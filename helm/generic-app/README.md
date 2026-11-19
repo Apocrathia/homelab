@@ -1219,6 +1219,10 @@ kubectl create namespace my-app
 
 # Install the application
 helm install my-app ./helm/generic-app --namespace my-app --values my-values.yaml
+
+# Or pull the published OCI artifact (private registry; helm registry login
+# registry.gitlab.com with the deploy token first)
+helm pull oci://registry.gitlab.com/apocrathia/homelab/generic-app --version <chart-version>
 ```
 
 ### Values File Example

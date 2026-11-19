@@ -115,6 +115,8 @@ Use **`pvc.staticLonghorn`** when **only** the Longhorn volume exists (no instan
 
 **`helm`** (generic-app):
 
+> **Version guard:** `helm template … helm/generic-app` renders the chart at HEAD; the deployed release is the pinned OCI tag. Confirm the HelmRelease `spec.chart.spec.version` matches `helm/generic-app/Chart.yaml` first (post-divergence, render from the `generic-app-<version>` git tag instead).
+
 ```bash
 yq '.spec.values' [HELMRELEASE_PATH] > .scratch/[APP]-helm-values.yaml
 helm template [HELMRELEASE_NAME] helm/generic-app -f .scratch/[APP]-helm-values.yaml --namespace [NAMESPACE] \

@@ -51,13 +51,7 @@
       "pinDigests": false
     },
     {
-      "description": "One MR for all generic-app chart version pins — each new generic-app-* tag touches ~88 HelmReleases",
-      "matchDatasources": ["git-tags"],
-      "matchDepNames": ["https://gitlab.com/Apocrathia/homelab.git"],
-      "groupName": "generic-app chart"
-    },
-    {
-      "description": "One MR for all generic-app OCI chart version pins — each new tag touches the flipped HelmReleases",
+      "description": "One MR for all generic-app chart version pins — each new OCI chart tag touches ~122 HelmReleases",
       "matchDatasources": ["docker"],
       "matchDepNames": ["registry.gitlab.com/apocrathia/homelab/generic-app"],
       "groupName": "generic-app chart"
@@ -133,17 +127,6 @@
     },
     {
       "customType": "regex",
-      "description": "generic-app Chart versions from Git tags",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
-      "datasourceTemplate": "git-tags",
-      "depNameTemplate": "https://gitlab.com/Apocrathia/homelab.git",
-      "matchStrings": [
-        "# renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ],
-      "extractVersionTemplate": "^generic-app-(?<version>.*)$"
-    },
-    {
-      "customType": "regex",
       "description": "GitLab Runner helper image in config.toml",
       "managerFilePatterns": [
         "/^flux/manifests/03-services/gitlab/runner/config\\.toml$/"
@@ -167,6 +150,7 @@
         "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n\\s*image = [\"'](?:[^:]+):(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']"
       ]
     },
+
     {
       "customType": "regex",
       "description": "Crossplane provider package refs (OCI tags)",

@@ -41,7 +41,7 @@ The Authentik stack — proxy provider -> application -> `admins` (order 10) + `
 - The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the chart-rendered OnePasswordItem — same shared item as headlamp and chaos-mesh.
 - The per-app outpost is NOT tofu-owned anymore: the new proxy shape renders no outpost, so `demo-app-outpost` + its dual-parent route (parentRefs `main-gateway`/`https` for LAN and `tailnet-gateway`/`https-gateway-services` for tailnet — the outpost route owns both doors) stay live but UNMANAGED until the W4 sweep retires them.
 - The W0 flip (from the retired Remote+varmap module lane) DISCARDS the module-era tofu state and re-adopts the live objects through the gated-import runbook: witness ids (provider pk, binding uuids) never enter git — they ride a gate-time varmap on the live Workspace once, then clear. Zero outage: the objects keep their uuids, nobody re-logs in. If an object is ever deleted out-of-band, tofu recreates it (state knows it).
-- No chart-tag race: the inline HCL needs no `generic-app-<version>` tag inside the Workspace spec; the tag only pins the chart source ref on the (suspended-until-gate) HelmRelease. The one-time W0 gate sequence lives in the flip MR body.
+- No chart-tag race: the inline HCL needs no `generic-app-<version>` tag inside the Workspace spec; the chart's OCI version pin on the HelmRelease is Renovate-managed. The one-time W0 gate sequence lives in the flip MR body.
 
 ## Storage Pattern
 
@@ -123,14 +123,16 @@ spec:
   interval: 15m
   chart:
     spec:
-      chart: ./helm/generic-app
+      chart: generic-app
       sourceRef:
-        kind: GitRepository
+        kind: HelmRepository
         name: homelab
         namespace: flux-system
   values:
     # Application-specific values...
 ```
+
+The chart version is pinned in `helmrelease.yaml` (Renovate-managed OCI tag) — see the manifest for the current pin.
 
 The HelmRelease contains the configuration that makes this demo app unique:
 
