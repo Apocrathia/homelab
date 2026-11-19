@@ -31,7 +31,7 @@ spec:
                   "SecRuleEngine DetectionOnly",
                   "SecRequestBodyAccess On",
                   "SecResponseBodyAccess Off",
-                  "Include @crs-setup.conf",
+                  "Include @crs-setup-conf",
                   "Include @owasp_crs/*.conf",
                 ],
             },
