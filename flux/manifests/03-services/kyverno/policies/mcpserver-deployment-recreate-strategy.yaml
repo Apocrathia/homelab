@@ -1,6 +1,6 @@
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
   name: mcpserver-deployment-recreate-strategy
   annotations:
@@ -19,31 +19,44 @@ metadata:
       downtime window (acceptable in a homelab) for rollouts that actually
       complete. Remove this once upstream kmcp exposes spec.deployment.strategy.
 spec:
-  # Mutating policies don't take validationFailureAction; the rule below is a
-  # no-op patch failure risk (the fields always exist on a Deployment).
-  background: true
-  rules:
-    - name: set-recreate-strategy
-      match:
-        any:
-          - resources:
-              kinds:
-                - Deployment
-      # Only Deployments owned by a kagent MCPServer CR. ownerReferences is the
-      # stable signal — names/labels vary across MCPServer instances.
-      # Nil-safe: most Deployments carry no ownerReferences; without the
-      # `|| `[]`` fallback, length(nil) errors and the webhook failurePolicy
-      # (Fail) denies every Deployment write cluster-wide.
-      preconditions:
-        all:
-          - key: "{{ (request.object.metadata.ownerReferences || `[]`) | [?kind=='MCPServer'] | length(@) }}"
-            operator: GreaterThan
-            value: 0
-      mutate:
-        patchStrategicMerge:
-          spec:
-            strategy:
-              type: Recreate
-              # Explicitly null out the rollingUpdate block: with type=Recreate
-              # the API rejects a spec that still carries rollingUpdate params.
-              rollingUpdate: null
+  # The CEL failurePolicy replaces the legacy webhook failurePolicy; Fail is
+  # also the kyverno default, kept explicit to match the upstream conformance
+  # tests' shape for this pattern.
+  failurePolicy: Fail
+  # Only Deployments owned by a kagent MCPServer CR. ownerReferences is the
+  # stable signal — names/labels vary across MCPServer instances.
+  # Nil-safe: most Deployments carry no ownerReferences; without the
+  # `?...orValue([])` fallback, exists() errors, and with failurePolicy Fail
+  # that would deny every Deployment write cluster-wide.
+  matchConditions:
+    - name: owned-by-mcpserver
+      expression: >-
+        object.metadata.?ownerReferences.orValue([]).exists(ref, ref.kind == "MCPServer")
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - apps
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - deployments
+  mutations:
+    # The legacy patchStrategicMerge set strategy.type=Recreate and nulled
+    # rollingUpdate in one shot. ApplyConfiguration can only set fields, it
+    # cannot remove them, so this is a JSONPatch: add type, plus a remove of
+    # rollingUpdate guarded by has() — a JSONPatch remove on a missing path
+    # fails, and with type=Recreate the API rejects a spec that still carries
+    # rollingUpdate params. The strategy-absent branch covers Deployment
+    # submissions that reach the webhook without spec.strategy set.
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          has(object.spec.strategy) && has(object.spec.strategy.rollingUpdate)
+            ? [JSONPatch{op: "add", path: "/spec/strategy/type", value: "Recreate"},
+               JSONPatch{op: "remove", path: "/spec/strategy/rollingUpdate"}]
+            : has(object.spec.strategy)
+              ? [JSONPatch{op: "add", path: "/spec/strategy/type", value: "Recreate"}]
+              : [JSONPatch{op: "add", path: "/spec/strategy", value: Object.spec.strategy{type: "Recreate"}}]

@@ -18,6 +18,7 @@ The policy `block-default-namespace` applies to the following resource types:
 
 - Deployments
 - StatefulSets
+- ReplicaSets
 - DaemonSets
 - Jobs
 - CronJobs

@@ -1,6 +1,6 @@
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: audit-automount-sa-token
   annotations:
@@ -13,56 +13,70 @@ metadata:
       be a security risk if the Pod doesn't need API access. This policy audits
       Pods that have automountServiceAccountToken enabled or not explicitly set.
 spec:
-  validationFailureAction: Audit
-  background: true
-  rules:
-    - name: check-automount-sa-token
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          # Exclude system namespaces where SA tokens are legitimately needed
-          - resources:
-              namespaces:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - cilium-system
-                - longhorn-system
-                - flux-system
-                - kyverno
-                # Operators and controllers that need API access
-                - cert-manager
-                - external-secrets-system
-                - prometheus-system
-                - postgres-system
-                - otel-system
-                - trivy-system
-                - policy-reporter
-                - grafana-system
-                - onepassword-system
-                - lws-system
-                - pasture-system
-                - system-upgrade
-                - gitlab-runner
-                - kagent
-                - renovate
-          # CNPG instance manager pods require API access for status
-          # updates, secret reading, failover coordination, and events
-          - resources:
-              kinds:
-                - Pod
-              selector:
-                matchExpressions:
-                  - key: cnpg.io/cluster
-                    operator: Exists
-      validate:
-        message: >-
-          automountServiceAccountToken should be set to false unless the Pod
-          requires Kubernetes API access.
-        pattern:
-          spec:
-            automountServiceAccountToken: false
+  # Audit: report violations (admission + background policy reports) without
+  # denying the request — the CEL equivalent of the legacy
+  # validationFailureAction: Audit.
+  validationActions:
+    - Audit
+  evaluation:
+    background:
+      enabled: true
+  # Pod-controller autogen is disabled to keep the legacy scope: bare Pods
+  # only (the old ClusterPolicy never generated controller variants).
+  autogen:
+    podControllers:
+      controllers: []
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+    # Exclude system namespaces where SA tokens are legitimately needed.
+    # kubernetes.io/metadata.name is the immutable built-in label every
+    # namespace carries, so NotIn on it reproduces the legacy namespace
+    # exclude list.
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - cilium-system
+            - longhorn-system
+            - flux-system
+            - kyverno
+            # Operators and controllers that need API access
+            - cert-manager
+            - external-secrets-system
+            - prometheus-system
+            - postgres-system
+            - otel-system
+            - trivy-system
+            - policy-reporter
+            - grafana-system
+            - onepassword-system
+            - lws-system
+            - pasture-system
+            - system-upgrade
+            - gitlab-runner
+            - kagent
+            - renovate
+    # CNPG instance manager pods require API access for status
+    # updates, secret reading, failover coordination, and events
+    objectSelector:
+      matchExpressions:
+        - key: cnpg.io/cluster
+          operator: DoesNotExist
+  validations:
+    - expression: "has(object.spec.automountServiceAccountToken) && object.spec.automountServiceAccountToken == false"
+      message: >-
+        automountServiceAccountToken should be set to false unless the Pod
+        requires Kubernetes API access.
