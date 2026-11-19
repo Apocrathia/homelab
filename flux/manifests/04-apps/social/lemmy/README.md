@@ -6,7 +6,7 @@ Self-hosted Lemmy UI frontend connected to the [lemmy.ml](https://lemmy.ml) inst
 
 ## Overview
 
-This deployment runs the [Lemmy UI](https://github.com/LemmyNet/lemmy-ui) web frontend, configured to point at the public lemmy.ml backend. No local Lemmy backend or database is deployed — this is a pure UI proxy to the external instance.
+This deployment runs the [Lemmy UI](https://github.com/LemmyNet/lemmy-ui) web frontend, configured to point at the public lemmy.ml backend. No local Lemmy backend or database is deployed, this is a pure UI proxy to the external instance.
 
 - Authentik proxy for SSO-gated access
 - Stateless deployment (no persistent storage)

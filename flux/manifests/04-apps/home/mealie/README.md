@@ -1,19 +1,19 @@
 # Mealie
 
-Self-hosted recipe manager and meal planning application with comprehensive cooking workflow management.
+Self-hosted recipe manager and meal planner.
 
-> **Navigation**: [← Back to Management README](../README.md)
+> **Navigation**: [← Back to Home README](../README.md)
 
 ## Overview
 
 This deployment includes:
 
-- Recipe management with URL scraping capabilities
+- Recipe import by URL scraping
 - Meal planning with calendar view
 - Shopping list generation from meal plans
 - Multi-user support with group sharing
-- Rich markdown recipe editor
-- Full REST API with interactive documentation
+- Markdown recipe editor
+- REST API with interactive documentation
 
 ## Configuration
 
@@ -21,7 +21,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### mealie-secrets (`vaults/Secrets/items/mealie-secrets`)
+**mealie-secrets** (`vaults/Secrets/items/mealie-secrets`)
 
 - `oidc-client-id`: Authentik OIDC client ID
 - `oidc-client-secret`: Authentik OIDC client secret
@@ -48,19 +48,15 @@ Create a 1Password item:
 
 ## Authentication
 
-Authentication is handled through Authentik OIDC:
-
-1. **OIDC Provider**: Authentik OIDC provider configured
-2. **Client Credentials**: Automatically generated and stored in 1Password
-3. **Password Login**: Disabled when OIDC is enabled
-4. **Clean Setup**: Works with Authentik from day one
+Authentik OIDC. Client credentials are auto-generated and stored in 1Password;
+password login is disabled while OIDC is active.
 
 ## Security Considerations
 
-- **OIDC Integration**: Complete authentication through Authentik
+- **OIDC Integration**: Authentication through Authentik
 - **Password Disabled**: No local password authentication when OIDC is active
 - **Database Security**: PostgreSQL credentials managed via 1Password
-- **SMTP Security**: Email credentials stored securely in 1Password
+- **SMTP Security**: Email credentials in 1Password
 
 ## Troubleshooting
 

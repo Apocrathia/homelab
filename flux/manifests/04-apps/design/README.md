@@ -6,6 +6,10 @@ Open-source creative design and CAD tools.
 
 ## Applications
 
+### [BenchUp3D](./benchup/README.md)
+
+SketchUp-style 3D modeler for woodworking in the browser.
+
 ### [CADCraft](./cadcraft/README.md)
 
 Open-source CAD — parametric solid modeling in the browser.
@@ -13,10 +17,6 @@ Open-source CAD — parametric solid modeling in the browser.
 ### [Craft Anything](./craft-anything/README.md)
 
 Understand how any software works, then craft your own.
-
-### [DeckCraft](./deckcraft/README.md)
-
-Presentations and slide shows in the browser.
 
 ### [DesignCraft](./designcraft/README.md)
 
@@ -33,10 +33,6 @@ Interface design and prototyping in the browser.
 ### [FilmCraft](./filmcraft/README.md)
 
 Nonlinear video editor in the browser.
-
-### [GridCraft](./gridcraft/README.md)
-
-Spreadsheet in the browser.
 
 ### [Klecks](./klecks/README.md)
 
@@ -74,10 +70,6 @@ Digital audio workstation (DAW) in the browser.
 
 Vector art tool in the browser.
 
-### [WordCraft](./wordcraft/README.md)
-
-Word processor in the browser.
-
 ## References
 
-- **[Generic-App Chart](../../helm/generic-app/README.md)** - Application deployment template
+- **[Generic-App Chart](../../../../helm/generic-app/README.md)** - Application deployment template

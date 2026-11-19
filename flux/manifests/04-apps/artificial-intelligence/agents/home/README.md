@@ -44,7 +44,7 @@ sequenceDiagram
 
 Create a 1Password item:
 
-#### home-agent-secrets (`vaults/Secrets/items/home-agent-secrets`)
+**home-agent-secrets** (`vaults/Secrets/items/home-agent-secrets`)
 
 - `litellm-api-key`: API key for LiteLLM access (LLM provider for the agent)
 - `homeassistant-token`: Home Assistant Long-Lived Access Token, **including the `Bearer ` prefix** (e.g. `Bearer eyJhbGciOi...`). The kagent controller passes this value verbatim as the `Authorization` header when contacting the HA MCP endpoint.

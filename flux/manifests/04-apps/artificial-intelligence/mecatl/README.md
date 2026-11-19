@@ -1,12 +1,12 @@
 # Mecatl
 
-[← Back to Artificial Intelligence](../README.md)
+> **Navigation**: [← Back to Artificial Intelligence README](../README.md)
 
 [Mecatl](https://github.com/stacklok/mecatl) is a provider-agnostic, headless agentic coding harness (Go) running as storage-free Kubernetes pods. Deployed as an experiment: a dedicated coding-agent lane separate from kagent's ops agents and Hermes's assistant role.
 
 ## Architecture
 
-- **mecak8s pods**: stateless agent compute (1 replica), gRPC :8080 + HTTP/SSE :8081
+- **mecak8s pods**: stateless agent compute, gRPC :8080 + HTTP/SSE :8081
 - **State**: dedicated mecatl-valkey (Redis protocol) - session snapshots, event streams, virtual filesystem
 - **Coordination**: Kubernetes Leases (chart ships its own RBAC)
 - **Models**: cluster LiteLLM via OpenAI-compatible endpoint (`glm-5.3-prime` default)
@@ -40,3 +40,7 @@ kubectl logs -n mecatl mecatl-valkey-0
 # Valkey health (TLS-only; CA comes from the cert-manager Secret):
 kubectl exec -n mecatl mecatl-valkey-0 -- valkey-cli --tls --cacert /tls/ca.crt ping
 ```
+
+## References
+
+- **[Mecatl](https://github.com/stacklok/mecatl)** - Source code and issues

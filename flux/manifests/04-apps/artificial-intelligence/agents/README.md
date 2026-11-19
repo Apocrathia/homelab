@@ -86,7 +86,7 @@ flowchart LR
 
 ## Writing System Prompts
 
-Good system prompts are critical for agent behavior. Follow the [kagent System Prompts Guide](https://kagent.dev/docs/kagent/getting-started/system-prompts) for best practices:
+Follow the [kagent System Prompts Guide](https://kagent.dev/docs/kagent/getting-started/system-prompts):
 
 - **Operational Protocol** - Define step-by-step methodology for the agent
 - **Tool Descriptions** - Include "Use this tool when..." with trigger phrases

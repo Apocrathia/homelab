@@ -8,6 +8,8 @@ inline-JS page (`/static` serves only the vendored `marked`/`purify`).
 PI-congruent by design: dark canvas, hairlines, lime for live, system
 mono, square corners, no animations, no vendored fonts.
 
+> **Navigation**: [← Back to Prime Agent README](../../../README.md)
+
 ## Run
 
 ```sh
@@ -22,8 +24,9 @@ node server.mjs
 ## Configuration
 
 `config.json` is the live local config: gitignored, credentials inside.
-Start from `config.example.json` (token-free) and paste real values into
-`config.json`, never into the example. This payload's copy is the
+Start from `config.example.json` (token-free; it lives in the scratch
+source tree, not this payload — see [Dev](#dev)) and paste real values
+into `config.json`, never into the example. This payload's copy is the
 token-free GitOps shape — never put a token in it
 ([below](#local-vs-cluster-credentials)).
 

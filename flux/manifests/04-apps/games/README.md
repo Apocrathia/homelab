@@ -1,6 +1,6 @@
 # Games
 
-Game support services for managing, organizing, and playing games in the homelab.
+Services for managing and playing games in the homelab.
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
@@ -13,7 +13,7 @@ in the Games folder.
 
 ### [ArchiSteamFarm](./archisteamfarm/README.md)
 
-Steam card farming application for idling multiple accounts simultaneously with Authentik SSO integration and secure configuration management.
+Steam card farming across multiple accounts, behind Authentik SSO.
 
 ### [rom-audit](./rom-audit/README.md)
 
@@ -22,7 +22,7 @@ DATs and reports `matched` / `wrong_name` / `unknown` per system.
 
 ### [ROMM](./romm/README.md)
 
-ROM Manager for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation.
+Retro-game ROM manager with metadata and browser emulation.
 
 ### [Skyscraper](./skyscraper/README.md)
 
@@ -42,10 +42,8 @@ WebSocket (no UDP LoadBalancer).
 
 ## Overview
 
-Game support services cover ROM management, web emulation helpers, ES-DE
-gamelist scraping, theme mirroring, browser Sunshine streaming, and AMP metrics
-export. Deployed via Flux; game server hosting stays on `game.services.apocrathia.com`
-via [AMP](https://cubecoders.com/AMP).
+Deployed via Flux. Game server hosting itself stays on
+`game.services.apocrathia.com` via [AMP](https://cubecoders.com/AMP).
 
 ## References
 

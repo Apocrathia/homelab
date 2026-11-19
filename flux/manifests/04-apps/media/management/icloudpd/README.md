@@ -2,7 +2,7 @@
 
 Background service that syncs iCloud Photos to local NAS storage.
 
-> **Navigation**: [← Back to Media Management README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Overview
 
@@ -22,7 +22,9 @@ Uses an [app-specific password](https://support.apple.com/en-us/102654) for auth
    - `username`: iCloud email address
    - `password`: app-specific password
 
-## Storage
+## Configuration
+
+### Storage
 
 - **Config**: Longhorn PVC for cookie/session persistence
 - **Photos**: SMB mount to `//storage.services.apocrathia.com/Pictures/iCloud`

@@ -3,7 +3,7 @@
 Resident OpenClaw coding harness on Agent Substrate (`AgentHarness`), accessed
 through the kagent UI.
 
-> **Navigation**: [<- Back to AI Applications README](../README.md)
+> **Navigation**: [← Back to AI Applications README](../README.md)
 
 ## Overview
 
@@ -14,23 +14,23 @@ through the kagent UI.
   `ate-system/ate-api-server` resolve ActorTemplate env `secretKeyRef`s in this
   namespace (same grant kagent's chart installs in `kagent`)
 
-Retired generic-app stack: the rollback artifacts (`helmrelease.yaml`,
-`openclaw.json`) are deleted. The authentik orphans (`openclaw-proxy-provider`,
-`openclaw-outpost`) go via the `openclaw-cleanup` companion blueprint
+The authentik orphans (`openclaw-proxy-provider`, `openclaw-outpost`) are
+removed by the `openclaw-cleanup` companion blueprint
 (`flux/manifests/03-services/authentik/blueprints/openclaw-cleanup.yaml`) —
-`state: absent` entries; blueprints never garbage-collect.
-
-Outpost k8s sweep follow-up: deleting the outpost should also remove its
-`ak-outpost-openclaw-outpost` Deployment, Service, and metrics Service plus
-the retired-hostname HTTPRoute from the authentik namespace, but survivors are
-possible (mlflow/ombi/zilean left k8s objects behind after their outpost
-deletions). Verify after the companion fires:
+`state: absent` entries; blueprints never garbage-collect. Outpost deletions
+can leave the `ak-outpost-openclaw-outpost` Deployment, Service, metrics
+Service, and retired-hostname HTTPRoute behind in the authentik namespace;
+verify and delete survivors explicitly (operator cluster mutation):
 
 ```bash
 kubectl get deploy,svc,httproute -n authentik | grep openclaw
 ```
 
-Any survivors need an explicit delete (operator cluster mutation).
+## Configuration
+
+Defined by kagent CRs: `AgentHarness/openclaw` (substrate runtime) and
+`ModelConfig/openclaw-model` (LiteLLM) — see `agentharness.yaml` and
+`modelconfig.yaml`.
 
 ## Secrets
 
@@ -50,8 +50,6 @@ Any survivors need an explicit delete (operator cluster mutation).
   (`https://kagent.gateway.services.apocrathia.com/api/agentharnesses/openclaw/openclaw/gateway`).
   It carries no provider — SSO comes from the kagent proxy provider that already
   covers `kagent.gateway.services.apocrathia.com`.
-- Former Gateway URL `https://openclaw.gateway.services.apocrathia.com` is
-  retired with the generic-app HelmRelease
 
 ## Worker pool
 
@@ -61,5 +59,5 @@ Harness uses the controller default pool `ate-system/kagent-default` (omit
 ## References
 
 - [OpenClaw Documentation](https://docs.openclaw.ai)
-- [Agent Substrate rollout plan](../../../../docs/plans/agent-substrate-rollout.md)
+- [Agent Substrate rollout plan](../../../../../docs/plans/agent-substrate-rollout.md)
 - [kagent](../kagent/README.md) / [substrate](../substrate/README.md)

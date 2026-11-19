@@ -225,3 +225,7 @@ is missing or empty` on boot failure. The collector stream is in
 - Dashboard slow first paint: `/api/sessions` walks the sessions + artifacts
   tree on the Longhorn PVC per refresh; a multi-second cold pass is expected
   today (TTL cache is a queued follow-up)
+
+## References
+
+- **[Prime Intellect](https://primeintellect.ai/)** - Product site

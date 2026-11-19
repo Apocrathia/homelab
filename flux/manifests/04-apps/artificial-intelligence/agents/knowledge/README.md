@@ -4,20 +4,12 @@
 
 ## Overview
 
-This deployment includes a knowledge management agent that stores, retrieves, and synthesizes information across multiple sources:
+The knowledge agent stores, retrieves, and synthesizes information across sources:
 
-- Vector database integration via Qdrant for semantic storage and retrieval
-- Offline encyclopedic content access through OpenZIM
-- Web search delegation for current information when needed
-- Designed to be called by other agents for knowledge queries
-
-## Purpose
-
-Stores, retrieves, and synthesizes information across multiple knowledge sources:
-
-- **Qdrant**: Vector knowledge base for semantic storage/retrieval
-- **OpenZIM**: Offline encyclopedic content (Wikipedia, etc.)
-- **Search Agent**: Delegation for web searches when needed
+- Qdrant vector store for semantic storage and retrieval
+- Offline encyclopedic content through OpenZIM
+- Web search delegation for current information
+- Called by other agents for knowledge queries
 
 ## Tools
 
@@ -30,16 +22,11 @@ Stores, retrieves, and synthesizes information across multiple knowledge sources
 
 ## Usage
 
-The knowledge agent is designed to be called by other agents (like homelab-agent) when they need to:
-
-- Store information for later retrieval
-- Recall previously stored information
-- Look up factual/encyclopedic information
-- Search across multiple knowledge sources
+Other agents (like homelab-agent) call it to store and recall knowledge, look up encyclopedic facts, and run web searches.
 
 ## Configuration
 
-- **Model**: qwen3 (via LiteLLM)
+- **Model**: via LiteLLM (pinned in `modelconfig.yaml`)
 - **Namespace**: `agent-knowledge`
 
 ## Troubleshooting
@@ -54,5 +41,5 @@ kubectl logs --namespace agent-knowledge -l app.kubernetes.io/name=knowledge-age
 
 ## References
 
-- **[Qdrant MCP Server](../../../mcp-servers/qdrant/README.md)** - Vector database integration
-- **[OpenZIM MCP Server](../../../mcp-servers/openzim/README.md)** - Encyclopedic content
+- **[Qdrant MCP Server](../../mcp-servers/qdrant/README.md)** - Vector database integration
+- **[OpenZIM MCP Server](../../mcp-servers/openzim/README.md)** - Encyclopedic content

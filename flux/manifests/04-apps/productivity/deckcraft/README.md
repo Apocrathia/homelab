@@ -1,15 +1,10 @@
 # DeckCraft
 
-[← Productivity Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/deckcraft)
-- [ArtCraft](https://getartcraft.com/apps/deckcraft)
+> **Navigation**: [← Productivity Apps](../README.md)
 
 ## Overview
 
-DeckCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+DeckCraft is an open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** <https://deckcraft.gateway.services.apocrathia.com>
 
@@ -35,3 +30,8 @@ kubectl logs -n deckcraft -l app.kubernetes.io/name=deckcraft -c fetch-deckcraft
 kubectl logs -n deckcraft -l app.kubernetes.io/name=deckcraft
 kubectl describe deployment -n deckcraft deckcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/deckcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/deckcraft)** - ArtCraft app listing

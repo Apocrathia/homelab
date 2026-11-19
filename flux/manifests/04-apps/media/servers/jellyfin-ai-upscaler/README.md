@@ -9,7 +9,7 @@ CPU ONNX upscaling service for the [Jellyfin AI Upscaler plugin](https://github.
 - Cluster-internal FastAPI service on port 5000 (`docker7-cpu` image)
 - Model, cache, and auth-token state on Longhorn
 - Shared-secret `API_TOKEN` via 1Password (`X-Api-Token`)
-- No Gateway route — Jellyfin reaches it over cluster DNS
+- No Gateway route: Jellyfin reaches it over cluster DNS
 
 Realtime server-side upscaling is enabled. On CPU it will be slow; the plugin still sends frames.
 
@@ -53,7 +53,7 @@ In **Dashboard → Plugins → AI Upscaler Plugin**:
 3. **Real-Time Upscaling**: on
 4. **Realtime mode**: `server` (do not leave this on `auto` if you want CPU inference instead of WebGL fallback)
 
-`localhost:5000` is the plugin default and will not work — that is inside the Jellyfin pod.
+`localhost:5000` is the plugin default and will not work: that is inside the Jellyfin pod.
 
 ## Authentication
 

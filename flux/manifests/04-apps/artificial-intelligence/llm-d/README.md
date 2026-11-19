@@ -6,7 +6,7 @@ Kubernetes-native distributed inference serving stack for large language models 
 
 ## Overview
 
-llm-d accelerates distributed inference by integrating industry-standard open technologies:
+llm-d runs distributed inference by combining:
 
 - **vLLM**: Default model server and inference engine
 - **Inference Gateway (IGW)**: Request scheduler and load balancer
@@ -22,41 +22,34 @@ llm-d provides several deployment patterns:
 
 ## Prerequisites
 
-- Kubernetes 1.29+
-- Accelerator support (NVIDIA GPUs, AMD GPUs, Google TPUs, or Intel XPUs)
-- Gateway API provider (for Inference Gateway)
-- Hugging Face token (for model downloads)
+- CPU-only deployment: this cluster has no accelerators — `accelerator.type: cpu` in `helmrelease.yaml` keeps the chart from injecting GPU requests
+- Hugging Face token for model downloads: `HF_TOKEN` field on the `llm-d-secrets` 1Password item (field name is case-sensitive)
 
 ## Deployment
 
-This deployment uses the ModelService Helm chart which provides:
+The `llm-d-modelservice` Helm chart runs in the `llm-d` namespace as an
+**inference-sim** simulator:
 
-- Declarative Kubernetes resource management for serving base models
-- Disaggregated prefill and decode workloads
-- Integration with Gateway API Inference Extension
-- Auto-scaling via HPA or custom controllers
-- Model loading from Hugging Face, PVCs, or OCI images
+- `inference-sim` serves the API shape without running models — a development
+  shape, not real inference, and it needs no GPU
+- Model artifacts are pinned in `helmrelease.yaml`
+  (`modelArtifacts.name: llm-d/inference-sim`)
+- A routing proxy sidecar fronts the decode pods; an `InferencePool` groups
+  them. Routing currently goes through LiteLLM, so the InferencePool is
+  optional (see `inferencepool.yaml`)
+
+## Access
+
+Internal only — no Gateway route:
+
+- **Service**: `http://llm-d-modelservice.llm-d.svc.cluster.local:8000`
 
 ## Configuration
 
-After deploying the Helm chart, create `ModelService` custom resources to deploy your models. Example:
-
-```yaml
-apiVersion: modelservice.llm-d.ai/v1alpha1
-kind: ModelService
-metadata:
-  name: my-model
-  namespace: llm-d
-spec:
-  # Model configuration
-  model:
-    source: huggingface
-    name: meta-llama/Llama-3.1-8B-Instruct
-  # Resource allocation
-  resources:
-    requests:
-      nvidia.com/gpu: 1
-```
+Model artifacts, accelerator type, and routing settings live in
+`helmrelease.yaml`; decode-pod grouping in `inferencepool.yaml`. See the
+[ModelService guide](https://llm-d.ai/docs/architecture/Components/modelservice)
+for the full custom-resource shape.
 
 ## Troubleshooting
 
@@ -67,11 +60,8 @@ kubectl get pods -n llm-d
 # Check ModelService resources
 kubectl get modelservices -n llm-d
 
-# Model server logs
-kubectl logs -n llm-d deployment/llm-d -f
-
-# Inference Gateway logs
-kubectl logs -n llm-d deployment/igw -f
+# Decode pod logs
+kubectl logs -n llm-d -l llm-d.ai/role=decode --tail=50
 ```
 
 ## References

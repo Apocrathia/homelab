@@ -1,6 +1,6 @@
 # Search Agent
 
-Web search specialist powered by kagent. Uses SearXNG for search capabilities.
+Web search specialist powered by kagent, backed by SearXNG.
 
 > **Navigation**: [← Back to Agents README](../README.md)
 
@@ -9,7 +9,7 @@ Web search specialist powered by kagent. Uses SearXNG for search capabilities.
 This deployment includes:
 
 - Declarative kagent Agent CRD with search-focused system prompt
-- Connection to the SearXNG MCP server for web search capabilities
+- Connection to the SearXNG MCP server for web search
 - Integration with LiteLLM for model access
 
 ```mermaid
@@ -47,7 +47,7 @@ The agent uses the kagent `MCPServer` in `mcp-searxng` namespace:
 
 Create a 1Password item:
 
-#### searxng-agent-secrets (`vaults/Secrets/items/searxng-agent-secrets`)
+**searxng-agent-secrets** (`vaults/Secrets/items/searxng-agent-secrets`)
 
 - `litellm-api-key`: API key for LiteLLM access
 

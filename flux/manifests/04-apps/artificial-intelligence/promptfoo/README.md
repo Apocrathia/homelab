@@ -49,11 +49,11 @@ The deployment disables every outbound call promptfoo makes by default:
 
 ## Storage & runtime layout
 
-| Mount            | Volume                  | Purpose                                                                              |
-| ---------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| `/data`          | Longhorn PVC (10Gi, 1×) | `$HOME` for promptfoo — sqlite db, blobs, eval results. Persists across restarts.    |
-| `/opt/promptfoo` | `emptyDir`              | Bootstrap install — `node/`, `npm/`, `venv/`. Re-populated by the init on every pod. |
-| `/tmp`           | `emptyDir`              | Scratch space (root FS is read-only).                                                |
+| Mount            | Volume       | Purpose                                                                              |
+| ---------------- | ------------ | ------------------------------------------------------------------------------------ |
+| `/data`          | Longhorn PVC | `$HOME` for promptfoo — sqlite db, blobs, eval results. Persists across restarts.    |
+| `/opt/promptfoo` | `emptyDir`   | Bootstrap install — `node/`, `npm/`, `venv/`. Re-populated by the init on every pod. |
+| `/tmp`           | `emptyDir`   | Scratch space (root FS is read-only).                                                |
 
 ## Bootstrap (init container)
 

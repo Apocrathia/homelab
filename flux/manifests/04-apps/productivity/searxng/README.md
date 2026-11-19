@@ -19,7 +19,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### searxng-secrets (`vaults/Secrets/items/searxng-secrets`)
+**searxng-secrets** (`vaults/Secrets/items/searxng-secrets`)
 
 - `secret-key`: Cryptographic secret key for SearXNG (required). Generate a random string for production use.
 

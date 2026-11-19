@@ -6,7 +6,7 @@
 
 ## Overview
 
-This deployment bootstraps ComfyUI from the official GitHub release tarball onto a stock `python:3.13` image (same pattern as [Promptfoo](../promptfoo/README.md)). An init container installs CPU PyTorch and ComfyUI dependencies into a Longhorn-backed venv at `/data/app`. Runtime data (output, input, user settings, custom nodes) lives under `/data/comfyui` on Longhorn. Models mount from SMB at `/models` (`Library/AI Models/ComfyUI`) via `extra_model_paths.yaml` — not nested under the Longhorn base path, because a nested SMB mount makes `/data/comfyui` root-owned and breaks init.
+This deployment bootstraps ComfyUI from the official GitHub release tarball onto a stock Python image (same pattern as [Promptfoo](../promptfoo/README.md)). An init container installs CPU PyTorch and ComfyUI dependencies into a Longhorn-backed venv at `/data/app`. Runtime data (output, input, user settings, custom nodes) lives under `/data/comfyui` on Longhorn. Models mount from SMB at `/models` (`Library/AI Models/ComfyUI`) via `extra_model_paths.yaml` — not nested under the Longhorn base path, because a nested SMB mount makes `/data/comfyui` root-owned and breaks init.
 
 CPU-only — inference is slow. Useful for workflow editing, API integration testing, and light generation. Add a GPU node and swap the bootstrap to a CUDA/ROCm wheel index when you want real throughput.
 
@@ -36,7 +36,7 @@ The init container pins a ComfyUI release tag via Renovate. Bumping the tag trig
 
 | Mount                | Volume                            | Purpose                                                |
 | -------------------- | --------------------------------- | ------------------------------------------------------ |
-| `/data`              | Longhorn (25Gi)                   | App venv, output, input, custom nodes                  |
+| `/data`              | Longhorn                          | App venv, output, input, custom nodes                  |
 | `/data/comfyui/user` | Longhorn                          | Workflows, settings, SQLite database (`comfyui.db`)    |
 | `/models`            | SMB (`Library/AI Models/ComfyUI`) | Checkpoints, LoRAs, VAEs, embeddings                   |
 | `/config`            | ConfigMap                         | `extra_model_paths.yaml` — maps `/models` into ComfyUI |

@@ -1,16 +1,18 @@
 # Media Applications
 
-Media server ecosystem for personal media collection management, streaming, and acquisitions.
+Media applications for collection management, streaming, and acquisitions.
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
 ## Overview
 
-Media applications are organized into three categories:
+Media applications are organized into three categories plus standalone
+browser tools:
 
 - **Servers**: Media streaming and playback services
 - **Management**: Arr stack automation and media organization
 - **Acquisitions**: Download clients and indexers
+- **Browser Tools**: Standalone in-browser media players and emulators
 
 ## Servers
 
@@ -77,6 +79,11 @@ Media applications are organized into three categories:
 - **[Archive Team Warrior](./acquisitions/archiveteam-warrior/README.md)** - Distributed web archiving volunteer service
 - **[copyparty](./acquisitions/copyparty/README.md)** - Friends' file drop box with resumable browser uploads to the `Uploads` SMB share
 
+## Browser Tools
+
+- **[Ruffle](./ruffle/README.md)** - Flash Player emulator in Rust/WebAssembly, running .swf files in the browser
+- **[Webamp](./webamp/README.md)** - Winamp 2.9 reimplemented in the browser with skins and visualizer
+
 ## Storage Integration
 
 - **Media Libraries**: SMB mounts to network storage for video and audio content
@@ -89,8 +96,8 @@ All media applications integrate with:
 
 - **Authentik SSO**: Authentication through proxy or OIDC providers
 - **Gateway API**: External access via Cilium Gateway
-- **Prometheus**: Metrics collection and monitoring
-- **Loki**: Centralized logging
+- **Prometheus**: Metrics
+- **Loki**: Logs
 
 ## Common Patterns
 

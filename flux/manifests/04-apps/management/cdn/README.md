@@ -32,9 +32,8 @@ https://cdn.gateway.services.apocrathia.com/homelab/<repo-relative-path>
   registry, no CDN features - just the tree, with a rate limit.
 
 Readiness/gatus probe: repo-root file (`/homelab/README.md`), never a
-lane-owned path - the tofu-tiles migration deleted
-`blueprints/icons/gitlab.svg` and 404'd the probe, taking the whole
-icon fleet down (2026-10-19 incident).
+lane-owned path — lane-owned files can disappear with their lane and 404 the
+probe.
 
 The `/homelab` prefix is deliberate, not indecision: it names the synced
 repo in the URL space, so a future second repo gets its own slot
@@ -90,7 +89,7 @@ hostname, no extra route.
   the stale tree. A cold start mid-outage waits (pod stays not-ready on
   the readiness probe against a real repo file) until the first
   successful clone.
-- **GitLab rate limits**: the poll runs every 180s, keeping the 2
+- **GitLab rate limits**: the poll runs every 180s, keeping the
   replicas around ~40 unauth req/hr from the home IP - under gitlab's
   observed ~60/hr per-IP cap. The poll stays that slow on purpose.
 - **Host down**: tiles render iconless; cosmetic and self-healing.

@@ -21,9 +21,9 @@ replica runs rate-limit/auth-security state in-process.
 ## Access
 
 - **URL**: `https://endurain.gateway.services.apocrathia.com`
-- **Front door**: Authentik only — local login is disabled (see below)
+- **Front door**: Authentik only; local login is disabled (see below)
 
-## Prerequisites
+## Configuration
 
 The pod stays pending until the 1Password item exists. Create
 `vaults/Secrets/items/endurain-secrets` with:
@@ -32,8 +32,8 @@ The pod stays pending until the 1Password item exists. Create
 | ------------ | ------------------------------------------------- |
 | `username`   | PostgreSQL database username (must be `endurain`) |
 | `password`   | PostgreSQL database password                      |
-| `secret-key` | `openssl rand -hex 32` — JWT/session signing      |
-| `fernet-key` | `openssl rand -base64 32` — Fernet encryption     |
+| `secret-key` | `openssl rand -hex 32`, JWT/session signing       |
+| `fernet-key` | `openssl rand -base64 32`, Fernet encryption      |
 
 The CNPG cluster bootstraps the `endurain` database owner from these
 credentials, so `username` must stay `endurain`.
@@ -41,19 +41,19 @@ credentials, so `username` must stay `endurain`.
 ## Initial Setup
 
 The app ships a seeded local admin. Bootstrap it, wire Authentik, promote the
-SSO account, then close the local door — in that order.
+SSO account, then close the local door, in that order.
 
 1. Log in locally as `admin` / `admin`; change the password immediately
 2. Get the provider credentials: Authentik → **Applications → Endurain** →
    open the provider → copy **Client ID** and **Client Secret**
 3. Add the IdP: Endurain → **Settings → Identity Providers → Add →
-   Authentik** — slug `authentik`, issuer `https://auth.gateway.services.apocrathia.com/application/o/endurain/`,
+   Authentik**, slug `authentik`, issuer `https://auth.gateway.services.apocrathia.com/application/o/endurain/`,
    pasted credentials. The pre-registered redirect URI is
    `https://endurain.gateway.services.apocrathia.com/api/v1/public/idp/callback/authentik`, so the
    slug must stay `authentik`
 4. Enable SSO: **Settings → Server → Authentication** → **Enable SSO/IdP
    authentication**
-5. Test the flow in a private window before continuing — the URL must
+5. Test the flow in a private window before continuing, the URL must
    round-trip through Authentik and land you in Endurain. First SSO login
    auto-creates the Endurain user from the Authentik email
 6. Promote your SSO user: **Settings → Users →** (your user) → access type
@@ -64,7 +64,7 @@ SSO account, then close the local door — in that order.
 ## Auth Posture
 
 Live configuration: SSO on, auto-redirect on, local login off. The app URL
-starts the OIDC flow immediately — PKCE is generated per session, so there
+starts the OIDC flow immediately, PKCE is generated per session, so there
 is no static "start URL" to bookmark. New users are created from their
 Authentik email on first login; sign-up is disabled.
 

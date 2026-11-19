@@ -2,6 +2,8 @@
 
 `CronJob` that pulls [Uptime Robot’s published checker IPs](https://api.uptimerobot.com/meta/ips) and updates two UniFi Network **firewall group** objects (IPv4 and IPv6 address groups) when the member lists change.
 
+> **Navigation**: [← Back to UniFi Scripts README](../README.md)
+
 ## What gets deployed
 
 - Namespace: `unifi-scripts`
@@ -57,7 +59,7 @@ uv run ruff check .
 
 See [sync_uptime_robot_firewall_groups.py](./src/sync_uptime_robot_firewall_groups.py). On startup, if `src/.env` exists it is loaded (ignored in-cluster).
 
-Environment variables are documented in [`.env.example`](./src/.env.example).
+Environment variables are documented in [`env.example`](./src/env.example).
 
 ## Kustomize check
 

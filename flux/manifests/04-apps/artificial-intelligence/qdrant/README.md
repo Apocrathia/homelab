@@ -1,21 +1,21 @@
 # Qdrant Vector Database
 
-High-performance vector database for AI knowledge storage and semantic search.
+Vector database for embeddings and semantic search.
 
 > **Navigation**: [← Back to AI README](../README.md)
 
 ## Overview
 
-Qdrant provides the vector storage backend for the knowledge management system:
+Vector storage backend for the knowledge-management system:
 
 - Vector similarity search for semantic retrieval
 - Persistent storage of embeddings and metadata
-- API key authentication for secure access
-- Prometheus metrics for monitoring
+- API key authentication
+- Prometheus metrics
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────┐     ┌─────────────────────┐
 │   Qdrant MCP Server │────▶│   Qdrant Database   │
 │   (mcp-qdrant ns)   │     │   (qdrant ns)       │
@@ -54,7 +54,7 @@ No external access - accessed exclusively via MCP server.
 
 ## MCP Integration
 
-The Qdrant MCP server (`mcp-qdrant` namespace) provides:
+The Qdrant MCP server (`mcp-qdrant` namespace) exposes:
 
 - **`qdrant-store`**: Store information with embeddings
 - **`qdrant-find`**: Semantic search for relevant information

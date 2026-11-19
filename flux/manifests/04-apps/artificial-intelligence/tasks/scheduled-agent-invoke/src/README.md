@@ -2,6 +2,8 @@
 
 Multi-turn kagent A2A using `a2a-sdk` streaming: reads `prompts/task.md` for turn 1, then `prompts/continuation.md` for follow-ups, carrying `contextId` between turns (same model as the Discord bridge).
 
+> **Navigation**: [← Back to scheduled-agent-invoke README](../README.md)
+
 ## Endpoint state
 
 ### Current (implemented)
@@ -14,7 +16,9 @@ Multi-turn kagent A2A using `a2a-sdk` streaming: reads `prompts/task.md` for tur
 
 - Transport: LiteLLM A2A gateway endpoint for the same scheduled task flow.
 - Intended endpoint shape: `http://litellm.<ns>.svc.cluster.local:4000/a2a/<agent>/message/send`.
-- Status: not enabled in the deployed LiteLLM instance used during validation; route returned `404 Not Found` because `/a2a/*` was not exposed.
+- Status: LiteLLM now exposes `/a2a/*` (inbound A2A is deployed and documented
+  in `litellm/README.md`); switching this task over remains the operator's
+  decision.
 
 ### Migration checklist (when revisiting)
 

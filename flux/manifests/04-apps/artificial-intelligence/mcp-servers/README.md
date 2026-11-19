@@ -1,12 +1,12 @@
 # MCP Servers
 
-Model Context Protocol servers providing specialized functionality for AI clients.
+Model Context Protocol servers that expose tools to AI clients.
 
 > **Navigation**: [← Back to AI README](../README.md)
 
 ## Overview
 
-All MCP servers are internal-only and accessible exclusively through the LiteLLM proxy. This provides:
+All MCP servers are internal-only and reachable only through the LiteLLM proxy, which gives:
 
 - Unified authentication and access control
 - Centralized logging and observability
@@ -14,7 +14,7 @@ All MCP servers are internal-only and accessible exclusively through the LiteLLM
 
 ## Architecture
 
-```
+```text
 External Clients → LiteLLM Proxy → MCP Servers (internal)
 ```
 
@@ -30,78 +30,78 @@ own the secret.
 
 ## Internal MCP Servers
 
-### Grafana MCP Server
+### [Grafana MCP Server](./grafana/README.md)
 
 - **Purpose**: Grafana dashboard and data source management
 - **Tools**: Dashboard operations, Prometheus queries, Loki log analysis, alert management
 
-### SearXNG MCP Server
+### [SearXNG MCP Server](./searxng/README.md)
 
 - **Purpose**: Privacy-respecting web search via internal SearXNG instance
 - **Tools**: Web search with pagination, URL content reading
 
-### Flux MCP Server
+### [Flux MCP Server](./flux/README.md)
 
 - **Purpose**: GitOps pipeline management and Flux resource operations
 - **Tools**: Resource listing, reconciliation triggers, status analysis
 
-### OpenZIM MCP Server
+### [OpenZIM MCP Server](./openzim/README.md)
 
 - **Purpose**: Offline knowledge base queries (Wikipedia, etc.)
 - **Tools**: ZIM file content search and retrieval
 
-### UniFi Network MCP Server
+### [UniFi Network MCP Server](./unifi/README.md)
 
 - **Purpose**: UniFi network device management
 - **Tools**: Device listing, client management, network configuration
 
-### GitLab MCP Server
+### [GitLab MCP Server](./gitlab/README.md)
 
 - **Purpose**: GitLab repository and issue management
 - **Tools**: Repository operations, issues, merge requests, pipelines
 
-### Servarr MCP Server
+### [Servarr MCP Server](./servarr/README.md)
 
 - **Purpose**: Sonarr and Radarr media management
 - **Tools**: Media search, queue management, library operations
 
-### TrueNAS MCP Server
+### [TrueNAS MCP Server](./truenas/README.md)
 
 - **Purpose**: TrueNAS Core/SCALE storage management
 - **Tools**: Pool status, dataset operations, snapshot management
 
-### Proxmox MCP Server
+### [Proxmox MCP Server](./proxmox/README.md)
 
 - **Purpose**: Proxmox virtualization management
 - **Tools**: VM/container operations, resource monitoring, cluster management
 
-### Firecrawl MCP Server
+### [Firecrawl MCP Server](./firecrawl/README.md)
 
 - **Purpose**: Web scraping and content extraction
 - **Tools**: Page scraping, content extraction, site crawling
 
-### GitHub MCP Server
+### [GitHub MCP Server](./github/README.md)
 
 - **Purpose**: GitHub repository and issue management
 - **Tools**: Repository operations, issues, pull requests, code search, security advisories
 - **Auth**: Self-hosted with PAT configured via 1Password secret
 - **Source**: [github/github-mcp-server](https://github.com/github/github-mcp-server)
 
-### Qdrant MCP Server
+### [Qdrant MCP Server](./qdrant/README.md)
 
 - **Purpose**: Knowledge storage and semantic search via Qdrant vector database
 - **Tools**: Information storage with embeddings, semantic similarity search
 - **Backend**: Qdrant vector database (deployed separately in `qdrant` namespace)
 - **Source**: [qdrant/mcp-server-qdrant](https://github.com/qdrant/mcp-server-qdrant)
 
-### Discord MCP Server
+### [Discord MCP Server](./discord/README.md)
 
 - **Purpose**: Discord API via bot token—channels, messages, moderation (tool surface depends on agent allowlist)
 - **Auth**: Same bot token as the homelab Discord bridge (`homelab-agent-secrets` → `discord-token`)
 - **LiteLLM**: `mcp_servers.discord` (alias `discord`)
 - **Source**: [SaseQ/discord-mcp](https://github.com/SaseQ/discord-mcp)
 
-### DuckDB MCP Server
+### [DuckDB MCP Server](./duckdb/README.md)
 
 - **Purpose**: SQL execution against a persistent local DuckDB file for data exploration and agent-driven analysis
 - **Tools**: Query execution, schema inspection, table listing, read-write data operations

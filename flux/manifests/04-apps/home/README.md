@@ -28,4 +28,4 @@ Service uptime monitoring across multiple protocols.
 
 ## References
 
-- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Application deployment template
+- **[Generic-App Chart](../../../../helm/generic-app/README.md)** - Application deployment template

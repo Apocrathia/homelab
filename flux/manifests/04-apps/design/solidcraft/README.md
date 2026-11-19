@@ -1,20 +1,14 @@
 # SolidCraft
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [Website](https://solidcraft.io)
-- [GitHub](https://github.com/tangency-labs/solidcraft)
-- [Docs](https://docs.solidcraft.io/)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 Open-source parametric 3D CAD in pure Rust. Sketch, constrain, and build solids on a parametric timeline. Runs in the browser via WebAssembly.
 
-**URL:** <https://solidcraft.gateway.services.apocrathia.com>
+**URL:** `https://solidcraft.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container and unpacked into a Longhorn PVC, then served by nginx. No backend, no database.
 
@@ -43,3 +37,9 @@ kubectl logs -n solidcraft -l app.kubernetes.io/name=solidcraft
 # Describe
 kubectl describe deployment -n solidcraft solidcraft
 ```
+
+## References
+
+- **[Website](https://solidcraft.io)** - Project website
+- **[GitHub](https://github.com/tangency-labs/solidcraft)** - Source code and issues
+- **[Docs](https://docs.solidcraft.io/)** - Official documentation

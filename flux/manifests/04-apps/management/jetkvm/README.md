@@ -85,7 +85,7 @@ Since no official container images exist, this deployment builds from source at 
 1. Init container clones `jetkvm/kvm`, builds production assets with Vite
 2. Main container serves static files with nginx
 
-> **Note**: This approach has longer startup times. Consider building and pushing images via CI/CD for production use.
+> **Note**: Building from source at runtime means slower pod startup; CI-built images would avoid that.
 
 ## Database
 
@@ -94,7 +94,7 @@ PostgreSQL is managed by CloudNativePG:
 - Cluster: `jetkvm-postgres`
 - Service: `jetkvm-postgres-rw.jetkvm.svc.cluster.local:5432`
 - Database: `jetkvm`
-- Storage: Longhorn (size configured in `helmrelease.yaml`)
+- Storage: Longhorn (size configured in `api-helmrelease.yaml` and `app-helmrelease.yaml`)
 
 Prisma migrations run automatically via init container before the API starts.
 

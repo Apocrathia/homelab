@@ -6,7 +6,7 @@ ES-DE `gamelist.xml`. Media downloads are disabled (enable later when needed).
 
 > **Navigation**: [← Back to Games README](../README.md)
 
-## What it does
+## Overview
 
 - Mounts `Games/Emulation` (SMB) at `/emulation`
 - Scrapes nonempty `roms/<system>/` via ScreenScraper (metadata only)
@@ -58,3 +58,15 @@ absolute container paths under `/emulation/...`.
 - Unknown or non-ROM folders are skipped via an exclude list in `scrape.sh`.
 - Rotate ScreenScraper credentials if they were ever stored in plaintext on the
   share (e.g. old Skraper config).
+
+## Troubleshooting
+
+```bash
+kubectl get cronjob skyscraper-esde -n skyscraper
+kubectl get jobs -n skyscraper
+kubectl logs -n skyscraper job/<job-name>
+```
+
+## References
+
+- **[Gemba Skyscraper](https://github.com/Gemba/skyscraper)** - Source code and issues

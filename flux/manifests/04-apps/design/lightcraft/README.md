@@ -1,19 +1,14 @@
 # LightCraft
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/lightcraft)
-- [ArtCraft](https://getartcraft.com/apps/lightcraft)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 LightCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
-**URL:** <https://lightcraft.gateway.services.apocrathia.com>
+**URL:** `https://lightcraft.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container into a Longhorn PVC and served by nginx. No backend, no database.
 
@@ -35,3 +30,8 @@ kubectl logs -n lightcraft -l app.kubernetes.io/name=lightcraft -c fetch-lightcr
 kubectl logs -n lightcraft -l app.kubernetes.io/name=lightcraft
 kubectl describe deployment -n lightcraft lightcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/lightcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/lightcraft)** - ArtCraft app listing

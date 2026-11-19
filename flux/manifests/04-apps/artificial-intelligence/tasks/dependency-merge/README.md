@@ -1,5 +1,9 @@
 # dependency-merge-sweep
 
+> **Navigation**: [← Back to Agent Tasks README](../README.md)
+
+## Overview
+
 Second stage of the dependency-review pipeline. Runs at :47 every 6 hours (hours 0, 6, 12, 18 UTC), 24 minutes
 behind the [:23 review sweep](../dependency-review) (`git-agent`), and acts
 on its output:
@@ -57,3 +61,11 @@ Reuses the sibling task's OnePasswordItem
 (`dependency-review-secrets` → `vaults/Secrets/items/gitlab-mcp-secrets`).
 The token must hold merge rights on the project; if protected-branch rules
 reject the merge, the job logs the 403 and the MR lands in the digest.
+
+## Troubleshooting
+
+```bash
+kubectl get cronjob dependency-merge-sweep -n agent-tasks
+kubectl get jobs -n agent-tasks
+kubectl logs -n agent-tasks job/<job-name>
+```

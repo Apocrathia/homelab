@@ -1,12 +1,6 @@
 # Excalidraw
 
-[← Productivity Apps](../README.md)
-
-## Links
-
-- [Website](https://excalidraw.com/)
-- [GitHub](https://github.com/excalidraw/excalidraw)
-- [Docs](https://docs.excalidraw.com/)
+> **Navigation**: [← Productivity Apps](../README.md)
 
 ## Overview
 
@@ -36,3 +30,9 @@ kubectl logs -n excalidraw -l app.kubernetes.io/name=excalidraw
 # Describe
 kubectl describe deployment -n excalidraw excalidraw
 ```
+
+## References
+
+- **[Website](https://excalidraw.com/)** - Project website
+- **[GitHub](https://github.com/excalidraw/excalidraw)** - Source code and issues
+- **[Docs](https://docs.excalidraw.com/)** - Official documentation

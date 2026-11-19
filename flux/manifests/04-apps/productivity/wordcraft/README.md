@@ -1,15 +1,10 @@
 # WordCraft
 
-[← Productivity Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/wordcraft)
-- [ArtCraft](https://getartcraft.com/apps/wordcraft)
+> **Navigation**: [← Productivity Apps](../README.md)
 
 ## Overview
 
-WordCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+WordCraft is an open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** <https://wordcraft.gateway.services.apocrathia.com>
 
@@ -35,3 +30,8 @@ kubectl logs -n wordcraft -l app.kubernetes.io/name=wordcraft -c fetch-wordcraft
 kubectl logs -n wordcraft -l app.kubernetes.io/name=wordcraft
 kubectl describe deployment -n wordcraft wordcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/wordcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/wordcraft)** - ArtCraft app listing

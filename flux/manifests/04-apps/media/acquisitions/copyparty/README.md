@@ -25,7 +25,7 @@ This deployment includes:
 
 ## Access
 
-- **URL**: <https://copyparty.gateway.services.apocrathia.com>
+- **URL**: `https://copyparty.gateway.services.apocrathia.com`
 - **Friends (tailnet)**: same hostname via the tailnet-gateway parentRef;
   friends land at `/u/<username>/` (book a bookmark there — the webroot is
   admins-only)

@@ -6,7 +6,7 @@ renames, deletes, or otherwise modifies anything on the share.
 
 > **Navigation**: [← Back to Games README](../README.md)
 
-## What it does
+## Overview
 
 - Mounts `Games/Emulation` (SMB) at `/emulation`, read-only
 - Loads `tools/rom-audit/systems.yaml` to decide which systems to audit
@@ -20,7 +20,7 @@ renames, deletes, or otherwise modifies anything on the share.
 
 ## Share layout
 
-```
+```text
 Emulation/
   dats/                        # operator-maintained No-Intro DAT files
   roms/<system>/                # ROM files (zips and loose files)
@@ -161,3 +161,11 @@ See [`src/README.md`](./src/README.md) for the Python package (`uv` +
    `Emulation/dats/` and flip `n3ds.enabled` to `true`.
 3. Create the `smb-credentials` 1Password item (shared with Skyscraper/RomM)
    if it doesn't already exist.
+
+## Troubleshooting
+
+```bash
+kubectl get cronjob rom-audit -n rom-audit
+kubectl get jobs -n rom-audit
+kubectl logs -n rom-audit job/<job-name>
+```

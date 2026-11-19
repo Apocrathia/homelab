@@ -1,6 +1,6 @@
 # Seerr
 
-Media request and discovery tool for Plex, Jellyfin, and Emby — the successor to Overseerr and Jellyseerr.
+Media request and discovery tool for Plex, Jellyfin, and Emby; the successor to Overseerr and Jellyseerr.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
