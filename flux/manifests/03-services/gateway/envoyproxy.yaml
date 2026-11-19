@@ -15,14 +15,11 @@ spec:
         type: LoadBalancer
         # Cluster (not Local): TAK TCPRoute listeners are plain L4 — the
         # backend pod is the only service backend, so with Local every node
-        # not hosting the pod refuses connections. Preserves the original
-        # Cilium Gateway behavior.
+        # not hosting the pod refuses connections.
         externalTrafficPolicy: Cluster
         # Cilium LB IPAM + L2 announcements: select the same label the IP
-        # pool and L2 policy match on, and pin the IP + loadbalancer mode
-        # the old Cilium Gateway carried.
+        # pool and L2 policy match on, and pin the IP.
         labels:
           io.cilium.gateway/owning-gateway: main-gateway
         annotations:
           io.cilium/lb-ipam-ips: "10.100.1.99"
-          service.cilium.io/loadbalancer-mode: "hybrid"
