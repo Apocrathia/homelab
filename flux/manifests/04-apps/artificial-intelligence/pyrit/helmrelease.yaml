@@ -10,11 +10,11 @@ spec:
   timeout: 15m
   chart:
     spec:
-      chart: ./helm/generic-app
-      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      chart: generic-app
+      # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
       version: "0.0.91"
       sourceRef:
-        kind: GitRepository
+        kind: HelmRepository
         name: homelab
         namespace: flux-system
       interval: 5m
