@@ -5,4 +5,5 @@ kind: Kustomization
 metadata:
   name: helm-config
 resources:
+  - secret.yaml
   - ./repositories/

@@ -15,6 +15,16 @@ Helm repositories provide access to packaged applications and services. This set
 
 ## Repository Configuration
 
+### Project Chart Registry
+
+#### Homelab (`homelab.yaml`)
+
+- **Repository**: `oci://registry.gitlab.com/apocrathia/homelab` (OCI, private)
+- **Purpose**: The project's own chart registry — hosts the `generic-app` chart, published by the `chart-oci-publish` CI job (OCI tag = `Chart.yaml` version)
+- **Update Interval**: 5 minutes
+- **Usage**: Source for every `generic-app` HelmRelease (version-pinned, Renovate-managed)
+- **Authentication**: `gitlab-registry-deploy-token` 1Password item (read_registry deploy token) via `secretRef`
+
 ### Core Infrastructure Repositories
 
 #### 1Password (`1password.yaml`)

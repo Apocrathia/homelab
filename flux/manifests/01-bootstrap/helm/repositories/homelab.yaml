@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/refs/heads/main/helmrepository-source-v1.json
+# The project's own chart registry (generic-app). Published by the
+# chart-oci-publish CI job; private — source-controller authenticates with
+# the gitlab-registry-deploy-token OnePasswordItem (secret.yaml in this
+# kustomization). OCI tag = chart version, so HelmRelease version pins are
+# honored (the old GitRepository path always rendered main).
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: homelab
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 5m
+  url: oci://registry.gitlab.com/apocrathia/homelab
+  secretRef:
+    name: gitlab-registry-deploy-token
