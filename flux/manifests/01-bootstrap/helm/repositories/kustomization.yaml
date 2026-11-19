@@ -21,6 +21,7 @@ resources:
   - grafana.yaml
   - headlamp.yaml
   - home-operations.yaml
+  - homelab.yaml
   - kyverno.yaml
   - longhorn.yaml
   - metrics-server.yaml
