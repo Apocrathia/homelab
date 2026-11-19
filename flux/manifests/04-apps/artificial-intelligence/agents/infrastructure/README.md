@@ -1,8 +1,15 @@
 # Infrastructure Agent
 
+> **Navigation**: [← Back to Agents README](../README.md)
+
+## Overview
+
 Infrastructure management agent for Proxmox, TrueNAS, and UniFi Network.
 
-> **Navigation**: [← Back to Agents README](../README.md)
+## Configuration
+
+The agent is defined by the `Agent` CR in `agent.yaml`; model wiring in
+`modelconfig.yaml`; MCP tools via `remotemcpserver.yaml`.
 
 ## Tools
 
@@ -37,6 +44,6 @@ kubectl logs --namespace agent-infrastructure -l app.kubernetes.io/name=infrastr
 
 ## References
 
-- **[Proxmox MCP Server](../../../mcp-servers/proxmox/README.md)** - Proxmox VE integration
-- **[TrueNAS MCP Server](../../../mcp-servers/truenas/README.md)** - TrueNAS integration
-- **[UniFi MCP Server](../../../mcp-servers/unifi/README.md)** - UniFi Network integration
+- **[Proxmox MCP Server](../../mcp-servers/proxmox/README.md)** - Proxmox VE integration
+- **[TrueNAS MCP Server](../../mcp-servers/truenas/README.md)** - TrueNAS integration
+- **[UniFi MCP Server](../../mcp-servers/unifi/README.md)** - UniFi Network integration

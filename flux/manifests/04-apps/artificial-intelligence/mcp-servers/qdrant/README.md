@@ -47,13 +47,13 @@ The MCPServer mounts the existing Secret read-only and exports the `api-key` fil
 
 ### Store Knowledge
 
-```
+```text
 Store this information: "Kubernetes uses etcd as its backing store for all cluster data"
 ```
 
 ### Query Knowledge
 
-```
+```text
 Find information about Kubernetes storage
 ```
 

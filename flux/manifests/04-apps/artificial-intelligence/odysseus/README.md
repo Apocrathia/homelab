@@ -8,7 +8,7 @@
 
 This deployment includes:
 
-- **Odysseus UI** — `generic-app` on `python:3.12-slim` (upstream Dockerfile base), bootstrapped at pod start (git clone + pip + `setup.py`)
+- **Odysseus UI** — `generic-app` on the upstream Dockerfile's Python base image, bootstrapped at pod start (git clone + pip + `setup.py`)
 - **PostgreSQL** — CloudNative-PG via `postgres.enabled` (`odysseus-postgres-rw`); SQLAlchemy `DATABASE_URL` built at runtime
 - **ChromaDB** — dedicated `odysseus-chromadb` release in this namespace for vector memory
 - **SearXNG** — cluster instance at `searxng.searxng.svc.cluster.local:8080` (not bundled here)

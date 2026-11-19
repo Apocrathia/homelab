@@ -27,23 +27,18 @@ When a user attempts to create any of these resources in the `default` namespace
 
 ### Validation Process
 
-To verify that the policy is working correctly:
+The policy deploys through Flux like every other manifest in this repo. To
+verify that it is working correctly:
 
-1. Apply the policy:
-
-   ```bash
-   kubectl apply -f block-default-namespace.yaml
-   ```
-
-2. Attempt to create a test deployment in the default namespace:
+1. Attempt to create a test deployment in the default namespace:
 
    ```bash
    kubectl apply -f test-violation.yaml
    ```
 
-3. You should receive an error message indicating that the deployment was blocked by the policy.
+2. You should receive an error message indicating that the deployment was blocked by the policy.
 
-4. To verify the policy is not blocking valid deployments, try creating the same deployment in a different namespace:
+3. To verify the policy is not blocking valid deployments, try creating the same deployment in a different namespace:
    ```bash
    kubectl create namespace test
    kubectl apply -f test-violation.yaml -n test
@@ -66,13 +61,15 @@ Kyverno provides automated resource cleanup policies for cluster maintenance:
 
 ### Active Cleanup Policies
 
-- **cleanup-empty-replicasets**: Removes empty ReplicaSets (replicas: 0) older than 1 hour
-- **cleanup-stale-pods**: Removes Succeeded/Failed pods older than 1 hour (not owned by ReplicaSets/StatefulSets)
-- **cleanup-completed-jobs**: Removes completed jobs older than 24 hours
-- **cleanup-failed-jobs**: Removes failed jobs older than 7 days
+Each policy's age thresholds live in its manifest under `policies/`:
+
+- **cleanup-empty-replicasets**: Removes empty ReplicaSets (replicas: 0)
+- **cleanup-stale-pods**: Removes Succeeded/Failed pods (not owned by ReplicaSets/StatefulSets)
+- **cleanup-completed-jobs**: Removes completed jobs
+- **cleanup-failed-jobs**: Removes failed jobs
 - **cleanup-released-pvcs**: Removes PVCs in Released status
-- **cleanup-old-events**: Removes Events older than 48 hours (backup when API server event TTL not enforced)
-- **cleanup-orphaned-configmaps**: Removes ConfigMaps without owner references older than 30 days
+- **cleanup-old-events**: Removes Events (backup when API server event TTL not enforced)
+- **cleanup-orphaned-configmaps**: Removes ConfigMaps without owner references
 
 `cleanup-orphaned-secrets.yaml` exists under `policies/` but is not listed in
 `policies/kustomization.yaml`, so it is not applied. Re-enable it only together
@@ -88,9 +85,8 @@ with Secret verbs on `cleanup-rbac.yaml`.
 
 ### Configuration
 
-Most cleanup policies run hourly (`0 * * * *`). Orphaned ConfigMaps cleanup
-runs daily at 2 AM (`0 2 * * *`) to reduce overhead on high-frequency
-operations. All policies exclude system namespaces (kube-system, kyverno).
+Cron schedules live in the policy manifests under `policies/`. All policies
+exclude system namespaces (kube-system, kyverno).
 
 ## Troubleshooting
 

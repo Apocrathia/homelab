@@ -1,5 +1,9 @@
 # dependency-review-sweep
 
+> **Navigation**: [← Back to Agent Tasks README](../README.md)
+
+## Overview
+
 Agent sweep over open Renovate MRs every 6 hours (at :23 of hours 0, 6, 12, 18 UTC). Replaces manual triage:
 
 - deterministic runner (`src/facts.py`) collects upstream facts: release age
@@ -65,4 +69,12 @@ gitlab-mcp uses for MR notes/approvals) and `vaults/Secrets/items/github-mcp-sec
 
 ```sh
 cd src && uv run python invoke.py   # needs GITLAB_TOKEN, GITHUB_TOKEN, A2A_URL
+```
+
+## Troubleshooting
+
+```bash
+kubectl get cronjob dependency-review-sweep -n agent-tasks
+kubectl get jobs -n agent-tasks
+kubectl logs -n agent-tasks job/<job-name>
 ```

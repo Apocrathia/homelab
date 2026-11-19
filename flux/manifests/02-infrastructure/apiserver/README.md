@@ -2,6 +2,8 @@
 
 Custom FlowSchemas and PriorityLevelConfigurations to prioritize critical infrastructure traffic.
 
+> **Navigation**: [← Back to Infrastructure README](../README.md)
+
 ## Overview
 
 The default API Priority and Fairness configuration causes all service accounts to compete equally in the `workload-low` priority level. This leads to API server saturation during load spikes with many CRDs and operators.

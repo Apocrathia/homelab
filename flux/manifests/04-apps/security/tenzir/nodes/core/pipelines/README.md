@@ -1,5 +1,7 @@
 # Pipelines (core)
 
+> **Navigation**: [← Core node](../README.md)
+
 One `.tql` file per Tenzir pipeline that `core` runs, plus `ocsf-archive.tql` (the compaction time rule's `pipeline`) and `detection-attest-verify.tql` (the record_integrity read-back walk).
 Each file is the pipeline's `definition`, verbatim.
 

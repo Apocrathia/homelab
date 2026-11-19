@@ -20,7 +20,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### archisteamfarm-secrets (`vaults/Secrets/items/archisteamfarm-secrets`)
+**archisteamfarm-secrets** (`vaults/Secrets/items/archisteamfarm-secrets`)
 
 - `ASF.json`: Global configuration with IPC password, Steam owner ID, trade tokens
 - `Apocrathia.json`: Bot-specific configuration with Steam credentials
@@ -29,8 +29,8 @@ Create a 1Password item:
 
 ### Storage
 
-- **Configuration Volume**: 2GB Longhorn persistent volume for ASF configuration (`/app/config`)
-- **Plugins Volume**: 1GB Longhorn persistent volume for ASF plugins (`/app/plugins`)
+- **Configuration Volume**: Longhorn persistent volume for ASF configuration (`/app/config`)
+- **Plugins Volume**: Longhorn persistent volume for ASF plugins (`/app/plugins`)
 - **Temp Volume**: EmptyDir volume for temporary files (`/tmp`)
 
 ### Plugins

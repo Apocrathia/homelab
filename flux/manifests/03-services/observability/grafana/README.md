@@ -31,7 +31,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
   name: my-dashboard
-  namespace: grafana-system
+  namespace: prometheus-system
 spec:
   instanceSelector:
     matchLabels:
@@ -49,7 +49,7 @@ apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
   name: prometheus-datasource
-  namespace: grafana-system
+  namespace: prometheus-system
 spec:
   instanceSelector:
     matchLabels:

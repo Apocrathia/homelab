@@ -205,7 +205,7 @@ State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-c
 
 ## Directory Structure
 
-```
+```text
 terraform/
 ├── README.md
 ├── root.hcl                            # Remote state only
@@ -268,7 +268,7 @@ terraform/
 
 **Talos** (shared defaults via `common.hcl`):
 
-```
+```text
 root.hcl + providers/proxmox.hcl
     └── deployments/proxmox/talos-cluster/common.hcl
             └── talos-XX/terragrunt.hcl  → modules/talos-vm
@@ -276,21 +276,21 @@ root.hcl + providers/proxmox.hcl
 
 **Home / Game** (self-contained `terragrunt.hcl` per VM):
 
-```
+```text
 root.hcl + providers/proxmox.hcl
     └── deployments/proxmox/{home,game}/terragrunt.hcl  → modules/proxmox-vm
 ```
 
 **Cloudflare DNS**:
 
-```
+```text
 root.hcl + providers/cloudflare.hcl
     └── deployments/cloudflare/<zone>/terragrunt.hcl  → modules/cloudflare-dns
 ```
 
 **Okta app / authenticator / network zone / sign-on policy**:
 
-```
+```text
 root.hcl + providers/okta.hcl
     ├── deployments/okta/app/terragrunt.hcl            → modules/okta-app
     ├── deployments/okta/authenticator/terragrunt.hcl  → modules/okta-authenticator
@@ -300,14 +300,14 @@ root.hcl + providers/okta.hcl
 
 **GitLab project**:
 
-```
+```text
 root.hcl + providers/gitlab.hcl
     └── deployments/gitlab/homelab/terragrunt.hcl  → modules/gitlab-project
 ```
 
 **Tailscale tailnet**:
 
-```
+```text
 root.hcl + providers/tailscale.hcl
     └── [AWS_SECRET_KEY_STANDALONE_REDACTED].hcl  → modules/tailscale-tailnet
 ```
@@ -572,6 +572,15 @@ git add deployments/**/.terraform.lock.hcl
 
 ### Cloudflare DNS records
 
+Handmade records stay out of state until you add them to `dns_records` in the
+deployment `terragrunt.hcl` and import:
+
+```bash
+cd terraform/deployments/cloudflare/dns
+# Import ID format for cloudflare_dns_record: <zone_id>/<record_id>
+terragrunt import 'cloudflare_dns_record.this["okta-cname"]' ZONE_ID/RECORD_ID
+```
+
 ### Tailscale policy file / DNS / settings
 
 Import the live tailnet config before first apply (already done for the
@@ -587,15 +596,6 @@ terragrunt import -lock=false tailscale_tailnet_settings.this tailnet_settings
 
 Keep `policy.hujson` byte-identical to the intended policy — `tailscale_acl`
 overwrites the WHOLE policy file.
-
-Handmade records stay out of state until you add them to `dns_records` in the
-deployment `terragrunt.hcl` and import:
-
-```bash
-cd terraform/deployments/cloudflare/dns
-# Import ID format for cloudflare_dns_record: <zone_id>/<record_id>
-terragrunt import 'cloudflare_dns_record.this["okta-cname"]' ZONE_ID/RECORD_ID
-```
 
 ## Pre-commit Hooks
 

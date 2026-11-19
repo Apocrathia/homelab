@@ -1,8 +1,8 @@
 ---
 title: "Okta ↔ Authentik federation (external Okta, lab Authentik)"
-status: active
+status: done # shipped as-built via terraform/deployments/okta/app (okta-app module) + flux/manifests/03-services/authentik/blueprints/okta.yaml — the planned okta-org module vehicle never existed
 found_at: 2026-07-24
-updated_at: 2026-07-25
+updated_at: 2026-11-19
 area: security
 ---
 

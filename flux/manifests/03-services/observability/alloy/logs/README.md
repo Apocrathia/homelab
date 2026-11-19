@@ -131,17 +131,4 @@ kubectl describe configmap -n alloy-system alloy-config
 
 - **[Grafana Alloy Documentation](https://grafana.com/docs/alloy/)** - Primary documentation source
 - **[OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)** - OTel Collector docs
-
-## Next Steps
-
-1. **Deploy Alloy**: The Helm chart will handle deployment
-2. **Verify Log Collection**: Check that logs are flowing to Loki
-3. **Create Dashboards**: Build Grafana dashboards for log analysis
-4. **Configure Alerts**: Set up alerts for log volume and errors
-5. **Customize Collection**: Adjust log collection patterns if needed
-
-## References
-
-- [Grafana Alloy Documentation](https://grafana.com/docs/alloy/latest/)
-- [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
 - [Loki LogQL](https://grafana.com/docs/loki/next/logql/)

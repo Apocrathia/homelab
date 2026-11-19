@@ -28,7 +28,9 @@ This deployment includes:
   break-glass, credentials from 1Password `misp-secrets`
   (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 
-## Chart source
+## Configuration
+
+### Chart source
 
 The chart has no published helm index, so it is consumed via the `misp`
 GitRepository (`flux/manifests/01-bootstrap/helm/repositories/misp.yaml`)
@@ -41,7 +43,7 @@ Subchart dependencies (bitnami mariadb 19.0.5, valkey 0.9.4, ntppool smtp
 2.4.0) are resolved by the source controller from the Chart.yaml repositories
 when it packages the chart from the git tree.
 
-## Images and update strategy
+### Images and update strategy
 
 Chart defaults misp-core and misp-modules to `latest` — both are pinned here
 with tag + digest and Renovate annotations:
@@ -81,7 +83,7 @@ MR !5478 reverts to the pinned pair.
 verified.** When one exists, move the chart git tag and the image pair
 together in one MR (pairing comment in `helmrelease.yaml`).
 
-## Secrets
+### Secrets
 
 1Password item `vaults/Secrets/items/misp-secrets` (slice 1). Fields and
 consumers:
@@ -133,7 +135,7 @@ connector consumes it from the **opencti** namespace (OnePasswordItem in
 `opencti/secret.yaml`; wiring in the OpenCTI README slice-6 section).
 MISP keeps auto-generating its own admin authkey untouched.
 
-## SSO (Authentik OIDC)
+### SSO (Authentik OIDC)
 
 Native MISP `OidcAuth` core plugin via the misp-docker env surface
 (research doc §1.6). Pieces:
@@ -199,13 +201,13 @@ off a blocked user today: disable the MISP user manually (`MISP →
 Administration → List Users`) — sessions die at next request, and their
 auth keys stop working.
 
-## Storage
+### Storage
 
-| Volume           | Class    | Size | Notes                                        |
-| ---------------- | -------- | ---- | -------------------------------------------- |
-| misp-attachments | longhorn | 20Gi | attachments + default feed cache (chart PVC) |
-| mariadb data     | longhorn | 10Gi | bitnami StatefulSet volumeClaimTemplate      |
-| valkey data      | -        | -    | emptyDir (cache/queue only; no persistence)  |
+| Volume           | Class    | Notes                                        |
+| ---------------- | -------- | -------------------------------------------- |
+| misp-attachments | longhorn | attachments + default feed cache (chart PVC) |
+| mariadb data     | longhorn | bitnami StatefulSet volumeClaimTemplate      |
+| valkey data      | -        | emptyDir (cache/queue only; no persistence)  |
 
 rustfs bucket `misp-mariadb-backups` (slice 1 keypair) receives the nightly
 MariaDB dump CronJob — see [Backups](#backups). `misp-files` stays reserved
@@ -344,7 +346,7 @@ nightly dumps for up to two weeks after the prune (the 23:30 event prune
 runs a full hour after the 22:30 dump starts, so each night's dump
 captures the pre-prune state).
 
-## Known chart quirks (verified against chart v5.0.1 + misp-docker)
+## Known chart quirks (verified against the chart + misp-docker)
 
 - The chart's configmap emits env names the current misp-docker image does
   not read (`MISP_UUID` vs `UUID`, `SECURITY_SALT` vs `SALT`,

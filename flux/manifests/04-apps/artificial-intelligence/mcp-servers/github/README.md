@@ -1,8 +1,10 @@
 # GitHub MCP Server
 
-Self-hosted GitHub MCP server for repository and issue management.
-
 > **Navigation**: [← Back to MCP Servers README](../README.md)
+
+## Overview
+
+Self-hosted GitHub MCP server for repository and issue management.
 
 **Endpoint:** `http://github.mcp-github.svc.cluster.local:8080/mcp`
 

@@ -1,5 +1,7 @@
 # Pipelines (introspection)
 
+> **Navigation**: [← Introspection node](../README.md)
+
 One `.tql` file per Tenzir pipeline that `introspection` runs. Each file
 is the pipeline's `definition`, verbatim; `../kustomization.yaml` is the
 stitch: its `configMapGenerator` packages these files into a

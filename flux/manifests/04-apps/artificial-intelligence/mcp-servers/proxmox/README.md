@@ -35,7 +35,7 @@ This deployment includes:
 
 ### Secrets
 
-Create a Kubernetes secret `proxmox-mcp-secrets` in the `mcp-proxmox` namespace with:
+The `OnePasswordItem` `proxmox-mcp-secrets` in the `mcp-proxmox` namespace supplies:
 
 - `proxmox-host`: Proxmox server hostname or IP
 - `proxmox-user`: Proxmox username (e.g., `admin@pve`)

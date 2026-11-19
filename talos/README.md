@@ -268,14 +268,17 @@ kubectl get nodes
    talosctl version --nodes 10.100.1.80
    ```
 
-2. **Update Configuration**: First, update your `unified-patch.yaml` with the new Talos version:
+2. **Update Configuration**: first bump the installer image in
+   [`patches/unified-patch.yaml`](./patches/unified-patch.yaml) — the live
+   factory image (schematic hash + version) lives there and is
+   Renovate-managed; the shape is:
 
    ```yaml
    apiVersion: v1alpha1
    kind: UnattendedInstallConfig
    installer:
      # renovate: datasource=github-releases depName=siderolabs/talos
-     image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.14.2
+     image: factory.talos.dev/metal-installer/<schematic-hash>:<version>
    ```
 
 3. **Regenerate Configurations**: Generate new configurations with the updated version:

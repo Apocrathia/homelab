@@ -1,5 +1,7 @@
 # Grafana
 
+> **Navigation**: [← Tenzir](../README.md)
+
 Five dashboards, each in its own ConfigMap generated from the matching
 JSON, all in the Grafana `Security` folder:
 

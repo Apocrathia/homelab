@@ -32,20 +32,19 @@ logical MRs, each small enough to review whole.
 
 ## Evidence base
 
-Read before implementing any slice. These carry the facts, not this plan:
+Read before implementing any slice. These carry the facts, not this plan.
+The `.scratch/` prototype dirs below are gone (`.scratch` is ephemeral by
+design — see `docs/research/clickhouse-path-audit.md` for the surviving
+prototype record); the shipped store is the as-built source now:
 
-- `.scratch/clickhouse-prototype/VERDICT.md` — full prototype evidence,
-  gotchas, handoff checklist. Architecture A verified end-to-end.
-- `.scratch/clickhouse-prototype/` — `config.d/storage.xml` (tiered policy,
-  `from_env` creds), `sql/00_schema.sql` (DDL shape), `sql/40_queries.sql`
-  (validated panel SQL), `grafana-datasource-clickhouse.yaml` (datasource
-  sketch), `tenzir-pipeline-sketch.md`.
-- `.scratch/duckdb-perf/repo-scout.md` — current archive layout, dashboard
-  query shapes, duckdb machinery inventory (lines cite paths).
-- `.scratch/duckdb-perf/engine-research.md` — engine matrix, why
-  MergeTree-copy beats parquet-over-S3 (`s3()` ≈ 5x slower, no time
-  partitioning — the reason the backfill is a one-time Tenzir replay, never a
-  standing query surface).
+- `flux/manifests/04-apps/security/tenzir/clickhouse/` — the shipped CHI
+  store (cluster, keeper, tiered-storage config) plus its README; the
+  as-built replacement for the prototype evidence.
+- Historical (ephemeral, deleted; git history is the archive):
+  `.scratch/clickhouse-prototype/` (VERDICT.md — architecture verdict,
+  storage.xml, schema/panel SQL, datasource sketch),
+  `.scratch/duckdb-perf/` (repo scout, engine matrix — why MergeTree-copy
+  beats parquet-over-S3: `s3()` ≈ 5x slower, no time partitioning).
 - Vendored Tenzir skills (landed on origin/main at 54e9be3a3, AFTER the
   prototype lap — fetch before reading; a local checkout may be a beat
   behind):
@@ -707,7 +706,7 @@ vendored docs); no `mc`/rustfs changes anywhere (see out of scope).
 
 ## Merge order + dependencies
 
-```
+```text
 MR-1 clickhouse service ──► MR-2 grafana plugin+datasource ─┐
         │                                                    ├─► MR-4 dashboards on CH ─► MR-5 teardown (no backfill)
         └──► MR-3 tenzir to_clickhouse legs ─────────────────┘

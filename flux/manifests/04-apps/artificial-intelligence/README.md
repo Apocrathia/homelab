@@ -87,6 +87,7 @@ flowchart TB
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
 - **[OpenHands](./openhands/README.md)** - AI software-engineering agent platform (Agent Canvas) backed by LiteLLM
+- **[Mecatl](./mecatl/README.md)** - Headless agentic coding harness on storage-free pods, backed by LiteLLM
 
 ### Data & Analytics
 

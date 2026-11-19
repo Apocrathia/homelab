@@ -50,9 +50,8 @@ threat intel.
 
 ## The OSINT row's shape contract
 
-Probed offline end-to-end 2026-10-21 (probe tree under
-[`.scratch/tenzir-netflow-osint-lap/intel-shape-probe/`](../../../../../../../.scratch/tenzir-netflow-osint-lap/intel-shape-probe/)
-in the primary checkout — throwaway evidence, not shipped):
+Probed offline end-to-end 2026-10-21 (throwaway probe tree under `.scratch/`
+in the primary checkout, since deleted — evidence not shipped):
 
 - The vendored `stix::ocsf::map` emits `osint` as a **one-element
   array** (`$ocsf.osint = [$ocsf.osint]`; never edited — the vendored

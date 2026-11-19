@@ -1,16 +1,15 @@
 # Custom Resource Definitions (CRDs) — Bootstrap
 
-CRDs applied during bootstrap. **Gateway API** CRDs and the pre-staged **OpenTofu** CRDs live here; Cilium, Kyverno, Longhorn, Prometheus, and the rest are installed by their Helm charts.
+CRDs applied during bootstrap. The **Gateway API Inference Extension** CRDs and the pre-staged **OpenTofu** CRDs live here; the Gateway API CRDs themselves ship with the Envoy Gateway chart (`03-services/envoy/`), and Cilium, Kyverno, Longhorn, Prometheus, and the rest are installed by their Helm charts.
 
 > **Navigation**: [← Back to Bootstrap README](../README.md)
 
 ## Overview
 
-This layer installs Gateway API CRDs so they exist before any controller that uses them (e.g. Cilium). Everything else comes from the Helm chart that deploys that component.
+This layer applies the CRDs that must exist before the Helm charts that own
+them reconcile. Everything else comes from the Helm chart that deploys that
+component.
 
-- **Gateway API (standard channel)** — routing CRDs: `Gateway`, `HTTPRoute`,
-  `TLSRoute`, and related types. Keep this at or above the version Cilium's
-  Gateway API controller requires; see `kustomization.yaml`.
 - **Gateway API Inference Extension** — `InferencePool` and related resources for
   inference workloads
 - **OpenTofu (pre-stage)** — `ProviderConfig` and `Workspace` CRDs, vendored from

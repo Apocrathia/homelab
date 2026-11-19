@@ -1,5 +1,7 @@
 # Detections
 
+> **Navigation**: [← Tenzir](../README.md)
+
 The detection plane: one OCSF bus on the core node, one sigma pass over
 it, and one archive dataset for everything the plane produces. This
 README documents the architecture; the node wiring lives in

@@ -1,5 +1,7 @@
 # investigations OCSF map
 
+> **Navigation**: [← investigations operators](../README.md)
+
 [`map.tql`](./map.tql): agent case/evidence envelope -> OCSF. Case
 envelopes map to Incident Finding (2005) lifecycle records
 (Create/Update/Close); evidence envelopes map to Datastore Activity

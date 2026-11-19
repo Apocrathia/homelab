@@ -21,8 +21,6 @@ This deployment includes:
   chowns `storage/` recursively, which fails on CIFS; the symlink keeps both
   Laravel's disk root and nginx's X-Accel alias pointing at the share without
   ever chowning it). Files land under `Uploads/ProjectSend/` on the NAS
-- MySQL 8.4 (`projectsend-mysql`, 10Gi Longhorn) and Valkey
-  (`projectsend-valkey`, 1Gi Longhorn)
 - Authentik OIDC integration (chart-rendered provider, jellyfin shape):
   friends sign in with their Authentik account via the app's Social Login
   (generic OpenID Connect) and are auto-provisioned as clients; the local
@@ -76,3 +74,8 @@ kubectl -n projectsend get pods,pvc
   `https://projectsend.gateway.services.apocrathia.com/auth/oidc/callback`.
   Auto-provision (friends become client accounts on first login) is set in
   the same Social Login screen.
+
+## References
+
+- **[ProjectSend](https://www.projectsend.org/)** - Project website
+- **[ProjectSend GitHub](https://github.com/projectsend/projectsend)** - Source code and issues

@@ -1,8 +1,8 @@
 ---
 title: "Ansible host GitOps"
-status: active
+status: done
 found_at: 2026-08-01
-updated_at: 2026-09-20
+updated_at: 2026-11-19
 related_issue: docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md
 area: agents
 ---
@@ -82,7 +82,9 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Stage UniFi NUC + Track A cutover — done 2026-09-20: UOS Server on unifi-os
       (static .3 per VLAN), site restored from CK+ backup, 13/13 devices migrated
       with set-inform, unifi.apocrathia.com CNAMEs here, CK+ powered off
-- [ ] Expand roles only when a host needs them (no speculative roles)
+- [x] Expand roles only when a host needs them (no speculative roles) —
+      kopia, ollama, tailscale, nginx_site, acme_sh each landed for a
+      concrete host need; no speculative roles in the tree
 
 ## Feedback loop
 

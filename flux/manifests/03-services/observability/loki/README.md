@@ -71,4 +71,4 @@ kubectl logs statefulset/loki-backend -n loki-system
 
 - [Loki Documentation](https://grafana.com/docs/loki/)
 - [Loki Helm Chart Migration](https://github.com/grafana/loki#%EF%B8%8F-helm-chart-migration)
-- [Grafana Community Loki Chart Package](https://github.com/grafana-community/helm-charts/pkgs/container/helm-charts%2Floki/826364855?tag=13.3.2)
+- [Grafana Community Loki Chart Package](https://github.com/grafana-community/helm-charts/pkgs/container/helm-charts%2Floki)

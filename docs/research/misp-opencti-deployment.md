@@ -380,7 +380,7 @@ MISP_THREAT_LEVEL_SCORE_MAPPING`, poll interval `CONNECTOR_DURATION_PERIOD=PT5M`
 
 ### 3.5 End-to-end chain (proposed)
 
-```
+```text
 MISP ──(OpenCTI MISP connector, REST+authkey)──▶ OpenCTI ──(TAXII 2.1 collection or
 live stream via from_http / or STIX export file-drop to rustfs)──▶ Tenzir funnel
 (OCSF mapping package owned by sibling lane)

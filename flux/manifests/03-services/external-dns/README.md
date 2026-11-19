@@ -31,12 +31,12 @@ LAN clients cannot route.
 
 ## Architecture
 
-| Component  | Implementation                                               |
-| ---------- | ------------------------------------------------------------ |
-| Controller | `external-dns` chart `1.21.1` (kubernetes-sigs)              |
-| Provider   | `ghcr.io/home-operations/external-dns-unifi-webhook:0.10.12` |
-| Upstream   | UniFi Network Integration API at `https://10.100.1.1` (UDM)  |
-| Secrets    | 1Password item `unifi-dns-secrets` via `OnePasswordItem`     |
+| Component  | Implementation                                                       |
+| ---------- | -------------------------------------------------------------------- |
+| Controller | `external-dns` chart (kubernetes-sigs, pinned in `helmrelease.yaml`) |
+| Provider   | `ghcr.io/home-operations/external-dns-unifi-webhook:0.10.12`         |
+| Upstream   | UniFi Network Integration API at `https://10.100.1.1` (UDM)          |
+| Secrets    | 1Password item `unifi-dns-secrets` via `OnePasswordItem`             |
 
 Records point at the Gateway's status address (`10.100.1.99`), so every
 HTTPRoute hostname on `main-gateway` resolves on the LAN automatically.

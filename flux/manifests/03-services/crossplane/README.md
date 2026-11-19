@@ -55,7 +55,7 @@ stale.
 [`upbound/provider-opentofu`](https://github.com/upbound/provider-opentofu)
 v1.1.8 (`provider-opentofu.yaml`) runs OpenTofu modules against external
 systems through `Workspace` managed resources — Pattern B from
-[`docs/research/crossplane-connector-pattern.md`](../../../docs/research/crossplane-connector-pattern.md).
+[`docs/research/crossplane-connector-pattern.md`](../../../../docs/research/crossplane-connector-pattern.md).
 First consumers: headlamp's Authentik entry
 (`flux/manifests/03-services/headlamp/crossplane.yaml`) and
 chaos-mesh's (`flux/manifests/03-services/chaos-mesh/crossplane.yaml`) —
@@ -77,11 +77,11 @@ the separate `authentik_outpost_provider_attachment` resource is retired).
   backend needs no extra RBAC.
 - **Credentials**: `OnePasswordItem` → Secret → namespaced
   `ProviderConfig.spec.credentials` array, materialized as a file in the
-  workspace and read from HCL via `file()`. The Authentik API token is created
-  by the
-  [`terraform-service-account` blueprint](../authentik/blueprints/terraform-service-account.yaml)
-  (service account + auto-generated key, never committed); copy the key once
-  from Authentik into the 1Password item
+  workspace and read from HCL via `file()`. The Authentik API token belongs to
+  the `ak-terraform` service account, managed by the tofu system unit
+  [`authentik/system/terraform-service-account/`](../authentik/system/terraform-service-account/README.md)
+  — adopt-only, the token never rotates; workspaces read it from the
+  `authentik-terraform-token` 1Password-backed Secret
 - **Deletion**: deleting a Workspace runs `tofu destroy` by default
   (external objects go with the CR — the inverse of the blueprint
   ConfigMap pattern)

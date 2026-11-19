@@ -16,6 +16,7 @@ Source of truth for **all** agent rules (Markdown). Frontmatter (`alwaysApply`,
 | `ambiguity-goes-back-to-source.md` | Flag irreducible ambiguity with `[NEEDS CLARIFICATION]`        |
 | `question-format.md`               | AskQuestion-first; points at `context/questions.md`            |
 | `response-shape.md`                | Short replies; half-screen rule                                |
+| `i-have-adhd.md`                   | ADHD-shaped output: action-first, numbered steps, no walls     |
 | `context-management.md`            | Meter-first compact; fork/delegate/write; file handoffs        |
 | `merge-authorization.md`           | Never merge/approve/push to main without explicit operator ask |
 | `ontology-framework.md`            | Harness entry classes + validation rules R1–R6                 |

@@ -50,7 +50,8 @@ in Tdarr `jobsjsondb` / JobReports.
 
 - Supersedes open leftovers from `tdarr-flows-storage-multipass` (closed
   2026-07-28). Flow history lives in git under `flows/`.
-- Revisit target: after bulk library reprocess (~2026-10).
+- Revisit target: after bulk library reprocess (~2026-10) — the target date
+  passed 2026-11-18; re-triage before acting on this issue.
 - 2026-09-08 audit (last 300 JobReports, 2.86.01): class 1 (`mov_text` → MKV) is
   at zero — `forceConform` on `vid006` already drops it. Remaining
   `transcodeError`s are exotic/corrupt sources only (rawvideo, svq3, one

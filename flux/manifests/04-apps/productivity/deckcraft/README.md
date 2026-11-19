@@ -1,11 +1,6 @@
 # DeckCraft
 
-[← Productivity Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/deckcraft)
-- [ArtCraft](https://getartcraft.com/apps/deckcraft)
+> **Navigation**: [← Productivity Apps](../README.md)
 
 ## Overview
 
@@ -35,3 +30,8 @@ kubectl logs -n deckcraft -l app.kubernetes.io/name=deckcraft -c fetch-deckcraft
 kubectl logs -n deckcraft -l app.kubernetes.io/name=deckcraft
 kubectl describe deployment -n deckcraft deckcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/deckcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/deckcraft)** - ArtCraft app listing

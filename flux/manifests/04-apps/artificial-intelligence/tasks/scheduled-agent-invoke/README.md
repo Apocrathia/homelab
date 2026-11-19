@@ -1,5 +1,9 @@
 # scheduled-agent-invoke
 
+> **Navigation**: [← Back to Agent Tasks README](../README.md)
+
+## Overview
+
 CronJob template for scheduled multi-turn A2A agent invocation.
 
 ## What this template includes
@@ -21,9 +25,20 @@ CronJob template for scheduled multi-turn A2A agent invocation.
 
 - Migrate to LiteLLM A2A gateway:
   `http://litellm.litellm.svc.cluster.local:4000/a2a/homelab-agent/message/send`
-- This remains planned work. During prior validation, the deployed LiteLLM service did not expose `/a2a/*` routes, so requests returned `404 Not Found`.
+- LiteLLM now serves A2A routes (inbound A2A is deployed — see the
+  `hermes-a2a-authorization` / `prime-a2a-authorization` secrets in
+  `litellm/README.md` and the agent registration flow in `agents/README.md`);
+  the migration itself remains the operator's call.
 
 ## Implementation note
 
 - Keep the template on kagent until LiteLLM A2A is confirmed available in the deployed chart/image/config.
 - For runtime and local-dev details, see `src/README.md`.
+
+## Troubleshooting
+
+```bash
+kubectl get cronjob homelab-agent-scheduled-task-template -n agent-tasks
+kubectl get jobs -n agent-tasks
+kubectl logs -n agent-tasks job/<job-name>
+```

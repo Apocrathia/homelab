@@ -46,6 +46,6 @@ pattern.
 kustomize build flux/manifests/03-services/clickhouse > /dev/null
 helm repo add altinity https://helm.altinity.com
 helm template altinity-operator altinity/altinity-clickhouse-operator \
-  --version 0.27.4 -n clickhouse \
+  --version $(yq '.spec.chart.spec.version' flux/manifests/03-services/clickhouse/operator.yaml) -n clickhouse \
   -f <(yq '.spec.values' flux/manifests/03-services/clickhouse/operator.yaml)
 ```

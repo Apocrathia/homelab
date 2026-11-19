@@ -48,6 +48,19 @@ The OpenZIM MCP server runs in advanced mode, providing specialized tools for ZI
 
 Additional advanced tools are available but not exposed to agents (server diagnostics, namespace browsing, etc.).
 
+## Troubleshooting
+
+```bash
+# MCPServer resource status
+kubectl get mcpserver.kagent.dev openzim -n mcp-openzim
+
+# Pod status
+kubectl get pods -n mcp-openzim
+
+# Server logs
+kubectl logs -n mcp-openzim -l app.kubernetes.io/name=openzim --tail=50
+```
+
 ## References
 
 - [openzim-mcp](https://github.com/cameronrye/openzim-mcp) - MCP server repository

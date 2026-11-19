@@ -1,5 +1,7 @@
 # Grafana Alloy
 
+> **Navigation**: [← Back to Observability README](../README.md)
+
 Three Alloy releases live under this folder, one per subfolder:
 
 - [`logs/`](./logs/) — release `alloy` (`alloy-system`): the shared log
@@ -10,5 +12,3 @@ Three Alloy releases live under this folder, one per subfolder:
 - [`kube-audit/`](./kube-audit/) — release `alloy-kube-audit`
   (`alloy-kube-audit-system`): dual-writes the kube-apiserver audit log
   into Loki and Tenzir.
-
-> **Navigation**: [← Back to Observability README](../README.md)

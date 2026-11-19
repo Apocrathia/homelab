@@ -1,5 +1,7 @@
 # homelab sigma rules
 
+> **Navigation**: [← Sigma rules](../README.md)
+
 Starter rules written against OCSF API Activity field paths so they
 evaluate under `mapping="auto"` on the detection bus:
 

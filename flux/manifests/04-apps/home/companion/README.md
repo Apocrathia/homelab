@@ -2,7 +2,7 @@
 
 Powerful stream deck control software for broadcast and live production environments.
 
-> **Navigation**: [← Back to Management README](../README.md)
+> **Navigation**: [← Back to Home README](../README.md)
 
 ## Overview
 
@@ -18,7 +18,7 @@ Companion is an open-source controller for Elgato Stream Decks and other input d
 
 ## Deployment
 
-This application is deployed using the [generic-app Helm chart](../../../helm/generic-app/README.md) through Flux GitOps.
+This application is deployed using the [generic-app Helm chart](../../../../../helm/generic-app/README.md) through Flux GitOps.
 
 ### Configuration Details
 

@@ -27,8 +27,8 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 - **Pattern**: `http://[service-name].[namespace].svc.cluster.local:[port]`
 - **Purpose**: Internal cluster communication
 - **Examples**:
-  - `http://n8n-postgres-rw.n8n.svc.cluster.local:5432`
-  - `http://mlflow.mlflow.svc.cluster.local:5000`
+  - `http://litellm.litellm.svc.cluster.local:4000`
+  - `http://kagent-controller.kagent.svc.cluster.local:8083`
 
 ## 1Password Integration Patterns
 
@@ -76,11 +76,17 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 - **HTTPRoute**: Disabled (Authentik outpost manages Gateway API routes via `kubernetes_httproute_parent_refs`)
 - **Authentication**: Proxy-based authentication with optional header injection for apps that support it
 
-### Blueprint Integration
+### Authentik stack ownership (tofu lane)
 
-- **Pattern**: `authentik-blueprint.yaml` files in application directories, loaded via Kustomize configMapGenerator
-- **Purpose**: Declarative Authentik configuration (providers, applications, outposts)
-- **Components**: Proxy provider, application entry, outpost with Gateway API integration
+- **Pattern**: `authentik.managedBy: terraform` (default since generic-app
+  0.0.88) — the chart renders the provider-opentofu workspace
+  (`authentik-tofu-workspace.yaml`) from the app's `authentik:` values
+- **Non-chart surfaces**: the file pair (`crossplane.yaml` + `authentik.tf`)
+  stitched by kustomize — `flux/manifests/03-services/authentik/tiles/` and
+  the per-area pairs (flux-system, cilium, …)
+- **Legacy**: the chart-rendered `authentik-blueprint.yaml` ConfigMap lane was
+  retired in generic-app 0.0.88; authentik's own tree blueprints
+  (`blueprints/`) are a separate surface and remain
 
 ## Database Patterns
 

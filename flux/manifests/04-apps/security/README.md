@@ -6,6 +6,13 @@ Threat-intelligence and detection platforms for the homelab.
 
 ## Applications
 
+### [Coraza](./coraza/)
+
+Browser-based WAF testing tool — write SecLang rules and test them against
+HTTP requests. A static mirror of the Coraza Playground (the open-source
+ModSecurity-compatible WAF compiled to WebAssembly), fetched by an init
+container and served by nginx; no backend, no database.
+
 ### [CyberChef](./cyberchef/README.md)
 
 GCHQ's browser-based "cyber Swiss Army knife": encode, decode, hash, parse,
@@ -65,7 +72,7 @@ on Longhorn.
 
 ### [Tenzir](./tenzir/README.md)
 
-SIEM detection + investigations plane: six standalone Tenzir nodes that
+SIEM detection + investigations plane: seven standalone Tenzir nodes that
 normalize kube-apiserver audit, tetragon, authentik, fleet, trivy, and
 NetFlow feeds to a unified OCSF bus, run SigmaHQ + homelab Sigma rules
 over it, and archive findings into the ClickHouse datalake after a

@@ -1,8 +1,10 @@
 # Prowlarr
 
-Indexer manager/proxy for \*arr applications with centralized indexer configuration for torrent trackers and Usenet indexers.
-
 > **Navigation**: [← Back to Media README](../../README.md)
+
+## Overview
+
+Indexer manager/proxy for \*arr applications with centralized indexer configuration for torrent trackers and Usenet indexers.
 
 ## Configuration
 

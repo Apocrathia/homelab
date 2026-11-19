@@ -13,13 +13,28 @@ This deployment includes:
 - Server-side fetches for video data, dislikes, SponsorBlock, and DeArrow (upstream defaults: sponsor.ajay.app, returnyoutubedislikeapi.com)
 - Default Invidious instance pointed at the in-cluster Invidious service
 
-## Wiring to Invidious
+## Configuration
+
+### Wiring to Invidious
 
 `PUBLIC_DEFAULT_INVIDIOUS_INSTANCE` is `http://invidious.invidious.svc.cluster.local`, the in-cluster service from the [Invidious deployment](../invidious/README.md).
 
 - Materialious fetches video data server-side through its built-in proxy. The public Invidious host is behind Authentik, which would hand the backend a login page instead of API JSON, so the backend must talk to the in-cluster service directly.
 - Video stream URLs inside those API responses stay absolute on `https://invidious.gateway.services.apocrathia.com` (Invidious builds them from its `domain` config with `local: true`), so browser playback still transits the public Invidious host with the user's SSO session.
 - Invidious Companion needs no `public_url` for this to work: Invidious proxies all video traffic itself (`builtin_proxy`). Setting `public_url` on `invidious_companion` breaks playback behind the single-backend Authentik proxy (see the [Invidious README](../invidious/README.md) for the failure mode).
+
+### 1Password Secrets
+
+Create a 1Password item:
+
+**materialious-secrets** (`vaults/Secrets/items/materialious-secrets`)
+
+- `cookie-secret`: signs authentication cookies, minimum 16 random characters (generate with `openssl rand -hex 32`)
+
+### Storage
+
+- **Data**: Longhorn persistent volume mounted at `/materialious-data` holding the SQLite database (`materialious.db`)
+- SQLite was chosen over a CNPG cluster because this is a single-replica, low-write account/settings store; no shared PostgreSQL service exists in the cluster to reuse
 
 ## Authentication
 
@@ -31,19 +46,6 @@ Materialious runs its own account system (no Authentik SSO gate on this route):
 - Admin: set `PUBLIC_ADMIN_USERNAMES` to the operator's username after registering, if user administration is needed
 
 The app shell serves without a login redirect; only data endpoints are gated.
-
-## 1Password Secrets
-
-Create a 1Password item:
-
-#### materialious-secrets (`vaults/Secrets/items/materialious-secrets`)
-
-- `cookie-secret`: signs authentication cookies, minimum 16 random characters (generate with `openssl rand -hex 32`)
-
-## Storage
-
-- **Data**: 5Gi Longhorn persistent volume mounted at `/materialious-data` holding the SQLite database (`materialious.db`)
-- SQLite was chosen over a CNPG cluster because this is a single-replica, low-write account/settings store; no shared PostgreSQL service exists in the cluster to reuse
 
 ## Access
 

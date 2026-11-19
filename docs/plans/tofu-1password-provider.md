@@ -1,8 +1,8 @@
 ---
 title: "OpenTofu secrets via 1Password provider"
-status: active
+status: done
 found_at: 2026-07-26
-updated_at: 2026-07-27
+updated_at: 2026-11-19
 area: security
 ---
 

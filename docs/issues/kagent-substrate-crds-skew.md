@@ -9,13 +9,15 @@ found_by: sre-incident-20260905
 area: agents
 ---
 
+# kagent 0.10.0 cannot create ActorTemplates against substrate 0.0.6 (CRD skew)
+
 ## Problem / desired state
 
 The kagent 0.10.0 controller (rolled out 2026-09-05 after the kyverno webhook
 blockage cleared) cannot create ActorTemplates against the installed
 substrate-crds 0.0.6 schema. Every AgentHarness reconcile fails:
 
-```
+```text
 AgentTemplate.ate.dev "openclaw" is invalid:
 [spec.runsc: Required value, spec.workerPoolRef: Required value, ...]
 ```

@@ -2,6 +2,8 @@
 
 Web application for monitoring Meshtastic mesh networks over IP using [MeshMonitor](https://github.com/Yeraze/meshmonitor).
 
+> **Navigation**: [← Back to Home README](../README.md)
+
 ## Overview
 
 Connects to a Meshtastic device via TCP/IP and provides:
@@ -28,8 +30,15 @@ Connects to a Meshtastic device via TCP/IP and provides:
 - **Local Auth**: Can be disabled via `DISABLE_LOCAL_AUTH` to force OIDC-only authentication
 - **TLS**: Set `MESHTASTIC_USE_TLS=true` if your device requires encrypted connections
 
-## Links
+## Troubleshooting
 
-- [MeshMonitor Documentation](https://meshmonitor.org)
-- [GitHub Repository](https://github.com/Yeraze/meshmonitor)
-- [Meshtastic](https://meshtastic.org)
+```bash
+kubectl get pods -n meshtastic
+kubectl logs -n meshtastic -l app.kubernetes.io/name=meshtastic --tail=50
+```
+
+## References
+
+- **[MeshMonitor Documentation](https://meshmonitor.org)** - MeshMonitor documentation
+- **[GitHub Repository](https://github.com/Yeraze/meshmonitor)** - Source code and issues
+- **[Meshtastic](https://meshtastic.org)** - Meshtastic project site

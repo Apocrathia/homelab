@@ -15,7 +15,7 @@ Qdrant provides the vector storage backend for the knowledge management system:
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────┐     ┌─────────────────────┐
 │   Qdrant MCP Server │────▶│   Qdrant Database   │
 │   (mcp-qdrant ns)   │     │   (qdrant ns)       │

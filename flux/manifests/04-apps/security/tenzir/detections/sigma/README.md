@@ -1,5 +1,7 @@
 # Sigma rules
 
+> **Navigation**: [← Detections](../README.md)
+
 The sigma rule corpus the core node's sigma-detect pipeline evaluates
 over the OCSF bus with `mapping="auto"`.
 

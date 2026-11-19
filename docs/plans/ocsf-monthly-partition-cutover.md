@@ -1,8 +1,8 @@
 ---
 title: "OCSF store monthly-partition cutover — live convergence runbook"
-status: blocked # blocked on the tenzir-node-core crashloop fix (the GATE below)
+status: done # cutover ran, live-verified 2026-11-05; residue tracked in the related issue
 found_at: 2026-10-29
-updated_at: 2026-10-29
+updated_at: 2026-11-19
 related_issue: docs/issues/ocsf-live-monthly-cutover.md
 area: observability
 ---
@@ -18,10 +18,9 @@ with monthly partitions (`PARTITION BY toYYYYMM(time)`) and gives
 still carry the old shape — daily partitions, 400 days everywhere — and
 ClickHouse partition keys have no `ALTER`: convergence is a per-table
 rebuild (new table + copy + rename), not a live statement. Init
-scripts never touch existing tables
-([`../issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`](../issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)),
-so this plan is the operator-led live-cutover half of the D3/D4
-pairing. The XML change ships first: fresh-PVC boots already create the
+scripts never touch existing tables (the DDL-convergence issue shipped
+and was delete-on-ship'd), so this plan is the operator-led
+live-cutover half of the D3/D4 pairing. The XML change ships first: fresh-PVC boots already create the
 new shape. Nothing in this plan runs without the operator's explicit
 go — cluster mutation is never agent-initiated here.
 

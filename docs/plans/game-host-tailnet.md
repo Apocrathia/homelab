@@ -1,8 +1,8 @@
 ---
 title: "Game host tailnet exposure (AMP over 443 + OIDC)"
-status: draft
+status: done # shipped as-built: nginx_site+acme_sh roles, tailscale join, tailnet-dns hosts entry, tag:game policy grants; AMP OIDC provider lives blueprint-orphaned (tiles/amp is provider-linked), not as the planned amp.yaml blueprint
 found_at: 2026-09-12
-updated_at: 2026-09-12
+updated_at: 2026-11-19
 area: networking
 ---
 

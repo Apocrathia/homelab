@@ -33,7 +33,8 @@ version, and JWT auth that works with a custom Kubernetes issuer on Talos.
 ## Current mitigation
 
 `HelmRelease/substrate` and `HelmRelease/substrate-crds` are pinned to chart
-`0.0.6` / `image.tag v0.0.6` (paired with kagent `0.9.12`). Close Renovate MRs
+`0.0.6` / `image.tag v0.0.6` (paired with kagent `0.10.6` as of 2026-11-19;
+the hold is substrate-side, not kagent-side). Close Renovate MRs
 that bump substrate until this issue's acceptance criteria pass — do not merge
 a version bump without re-checking the feedback loop below.
 

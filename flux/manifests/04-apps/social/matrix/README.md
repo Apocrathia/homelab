@@ -12,7 +12,7 @@ Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully dele
 | `matrix.gateway.services.apocrathia.com`  | MAS OAuth host: login UI, OIDC endpoints, Authentik callback                                                                                                                                    | `httproute.yaml` (dual parentRefs, litellm pattern)           |
 | `element.gateway.services.apocrathia.com` | Element Web SPA (public OIDC client of MAS)                                                                                                                                                     | `httproute.yaml` (wildcard doors, litellm pattern)            |
 
-## Stack
+## Overview
 
 ```mermaid
 flowchart LR
@@ -26,9 +26,9 @@ flowchart LR
     Synapse <-. shared-secret .-> MAS
 ```
 
-Five pods: `synapse`, `mas`, `element`, `sable`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
+Five pods: `synapse`, `mas`, `element`, `sable`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
 
-## SSO flow
+## Authentication
 
 1. Client fetches `https://matrix.apocrathia.com/.well-known/matrix/client` → MSC2965 block points at the MAS issuer.
 2. Client follows to `matrix.gateway.services.apocrathia.com`, MAS redirects to the Authentik provider (`.../application/o/matrix/`).

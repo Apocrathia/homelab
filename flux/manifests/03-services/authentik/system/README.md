@@ -14,6 +14,8 @@ All units share the one ns-authentik `authentik-terraform-token` Secret
 rendered by `tiles/authentik-terraform-token.yaml` — that Secret is the
 tier's shared substrate and must outlive any single unit.
 
+> **Navigation**: [← Back to Authentik README](../README.md)
+
 ## Units
 
 - `app-access/` — the `admins` + `users` IdP groups every application
@@ -29,5 +31,3 @@ tier's shared substrate and must outlive any single unit.
 - `fleetdm/` — Fleet DM's SAML + SCIM stack (staff + MDM SAML providers,
   SCIM backchannel + custom user mapping, both applications, admins
   bindings); adopt-only, byte-parity with the live rows
-
-> **Navigation**: [← Back to Authentik README](../README.md)

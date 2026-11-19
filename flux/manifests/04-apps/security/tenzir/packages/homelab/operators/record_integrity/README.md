@@ -1,5 +1,7 @@
 # record_integrity
 
+> **Navigation**: [← Operators](../README.md)
+
 [`attest.tql`](./attest.tql) and [`verify.tql`](./verify.tql): the
 generalized OCSF `record_integrity` lane both planes stamp — the shared
 engine behind the investigations plane's scope wrappers
@@ -143,4 +145,4 @@ every post-restart record; the structural length guard fixed it, and
 the tamper baseline now pins the restart silence). The narrative, the
 honest limits, and the cost math live in the datalake README's
 attestation section
-([`../../../clickhouse/README.md`](../../../clickhouse/README.md)).
+([`../../../../clickhouse/README.md`](../../../../clickhouse/README.md)).

@@ -14,7 +14,7 @@ OpenCTI in the Filigran security suite.
 - **openaev-opensearch** — single-node OpenSearch engine, security plugin off
   (official compose parity), CNP-locked to the platform pod
 - **openaev-rabbitmq** — RabbitMQ broker with the upstream-mandated
-  `rabbitmq.conf` (512MB max message, 24h consumer timeout)
+  `rabbitmq.conf` (upstream-mandated broker limits)
 - Object storage rides the NAS RustFS instance — no in-cluster MinIO
 - **URL**: `https://openaev.gateway.services.apocrathia.com`
 - Sizing, image digests, probes: the manifests in this directory are the

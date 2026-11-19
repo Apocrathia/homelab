@@ -91,7 +91,7 @@ All available configuration values for the chart:
 | `secrets.enabled`                              | bool   | `true`                                              | Enable 1Password secrets integration                                                                                                            |
 | `secrets.itemPath`                             | string | `vaults/Secrets/items/demo-app-secrets`             | 1Password item path                                                                                                                             |
 | `authentik.enabled`                            | bool   | `true`                                              | Enable Authentik SSO integration                                                                                                                |
-| `authentik.managedBy`                          | string | `blueprint`                                         | Authentik stack owner: `blueprint` CMs (default) or `terraform` provider-opentofu docs                                                          |
+| `authentik.managedBy`                          | string | `terraform`                                         | Authentik stack owner: the chart-rendered provider-opentofu lane (blueprint lane retired in 0.0.88)                                             |
 | `authentik.displayName`                        | string | `Demo Application`                                  | Display name in Authentik                                                                                                                       |
 | `authentik.externalHost`                       | string | `https://demo.gateway.services.apocrathia.com`      | External URL                                                                                                                                    |
 | `authentik.ssoLaunchUrl`                       | string | `""`                                                | Direct SSO entrypoint for the library tile; empty = the app's own URL                                                                           |
@@ -912,20 +912,18 @@ authentik:
 
 #### Authentik stack ownership: `managedBy`
 
-`authentik.managedBy` picks who owns the app's Authentik stack (0.0.84+):
+`authentik.managedBy` picks who owns the app's Authentik stack (the
+blueprint lane was retired in 0.0.88; `terraform` is the default and only
+lane):
 
-- **`blueprint` (default, legacy)**: the chart renders the blueprint
-  ConfigMap (mode `proxy`/`oidc`/`bookmark`) and Authentik imports it.
-  Unchanged behavior for every un-flipped app — the tofu lane changes
-  nothing on this path.
 - **`terraform` (the tofu lane)**: the chart renders the provider-opentofu
   stack — `OnePasswordItem` (workspace token) + `ProviderConfig` (token
   file, optional `oidc-client-id` file, per-app backend args) +
   `Workspace` (`source: Inline`) — with **chart-generated per-app HCL**.
   The Workspace carries NO varmap in git and NO module ref (the
   Remote+chart-tag module-pull antipattern is retired): every value lands
-  inline in the generated HCL, composed from the same `authentik` values
-  the blueprint templates read. All three modes render tofu shapes
+  inline in the generated HCL, composed from the `authentik` values
+  block. All three modes render tofu shapes
   (`bookmark` = the tile shape: application + bindings, no provider).
 
 The generated HCL is shape-identical to the merged file-pair exemplars
@@ -1427,7 +1425,7 @@ authentik:
   - Useful for API endpoints, health checks, or public resources
   - Example: `["^/$", "^/.well-known/", "^/api/"]`
 
-For a complete working example, see the [Companion app configuration](../../flux/manifests/04-apps/companion/helmrelease.yaml).
+For a complete working example, see the [Companion app configuration](../../flux/manifests/04-apps/home/companion/helmrelease.yaml).
 
 ## Components
 
@@ -1450,7 +1448,7 @@ For a complete working example, see the [Companion app configuration](../../flux
 ### Security & Auth
 
 - `secrets.yaml`: 1Password secret integration (conditional)
-- `authentik-blueprint.yaml`: Authentik SSO configuration (conditional)
+- `authentik-tofu-workspace.yaml`: Authentik SSO provider-opentofu workspace (conditional)
 - `httproute.yaml`: Direct Gateway API access (conditional, only when Authentik disabled)
 
 ### Networking

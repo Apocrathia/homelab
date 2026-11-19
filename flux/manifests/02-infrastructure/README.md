@@ -2,7 +2,7 @@
 
 Core infrastructure components required for cluster operation.
 
-> **Navigation**: [← Back to Flux README](../README.md)
+> **Navigation**: [← Back to Flux README](../../README.md)
 
 ## Overview
 
@@ -17,14 +17,16 @@ The infrastructure layer provides the foundational services that enable the clus
 
 ### Networking and Security
 
-- [**Cilium**](cilium/README.md) - CNI, network policies, and Gateway API implementation
-- [**CSI Driver SMB**](csi-driver-smb/README.md) - SMB storage integration
+- [**Cilium**](cilium/README.md) - CNI, network policies, and LB IPAM/L2 announcements
+- [**CSI Driver SMB**](csi-driver-smb/README.md) - SMB CSI driver for static per-app share mounts
+- [**CoreDNS**](coredns/README.md) - GitOps patches for the Talos-deployed cluster DNS
+- [**API Server**](apiserver/README.md) - FlowSchemas and priority levels for API fairness
 
 ### Storage and Data
 
 - [**Longhorn**](longhorn/README.md) - Distributed block storage with backup capabilities
 - [**Snapshot Controller**](snapshot-controller/README.md) - CSI volume snapshot stack
-- [**Kopiur**](kopiur/README.md) - Kopia-native backup operator (pilot)
+- [**Kopiur**](kopiur/README.md) - Kopia-native backup operator
 
 ### Monitoring and Observability
 
@@ -92,8 +94,8 @@ The infrastructure layer provides:
    # Check Cilium status
    kubectl get pods -n cilium-system
 
-   # Check Gateway API status
-   kubectl get gateway -n cilium-system
+   # Check Gateway API status (Envoy Gateway owns the gateways)
+   kubectl get gateway -n envoy-system
 
    # Verify network policies
    kubectl get ciliumnetworkpolicy -A
@@ -108,21 +110,18 @@ The infrastructure layer provides:
    # Check storage classes
    kubectl get storageclass
 
-   # Verify SMB connectivity
-   kubectl get pods -n kube-system -l app=csi-smb
+   # Verify SMB driver pods
+   kubectl get pods -n kube-system | grep csi-smb
    ```
 
 3. **Monitoring Issues**
 
    ```bash
-   # Check Prometheus stack
+   # Check Prometheus stack (Grafana included)
    kubectl get pods -n prometheus-system
 
-   # Check Grafana
-   kubectl get pods -n grafana-system
-
    # Verify metrics server
-   kubectl get pods -n kube-system -l k8s-app=metrics-server
+   kubectl get pods -n kube-system | grep metrics-server
    ```
 
 ### Health Checks
@@ -132,7 +131,6 @@ The infrastructure layer provides:
 kubectl get pods -n cilium-system
 kubectl get pods -n longhorn-system
 kubectl get pods -n prometheus-system
-kubectl get pods -n grafana-system
 
 # Check infrastructure resources
 kubectl get gateway -A
@@ -145,34 +143,3 @@ kubectl get crd | grep -E "(cilium|longhorn|prometheus)"
 - **[Cilium](https://docs.cilium.io/)** - CNI and networking
 - **[Longhorn](https://longhorn.io/docs/)** - Distributed storage
 - **[Prometheus Operator](https://prometheus-operator.dev/)** - Monitoring stack
-
-## Best Practices
-
-### Infrastructure Design
-
-1. **High Availability**: Deploy multiple replicas for critical components
-2. **Resource Management**: Set appropriate resource limits and requests
-3. **Security**: Implement defense in depth with multiple security layers
-4. **Monitoring**: Comprehensive monitoring of all infrastructure components
-
-### Operations
-
-1. **Backup Strategy**: Regular backup of infrastructure configurations
-2. **Update Strategy**: Planned updates with rollback capabilities
-3. **Capacity Planning**: Monitor resource usage and plan for growth
-4. **Documentation**: Maintain up-to-date documentation and runbooks
-
-### Security
-
-1. **Network Policies**: Implement strict network policies
-2. **RBAC**: Principle of least privilege for all components
-3. **Secrets Management**: Secure handling of sensitive configuration
-4. **Compliance**: Regular security audits and compliance checks
-
-## Next Steps
-
-After infrastructure deployment:
-
-1. **Services Layer**: Deploy platform services and applications
-2. **Applications Layer**: Deploy user-facing applications
-3. **Monitoring**: Configure dashboards and alerting rules

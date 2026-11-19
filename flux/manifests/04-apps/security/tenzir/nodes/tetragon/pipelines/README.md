@@ -1,5 +1,7 @@
 # Pipelines (tetragon)
 
+> **Navigation**: [← Tetragon node](../README.md)
+
 One `.tql` file per Tenzir pipeline that `tenzir` runs, plus
 `tetragon-attest-verify.tql` (the record_integrity read-back walk).
 Each file is the pipeline's `definition`, verbatim. The

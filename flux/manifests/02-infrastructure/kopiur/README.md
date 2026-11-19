@@ -2,8 +2,8 @@
 
 [Kopia](https://kopia.io)-native Kubernetes backup operator
 ([home-operations/kopiur](https://github.com/home-operations/kopiur)), written
-in Rust on kube-rs. Pilot deployment — intended to replace Longhorn's
-recurring backup jobs for cluster volumes.
+in Rust on kube-rs. Intended to replace Longhorn's recurring backup jobs for
+cluster volumes (pilot in flight — see Status).
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
@@ -19,15 +19,16 @@ recurring backup jobs for cluster volumes.
   repository backend
 - Webhook certificate is self-managed (no cert-manager dependency)
 
-## Status: operator only
+## Status
 
-No `Repository`/`SnapshotPolicy`/`SnapshotSchedule` objects deployed yet — the
-backup plane (`ClusterRepository` on NAS RustFS + pilot policies on
-non-critical PVCs) lands in a separate follow-up MR under
-`03-services/backup`. Longhorn's `daily-backup` RecurringJob stays in place
-until the pilot proves out. `features.credentialProjection.enabled` is set so
-the follow-up's shared repository can project credentials into mover
-namespaces.
+The backup plane landed in
+[`03-services/backup`](../../03-services/backup/README.md): the
+`ClusterRepository` on NAS RustFS plus per-app `SnapshotPolicy`/`SnapshotSchedule`
+objects that live with their apps. Pilot apps: `demo-app`, `jellyfin`
+(config only; media PVCs are NAS-backed). Longhorn's `daily-backup`
+RecurringJob stays in place until the pilot proves out (restore drill +
+soak). `features.credentialProjection.enabled` lets the shared repository
+project credentials into mover namespaces.
 
 kopiur is alpha software (`v1alpha1`, CRD surface may change between
 releases) — chart version is pinned and Renovate-managed.
@@ -44,6 +45,6 @@ kubectl get crd | grep kopiur.home-operations.com
 kubectl kopiur status  # krew/homebrew plugin: docs/cli/index.md
 ```
 
-- **Docs**: <https://kopiur.home-operations.com/>
-- **Install guide**: <https://kopiur.home-operations.com/docs/install/>
+- [Kopiur docs](https://kopiur.home-operations.com/)
+- [Install guide](https://kopiur.home-operations.com/docs/install/)
 - **kubectl plugin**: `kubectl krew install --manifest-url https://raw.githubusercontent.com/home-operations/kopiur/main/plugins/kopiur.yaml`

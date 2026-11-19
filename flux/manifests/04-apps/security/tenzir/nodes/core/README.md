@@ -172,7 +172,7 @@ drop at each pipeline's class gate and never reach the store.
 Retention lives in ClickHouse: monthly partitions, a 7-day hot-to-cold
 tier move, and a DELETE horizon of 400 days (90 for
 `ocsf.Network_Activity`) — the startup scripts are the source
-([`../clickhouse/config/10-startup-scripts.xml`](../clickhouse/config/10-startup-scripts.xml)).
+([`../../clickhouse/config/10-startup-scripts.xml`](../../clickhouse/config/10-startup-scripts.xml)).
 
 ## Adding a node
 

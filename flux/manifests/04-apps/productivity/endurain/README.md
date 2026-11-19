@@ -23,7 +23,7 @@ replica runs rate-limit/auth-security state in-process.
 - **URL**: `https://endurain.gateway.services.apocrathia.com`
 - **Front door**: Authentik only — local login is disabled (see below)
 
-## Prerequisites
+## Configuration
 
 The pod stays pending until the 1Password item exists. Create
 `vaults/Secrets/items/endurain-secrets` with:

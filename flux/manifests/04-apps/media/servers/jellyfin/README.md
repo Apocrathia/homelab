@@ -1,6 +1,6 @@
 # Jellyfin
 
-> **Navigation**: [← Back to Media Servers](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Overview
 

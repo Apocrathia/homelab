@@ -10,27 +10,30 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 
 ### Pipeline Components
 
-| File                              | Stage         | Trigger                         | Purpose                                                |
-| --------------------------------- | ------------- | ------------------------------- | ------------------------------------------------------ |
-| `no-op.gitlab-ci.yml`             | test          | MR (fallback)                   | Ensures pipeline passes when no other jobs apply       |
-| `chart-tag.gitlab-ci.yml`         | deploy        | `Chart.yaml` changes            | Creates Git tags for Helm chart releases               |
-| `chart-oci-publish.gitlab-ci.yml` | deploy        | main (idempotent)               | Publishes generic-app chart to the GitLab OCI registry |
-| `kustomize-diff.gitlab-ci.yml`    | verify        | MR (manifest changes)           | Posts rendered manifest diffs to MR comments           |
-| `mr-change-summary.gitlab-ci.yml` | verify        | MR (any)                        | Invokes git-agent (A2A) to post a change summary       |
-| `scorecard.gitlab-ci.yml`         | verify        | MR (manifest changes)           | Runs OpenSSF Scorecard on changed dependencies         |
-| `tofu.gitlab-ci.yml`              | verify/deploy | MR/main (terraform changes)     | OpenTofu plan/apply for Proxmox VMs                    |
-| `fleet/.gitlab-ci.yml`            | deploy        | MR/main/schedule (fleet config) | Fleet GitOps (`fleetctl gitops`)                       |
-| `gitleaks.gitlab-ci.yml`          | test          | MR (all files)                  | Secret scanning on MR commits                          |
-| `kube-linter.gitlab-ci.yml`       | test          | MR (manifest changes)           | Kubernetes manifest security linting                   |
-| `trivy.gitlab-ci.yml`             | test          | MR (IaC changes)                | IaC security scanning for Terraform and K8s            |
-| `shellcheck.gitlab-ci.yml`        | test          | MR (shell script changes)       | Shell script static analysis                           |
-| `semgrep.gitlab-ci.yml`           | test          | MR (code changes)               | SAST for Python, Go, JS, TS                            |
+| File                              | Stage         | Trigger                          | Purpose                                                |
+|-----------------------------------|---------------|----------------------------------|--------------------------------------------------------|
+| `chart-tag.gitlab-ci.yml`         | deploy        | `Chart.yaml` changes             | Creates Git tags for Helm chart releases               |
+| `chart-oci-publish.gitlab-ci.yml` | deploy        | main (idempotent)                | Publishes generic-app chart to the GitLab OCI registry |
+| `kustomize-diff.gitlab-ci.yml`    | verify        | MR (manifest changes)            | Posts rendered manifest diffs to MR comments           |
+| `mr-change-summary.gitlab-ci.yml` | verify        | MR (any)                         | Invokes git-agent (A2A) to post a change summary       |
+| `scorecard.gitlab-ci.yml`         | verify        | MR (manifest changes)            | Runs OpenSSF Scorecard on changed dependencies         |
+| `tofu.gitlab-ci.yml`              | verify/deploy | MR/main (terraform changes)      | OpenTofu plan/apply for Proxmox VMs                    |
+| `pages.gitlab-ci.yml`             | deploy        | main/schedule (docs changes)     | Builds and publishes GitLab Pages (MkDocs)             |
+| `fleet/.gitlab-ci.yml`            | deploy        | MR/main/schedule (fleet config)  | Fleet GitOps (`fleetctl gitops`)                       |
+| `ansible/.gitlab-ci.yml`          | test/deploy   | MR/main (`ansible/**` changes)   | Ansible validate/check/apply + nightly drift           |
+| `gitleaks.gitlab-ci.yml`          | test          | MR (all files)                   | Secret scanning on MR commits                          |
+| `kube-linter.gitlab-ci.yml`       | test          | MR (manifest changes)            | Kubernetes manifest security linting                   |
+| `trivy.gitlab-ci.yml`             | test          | MR (IaC changes)                 | IaC security scanning for Terraform and K8s            |
+| `shellcheck.gitlab-ci.yml`        | test          | MR (shell script changes)        | Shell script static analysis                           |
+| `semgrep.gitlab-ci.yml`           | test          | MR (code changes)                | SAST for Python, Go, JS, TS                            |
+| `pre-commit.gitlab-ci.yml`        | test          | MR (any)                         | Runs repo pre-commit hooks on all files                |
+| `context-links.gitlab-ci.yml`     | test          | MR (AGENTS.md/`.agents` changes) | Checks agent-context markdown links and anchors        |
 
 ## Stages
 
 ```yaml
 stages:
-  - test # Validation, security scanning, no-op fallback
+  - test # Validation, security scanning
   - verify # Kustomize diff, Scorecard, Tofu plan
   - deploy # Chart tagging, OCI chart publish, Tofu apply (manual)
 ```
@@ -83,7 +86,8 @@ Runs on MRs that modify manifests or `renovate.json`. Extracts GitHub/GitLab rep
 
 **Requirements**:
 
-- `GITHUB_TOKEN` - GitHub token for API access
+- `SCORECARD_GITHUB_AUTH_TOKEN` - GitHub auth for the Scorecard CLI (mapped to `GITHUB_AUTH_TOKEN` in the job)
+- `SCORECARD_GITLAB_AUTH_TOKEN` - GitLab auth for the Scorecard CLI (mapped to `GITLAB_AUTH_TOKEN` in the job)
 - `SCORECARD_TOKEN` - Personal access token for posting MR comments
 
 ### OpenTofu/Terragrunt
@@ -101,14 +105,13 @@ Manages Proxmox VM infrastructure. Runs validation and plan on MRs, drift check 
 
 - `TOFU_TOKEN` - Personal access token for posting MR comments
 - `TF_HTTP_ADDRESS`, `TF_HTTP_USERNAME`, `TF_HTTP_PASSWORD` - GitLab HTTP remote state backend (see `terraform/README.md`)
-- `PROXMOX_VE_*` - Proxmox API credentials for plan/apply
 - `OP_CONNECT_HOST` - 1Password Connect URL (CI default set in tofu YAML)
 - `OP_CONNECT_TOKEN` - 1Password Connect API token for tofu (see `docs/plans/tofu-1password-provider.md`)
 - `TOFU_DRIFT_WEBHOOK_URL` (optional) - Discord webhook for drift notifications
 
 ### Chart Tagging
 
-Creates Git tags when `helm/generic-app/Chart.yaml` version changes. Tag format: `generic-app-X.Y.Z`. The tags are release markers — chart delivery to the cluster is the OCI publish below.
+Creates Git tags when `helm/generic-app/Chart.yaml` version changes. Tag format: `generic-app-X.Y.Z`. The tags are release markers; chart delivery to the cluster is the OCI publish below.
 
 **Requirements**:
 
@@ -155,10 +158,6 @@ Applies Ansible playbooks for non-Kubernetes Linux hosts. Job definition lives a
 
 Deploy SSH + become material lives in 1Password fields `ansible_gitops_ed25519`, `ansible_gitops_known_hosts`, and `sudo-password` (not GitLab CI variables). See `ansible/README.md`.
 
-### No-Op
-
-Fallback job that runs when an MR has no other applicable jobs. Prevents empty pipelines.
-
 ### Security Scanning
 
 Five security scanning jobs run on MRs to catch issues before merge:
@@ -193,27 +192,26 @@ The `agents/homelab/config.yaml` configures the GitLab Kubernetes Agent for:
 
 ## Required CI/CD Variables
 
-| Variable                     | Purpose                                                                                                                   | Scope                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `KUSTOMIZE_TOKEN`            | MR comment access                                                                                                         | kustomize-diff                        |
-| `SCORECARD_TOKEN`            | MR comment access                                                                                                         | scorecard                             |
-| `TOFU_TOKEN`                 | MR comment access                                                                                                         | tofu-plan, tofu-drift                 |
-| `TF_HTTP_ADDRESS`            | GitLab remote state base URL                                                                                              | tofu-drift, tofu-plan, tofu-apply     |
-| `TF_HTTP_USERNAME`           | GitLab username for state backend                                                                                         | tofu-drift, tofu-plan, tofu-apply     |
-| `TF_HTTP_PASSWORD`           | GitLab token (`api` scope) for state backend                                                                              | tofu-drift, tofu-plan, tofu-apply     |
-| `PROXMOX_VE_ENDPOINT`        | Proxmox API URL                                                                                                           | tofu-drift, tofu-plan, tofu-apply     |
-| `PROXMOX_VE_API_TOKEN`       | Proxmox API token                                                                                                         | tofu-drift, tofu-plan, tofu-apply     |
-| `OP_CONNECT_HOST`            | 1Password Connect URL (optional override; CI YAML has lab default)                                                        | tofu-\*, ansible-check, ansible-apply |
-| `OP_CONNECT_TOKEN`           | 1Password Connect API token (Secrets vault for tofu + ansible-secrets)                                                    | tofu-\*, ansible-check, ansible-apply |
-| `TOFU_DRIFT_WEBHOOK_URL`     | Discord webhook for drift notifications (optional)                                                                        | tofu-drift                            |
-| `GITHUB_TOKEN`               | Scorecard API access                                                                                                      | scorecard                             |
-| `GITLAB_TOKEN`               | Git tag push access                                                                                                       | chart-tag                             |
-| `AGENT_TOKEN`                | Project PAT (`api` scope) for change-summary skip-cache trailer writes — `CI_JOB_TOKEN` cannot PUT MR notes on GitLab.com | mr-change-summary                     |
-| `FLEET_URL`                  | Fleet server URL                                                                                                          | fleet-gitops                          |
-| `FLEET_API_TOKEN`            | Fleet API-only user token (GitOps role)                                                                                   | fleet-gitops                          |
-| `FLEET_GLOBAL_ENROLL_SECRET` | Global osquery enroll secret                                                                                              | fleet-gitops                          |
-| `FLEET_HOME_ENROLL_SECRET`   | Home team osquery enroll secret                                                                                           | fleet-gitops                          |
-| `FLEET_GITOPS_SCHEDULE`      | Set to `true` on the Fleet hourly schedule only                                                                           | fleet-gitops (schedule)               |
+| Variable                      | Purpose                                                                                                                   | Scope                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `KUSTOMIZE_TOKEN`             | MR comment access                                                                                                         | kustomize-diff                        |
+| `SCORECARD_TOKEN`             | MR comment access                                                                                                         | scorecard                             |
+| `TOFU_TOKEN`                  | MR comment access                                                                                                         | tofu-plan, tofu-drift                 |
+| `TF_HTTP_ADDRESS`             | GitLab remote state base URL                                                                                              | tofu-drift, tofu-plan, tofu-apply     |
+| `TF_HTTP_USERNAME`            | GitLab username for state backend                                                                                         | tofu-drift, tofu-plan, tofu-apply     |
+| `TF_HTTP_PASSWORD`            | GitLab token (`api` scope) for state backend                                                                              | tofu-drift, tofu-plan, tofu-apply     |
+| `OP_CONNECT_HOST`             | 1Password Connect URL (optional override; CI YAML has lab default)                                                        | tofu-\*, ansible-check, ansible-apply |
+| `OP_CONNECT_TOKEN`            | 1Password Connect API token (Secrets vault for tofu + ansible-secrets)                                                    | tofu-\*, ansible-check, ansible-apply |
+| `TOFU_DRIFT_WEBHOOK_URL`      | Discord webhook for drift notifications (optional)                                                                        | tofu-drift                            |
+| `SCORECARD_GITHUB_AUTH_TOKEN` | Scorecard CLI GitHub auth (mapped to `GITHUB_AUTH_TOKEN`)                                                                 | scorecard, scorecard-badge            |
+| `SCORECARD_GITLAB_AUTH_TOKEN` | Scorecard CLI GitLab auth (mapped to `GITLAB_AUTH_TOKEN`)                                                                 | scorecard, scorecard-badge            |
+| `GITLAB_TOKEN`                | Git tag push access                                                                                                       | chart-tag                             |
+| `AGENT_TOKEN`                 | Project PAT (`api` scope) for change-summary skip-cache trailer writes — `CI_JOB_TOKEN` cannot PUT MR notes on GitLab.com | mr-change-summary                     |
+| `FLEET_URL`                   | Fleet server URL                                                                                                          | fleet-gitops                          |
+| `FLEET_API_TOKEN`             | Fleet API-only user token (GitOps role)                                                                                   | fleet-gitops                          |
+| `FLEET_GLOBAL_ENROLL_SECRET`  | Global osquery enroll secret                                                                                              | fleet-gitops                          |
+| `FLEET_HOME_ENROLL_SECRET`    | Home team osquery enroll secret                                                                                           | fleet-gitops                          |
+| `FLEET_GITOPS_SCHEDULE`       | Set to `true` on the Fleet hourly schedule only                                                                           | fleet-gitops (schedule)               |
 
 Configure in **Settings > CI/CD > Variables**.
 

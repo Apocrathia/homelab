@@ -5,7 +5,7 @@ share so theme folders are present without ES-DE writing over SMB.
 
 > **Navigation**: [← Back to Games README](../README.md)
 
-## What it does
+## Overview
 
 - Mounts `Games/Emulation` (SMB) at `/emulation`
 - Updates `themes/themes-list` from
@@ -42,3 +42,15 @@ Skyscraper).
 - Per-theme failures are logged; the Job succeeds when at least one theme syncs.
 - First full clone (or unshallow of prior shallow clones) can take a while and
   use multiple GB of share space.
+
+## Troubleshooting
+
+```bash
+kubectl get cronjob esde-themes-sync -n esde-themes
+kubectl get jobs -n esde-themes
+kubectl logs -n esde-themes job/<job-name>
+```
+
+## References
+
+- **[ES-DE themes list](https://gitlab.com/es-de/themes/themes-list)** - Upstream themes list

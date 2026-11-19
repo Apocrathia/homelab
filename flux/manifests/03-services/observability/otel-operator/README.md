@@ -157,10 +157,6 @@ kubectl get certificate -n otel-system
 ## References
 
 - **[OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)** - Primary documentation
+- **[Auto-Instrumentation](https://opentelemetry.io/docs/kubernetes/operator/automatic/)** - Instrumentation guide
+- **[Operator GitHub](https://github.com/open-telemetry/opentelemetry-operator)** - Source code and issues
 - **[Helm Chart](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-operator)** - Chart source and values
-
-## References
-
-- [OpenTelemetry Kubernetes](https://opentelemetry.io/docs/kubernetes/)
-- [Operator GitHub](https://github.com/open-telemetry/opentelemetry-operator)
-- [Auto-Instrumentation](https://opentelemetry.io/docs/kubernetes/operator/automatic/)

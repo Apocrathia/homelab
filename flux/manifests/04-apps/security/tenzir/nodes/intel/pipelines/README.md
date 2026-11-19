@@ -1,5 +1,7 @@
 # Pipelines (intel)
 
+> **Navigation**: [← Intel node](../README.md)
+
 The CTI factory plane's pipeline drop zone. One row ships as two
 pipelines:
 [opencti-taxii-factory-walk.tql](./opencti-taxii-factory-walk.tql) and

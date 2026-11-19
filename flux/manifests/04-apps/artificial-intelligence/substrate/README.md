@@ -22,7 +22,7 @@ HelmRelease. Keep that chart's bundled `substrate.enabled` off.
 kagent releases vendor a specific substrate client version (the
 `replace github.com/agent-substrate/substrate` line in kagent's `go/go.mod`).
 Keep the deployed substrate chart at or below that version. Chart and CRDs are
-held at `0.0.6` (paired with kagent `0.9.12`); close Renovate bumps until
+held at the pinned kagent pairing (see `helmrelease.yaml`); close Renovate bumps until
 [`docs/issues/substrate-kagent-version-skew.md`](../../../../../docs/issues/substrate-kagent-version-skew.md)
 acceptance passes.
 
@@ -66,11 +66,6 @@ the root keys from `OnePasswordItem/agent-substrate-secrets` with
 | `access-key-id`     | `RUSTFS_ACCESS_KEY` / `AWS_ACCESS_KEY_ID`     |
 | `access-key-secret` | `RUSTFS_SECRET_KEY` / `AWS_SECRET_ACCESS_KEY` |
 
-See upstream:
-
-- [Agent Substrate](https://kagent.dev/docs/kagent/examples/agent-substrate)
-- [Agent Harness](https://kagent.dev/docs/kagent/examples/agent-harness)
-
 ## Authentication
 
 No Gateway / Authentik surface. Clients authenticate to ateapi with Kubernetes
@@ -104,3 +99,8 @@ kubectl get workerpool -n ate-system
 kubectl get deploy,pods -n ate-system -l app=kagent-default 2>/dev/null
 kubectl get pods -n ate-system | grep kagent-default
 ```
+
+## References
+
+- **[Agent Substrate](https://kagent.dev/docs/kagent/examples/agent-substrate)** - Upstream substrate example
+- **[Agent Harness](https://kagent.dev/docs/kagent/examples/agent-harness)** - Upstream harness example

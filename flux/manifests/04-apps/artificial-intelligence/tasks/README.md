@@ -2,6 +2,8 @@
 
 Scheduled task templates and wires for invoking A2A agents on a fixed cadence.
 
+> **Navigation**: [← Back to Artificial Intelligence README](../README.md)
+
 ## Included
 
 - `scheduled-agent-invoke/` — suspended CronJob **template** (cluster health →
@@ -10,11 +12,11 @@ Scheduled task templates and wires for invoking A2A agents on a fixed cadence.
   (`run-loop` heartbeat; in-cluster ceiling = `mode=scout`). Schedule
   `30 */6 * * *`; unsuspend when ready.
 - `alert-agent-invoke/` — alert-driven invoke path (separate from Cron templates).
-- `dependency-review/` — **live** hourly Renovate MR sweep (`20 * * * *`,
+- `dependency-review/` — **live** Renovate MR sweep every 6 hours (`23 */6 * * *`,
   unsuspended): deterministic upstream facts → git-agent judgment → verdict
   note + `agent-review:*` labels + approval on pass. Unlike its siblings it
   needs GitLab/GitHub tokens (1Password items, see its README).
-- `dependency-merge/` — **live** second stage (`50 * * * *`, unsuspended):
+- `dependency-merge/` — **live** second stage (`47 */6 * * *`, unsuspended):
   homelab-agent merges `agent-review:pass` MRs past the hard gates
   (infra-class hard block independent of labels, reviewed-sha match, green
   pipeline, no major/infra flags, allowed update types) after its own

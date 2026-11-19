@@ -36,7 +36,7 @@ iv-org/invidious for the load-time logic.
 
 Create a 1Password item:
 
-#### invidious-secrets (`vaults/Secrets/items/invidious-secrets`)
+**invidious-secrets** (`vaults/Secrets/items/invidious-secrets`)
 
 - `database-url`: Full PostgreSQL connection URL
   - Format: `postgres://invidious:<password>@invidious-postgres-rw.invidious.svc.cluster.local:5432/invidious`
@@ -66,7 +66,7 @@ acceptable.
 
 ### Storage
 
-- **PostgreSQL**: 10GB Longhorn persistent volume for database storage
+- **PostgreSQL**: Longhorn persistent volume for database storage
 - **No application storage**: Invidious caches data in PostgreSQL
 
 ### Access

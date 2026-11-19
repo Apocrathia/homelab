@@ -29,8 +29,8 @@ The deployment follows the LinuxServer.io standard pattern:
 
 ### Storage
 
-- **Configuration Volume**: 10GB Longhorn persistent volume for application configuration
-- **Models Volume**: 5GB Longhorn persistent volume for Whisper model storage
+- **Configuration Volume**: Longhorn persistent volume for application configuration
+- **Models Volume**: Longhorn persistent volume for Whisper model storage
 - **Anime Volume**: SMB mount for anime library access (read-only)
 - **TV Volume**: SMB mount for TV shows library access (read-only)
 - **Movies Volume**: SMB mount for movies library access (read-only)

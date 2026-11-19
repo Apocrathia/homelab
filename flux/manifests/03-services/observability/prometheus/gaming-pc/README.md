@@ -2,7 +2,7 @@
 
 Prometheus scrapes node-exporter metrics from the Fedora gaming workstation.
 
-> **Navigation**: [← Back to Prometheus extras README](../README.md)
+> **Navigation**: [← Back to Observability README](../../README.md)
 
 ## Overview
 

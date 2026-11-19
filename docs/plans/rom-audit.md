@@ -1,8 +1,8 @@
 ---
 title: "rom-audit — DAT report CronJob"
-status: active
+status: done
 found_at: 2026-07-27
-updated_at: 2026-07-29
+updated_at: 2026-11-19
 area: apps
 ---
 
@@ -122,7 +122,7 @@ systems:
 
 ## Share layout
 
-```
+```text
 Emulation/
   dats/
   roms/<system>/
@@ -133,7 +133,7 @@ Emulation/
 
 ## Git layout
 
-```
+```text
 flux/manifests/04-apps/games/rom-audit/
   namespace.yaml
   kustomization.yaml

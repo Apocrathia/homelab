@@ -2,7 +2,7 @@
 
 Guide for deploying the 1Password Connect Operator in your Kubernetes cluster.
 
-> **Navigation**: [← Back to Flux README](../../../README.md)
+> **Navigation**: [← Back to Bootstrap README](../README.md)
 
 ## Prerequisites
 
@@ -113,9 +113,5 @@ Common issues and solutions:
 - **[1Password Connect](https://developer.1password.com/docs/connect)** - Official documentation
 - **[1Password CLI](https://developer.1password.com/docs/cli/)** - CLI reference
 - **[Helm Charts](https://github.com/1Password/connect-helm-charts)** - Deployment charts
-
-## Additional Resources
-
-- [Official 1Password Connect Documentation](https://developer.1password.com/docs/connect)
-- [Helm Chart Configuration Options](https://developer.1password.com/docs/connect/helm)
-- [Kubernetes Operator Documentation](https://developer.1password.com/docs/k8s/k8s-operator)
+- **[Helm Chart Configuration](https://developer.1password.com/docs/connect/helm)** - Chart values reference
+- **[Kubernetes Operator](https://developer.1password.com/docs/k8s/k8s-operator)** - Operator documentation

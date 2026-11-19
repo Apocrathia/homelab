@@ -2,7 +2,7 @@
 
 Foundational GitOps resources required to reconcile the homelab cluster.
 
-> **Navigation**: [← Back to Flux README](../README.md)
+> **Navigation**: [← Back to Flux README](../../README.md)
 
 ## Components
 

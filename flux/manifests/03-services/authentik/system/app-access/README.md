@@ -1,5 +1,7 @@
 # app-access (Authentik system unit)
 
+> **Navigation**: [← Back to Authentik system README](../README.md)
+
 The tofu-managed home for the two IdP-level access groups: `admins`
 (operator group, bound to every application) and `users` (friends group,
 bound only to explicitly shared applications). This pair ADOPTS the live
@@ -14,5 +16,3 @@ changes keeps it that way (see the membership landmine note in
 
 Retired the `blueprints/app-access.yaml` ConfigMap — the blueprint CM
 prunes and the live groups survive for this workspace to adopt.
-
-> **Navigation**: [← Back to Authentik system README](../README.md)

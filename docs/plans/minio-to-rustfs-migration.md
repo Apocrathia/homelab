@@ -1,8 +1,8 @@
 ---
 title: "Migrate NAS MinIO consumers to RustFS"
-status: active
+status: done
 found_at: 2026-09-07
-updated_at: 2026-09-10
+updated_at: 2026-11-19
 area: storage
 ---
 

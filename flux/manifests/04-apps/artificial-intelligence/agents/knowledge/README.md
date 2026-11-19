@@ -11,14 +11,6 @@ This deployment includes a knowledge management agent that stores, retrieves, an
 - Web search delegation for current information when needed
 - Designed to be called by other agents for knowledge queries
 
-## Purpose
-
-Stores, retrieves, and synthesizes information across multiple knowledge sources:
-
-- **Qdrant**: Vector knowledge base for semantic storage/retrieval
-- **OpenZIM**: Offline encyclopedic content (Wikipedia, etc.)
-- **Search Agent**: Delegation for web searches when needed
-
 ## Tools
 
 | Tool           | Source           | Purpose                                           |
@@ -39,7 +31,7 @@ The knowledge agent is designed to be called by other agents (like homelab-agent
 
 ## Configuration
 
-- **Model**: qwen3 (via LiteLLM)
+- **Model**: via LiteLLM (pinned in `modelconfig.yaml`)
 - **Namespace**: `agent-knowledge`
 
 ## Troubleshooting
@@ -54,5 +46,5 @@ kubectl logs --namespace agent-knowledge -l app.kubernetes.io/name=knowledge-age
 
 ## References
 
-- **[Qdrant MCP Server](../../../mcp-servers/qdrant/README.md)** - Vector database integration
-- **[OpenZIM MCP Server](../../../mcp-servers/openzim/README.md)** - Encyclopedic content
+- **[Qdrant MCP Server](../../mcp-servers/qdrant/README.md)** - Vector database integration
+- **[OpenZIM MCP Server](../../mcp-servers/openzim/README.md)** - Encyclopedic content

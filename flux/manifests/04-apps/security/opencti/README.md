@@ -14,14 +14,14 @@ external-import connector; local admin login is kept as break-glass.
 
 Stack layout (all in the `opencti` namespace):
 
-```
+```text
 ┌────────────────┐   ┌──────────────────┐
 │ opencti-server │──▶│ opencti-worker   │
 │  (platform)    │   │ (bg processing)  │
 └───┬───┬───┬─────┘   └───┬──────────────┘
     │   │   │             │
-    │   │   └──▶ opensearch-cluster-master:9200  (single node, Longhorn 30Gi)
-    │   └─────▶ opencti-rabbitmq:5672              (Longhorn 8Gi)
+    │   │   └──▶ opensearch-cluster-master:9200  (single node, Longhorn)
+    │   └─────▶ opencti-rabbitmq:5672              (Longhorn)
     └─────────▶ opencti-redis:6379                (dragonfly, no eviction)
                     │
                     ▼
@@ -30,7 +30,7 @@ Stack layout (all in the `opencti` namespace):
 ```
 
 - **Platform**: `NODE_OPTIONS --max-old-space-size=4096` (tuned down from the
-  8 GB default), 5Gi memory limit.
+  8 GB default).
 - **OpenSearch**: single-node subchart, 3g heap, `vm.max_map_count=262144` set
   by the chart's privileged busybox initContainer (operator decision — no
   Talos patch).
@@ -463,3 +463,8 @@ is created by the parallel MISP slice. When this app dir landed the area
 registries were not yet present — this app must be registered in the area
 `kustomization.yaml` (add `- opencti` to `resources`) and listed in the area
 README for Flux to pick it up.
+
+## References
+
+- **[OpenCTI docs](https://docs.opencti.io/)** - Official documentation
+- **[devops-ia/helm-opencti](https://github.com/devops-ia/helm-opencti)** - Helm chart from its published repository

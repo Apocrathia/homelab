@@ -9,7 +9,7 @@ This is my personal homelab. If you find a security issue, message me with what 
 - Gitleaks scans commits for secrets (pre-commit hooks + CI)
 - kube-linter checks manifests for security issues
 - Renovate keeps dependencies updated
-- 1Password Operator handles secrets (nothing hardcoded)
+- 1Password Connect + External Secrets Operator handle secrets (nothing hardcoded)
 
 ## Out of Scope
 

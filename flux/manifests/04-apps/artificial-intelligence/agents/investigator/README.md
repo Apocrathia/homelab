@@ -3,15 +3,15 @@
 The homelab's security investigator: a kagent agent that triages alerts and
 detection findings against the Tenzir OCSF lake, works cases in the
 investigations platform, and reports in Discord-ready markdown. Persona:
-the [security-analyst](../../../../../.agents/agents/security-analyst/agent.md)
+the [security-analyst](../../../../../../.agents/agents/security-analyst/agent.md)
 mold — adversarial, evidence-first, homelab-calibrated.
 
 > **Navigation**: [← Back to Agents README](../README.md)
 
-## What it does
+## Overview
 
 Investigations are a workflow over two surfaces of the
-[investigations node](../../../../security/tenzir/nodes/investigations/README.md)
+[investigations node](../../../security/tenzir/nodes/investigations/README.md)
 (`tenzir-node-investigations`, in-cluster only):
 
 - **Write lane** (`:8080`) — case open/update/close and evidence-pin envelopes
@@ -25,6 +25,12 @@ Investigations are a workflow over two surfaces of the
 The full playbook (endpoints, envelope contract, launch/serve examples, the
 single-JSON read trap, verdict/status IDs, report format) lives in the Agent CR
 system prompt — the prompt is the skill.
+
+## Configuration
+
+The agent is defined by the `Agent` CR in `agent.yaml`; model wiring in
+`modelconfig.yaml`. The kagent token bootstrap is covered under
+[Secrets bootstrap](#secrets-bootstrap).
 
 ## How it gets invoked
 
@@ -125,6 +131,6 @@ findings alert lane surfaces alert-invocation failures in the bridge logs
 
 ## References
 
-- **[Investigations node README](../../../../security/tenzir/nodes/investigations/README.md)** — envelope contract, bootstrap, containment
+- **[Investigations node README](../../../security/tenzir/nodes/investigations/README.md)** — envelope contract, bootstrap, containment
 - **[Tenzir platform design](../../../../../../.scratch/agent-investigation/design.md)** — P-3 scope
 - **[kagent Agent CRD](https://kagent.dev/docs/kagent/crds)** — Declarative agent schema

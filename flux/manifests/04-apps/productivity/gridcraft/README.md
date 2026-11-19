@@ -1,11 +1,6 @@
 # GridCraft
 
-[← Productivity Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/gridcraft)
-- [ArtCraft](https://getartcraft.com/apps/gridcraft)
+> **Navigation**: [← Productivity Apps](../README.md)
 
 ## Overview
 
@@ -35,3 +30,8 @@ kubectl logs -n gridcraft -l app.kubernetes.io/name=gridcraft -c fetch-gridcraft
 kubectl logs -n gridcraft -l app.kubernetes.io/name=gridcraft
 kubectl describe deployment -n gridcraft gridcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/gridcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/gridcraft)** - ArtCraft app listing

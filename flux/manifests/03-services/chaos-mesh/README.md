@@ -6,7 +6,7 @@ Chaos Mesh is a cloud-native chaos engineering platform that orchestrates chaos 
 
 ## Overview
 
-This installation deploys Chaos Mesh v2.7.2 with the following components:
+This installation deploys Chaos Mesh with the following components (chart version pinned in `helmrelease.yaml`):
 
 - **Controller Manager**: Manages chaos experiments with leader election for HA
 - **Chaos Daemon**: Executes chaos experiments on nodes
@@ -169,30 +169,10 @@ kubectl apply -f pod-kill-demo.yaml
 You can create chaos experiments through:
 
 1. **Dashboard**: Web UI for creating and managing experiments
-2. **YAML**: Direct Kubernetes manifests
+2. **YAML**: Direct Kubernetes manifests (see the example above)
 3. **CLI**: chaosctl command-line tool
 
-### Example Experiment
-
-Here's an example pod-kill experiment:
-
-```yaml
-apiVersion: chaos-mesh.org/v1alpha1
-kind: PodChaos
-metadata:
-  name: pod-kill-example
-  namespace: chaos-mesh
-spec:
-  action: pod-kill
-  mode: one
-  selector:
-    namespaces:
-      - default
-    labelSelectors:
-      app: my-app
-  scheduler:
-    cron: "@every 30s"
-```
+Ready-made experiments live in [`experiments/`](experiments/README.md).
 
 ## Best Practices
 

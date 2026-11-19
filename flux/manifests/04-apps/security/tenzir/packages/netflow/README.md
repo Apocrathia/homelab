@@ -1,5 +1,7 @@
 # Vendored netflow package
 
+> **Navigation**: [← Packages](../README.md)
+
 The official `netflow` TQL package, vendored byte-for-byte from
 [github.com/tenzir/library](https://github.com/tenzir/library) @
 `c6bba5f894455ce113f47e923605460b1b720edc` (2026-10-13). It maps

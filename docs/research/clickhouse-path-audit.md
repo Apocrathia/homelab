@@ -10,9 +10,9 @@ area: observability
 
 > Research note (October 2026). Read-only vendor-doc vs homelab audit of the
 > Tenzir → ClickHouse write path, produced during the ocsf DDL-divergence +
-> broken-parts repair (see
-> `docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md` for the
-> outcome). Follow-ups are proposals until they land as issues/plans or in
+> broken-parts repair (that issue shipped and was delete-on-ship'd; see
+> `docs/plans/ocsf-monthly-partition-cutover.md` for the follow-on cutover).
+> Follow-ups are proposals until they land as issues/plans or in
 > the tree. Original scout copy lives at
 > `.scratch/agent-investigation/clickhouse-path-audit.md`.
 

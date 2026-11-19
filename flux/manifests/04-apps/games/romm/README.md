@@ -25,7 +25,7 @@ in the overlay.
 
 Create a 1Password item:
 
-#### romm-secrets (`vaults/Secrets/items/romm-secrets`)
+**romm-secrets** (`vaults/Secrets/items/romm-secrets`)
 
 - `username`: PostgreSQL username (e.g., romm)
 - `password`: PostgreSQL password

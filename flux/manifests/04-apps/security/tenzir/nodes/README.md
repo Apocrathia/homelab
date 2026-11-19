@@ -1,5 +1,7 @@
 # Nodes
 
+> **Navigation**: [← Tenzir](../README.md)
+
 One Tenzir node = one process = one folder. Each folder carries its
 HelmRelease, its kustomization, and a README with the node's own
 connectivity chart, sizing math, and retention profile.

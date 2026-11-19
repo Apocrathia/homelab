@@ -47,7 +47,7 @@ The agent uses the kagent `MCPServer` in `mcp-searxng` namespace:
 
 Create a 1Password item:
 
-#### searxng-agent-secrets (`vaults/Secrets/items/searxng-agent-secrets`)
+**searxng-agent-secrets** (`vaults/Secrets/items/searxng-agent-secrets`)
 
 - `litellm-api-key`: API key for LiteLLM access
 

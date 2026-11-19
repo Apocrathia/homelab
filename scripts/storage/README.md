@@ -93,10 +93,7 @@ Edit `io-benchmark-pod.yaml` to adjust:
 
 ## Comparing Before/After
 
-Run the benchmark:
-
-1. **Before** optimizing Ceph settings
-2. **After** applying Ceph optimizations
-3. **After** migrating to raw NVMe + Longhorn strict-local
-
-Compare the latency and IOPS metrics to quantify improvements.
+Run the benchmark before and after a storage change — for example a
+Longhorn data-locality or strict-local adjustment — and compare the latency
+and IOPS metrics to quantify improvements. (The original comparison runs
+were Ceph-era; the lab has run Longhorn since.)

@@ -1,5 +1,7 @@
 # Authentik blueprints
 
+> **Navigation**: [← Back to Authentik README](../README.md)
+
 The last blueprint-mode ConfigMaps: sources and service accounts whose
 secrets or error states make tofu the wrong lane. Each yaml here renders
 as a `authentik_blueprint`-labeled ConfigMap; the authentik worker
@@ -25,5 +27,3 @@ service account moved last of all: its circularity (tofu authenticating
 with the very token it manages) resolves on the adoption gate — the
 `system/terraform-service-account/` pair adopts the live token and never
 rotates it.
-
-> **Navigation**: [← Back to Authentik README](../README.md)

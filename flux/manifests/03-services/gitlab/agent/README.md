@@ -2,7 +2,7 @@
 
 This guide explains how to set up the GitLab Agent for Kubernetes (KAS) in your cluster.
 
-> **Navigation**: [← Back to GitLab README](../README.md)
+> **Navigation**: [← Back to Services README](../../README.md)
 
 ## Prerequisites
 

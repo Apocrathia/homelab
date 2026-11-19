@@ -25,12 +25,11 @@ This deployment provides the CloudNativePG operator which enables:
 
 ## Managed Clusters
 
-The operator currently manages:
-
-- **n8n-postgres**: PostgreSQL cluster for n8n workflow automation
-  - Longhorn storage
-  - Integrated with 1Password secrets
-  - Cilium network policies for security
+The operator is cluster-wide: every PostgreSQL cluster is defined next to
+the app that owns it (a `postgres.yaml` in the app's directory, e.g.
+[`03-services/authentik/`](../authentik/)), never here. No central inventory
+is kept in docs — it would drift; `kubectl get cluster -A` or a repo search
+for `postgresql.cnpg.io/v1` shows the current set.
 
 ## Monitoring
 
@@ -49,25 +48,12 @@ Metrics are automatically scraped by Prometheus when `podMonitorEnabled: true`.
 
 ## Usage
 
-### Creating a PostgreSQL Cluster
+### Adding an Application
 
-```yaml
-apiVersion: postgresql.cnpg.io/v1
-kind: Cluster
-metadata:
-  name: my-postgres
-  namespace: my-namespace
-spec:
-  instances: 1
-  storage:
-    storageClass: longhorn
-  bootstrap:
-    initdb:
-      database: mydb
-      owner: myuser
-```
-
-See official documentation for complete configuration options including image versions and storage sizing.
+Create a `Cluster` (`postgresql.cnpg.io/v1`) in the consuming app's own
+directory — instances, storage, and bootstrap live in that manifest; see an
+existing app's `postgres.yaml` for the pattern. The [CloudNativePG
+documentation](https://cloudnative-pg.io/docs/) covers the full spec.
 
 ### Key Features for Applications
 
@@ -126,7 +112,7 @@ kubectl -n <namespace> get pods -l cnpg.io/cluster=<cluster-name>
 
 ### Common Issues
 
-#### Cluster Not Starting
+**Cluster Not Starting**
 
 ```bash
 # Check cluster conditions
@@ -136,7 +122,7 @@ kubectl -n <namespace> get cluster <cluster-name> -o yaml
 kubectl -n <namespace> describe pods -l cnpg.io/cluster=<cluster-name>
 ```
 
-#### Authentication Issues
+**Authentication Issues**
 
 ```bash
 # Verify secrets exist
@@ -146,7 +132,7 @@ kubectl -n <namespace> get secrets -l cnpg.io/cluster=<cluster-name>
 kubectl -n <namespace> get secret <secret-name> -o yaml
 ```
 
-#### Storage Issues
+**Storage Issues**
 
 ```bash
 # Check PVC status
@@ -177,33 +163,5 @@ kubectl -n <namespace> exec -it <pod-name> -- pg_isready -U <username> -d <datab
 2. **Secrets Management**: Store credentials in external secret management (1Password)
 3. **RBAC**: Limit cluster access to authorized users
 4. **TLS**: Enable TLS for client connections in production
-
-## Integration Examples
-
-### With n8n (Current Setup)
-
-- PostgreSQL cluster: `n8n-postgres`
-- Database: `n8n`
-- Owner: `n8n` (configured in cluster spec)
-- Network security: Cilium policies
-- Monitoring: PodMonitor enabled
-
-### Adding More Applications
-
-```yaml
-apiVersion: postgresql.cnpg.io/v1
-kind: Cluster
-metadata:
-  name: another-app-postgres
-  namespace: another-app
-spec:
-  instances: 2 # For high availability
-  storage:
-    storageClass: longhorn
-  bootstrap:
-    initdb:
-      database: anotherapp
-      owner: anotherapp_user
-```
 
 See `helmrelease.yaml` for complete operator configuration.

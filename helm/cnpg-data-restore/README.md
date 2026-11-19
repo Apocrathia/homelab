@@ -1,6 +1,6 @@
 # cnpg-data-restore
 
-Helm chart for a **one-off Job** that runs **`pg_restore`** against a dump file on an **SMB/CIFS volume**, using the **same CSI + 1Password credential pattern** as [generic-app](../../generic-app/README.md) (`storage.smb`) and [`cnpg-data-extract`](../cnpg-data-extract/README.md) (`backupSmb`). The share is mounted **read-only** at `backupSmb.mountPath` (default `/backup`).
+Helm chart for a **one-off Job** that runs **`pg_restore`** against a dump file on an **SMB/CIFS volume**, using the **same CSI + 1Password credential pattern** as [generic-app](../generic-app/README.md) (`storage.smb`) and [`cnpg-data-extract`](../cnpg-data-extract/README.md) (`backupSmb`). The share is mounted **read-only** at `backupSmb.mountPath` (default `/backup`).
 
 Use this after a new CNPG `Cluster` is up and the dump file already lives on the backup share (e.g. written by `cnpg-data-extract` with `backupSmb.enabled`).
 

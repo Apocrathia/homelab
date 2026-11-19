@@ -4,7 +4,6 @@ Declarative config for non-Kubernetes Linux hosts (Debian game host, Fedora
 gaming PC, signage, UniFi NUC, …). Fleet stays the
 inventory/compliance plane; this tree owns package/user/system desired state.
 `roles/common` branches on `ansible_os_family` (Debian apt /
-| `roles/kopia/` | Kopia client: per-host S3 repo, retention, systemd-timer backup |
 unattended-upgrades vs RedHat dnf / dnf-automatic).
 
 Archaeology: earlier patterns lived in `homelab.gh/Ansible/` (compose-era docker
@@ -23,6 +22,9 @@ and Ansible-managed k8s are gone. Keep the useful bits: purpose groups,
 | `playbooks/`          | `site.yml` aggregator, `bootstrap.yml`, `common.yml`, `kopia.yml`                  |
 | `roles/common/`       | Baseline packages, hostname/timezone, login user, omz+p10k shell, ghostty terminfo |
 | `roles/hardening/`    | devsec ssh/os hardening + opt-in ufw firewall (unassigned yet)                     |
+| `roles/kopia/`        | Kopia client: per-host S3 repo, retention, systemd-timer backup                    |
+| `roles/ollama/`       | Ollama LLM server via the official install script, version pinned                  |
+| `roles/tailscale/`    | Tailnet join as a tagged device (no subnet routes), LAN resolver kept              |
 | `ci/requirements.txt` | Pip pins for CI/local tooling (Renovate `pip_requirements`)                        |
 | `ci/fetch_op_ssh.py`  | Pull deploy key + known_hosts from 1Password Connect                               |
 | `.gitlab-ci.yml`      | Validate always; check/apply when Connect token can read secrets                   |

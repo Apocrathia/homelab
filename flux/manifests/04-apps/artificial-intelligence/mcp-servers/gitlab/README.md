@@ -22,11 +22,10 @@ GitLab API integration via Model Context Protocol (native streamable HTTP).
 `REMOTE_AUTHORIZATION=true`). Prefer this over stdio/agentgateway for
 concurrency; stdio session leaks under Renovate change-summary load.
 
-Sessions are multi-pod safe: with 3 replicas and upstream's default per-pod
-in-memory session state, a request landing on the wrong pod 404s its session
-(the mr-change-summary failures). `OAUTH_STATELESS_MODE=true` seals session
-identity into the `Mcp-Session-Id` header instead, so any replica can serve
-any session.
+Sessions are multi-pod safe: with upstream's default per-pod in-memory
+session state, a request landing on the wrong pod 404s its session.
+`OAUTH_STATELESS_MODE=true` seals session identity into the
+`Mcp-Session-Id` header instead, so any replica can serve any session.
 
 ### Environment Variables
 
@@ -55,6 +54,19 @@ forwards `Private-Token` / `Authorization` from the caller.
 
 - Network: Cilium CCNP `mcp-server-isolation` gates ingress
 - Auth: per-request GitLab PAT; no shared server-side token in the pod env
+
+## Troubleshooting
+
+```bash
+# MCPServer resource status
+kubectl get mcpserver.kagent.dev gitlab -n mcp-gitlab
+
+# Pod status
+kubectl get pods -n mcp-gitlab
+
+# Server logs
+kubectl logs -n mcp-gitlab -l app.kubernetes.io/name=gitlab --tail=50
+```
 
 ## References
 

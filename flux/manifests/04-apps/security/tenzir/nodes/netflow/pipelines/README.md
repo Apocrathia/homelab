@@ -1,5 +1,7 @@
 # Pipelines (netflow)
 
+> **Navigation**: [← Netflow node](../README.md)
+
 One `.tql` file per Tenzir pipeline that `netflow` runs, plus
 `ocsf-archive.tql` (the compaction time rule's `pipeline`) and
 `netflow-attest-verify.tql` (the record_integrity read-back walk).

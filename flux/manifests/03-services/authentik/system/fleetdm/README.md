@@ -1,5 +1,7 @@
 # fleetdm (Authentik system unit)
 
+> **Navigation**: [← Back to Authentik system README](../README.md)
+
 The tofu-managed home for Fleet DM's SAML + SCIM stack: the staff SAML
 provider (Fleet's console login path — JIT role sync via the
 `Fleet DM Console Role` mapping, Fleet Premium), the MDM end-user SAML
@@ -27,5 +29,3 @@ CM prunes and the live objects survive for this Workspace to adopt.
 Health flag (2026-10-25): the Fleet SCIM sync threw `ResultTimeout` 5x
 on 2026-10-19; today's full syncs run info-clean with one synced user.
 The sync path is untouched by this migration.
-
-> **Navigation**: [← Back to Authentik system README](../README.md)

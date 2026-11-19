@@ -1,8 +1,8 @@
 ---
 title: "Roll out Agent Substrate for kagent"
-status: active
+status: done
 found_at: 2026-07-24
-updated_at: 2026-07-24
+updated_at: 2026-11-19
 related_issue: docs/issues/agent-substrate-real-environments.md
 area: agents
 ---
@@ -46,6 +46,10 @@ by refining this plan.
 
 ## Decisions
 
+- Deployed state (2026-11-19 sweep): substrate + WorkerPool are live in
+  `ate-system` and kagent runs chart **0.10.6** — the version pairings below
+  are the planning-time GO (0.0.6 ↔ kagent 0.9.12), since superseded by
+  Renovate bumps.
 - Next lap — **plan-first (Heavy tier)** — greenfield two-chart install + kagent
   value changes + heavy data plane; ordering and capacity matter. Reversible:
   plan is a doc.
@@ -300,8 +304,8 @@ ate-api-server / ate-controller / atenet DNS+router + atelet DaemonSet (×nodes)
   per phase; `helm-deployment` skill for the substrate charts. HITL throughout.
 - Upstream: [Agent Substrate](https://kagent.dev/docs/kagent/examples/agent-substrate),
   [Agent Harness](https://kagent.dev/docs/kagent/examples/agent-harness).
-  Research agents: [compat](84210d03-da46-4f0f-b2e9-8c1558de0388),
-  [SRE](761eac71-bd3e-4868-b7af-9fcb8f9a5c8f),
-  [repo](3caeefde-b174-4fb2-aaaf-25bc888ff75f),
-  [gVisor](285ac608-5650-40da-83a4-dc08e0bc2ae1),
-  [Kyverno/PSA](4442d939-de8c-4d8c-86a4-1d2197c9623a).
+  Research agents (session ids, historical): compat 84210d03-da46-4f0f-b2e9-8c1558de0388,
+  SRE 761eac71-bd3e-4868-b7af-9fcb8f9a5c8f,
+  repo 3caeefde-b174-4fb2-aaaf-25bc888ff75f,
+  gVisor 285ac608-5650-40da-83a4-dc08e0bc2ae1,
+  Kyverno/PSA 4442d939-de8c-4d8c-86a4-1d2197c9623a.

@@ -1,5 +1,7 @@
 # terraform-service-account (Authentik system unit)
 
+> **Navigation**: [← Back to Authentik system README](../README.md)
+
 The tofu-managed home for the tofu tier's own bootstrap identity: the
 `terraform-workspace-manager` role, the `ak-terraform` service account,
 and the API token every authentik tofu workspace — this one included —
@@ -18,5 +20,3 @@ the role back to 30 permissions and 403 the whole tier.
 Retired the `blueprints/terraform-service-account.yaml` ConfigMap — the
 blueprint CM prunes and the live objects survive for this workspace to
 adopt.
-
-> **Navigation**: [← Back to Authentik system README](../README.md)

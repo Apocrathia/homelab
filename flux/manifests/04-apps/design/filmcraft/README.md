@@ -1,19 +1,14 @@
 # FilmCraft
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/filmcraft)
-- [ArtCraft](https://getartcraft.com/apps/filmcraft)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 FilmCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
-**URL:** <https://filmcraft.gateway.services.apocrathia.com>
+**URL:** `https://filmcraft.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container into a Longhorn PVC and served by nginx. No backend, no database.
 
@@ -35,3 +30,8 @@ kubectl logs -n filmcraft -l app.kubernetes.io/name=filmcraft -c fetch-filmcraft
 kubectl logs -n filmcraft -l app.kubernetes.io/name=filmcraft
 kubectl describe deployment -n filmcraft filmcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/filmcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/filmcraft)** - ArtCraft app listing

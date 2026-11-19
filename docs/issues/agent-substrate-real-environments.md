@@ -14,15 +14,17 @@ slice: hitl
 
 ## Problem / desired state
 
-Agents today are mostly chatbot inference plus MCP tool calls. There is no
-Agent Substrate install, no `WorkerPool`, and no `SandboxAgent` /
-`AgentHarness` targeting substrate. That caps what agents can do (no durable
-sandbox, no gVisor actor lifecycle, no golden snapshots).
+Shipped (verified in tree 2026-11-19): Agent Substrate + the
+`kagent-default` WorkerPool run in `ate-system`, kagent (0.10.6) carries the
+substrate integration values, and the `hello-substrate` smoke `SandboxAgent`
+is deployed — the original "no substrate, no WorkerPool" problem is closed.
 
-Desired state: Agent Substrate runs in-cluster; kagent controller has
-substrate integration enabled; at least one Declarative `SandboxAgent` and/or
-`AgentHarness` proves a real environment (shell/tools inside the sandbox, not
-just LLM + remote MCP).
+Remaining acceptance residue:
+
+- The operator/agent docs note on substrate vs plain Declarative pods
+  (lifecycle, snapshots, WorkerPool slots, Go-only, footprint, PSA).
+- The deferred Hermes `AgentHarness` (was gated on a stable kagent 0.10;
+  kagent is now 0.10.6 — re-triage the deferral).
 
 Upstream:
 [Agent Substrate](https://kagent.dev/docs/kagent/examples/agent-substrate),

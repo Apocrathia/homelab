@@ -30,7 +30,9 @@ A: The homelab must grow. ¯\\_(ツ)_/¯
 - **Ephemeral Chat**: Decentralized P2P chat with the memory of a goldfish
 - **Visualizations**: Particle map and theme switcher
 
-## Access
+## Configuration
+
+### Access
 
 - **URL**: https://hypermind.gateway.services.apocrathia.com
 - **Auth**: Authentik SSO (proxy mode)

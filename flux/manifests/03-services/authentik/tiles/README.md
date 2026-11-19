@@ -28,8 +28,9 @@ witness ids never appear in git.
 
 ## Remaining blueprints
 
-`blueprints/` keeps the error-and-secret lane only (okta source, terraform
-service account); the kubernetes blueprint lives in `kube-auth/`, the
+`blueprints/` keeps the error-and-secret lane only (okta source, the
+openclaw-cleanup one-shot); the kubernetes OIDC provider is tofu-managed in
+`system/kubernetes/` with its k8s-side RBAC in `kube-auth/`, the
 access-tier groups and webauthn MFA stages in `system/`, tak-ldap in
 `tak/`'s own dir. All four of the latter are tofu-adopted now — the
 tiles' `data.authentik_group` lookups bind the same live group rows the

@@ -1,3 +1,11 @@
+---
+title: Dedicated RustFS for Agent Substrate snapshots
+status: done
+found_at: 2026-07-25
+updated_at: 2026-11-19
+area: storage
+---
+
 # Dedicated RustFS for Agent Substrate snapshots
 
 ## Goal

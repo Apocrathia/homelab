@@ -1,19 +1,14 @@
 # PhotoCraft
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/photocraft)
-- [ArtCraft](https://getartcraft.com/apps/photocraft)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 PhotoCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
-**URL:** <https://photocraft.gateway.services.apocrathia.com>
+**URL:** `https://photocraft.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container into a Longhorn PVC and served by nginx. No backend, no database.
 
@@ -35,3 +30,8 @@ kubectl logs -n photocraft -l app.kubernetes.io/name=photocraft -c fetch-photocr
 kubectl logs -n photocraft -l app.kubernetes.io/name=photocraft
 kubectl describe deployment -n photocraft photocraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/photocraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/photocraft)** - ArtCraft app listing

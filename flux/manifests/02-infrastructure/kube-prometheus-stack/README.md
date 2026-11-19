@@ -19,21 +19,21 @@ The kube-prometheus-stack provides a complete monitoring platform with:
 
 ### Core Components
 
-#### Prometheus
+**Prometheus**
 
 - **Metrics Collection**: Scrapes metrics from Kubernetes components
 - **Time Series Storage**: Efficient storage for time series data
 - **Query Language**: PromQL for data querying and analysis
 - **Alerting Engine**: Rule-based alerting system
 
-#### Grafana
+**Grafana**
 
 - **Dashboards**: Pre-built and custom dashboards
 - **Data Sources**: Multiple data source support
 - **Alerting**: Integrated alerting with Prometheus
 - **User Management**: Authentication and authorization
 
-#### Alertmanager
+**Alertmanager**
 
 - **Alert Routing**: Configurable alert routing and grouping
 - **Notification**: Multiple notification channels
@@ -42,19 +42,19 @@ The kube-prometheus-stack provides a complete monitoring platform with:
 
 ### Supporting Components
 
-#### Node Exporter
+**Node Exporter**
 
 - **System Metrics**: Node-level system metrics
 - **Hardware Monitoring**: CPU, memory, disk, network metrics
 - **Process Information**: System process monitoring
 
-#### Kube State Metrics
+**Kube State Metrics**
 
 - **Kubernetes Objects**: State metrics for Kubernetes objects
 - **Resource Usage**: Pod, node, deployment metrics
 - **Cluster State**: Overall cluster health metrics
 
-#### Prometheus Operator
+**Prometheus Operator**
 
 - **CRD Management**: Custom resources for Prometheus components
 - **Configuration Management**: Declarative configuration
@@ -98,7 +98,7 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 
 ### Grafana Access
 
-- **Internal URL**: `http://grafana.grafana-system.svc:80`
+- **Internal URL**: `http://grafana.prometheus-system.svc:80`
 - **External Access**: Via Gateway API with Authentik authentication
 - **Admin Credentials**: Stored in 1Password `local-account` item
 
@@ -215,10 +215,10 @@ Resource limits and requests are configured in `helmrelease.yaml`.
 
    ```bash
    # Check Grafana pods
-   kubectl get pods -n grafana-system
+   kubectl get pods -n prometheus-system
 
    # Check Grafana logs
-   kubectl logs -n grafana-system deployment/grafana
+   kubectl logs -n prometheus-system deployment/grafana
    ```
 
 3. **Alertmanager Issues**
@@ -236,14 +236,14 @@ Resource limits and requests are configured in `helmrelease.yaml`.
 ```bash
 # Check all components
 kubectl get pods -n prometheus-system
-kubectl get pods -n grafana-system
+kubectl get pods -n prometheus-system
 
 # Check Prometheus health
 kubectl port-forward -n prometheus-system svc/prometheus-k8s 9090:9090
 curl http://localhost:9090/-/healthy
 
 # Check Grafana health
-kubectl port-forward -n grafana-system svc/grafana 3000:80
+kubectl port-forward -n prometheus-system svc/grafana 3000:80
 curl http://localhost:3000/api/health
 ```
 
@@ -254,7 +254,7 @@ curl http://localhost:3000/api/health
 kubectl logs -n prometheus-system statefulset/prometheus-k8s
 
 # Grafana logs
-kubectl logs -n grafana-system deployment/grafana
+kubectl logs -n prometheus-system deployment/grafana
 
 # Alertmanager logs
 kubectl logs -n prometheus-system -l app.kubernetes.io/name=alertmanager

@@ -22,6 +22,19 @@ Web scraping and content extraction via self-hosted Firecrawl backend.
 
 Requires self-hosted Firecrawl deployment in `firecrawl` namespace.
 
+## Troubleshooting
+
+```bash
+# MCPServer resource status
+kubectl get mcpserver.kagent.dev firecrawl -n mcp-firecrawl
+
+# Pod status
+kubectl get pods -n mcp-firecrawl
+
+# Server logs
+kubectl logs -n mcp-firecrawl -l app.kubernetes.io/name=firecrawl --tail=50
+```
+
 ## References
 
 - **[Firecrawl Documentation](https://docs.firecrawl.dev/)** - Primary documentation source

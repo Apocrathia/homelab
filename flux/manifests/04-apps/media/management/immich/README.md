@@ -20,7 +20,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### immich-secrets (`vaults/Secrets/items/immich-secrets`)
+**immich-secrets** (`vaults/Secrets/items/immich-secrets`)
 
 - `username`: PostgreSQL database username (e.g., `immich`)
 - `password`: PostgreSQL database password

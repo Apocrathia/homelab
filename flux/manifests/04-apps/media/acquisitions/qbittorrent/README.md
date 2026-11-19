@@ -20,7 +20,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### qbittorrent-secrets (`vaults/Secrets/items/qbittorrent-secrets`)
+**qbittorrent-secrets** (`vaults/Secrets/items/qbittorrent-secrets`)
 
 - `vpn-provider`: VPN service provider name
 - `vpn-type`: VPN protocol type

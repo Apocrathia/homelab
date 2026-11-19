@@ -8,7 +8,8 @@ Platform services that provide core functionality to the homelab cluster.
 
 ### Core Services
 
-- [**Gateway**](gateway/README.md) - Gateway API implementation for traffic management
+- [**Gateway**](gateway/README.md) - `main-gateway` edge listener and its policies (Cilium LB IPAM + L2)
+- [**Envoy Gateway**](envoy/) - Gateway API controller serving the `envoy` GatewayClass
 - [**Tailscale**](tailscale/README.md) - Kubernetes operator for Tailscale ingress, egress, and subnet routing
 - [**Authentik**](authentik/README.md) - Identity and access management with SSO
 - [**Cert Manager**](cert-manager/README.md) - Automated certificate management
@@ -17,10 +18,7 @@ Platform services that provide core functionality to the homelab cluster.
 
 ### Monitoring and Observability
 
-- [**Observability Stack**](observability/README.md) - LGTM stack (Loki, Grafana, Tempo, Mimir)
-  - [**Loki**](observability/loki/README.md) - Log aggregation and storage
-  - [**Mimir**](observability/mimir/README.md) - Long-term metrics storage
-  - [**Alloy**](observability/alloy/) - Log and metrics collection
+- [**Observability Stack**](observability/README.md) - LGTM stack (Loki, Grafana, Tempo, Mimir), Alloy collectors, OTel operator, Gatus, and Prometheus extras — see its README for the full component index
 
 ### Security and Compliance
 
@@ -28,22 +26,25 @@ Platform services that provide core functionality to the homelab cluster.
 - [**Tetragon**](tetragon/README.md) - eBPF runtime security (kernel-level detection)
 - [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
 - [**External Secrets Operator**](external-secrets/README.md) - Integration with external secret management systems
+- [**Chaos Mesh**](chaos-mesh/README.md) - Chaos engineering platform (namespace-gated experiments)
 
 ### Data Services
 
-- [**PostgreSQL Operator**](postgresql/README.md) - CloudNativePG operator for Kubernetes-native PostgreSQL management with enterprise features
+- [**PostgreSQL Operator**](postgresql/README.md) - CloudNativePG operator for Kubernetes-native PostgreSQL
+- [**ClickHouse Operator**](clickhouse/README.md) - Altinity operator (clusters live with the Tenzir stack)
 - [**Backup**](backup/README.md) - Kopia backup plane (kopiur ClusterRepository + workload policies)
 
 ### Development and Operations
 
 - [**Headlamp**](headlamp/README.md) - Kubernetes web UI
-- [**GitLab Integration**](gitlab/) - GitLab Agent and Runner
+- **GitLab Integration** - GitLab Agent and Runner
   - [**Agent**](gitlab/agent/README.md) - Kubernetes cluster agent
   - [**Runner**](gitlab/runner/README.md) - CI/CD runner
 - [**Housekeeping**](housekeeping/README.md) - Cluster maintenance automation
 - [**Renovate Operator**](renovate-operator/README.md) - mogenius Renovate operator for automated dependency updates
 - [**Tuppr**](tuppr/README.md) - Automated Talos Linux and Kubernetes upgrade controller
 - [**Crossplane**](crossplane/README.md) - Control plane for Kubernetes-native management of external resources, with the Crossview web dashboard
+- [**LeaderWorkerSet**](leaderworkerset/README.md) - Leader/worker workload API used by `llm-d` inference
 
 ## Architecture
 

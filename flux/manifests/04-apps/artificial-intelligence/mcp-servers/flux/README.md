@@ -71,6 +71,19 @@ The Flux MCP server provides these capabilities:
 
 For the complete list of tools, see the [official documentation](https://fluxcd.control-plane.io/mcp/tools/).
 
+## Troubleshooting
+
+```bash
+# MCPServer resource status
+kubectl get mcpserver.kagent.dev flux -n mcp-flux
+
+# Pod status
+kubectl get pods -n mcp-flux
+
+# Server logs
+kubectl logs -n mcp-flux -l app.kubernetes.io/name=flux --tail=50
+```
+
 ## References
 
 - [Flux MCP Server](https://fluxcd.control-plane.io/mcp/) - Official Flux MCP documentation

@@ -26,7 +26,7 @@ Baseline template demonstrating Authentik SSO, Gateway API routing, and SMB stor
 
 ### [Design](design/README.md)
 
-PhotoCraft, VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft, FigCraft, TextureCraft, MaterialCraft, SoundCraft, CADCraft, Craft Anything, and SolidCraft — thirteen ArtCraft creative tools plus one independent CAD app, all in the browser.
+PhotoCraft, VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft, FigCraft, TextureCraft, MaterialCraft, SoundCraft, CADCraft, Craft Anything, SolidCraft, Klecks, and BenchUp3D — thirteen ArtCraft creative tools, an independent CAD app, a browser painter, and a 3D modeler, all in the browser.
 
 ### [Artificial Intelligence](artificial-intelligence/README.md)
 
@@ -34,7 +34,7 @@ LiteLLM, OpenWebUI, kagent, Hermes Agent, MCP servers, and related tooling.
 
 ### [Games](games/README.md)
 
-ArchiSteamFarm for card farming, ROMM for retro game management.
+ArchiSteamFarm for card farming, ROMM for retro game management, Moonlight Web for browser game streaming, ES-DE CronJobs (Skyscraper scraping, rom-audit, theme mirroring), and the AMP exporter.
 
 ### [Home](home/README.md)
 
@@ -42,11 +42,11 @@ Companion, Mealie, Meshtastic, Terminus, and Uptime Kuma.
 
 ### [Management](management/README.md)
 
-JetKVM, kuber-ios, UnPoller, and operational scripts.
+JetKVM, kuber-ios, UnPoller, LibreSpeed, the CDN, Fleet device management, and operational scripts.
 
 ### [Media](media/README.md)
 
-Plex, Jellyfin, the Arr stack, and download clients.
+Jellyfin, the Arr stack, download clients, and browser-based media tools.
 
 ### [Productivity](productivity/README.md)
 
@@ -70,7 +70,7 @@ Applications deploy via the `generic-app` Helm chart, which handles:
 - 1Password secrets
 - Security contexts
 
-See [generic-app chart](../../helm/generic-app/README.md) for details.
+See [generic-app chart](../../../helm/generic-app/README.md) for details.
 
 ## Structure
 
@@ -78,7 +78,7 @@ Each application follows one of two patterns:
 
 **Generic-App Chart (preferred):**
 
-```
+```text
 app-name/
 ├── README.md
 ├── kustomization.yaml
@@ -88,7 +88,7 @@ app-name/
 
 **Custom Manifests (legacy):**
 
-```
+```text
 app-name/
 ├── README.md
 ├── kustomization.yaml
@@ -119,5 +119,5 @@ kubectl get pods -n <app-namespace> -l app=outpost
 
 ## References
 
-- **[Generic-App Chart](../../helm/generic-app/README.md)** - Reusable Helm chart
+- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Reusable Helm chart
 - **[Authentik Outpost](https://docs.goauthentik.io/docs/outposts/)** - SSO integration

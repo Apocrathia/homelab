@@ -1,5 +1,7 @@
 # Tdarr custom flows
 
+> **Navigation**: [← Tdarr](../README.md)
+
 Custom flow set for CPU-only HEVC transcoding across Movies, TV, and Anime libraries. Four flows handle the full pipeline from input validation through notification.
 
 ## Flow architecture
@@ -347,3 +349,7 @@ If the database becomes corrupted (e.g., from concurrent writes), Tdarr will rec
 4. **Flow not executing**: Confirm libraries are set to use flows (not plugins)
 5. **goToFlow errors**: Flow IDs are pre-wired in the JSON files. If Tdarr reassigns IDs on import, update the goToFlow nodes to match
 6. **CPU encoding failures**: Verify the ffmpeg command has `-preset` as a top-level argument, not inside `-x265-params`
+
+## References
+
+- [Tdarr documentation](https://docs.tdarr.io/) — flows, plugins, and node setup

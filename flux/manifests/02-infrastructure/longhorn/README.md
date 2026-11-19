@@ -35,21 +35,11 @@ migration note below):
 
 Values live in the vault item, not in docs.
 
-## Storage Class
+## Persistent Volume Claims
 
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: example-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 10Gi
-```
+Workloads request Longhorn storage with a `PersistentVolumeClaim` using
+`storageClassName: longhorn`; sizes and access modes live with each app's
+manifest.
 
 ## Backup
 
@@ -179,4 +169,4 @@ kubectl get backuptargets -n longhorn-system
 ## References
 
 - **[Longhorn Documentation](https://longhorn.io/docs/)** - Official docs
-- **[Backup and Restore](https://longhorn.io/docs/1.6.0/snapshots-and-backups/)** - Backup guide
+- **[Backup and Restore](https://longhorn.io/docs/snapshots-and-backups/)** - Backup guide

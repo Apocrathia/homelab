@@ -2,7 +2,7 @@
 
 This directory contains the monitoring configuration for etcd running on Talos control plane nodes.
 
-> **Navigation**: [← Back to kube-prometheus-stack README](../README.md)
+> **Navigation**: [← Back to Observability README](../../README.md)
 
 ## Overview
 
@@ -24,7 +24,7 @@ Configures Prometheus to scrape etcd metrics directly from Talos nodes:
 
 Monitors etcd performance and availability:
 
-#### Performance Alerts
+**Performance Alerts**
 
 - **EtcdSlowRequests**: WAL fsync taking > 0.5s (warning)
 - **EtcdHighRequestLatency**: Request latency > 0.1s (warning)
@@ -32,7 +32,7 @@ Monitors etcd performance and availability:
 - **EtcdHighMemoryUsage**: Memory usage > 80% of quota limit (warning)
 - **EtcdTooManyOpenConnections**: High network traffic (warning)
 
-#### Availability Alerts
+**Availability Alerts**
 
 - **EtcdLeaderChanges**: > 2 leader changes per hour (critical)
 - **EtcdClusterDown**: etcd cluster unavailable (critical)
@@ -113,10 +113,10 @@ increase(etcd_server_read_indexes_failed_total[5m])
 ## References
 
 - **[etcd Documentation](https://etcd.io/docs/)** - Primary documentation source
-- **[Talos etcd Guide](https://www.talos.dev/v1.9/talos-guides/configuration/editing-machine-configuration/)** - etcd configuration on Talos
+- **[Talos etcd Guide](https://www.talos.dev/talos-guides/configuration/editing-machine-configuration/)** - etcd configuration on Talos
 
 ## Related Configuration
 
 - **Talos etcd tuning**: See `talos/patches/unified-patch.yaml`
-- **Prometheus configuration**: See parent directory `helmrelease.yaml`
+- **Prometheus configuration**: See `02-infrastructure/kube-prometheus-stack/helmrelease.yaml`
 - **Alertmanager routing**: Configured in main kube-prometheus-stack

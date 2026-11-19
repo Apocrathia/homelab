@@ -44,5 +44,5 @@ kubectl get pods -n authentik | grep archiveteam
 ## References
 
 - **[ArchiveTeam Warrior Wiki](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior)** - Official documentation
-- **[Docker Usage Guide](<https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_(container_only)>)** - Container deployment
+- **[Docker Usage Guide](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_%28container_only%29)** - Container deployment
 - **[Active Projects](https://wiki.archiveteam.org/index.php?title=Warrior_projects)** - Current archiving projects

@@ -33,7 +33,7 @@ This deployment includes:
 
 ### Secrets
 
-Create a Kubernetes secret `servarr-mcp-secrets` in the `mcp-servarr` namespace with:
+The `OnePasswordItem` `servarr-mcp-secrets` in the `mcp-servarr` namespace supplies:
 
 - `sonarr-url`: Sonarr base URL (e.g., `http://sonarr.media.svc.cluster.local:8989`)
 - `sonarr-api-key`: Sonarr API key

@@ -1,19 +1,14 @@
 # Craft Anything
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/craft-anything)
-- [ArtCraft](https://getartcraft.com/apps/craft-anything)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 Craft Anything — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
-**URL:** <https://craft-anything.gateway.services.apocrathia.com>
+**URL:** `https://craft-anything.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container into a Longhorn PVC and served by nginx. No backend, no database.
 
@@ -35,3 +30,8 @@ kubectl logs -n craft-anything -l app.kubernetes.io/name=craft-anything -c fetch
 kubectl logs -n craft-anything -l app.kubernetes.io/name=craft-anything
 kubectl describe deployment -n craft-anything craft-anything
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/craft-anything)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/craft-anything)** - ArtCraft app listing

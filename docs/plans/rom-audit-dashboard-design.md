@@ -1,8 +1,8 @@
 ---
 title: "rom-audit — Grafana dashboard"
-status: active
+status: done
 found_at: 2026-07-29
-updated_at: 2026-07-29
+updated_at: 2026-11-19
 area: apps
 ---
 

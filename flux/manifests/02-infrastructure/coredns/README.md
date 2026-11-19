@@ -10,7 +10,7 @@ Talos deploys CoreDNS during cluster bootstrap but doesn't expose replica config
 
 ## Configuration
 
-- **Replicas**: 4 (configured in `deployment-patch.yaml`)
+- **Replica count**: configured in `deployment-patch.yaml`
 
 ## Notes
 

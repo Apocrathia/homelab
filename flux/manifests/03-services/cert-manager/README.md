@@ -18,20 +18,20 @@ cert-manager automates certificate management with:
 
 ### Core Components
 
-#### cert-manager Controller
+**cert-manager Controller**
 
 - **Certificate Management**: Manages Certificate resources
 - **Issuer Management**: Handles Issuer and ClusterIssuer resources
 - **Challenge Solving**: Handles ACME challenge responses
 - **Certificate Lifecycle**: Manages certificate issuance and renewal
 
-#### cainjector
+**cainjector**
 
 - **Webhook Injection**: Injects CA data into webhooks
 - **Secret Management**: Manages CA certificate secrets
 - **Trust Bundle Management**: Manages trusted certificate bundles
 
-#### webhook
+**webhook**
 
 - **Validation**: Validates Certificate and Issuer resources
 - **Admission Control**: Kubernetes admission webhook
@@ -39,21 +39,21 @@ cert-manager automates certificate management with:
 
 ### Custom Resources
 
-#### Certificate
+**Certificate**
 
 - **TLS Certificates**: X.509 certificate management
 - **Private Keys**: Automatic private key generation
 - **Subject Alternative Names**: Support for multiple DNS names
 - **Key Usage**: Configurable certificate usage extensions
 
-#### Issuer/ClusterIssuer
+**Issuer/ClusterIssuer**
 
 - **ACME Issuers**: Let's Encrypt integration
 - **CA Issuers**: Private certificate authority
 - **Self-Signed Issuers**: Self-signed certificate generation
 - **Vault Issuers**: HashiCorp Vault integration
 
-#### CertificateRequest
+**CertificateRequest**
 
 - **Request Processing**: Internal certificate request processing
 - **Status Tracking**: Certificate request status management
@@ -95,53 +95,21 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 
 ### ClusterIssuers
 
-#### Let's Encrypt Staging
+All three issuers live in `cluster-issuer.yaml` (don't duplicate their specs
+here — they drift):
 
-```yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-staging
-spec:
-  acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: admin@apocrathia.com
-    privateKeySecretRef:
-      name: letsencrypt-staging
-    solvers:
-      - dns01:
-          cloudflare:
-            email: admin@apocrathia.com
-            apiTokenSecretRef:
-              name: cloudflare-api-token-secret
-              key: api-token
-```
+| Issuer                | Purpose                                               |
+| --------------------- | ----------------------------------------------------- |
+| `letsencrypt-staging` | Staging ACME — test issuance before switching to prod |
+| `letsencrypt-prod`    | Production ACME certificates                          |
+| `self-signed`         | Self-signed CA for internal/dev certificates          |
 
-#### Let's Encrypt Production
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@apocrathia.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-      - dns01:
-          cloudflare:
-            email: admin@apocrathia.com
-            apiTokenSecretRef:
-              name: cloudflare-api-token-secret
-              key: api-token
-```
+Both Let's Encrypt issuers solve DNS-01 challenges against Cloudflare with the
+`cloudflare-api-token-secret` 1Password-backed secret (`api-token` field).
 
 ### Certificate Examples
 
-#### Wildcard Certificate
+**Wildcard Certificate**
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -159,23 +127,12 @@ spec:
     - "*.apocrathia.com"
 ```
 
-#### Gateway Certificate
+**Gateway Certificate**
 
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: gateway-services-tls
-  namespace: cilium-secrets
-spec:
-  secretName: cert-manager-gateway-services-apocrathia-com-tls
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  commonName: "*.gateway.services.apocrathia.com"
-  dnsNames:
-    - "*.gateway.services.apocrathia.com"
-```
+The `main-gateway` wildcard lives in
+[`03-services/gateway/gateway-cert.yaml`](../gateway/gateway-cert.yaml):
+`gateway-services-apocrathia-com-tls` in namespace `cert-manager`, issued by
+`letsencrypt-prod`, consumed by the Gateway listener through a ReferenceGrant.
 
 ## Integration with Homelab
 
@@ -188,7 +145,7 @@ spec:
 
 ### Application Integration
 
-- **Ingress TLS**: Automatic TLS for ingress resources
+- **Gateway API TLS**: Certificates for Gateway listeners and routes (this repo uses Gateway API only — no Ingress)
 - **Service Certificates**: mTLS between services
 - **Client Authentication**: Client certificate validation
 - **Certificate Authority**: Private CA for internal services

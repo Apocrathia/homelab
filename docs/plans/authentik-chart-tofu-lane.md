@@ -1,8 +1,8 @@
 ---
 title: "Authentik chart→tofu lane — retire the generic-app blueprint ConfigMaps"
-status: draft
+status: done # shipped via chart 0.0.87-0.0.91 (inline HCL lane, 0.0.88 default flip + blueprint retirement, 0.0.90 outpost parity)
 found_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-11-19
 area: helm
 ---
 
@@ -44,7 +44,7 @@ live-proven merge gate (recipe §8), no recreate, no blip, nobody re-logs in.
   `kube-auth/`) — they stay.
 - SAML/SCIM oddballs (fleetdm) — file-pair tier B, already deferred.
 
-## Current state (grounded 2026-10-18)
+## Current state (grounded 2026-10-18 — planning-time snapshot; the lane shipped in 0.0.87–0.0.91)
 
 - Chart: `0.0.86`. Two authentik lanes in `templates/`:
   - blueprint: `authentik-{proxy,oidc,bookmark}-blueprint.yaml` render

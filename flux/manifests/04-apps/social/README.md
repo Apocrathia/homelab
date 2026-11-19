@@ -4,6 +4,13 @@ Community and social networking applications.
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
+## Overview
+
+Community, chat, and field-coordination services live here. Deployed via
+Flux; external access goes through the `main-gateway` with Gateway API
+HTTPRoutes, and app routes follow the `<app>.gateway.services.apocrathia.com`
+convention (Matrix also serves `matrix.apocrathia.com` for federation).
+
 ## Applications
 
 ### [Hypermind](./hypermind/README.md)
@@ -18,9 +25,11 @@ Lemmy UI frontend for the lemmy.ml instance.
 
 Matrix homeserver (Synapse) with SSO delegated to Matrix Authentication Service, upstreamed to Authentik OIDC.
 
-### [Sable](./matrix/README.md)
+### Sable
 
-Sable — Discord-like OIDC-native Matrix client (Rust + Svelte). Deployed alongside Element in the matrix namespace.
+Sable — Discord-like OIDC-native Matrix client (Rust + Svelte). Deployed
+alongside Element in the matrix namespace; documented in the
+[Matrix README](./matrix/README.md) (no separate doc).
 
 ### [Mumble](./mumble/README.md)
 
@@ -36,4 +45,4 @@ Self-hosted web IRC client with persistent connections and message history.
 
 ## References
 
-- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Application deployment template
+- **[Generic-App Chart](../../../../helm/generic-app/README.md)** - Application deployment template

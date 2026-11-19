@@ -2,6 +2,8 @@
 
 Java/Spring MCP server using the Discord API (JDA). Deployed as kmcp MCPServer `discord` in `mcp-discord`.
 
+> **Navigation**: [← Back to MCP Servers README](../README.md)
+
 homelab-agent references a subset of tools via `RemoteMCPServer` in the `kagent` namespace.
 
 ## Configuration
@@ -12,11 +14,24 @@ homelab-agent references a subset of tools via `RemoteMCPServer` in the `kagent`
 - **Guild**: Optional field `discord-guild-id` on the same 1Password item — exposed as `DISCORD_GUILD_ID` so guild-scoped tools do not require `guildId` on every call.
 - **Secrets**: The `homelab-agent-secrets` Secret is mounted read-only; the startup command maps `discord-token` and `discord-guild-id` to `DISCORD_TOKEN` and `DISCORD_GUILD_ID`.
 
-Coordinate any Discord A2A bridge work with [the upstream A2A issue](../../../../../../../docs/issues/discord-integration-upstream-a2a.md).
+Coordinate any Discord A2A bridge work with [the upstream A2A issue](../../../../../../docs/issues/discord-integration-upstream-a2a.md).
 
 ## Internal URL
 
 `http://discord.mcp-discord.svc.cluster.local:8080/mcp`
+
+## Troubleshooting
+
+```bash
+# MCPServer resource status
+kubectl get mcpserver.kagent.dev discord -n mcp-discord
+
+# Pod status
+kubectl get pods -n mcp-discord
+
+# Server logs
+kubectl logs -n mcp-discord -l app.kubernetes.io/name=discord --tail=50
+```
 
 ## References
 

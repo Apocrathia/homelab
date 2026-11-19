@@ -1,11 +1,6 @@
 # Ruffle
 
-[← Media Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/ruffle-rs/ruffle)
-- [Website](https://ruffle.rs)
+> **Navigation**: [← Media Apps](../README.md)
 
 ## Overview
 
@@ -23,3 +18,8 @@ Authentik proxy.
 kubectl get pods -n ruffle
 kubectl logs -n ruffle -l app.kubernetes.io/name=ruffle -c fetch-ruffle
 ```
+
+## References
+
+- **[GitHub](https://github.com/ruffle-rs/ruffle)** - Source code and issues
+- **[Website](https://ruffle.rs)** - Project website

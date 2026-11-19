@@ -1,8 +1,10 @@
 # kagent
 
-AI agent orchestration platform for managing and deploying AI agents in Kubernetes.
-
 > **Navigation**: [← Back to AI README](../README.md)
+
+## Overview
+
+AI agent orchestration platform for managing and deploying AI agents in Kubernetes.
 
 ## Components
 

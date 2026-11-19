@@ -2,6 +2,8 @@
 
 Prometheus scrapes SNMP devices (UPS, PDU, switches) through snmp-exporter.
 
+> **Navigation**: [← Back to Observability README](../../README.md)
+
 ## Files
 
 | File                 | What it does                                           |
@@ -58,7 +60,7 @@ spec:
       replacement: snmp-exporter.prometheus-system.svc:9116
 ```
 
-Add it to `kustomization.yaml`, then `kubectl apply -k .`
+Add it to `kustomization.yaml`; Flux picks it up on the next reconcile (`flux reconcile kustomization services-observability`).
 
 ## Auth profiles
 

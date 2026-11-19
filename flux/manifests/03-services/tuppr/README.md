@@ -140,8 +140,9 @@ kubectl scale deployment tuppr --replicas=1 -n system-upgrade
 
 ## References
 
-- **[Tuppr Documentation](https://github.com/aenix-io/tuppr)** - Official documentation
-- **[Talos Upgrades](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)** - Talos upgrade process
+- **[Tuppr Documentation](https://github.com/home-operations/tuppr)** - Official documentation
+- **[Talos Upgrades](https://www.talos.dev/talos-guides/upgrading-talos/)** - Talos upgrade process
+- [CEL Expression Language](https://cel.dev/)
 
 ## Monitoring
 
@@ -171,9 +172,3 @@ histogram_quantile(0.95, rate(tuppr_health_check_duration_seconds_bucket[5m]))
 - **Single KubernetesUpgrade**: Only one `KubernetesUpgrade` resource allowed per cluster
 - **No Concurrent Execution**: Talos and Kubernetes upgrades cannot run simultaneously
 - **Sequential Processing**: Upgrades are processed one at a time
-
-## Resources
-
-- [Tuppr GitHub Repository](https://github.com/home-operations/tuppr)
-- [Tuppr Documentation](https://github.com/home-operations/tuppr/blob/main/README.md)
-- [CEL Expression Language](https://cel.dev/)

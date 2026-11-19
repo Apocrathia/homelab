@@ -17,7 +17,8 @@ Mimir is deployed in distributed mode with the following components:
 
 ## Storage Configuration
 
-Mimir uses external RustFS for object storage with separate buckets for different data types:
+Mimir uses external RustFS for object storage with separate buckets for
+different data types (create all three in RustFS before first deploy):
 
 - `mimir-blocks`: Time series data blocks
 - `mimir-ruler`: Recording rules and alerting rules
@@ -25,14 +26,13 @@ Mimir uses external RustFS for object storage with separate buckets for differen
 
 ## 1Password Setup
 
-Before deploying Mimir, you need to create the RustFS credentials in 1Password:
+Before deploying Mimir, create the RustFS credentials in 1Password:
 
 1. In your 1Password vault, create a new item called `mimir-secrets`
 2. Add these fields:
    - **Field Label**: `access-key-id` | **Value**: `your-rustfs-access-key`
    - **Field Label**: `access-key-secret` | **Value**: `your-rustfs-secret-key`
-3. The 1Password Connect Operator will automatically create a Kubernetes secret with these values
-4. Flux will use `valuesFrom` to inject these values into the HelmRelease at deployment time
+3. The 1Password Connect Operator materializes the Kubernetes secret; Flux injects the values into the HelmRelease via `valuesFrom`
 
 ## Integration with Prometheus
 
@@ -44,21 +44,9 @@ Prometheus is configured to remote write all metrics to Mimir via the gateway at
 - **Metrics API**: `http://mimir-gateway.mimir-system.svc:80/prometheus/`
 - **External RustFS**: `http://storage.services.apocrathia.com:9009`
 
-## Required Buckets
-
-Before deploying Mimir, ensure these buckets exist in your RustFS server:
-
-- `mimir-blocks`
-- `mimir-ruler`
-- `mimir-alertmanager`
-
 ## Security Notes
 
-- RustFS credentials are stored in 1Password and referenced via 1Password Connect
-- The `mimir-secrets` item should be created in your 1Password vault with:
-  - `access-key-id`: The RustFS access key
-  - `access-key-secret`: The RustFS secret key
-- Flux `valuesFrom` automatically injects these values into the HelmRelease at deployment time
+- RustFS credentials live in the `mimir-secrets` 1Password item (fields above); nothing sensitive is stored in git
 - External RustFS endpoint is configured as `storage.services.apocrathia.com:9009` (no protocol prefix)
 - External RustFS is configured with `insecure: true` for HTTP communication
 - Each storage backend uses separate buckets to avoid conflicts

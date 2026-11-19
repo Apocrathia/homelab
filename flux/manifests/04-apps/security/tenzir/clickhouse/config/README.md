@@ -1,5 +1,7 @@
 # ClickHouse cluster configuration
 
+> **Navigation**: [← ClickHouse datalake](../README.md)
+
 The two XML files here are the source of truth for the tenzir
 ClickHouse cluster's `config.d` content; the cluster CR
 ([`../cluster.yaml`](../cluster.yaml)) no longer carries them inline.

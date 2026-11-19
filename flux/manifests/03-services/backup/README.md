@@ -76,5 +76,5 @@ kubectl get snapshots -A
 kubectl wait --for=condition=Ready clusterrepository/nas-rustfs --timeout=120s
 ```
 
-- **Kopiur docs**: <https://kopiur.home-operations.com/>
-- **Restore drills**: <https://kopiur.home-operations.com/docs/scenarios/verification-drills/>
+- [Kopiur docs](https://kopiur.home-operations.com/)
+- [Restore drills](https://kopiur.home-operations.com/docs/scenarios/verification-drills/)

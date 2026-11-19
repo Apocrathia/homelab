@@ -16,9 +16,10 @@ The role:
    `storage.services.apocrathia.com:9009` (plain HTTP on the LAN), config in
    `/root/.config/kopia`, hosts' own bucket-scoped RustFS user (from
    `kopia-secrets`). Credentials pass via environment, never argv.
-3. **Policy** — retention per backup path (defaults 7 daily / 4 weekly /
-   6 monthly). Hosts never touch the repo's `--global` policy — it is owned
-   elsewhere in the lab.
+3. **Policy** — retention per backup path (GFS defaults in
+   `defaults/main.yml`: `kopia_keep_daily` / `kopia_keep_weekly` /
+   `kopia_keep_monthly`). Hosts never touch the repo's `--global` policy —
+   it is owned elsewhere in the lab.
 4. **Schedule** — `kopia-snapshot.timer` runs a one-shot service with the
    explicit path list (bootstrap-safe; `--all` only finds sources that
    already have snapshots) nightly at 02:00 + 30m randomized delay,
@@ -66,8 +67,9 @@ journalctl -u kopia-snapshot.service
   password; blast-radius separation would require separate buckets and users
   per trust domain.
 - `kopia_package_version` must not exceed the version the rest of the lab
-  runs (0.23.1); newer formats would break older clients. Renovate manages
-  the pin (github-releases datasource).
+  runs; newer formats would break older clients. Renovate manages the pin
+  (github-releases datasource) — read the live value in `defaults/main.yml`,
+  not here.
 - unifi-os is a Debian 13 NUC running UniFi OS Server in podman; it is an
   active kopia target — `/etc`, `/home` (UOS app data in podman volumes under
   `/home/uosserver`), `/opt`, `/var/backups` (`host_vars/unifi-os.yml`).

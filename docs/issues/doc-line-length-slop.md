@@ -78,9 +78,10 @@ cannot wrap internally, so lists win for long content.
   over 80/150 and paragraphs over 320 characters outside code
   fences. Numbers in this issue come from the 2026-10-29 run.
 - Protected paths — `AGENTS.md`/`CLAUDE.md`, `.agents/rules`,
-  `.cursor`, `.claude` — need operator confirmation before their
+  `.claude` — need operator confirmation before their
   cleanup edits per protected-paths.
-- Adapter-duplicated personas exist under `.agents`, `.claude`, and
-  `.cursor`: the same fix must land in every copy.
+- Adapter-duplicated personas exist under `.agents` and `.claude`:
+  the same fix must land in every copy. (`.cursor` was retired and
+  deleted from the repo — 2026-10-22.)
 - Vendored content stays byte-identical (upstream sync rule); the
   caps apply to house-authored docs only.

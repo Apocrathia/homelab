@@ -1,19 +1,14 @@
 # DesignCraft
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/designcraft)
-- [ArtCraft](https://getartcraft.com/apps/designcraft)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 DesignCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
-**URL:** <https://designcraft.gateway.services.apocrathia.com>
+**URL:** `https://designcraft.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container into a Longhorn PVC and served by nginx. No backend, no database.
 
@@ -35,3 +30,8 @@ kubectl logs -n designcraft -l app.kubernetes.io/name=designcraft -c fetch-desig
 kubectl logs -n designcraft -l app.kubernetes.io/name=designcraft
 kubectl describe deployment -n designcraft designcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/designcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/designcraft)** - ArtCraft app listing

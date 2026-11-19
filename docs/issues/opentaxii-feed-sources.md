@@ -17,8 +17,9 @@ OpenTAXII is deployed and bootstrapped (TAXII 2.1 api root + public
 flight (`feat/opentaxii-opencti-connector`). But nothing feeds the TAXII 2.1
 collection, so the staging hub still carries no content.
 
-Research (2026-10-19, primary-source cited:
-`.scratch/opentaxii-setup/research.md`) verified:
+Research (2026-10-19, primary-source cited in the since-deleted
+`.scratch/opentaxii-setup/research.md` — `.scratch` is ephemeral; the
+verified findings are inlined below) verified:
 
 - No reliable anonymous free public TAXII 2.1 feed exists to poll. CIRCL
   `cib.circl.lu` appears defunct (no live endpoint, no archive; UNVERIFIED
@@ -81,8 +82,9 @@ Bootstrap live state: api root `9d2329b4-6a06-4f01-9c94-a2c3e6d1a501`
 of the UUID. Write access needs `is_public_write` (already set) or an
 account (`opentaxii-create-account`; management API only exposes
 `/management/auth` + `/management/health`). POST envelope validation honors
-`allow_custom_properties`. Full source citations in
-`.scratch/opentaxii-setup/research.md`.
+`allow_custom_properties`. Full source citations lived in the
+since-deleted `.scratch/opentaxii-setup/research.md` (git history is the
+archive).
 
 ## Notes
 

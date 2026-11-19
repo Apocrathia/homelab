@@ -2,7 +2,7 @@
 
 Self-hosted monitoring tool for tracking service uptime and performance across multiple protocols.
 
-> **Navigation**: [← Back to Management README](../README.md)
+> **Navigation**: [← Back to Home README](../README.md)
 
 ## Overview
 

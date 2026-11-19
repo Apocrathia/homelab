@@ -32,7 +32,7 @@ This deployment includes:
 
 ### Secrets
 
-Create a Kubernetes secret `truenas-mcp-secrets` in the `mcp-truenas` namespace with:
+The `OnePasswordItem` `truenas-mcp-secrets` in the `mcp-truenas` namespace supplies:
 
 - `truenas-url`: TrueNAS server URL (e.g., `https://truenas.local`)
 - `truenas-api-key`: TrueNAS API key (created in Settings → API Keys)

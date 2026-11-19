@@ -1,7 +1,7 @@
 ---
 title: "Set iconUrl and A2A card metadata on kagent agents"
 kind: feature
-status: blocked
+status: open
 severity: low
 source: human
 found_at: 2026-07-25
@@ -20,8 +20,9 @@ fields for this — `iconUrl`, `documentationUrl`, `version`, and `provider`
 (`organization` + `url`) — which the controller copies onto
 `/.well-known/agent-card.json`.
 
-The pinned chart is `0.9.12`, whose `AgentSpec` has none of these fields, so
-the apiserver rejects them today. They exist as of the `0.10.0-beta` line.
+Unblocked 2026-11-19: the pinned chart is `0.10.6` (fields exist as of the
+`0.10.0` line), so the apiserver accepts them — the icon/docs wiring itself
+is still to do (no in-scope manifest sets `iconUrl` yet).
 
 Desired state: once kagent is on a chart that carries the fields, every
 `Agent` / `SandboxAgent` in the repo advertises at minimum an icon, with

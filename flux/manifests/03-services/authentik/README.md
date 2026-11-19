@@ -22,7 +22,7 @@ This deployment includes:
 ## Access
 
 - **URL**: `https://auth.gateway.services.apocrathia.com`
-- **API**: `https://authentik.authentik-system.svc:9443/api/v3/`
+- **API**: `https://authentik-server.authentik.svc:9443/api/v3/`
 
 ## Configuration
 
@@ -86,9 +86,8 @@ PostgreSQL backups via CNPG barman to the RustFS `cnpg` bucket
 (`s3://cnpg/authentik`):
 
 - WAL archiving: continuous, zstd-compressed (point-in-time recovery window)
-- Base backups: nightly at 0500 UTC (`scheduled-backup.yaml`), gzip, immediate
-  checkpoint
-- Retention: 14 days (backups + WALs)
+- Base backups: nightly (`scheduled-backup.yaml`), gzip, immediate checkpoint
+- Retention: configured in `scheduled-backup.yaml`
 - Credentials: 1Password item `cnpg-backups-secrets` (bucket-scoped S3 user;
   see `docs/infrastructure/rustfs-bucket-user-creation.md`)
 

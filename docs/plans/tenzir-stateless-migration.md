@@ -1,8 +1,8 @@
 ---
 title: Tenzir CH-only stateless migration
-status: complete
+status: done
 found_at: 2026-10-21
-updated_at: 2026-10-29
+updated_at: 2026-11-19
 area: security
 ---
 

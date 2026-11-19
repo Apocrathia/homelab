@@ -1,5 +1,7 @@
 # kubernetes (Authentik system unit)
 
+> **Navigation**: [← Back to Authentik system README](../README.md)
+
 The tofu-managed home for the kube-apiserver's OIDC issuer: the
 `kubernetes-oidc-provider` (public client `kubernetes`), the
 `kubernetes-admins`/`-operators`/`-viewers` groups the ClusterRoleBindings
@@ -17,5 +19,3 @@ path through the CDN) are not authentik state and do not move.
 Retired the `kube-auth/authentik-blueprint.yaml` ConfigMap — the
 blueprint CM prunes and the live objects survive for this workspace to
 adopt.
-
-> **Navigation**: [← Back to Authentik system README](../README.md)

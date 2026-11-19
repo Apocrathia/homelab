@@ -68,7 +68,7 @@ Grafana org/role mapping if you rely on `X-authentik-groups` today.
 
 ## Notes
 
-- Raised from full-repo security review
-  (`docs/security/security-review-2026-08-01.md`, SEC-002); operator chose
-  OIDC migration over narrowing skip regex.
+- Raised from the 2026-08-01 full-repo security review (SEC-002; the review
+  report never landed as a repo file — `found_by` records the session);
+  operator chose OIDC migration over narrowing skip regex.
 - Do not put OIDC client secrets in Git — OnePassword Item only.

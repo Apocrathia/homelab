@@ -1,5 +1,7 @@
 # Pipelines (enrichment)
 
+> **Navigation**: [← Enrichment node](../README.md)
+
 The drop zone for the enrichment node's pipelines — the lap-2 factory
 pipeline plus the fleet-standard diagnostics pair:
 

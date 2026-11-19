@@ -29,7 +29,7 @@ Container ports are `>1023` because the daemon drops to `nobody:nogroup` before 
 - **Config file**: `opencanary.conf` is generated into the `opencanary-config` ConfigMap by kustomize and mounted read-only at `/etc/opencanaryd/opencanary.conf` — OpenCanary's first config search path.
 - **The daemon exits at boot without a config file**; there is no default config in the image.
 - **Service set**: HTTP + SSH only for v1. Other modules (ftp, telnet, mysql, redis, ...) are disabled by absence in the config.
-- **SSH host keys**: generated on first start into `/var/tmp` (a 1Gi Longhorn volume) so the host key fingerprint stays stable across pod restarts. A fresh key every restart makes repeat visitors suspicious.
+- **SSH host keys**: generated on first start into `/var/tmp` (a Longhorn volume) so the host key fingerprint stays stable across pod restarts. A fresh key every restart makes repeat visitors suspicious.
 - **`portscan` module stays off**: it tails `/var/log/kern.log`, which does not exist in the container.
 
 See `helmrelease.yaml` and `opencanary.conf` for the complete configuration.

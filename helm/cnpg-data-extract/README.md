@@ -44,7 +44,7 @@ Example: [`examples/chaptarr-static-longhorn-smb.yaml`](examples/chaptarr-static
 
 ## Durable dumps on SMB (same pattern as generic-app)
 
-Set `backupSmb.enabled: true` and the same fields `generic-app` uses under `storage.smb.volumes[]`: `source`, `subDir`, `credentialsPath` (1Password path to the **same** item as your SMB backup credentials, e.g. `vaults/Secrets/items/smb-credentials` — see [generic-app SMB](../../generic-app/README.md) (`storage.smb`). The chart creates a PV, PVC, and `OnePasswordItem` for the CSI secret (like `storage-smb.yaml` in generic-app). The dump volume is mounted at `dump.mountPath` (e.g. `/backup`). Set `dump.fileName` (e.g. `authentik.dump`) so the path matches `cnpg-data-restore`’s `restore.dumpFile`. **UID 26** must be able to write on the share; if writes fail, fix CIFS ACLs / map Unix user on the NAS.
+Set `backupSmb.enabled: true` and the same fields `generic-app` uses under `storage.smb.volumes[]`: `source`, `subDir`, `credentialsPath` (1Password path to the **same** item as your SMB backup credentials, e.g. `vaults/Secrets/items/smb-credentials` — see [generic-app SMB](../generic-app/README.md) (`storage.smb`). The chart creates a PV, PVC, and `OnePasswordItem` for the CSI secret (like `storage-smb.yaml` in generic-app). The dump volume is mounted at `dump.mountPath` (e.g. `/backup`). Set `dump.fileName` (e.g. `authentik.dump`) so the path matches `cnpg-data-restore`’s `restore.dumpFile`. **UID 26** must be able to write on the share; if writes fail, fix CIFS ACLs / map Unix user on the NAS.
 
 Examples: [`examples/authentik-smb.yaml`](examples/authentik-smb.yaml).
 

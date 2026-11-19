@@ -2,7 +2,7 @@
 
 Self-hosted recipe manager and meal planning application with comprehensive cooking workflow management.
 
-> **Navigation**: [← Back to Management README](../README.md)
+> **Navigation**: [← Back to Home README](../README.md)
 
 ## Overview
 
@@ -21,7 +21,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### mealie-secrets (`vaults/Secrets/items/mealie-secrets`)
+**mealie-secrets** (`vaults/Secrets/items/mealie-secrets`)
 
 - `oidc-client-id`: Authentik OIDC client ID
 - `oidc-client-secret`: Authentik OIDC client secret
