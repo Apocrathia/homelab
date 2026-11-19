@@ -118,6 +118,18 @@ model_list:
     model_info:
       supports_reasoning: true
       reasoning_effort_levels: ["low", "high", "max"]
+  # Forced-low alias of glm-5.3-prime for the latency-sensitive CI agent (mr-summary-agent); no fallbacks (job is allow_failure).
+  - model_name: glm-5.3-prime-low
+    litellm_params:
+      model: openai/internal/glm-5.3-fast
+      api_base: https://api.pinference.ai/api/v1
+      api_key: os.environ/PRIME_API_KEY
+      extra_headers:
+        X-Prime-Team-ID: os.environ/PRIME_TEAM_ID
+      reasoning_effort: "low"
+    model_info:
+      supports_reasoning: true
+      reasoning_effort_levels: ["low"]
   - model_name: kimi-k3-prime
     litellm_params:
       model: openai/moonshotai/kimi-k3

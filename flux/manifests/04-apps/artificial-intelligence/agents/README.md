@@ -17,6 +17,7 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 - **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
 - **[media](./media/)** - `media-agent`: Servarr (Sonarr/Radarr) management
 - **[git](./git/)** - `git-agent`: GitHub and GitLab operations
+- **[git](./git/)** - `mr-summary-agent`: CI-only low-latency MR change summaries (not exposed via the LiteLLM A2A proxy)
 - **[investigator](./investigator/)** - `investigator-agent`: Security investigations against the Tenzir OCSF lake (cases, evidence pins, verdicts)
 
 **System Agents (managed by kagent helm chart):**

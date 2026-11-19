@@ -8,11 +8,13 @@ mr-change-summary:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   variables:
-    A2A_URL: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent/"
+    A2A_URL: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/mr-summary-agent/"
     MAX_TURNS: "12"
     # Bail after N consecutive transport errors / failed states (not soft stub retries).
     MAX_CONSECUTIVE_FAILURES: "3"
     HTTP_TIMEOUT_S: "600"
+    # Cap on the FILTERED diff (version-pin hunks only) fed to the agent;
+    # applies after hunk filtering, not to the raw diff.
     DIFF_MAX_BYTES: "120000"
     CHANGED_FILES_MAX_LINES: "500"
     GIT_DEPTH: "200"
@@ -43,6 +45,10 @@ mr-change-summary:
         "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" \
         > /tmp/work/diff.patch
 
+      git diff --numstat \
+        "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" \
+        > /tmp/work/numstat.txt
+
       DIFF_BYTES=$(wc -c < /tmp/work/diff.patch | tr -d ' ')
       CHANGED_FILE_COUNT=$(wc -l < /tmp/work/changed-files.txt | tr -d ' ')
       echo "Diff: ${DIFF_BYTES} bytes across ${CHANGED_FILE_COUNT} changed files"
@@ -68,6 +74,8 @@ mr-change-summary:
 
       DIFF_PATH=/tmp/work/diff.patch \
       CHANGED_FILES_PATH=/tmp/work/changed-files.txt \
+      NUMSTAT_PATH=/tmp/work/numstat.txt \
+      FILTERED_DIFF_OUTPUT_PATH=/tmp/work/filtered.diff \
       DIFF_MAX_BYTES="${DIFF_MAX_BYTES}" \
       CHANGED_FILES_MAX_LINES="${CHANGED_FILES_MAX_LINES}" \
       PROMPT_OUTPUT_PATH=/tmp/work/prompt.md \
@@ -75,6 +83,7 @@ mr-change-summary:
 
       PROMPT_PATH=/tmp/work/prompt.md \
       DIFF_PATH=/tmp/work/diff.patch \
+      FILTERED_DIFF_PATH=/tmp/work/filtered.diff \
       CHANGED_FILES_PATH=/tmp/work/changed-files.txt \
       A2A_URL="${A2A_URL}" \
       MAX_TURNS="${MAX_TURNS}" \

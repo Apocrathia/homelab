@@ -23,7 +23,34 @@ The agent is defined by the `Agent` CR in `agent.yaml`; model wiring in
 - CI/CD pipeline status
 - Branch and commit operations
 - Release management
-- **MR change-summary**: invoked from the GitLab CI job `mr-change-summary` (see [.gitlab/README.md](../../../../../../.gitlab/README.md#mr-change-summary)). The agent reads the MR diff and description, fetches upstream release / PR / issue context for each version delta, and posts a self-updating comment back to the MR using the marker `<!-- mr-change-summary -->`. Protocol lives in `agent.yaml` `systemMessage` under "MR Change-Summary Protocol".
+- **MR change-summary**: posts the self-updating `<!-- mr-change-summary -->` comment on MRs (see [.gitlab/README.md](../../../../../../.gitlab/README.md#mr-change-summary)). The GitLab CI job `mr-change-summary` invokes the dedicated `mr-summary-agent` below; `git-agent` keeps the skill for ad-hoc runs. Protocols live in the respective `systemMessage` ("MR Change Summary" section).
+
+## mr-summary-agent
+
+Dedicated CI-only agent for MR change summaries (same namespace, separate
+`Agent`/`ModelConfig`: `summary-agent.yaml` + `summary-modelconfig.yaml`).
+
+- **Purpose**: the GitLab CI job `mr-change-summary` invokes this agent directly
+  over A2A (kagent controller) with a pre-filtered diff — version-pin hunks,
+  changed-files list, numstat list — and it upserts the
+  `<!-- mr-change-summary -->` comment.
+- **Model**: `glm-5.3-prime-low`, the forced-low reasoning alias of
+  `glm-5.3-prime` defined in [litellm/litellm.yml](../../litellm/litellm.yml).
+  Same upstream model, `reasoning_effort: low` — cuts the CI job from 3-30 min
+  of high-effort reasoning to minutes. No fallbacks; the job is
+  `allow_failure`.
+- **Why separate from git-agent**: `git-agent` has four other consumers
+  (dependency-review CronJob, homelab-agent, hermes-agent, the LiteLLM A2A
+  proxy) that need its full prompt and default reasoning effort. This agent
+  carries only the MR Change Summary skill and a trimmed tool whitelist.
+- **Not exposed**: deliberately absent from hermes-agent config and the
+  LiteLLM `agents:` A2A proxy list — CI talks to kagent directly.
+- **Secrets**: reuses `git-agent-secrets` (same LiteLLM API key); see
+  [Secrets](#secrets) below.
+
+> **Deploy-order note**: until Flux deploys these manifests, the
+> `mr-change-summary` job on the introducing MR itself will 404 on the new
+> A2A URL; `allow_failure: true` absorbs it.
 
 ## Secrets
 

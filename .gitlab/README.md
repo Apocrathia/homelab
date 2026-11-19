@@ -10,24 +10,24 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 
 ### Pipeline Components
 
-| File                              | Stage         | Trigger                          | Purpose                                                |
-| --------------------------------- | ------------- | -------------------------------- | ------------------------------------------------------ |
-| `chart-tag.gitlab-ci.yml`         | deploy        | `Chart.yaml` changes             | Creates Git tags for Helm chart releases               |
-| `chart-oci-publish.gitlab-ci.yml` | deploy        | main (idempotent)                | Publishes generic-app chart to the GitLab OCI registry |
-| `kustomize-diff.gitlab-ci.yml`    | verify        | MR (manifest changes)            | Posts rendered manifest diffs to MR comments           |
-| `mr-change-summary.gitlab-ci.yml` | verify        | MR (any)                         | Invokes git-agent (A2A) to post a change summary       |
-| `scorecard.gitlab-ci.yml`         | verify        | MR (manifest changes)            | Runs OpenSSF Scorecard on changed dependencies         |
-| `tofu.gitlab-ci.yml`              | verify/deploy | MR/main (terraform changes)      | OpenTofu plan/apply for Proxmox VMs                    |
-| `pages.gitlab-ci.yml`             | deploy        | main/schedule (docs changes)     | Builds and publishes GitLab Pages (MkDocs)             |
-| `fleet/.gitlab-ci.yml`            | deploy        | MR/main/schedule (fleet config)  | Fleet GitOps (`fleetctl gitops`)                       |
-| `ansible/.gitlab-ci.yml`          | test/deploy   | MR/main (`ansible/**` changes)   | Ansible validate/check/apply + nightly drift           |
-| `gitleaks.gitlab-ci.yml`          | test          | MR (all files)                   | Secret scanning on MR commits                          |
-| `kube-linter.gitlab-ci.yml`       | test          | MR (manifest changes)            | Kubernetes manifest security linting                   |
-| `trivy.gitlab-ci.yml`             | test          | MR (IaC changes)                 | IaC security scanning for Terraform and K8s            |
-| `shellcheck.gitlab-ci.yml`        | test          | MR (shell script changes)        | Shell script static analysis                           |
-| `semgrep.gitlab-ci.yml`           | test          | MR (code changes)                | SAST for Python, Go, JS, TS                            |
-| `pre-commit.gitlab-ci.yml`        | test          | MR (any)                         | Runs repo pre-commit hooks on all files                |
-| `context-links.gitlab-ci.yml`     | test          | MR (AGENTS.md/`.agents` changes) | Checks agent-context markdown links and anchors        |
+| File                              | Stage         | Trigger                          | Purpose                                                 |
+| --------------------------------- | ------------- | -------------------------------- | ------------------------------------------------------- |
+| `chart-tag.gitlab-ci.yml`         | deploy        | `Chart.yaml` changes             | Creates Git tags for Helm chart releases                |
+| `chart-oci-publish.gitlab-ci.yml` | deploy        | main (idempotent)                | Publishes generic-app chart to the GitLab OCI registry  |
+| `kustomize-diff.gitlab-ci.yml`    | verify        | MR (manifest changes)            | Posts rendered manifest diffs to MR comments            |
+| `mr-change-summary.gitlab-ci.yml` | verify        | MR (any)                         | Invokes mr-summary-agent (A2A) to post a change summary |
+| `scorecard.gitlab-ci.yml`         | verify        | MR (manifest changes)            | Runs OpenSSF Scorecard on changed dependencies          |
+| `tofu.gitlab-ci.yml`              | verify/deploy | MR/main (terraform changes)      | OpenTofu plan/apply for Proxmox VMs                     |
+| `pages.gitlab-ci.yml`             | deploy        | main/schedule (docs changes)     | Builds and publishes GitLab Pages (MkDocs)              |
+| `fleet/.gitlab-ci.yml`            | deploy        | MR/main/schedule (fleet config)  | Fleet GitOps (`fleetctl gitops`)                        |
+| `ansible/.gitlab-ci.yml`          | test/deploy   | MR/main (`ansible/**` changes)   | Ansible validate/check/apply + nightly drift            |
+| `gitleaks.gitlab-ci.yml`          | test          | MR (all files)                   | Secret scanning on MR commits                           |
+| `kube-linter.gitlab-ci.yml`       | test          | MR (manifest changes)            | Kubernetes manifest security linting                    |
+| `trivy.gitlab-ci.yml`             | test          | MR (IaC changes)                 | IaC security scanning for Terraform and K8s             |
+| `shellcheck.gitlab-ci.yml`        | test          | MR (shell script changes)        | Shell script static analysis                            |
+| `semgrep.gitlab-ci.yml`           | test          | MR (code changes)                | SAST for Python, Go, JS, TS                             |
+| `pre-commit.gitlab-ci.yml`        | test          | MR (any)                         | Runs repo pre-commit hooks on all files                 |
+| `context-links.gitlab-ci.yml`     | test          | MR (AGENTS.md/`.agents` changes) | Checks agent-context markdown links and anchors         |
 
 ## Stages
 
@@ -50,14 +50,14 @@ Runs on MRs that modify `flux/manifests/**/*`. Builds kustomize overlays for bot
 
 ### MR Change Summary
 
-Runs on every MR. Builds a prompt from the MR title, description, changed files, and full diff, then invokes the in-cluster `git-agent` (kagent) over A2A. The agent fetches upstream context (release notes, PRs, issues) for each version delta and posts a single self-updating comment to the MR via the gitlab-mcp server.
+Runs on every MR. Builds a prompt from the MR title, description, changed files, per-file change volume (numstat), and a version-pin-filtered diff (pin/digest/Renovate-config hunks only), then invokes the dedicated in-cluster `mr-summary-agent` (kagent) over A2A. The agent fetches upstream context (release notes, PRs, issues) for each version delta and posts a single self-updating comment to the MR via the gitlab-mcp server. Manual (non-version) changes are summarized at file level from the changed-files and change-volume lists.
 
-**Energy gate**: before invoking the agent, the job hashes the diff and changed-files list and compares against the `<!-- hash:... -->` trailer on the existing change-summary comment. If the hash matches, the agent is **not invoked** at all (no energy spent on local inference). Rebases that don't change the actual diff become 0-cost no-ops.
+**Energy gate**: before invoking the agent, the job hashes the filtered diff and changed-files list and compares against the `<!-- hash:... -->` trailer on the existing change-summary comment. If the hash matches, the agent is **not invoked** at all (no energy spent on local inference). Rebases that don't change the actual diff — and prose-only edits that leave the pin hunks untouched — become 0-cost no-ops.
 
 **How it works**:
 
-- `.gitlab/scripts/mr_change_summary_prompt.py` renders the prompt from `CI_*` env vars and the diff (avoids shell-quoting hazards).
-- `.gitlab/scripts/mr_change_summary_invoke.py` computes the input hash, checks for an existing comment via the GitLab API (`JOB-TOKEN` read), and either skips the agent entirely or runs the multi-turn A2A SDK loop modelled on `flux/manifests/04-apps/artificial-intelligence/tasks/scheduled-agent-invoke/src/invoke.py`.
+- `.gitlab/scripts/mr_change_summary_prompt.py` renders the prompt from `CI_*` env vars, filters the diff to version-pin hunks, and writes the filtered diff to a sidecar for hashing (avoids shell-quoting hazards).
+- `.gitlab/scripts/mr_change_summary_invoke.py` computes the input hash (filtered diff + changed-files list), checks for an existing comment via the GitLab API (`JOB-TOKEN` read), and either skips the agent entirely or runs the multi-turn A2A SDK loop modelled on `flux/manifests/04-apps/artificial-intelligence/tasks/scheduled-agent-invoke/src/invoke.py`.
 - After the agent posts/updates the comment, CI rewrites the body to append a `<!-- hash:abcdef... -->` trailer. The trailer is the cache key for the next run and the verification token for this run.
 - Trailer writes use `AGENT_TOKEN` (a project PAT with `api` scope); GitLab.com rejects `CI_JOB_TOKEN` for MR note PUTs. See "Required CI/CD Variables" below.
 - To force a refresh after a prompt-engineering change, manually delete the existing change-summary comment on the affected MR(s); the next pipeline will write a fresh one.
@@ -67,7 +67,7 @@ Runs on every MR. Builds a prompt from the MR title, description, changed files,
 **Requirements**:
 
 - The runner must be able to reach `kagent-controller.kagent.svc.cluster.local:8083` (in-cluster runner; already true for `gitlab-runner` in the `gitlab-runner` namespace).
-- `git-agent` must be deployed and have the gitlab-mcp tools `get_merge_request_notes`, `create_merge_request_note`, `update_merge_request_note` whitelisted.
+- `mr-summary-agent` must be deployed and have the gitlab-mcp tools `get_merge_request_notes`, `create_merge_request_note`, `update_merge_request_note` whitelisted.
 - The gitlab-mcp PAT (`gitlab-mcp-secrets.gitlab-token`, forwarded as `Private-Token` on RemoteMCPServer) must have `api` scope on the homelab project; used by the agent to post comments.
 - `AGENT_TOKEN` must be set as a project CI variable with `api` scope.
 
@@ -76,7 +76,7 @@ Runs on every MR. Builds a prompt from the MR title, description, changed files,
 - `MAX_TURNS`: A2A turn cap (default `12`)
 - `MAX_CONSECUTIVE_FAILURES`: abort after this many consecutive transport/`failed` turns (default `3`)
 - `HTTP_TIMEOUT_S`: per-request HTTP timeout to kagent (default `600`)
-- `DIFF_MAX_BYTES`: diff payload cap fed to the agent (default `120000`)
+- `DIFF_MAX_BYTES`: cap on the filtered (version-pin) diff fed to the agent (default `120000`)
 - `CHANGED_FILES_MAX_LINES`: file-list cap (default `500`)
 - `FORCE_RECOMPUTE`: set to `1` in a manual pipeline run to bypass the hash skip and re-invoke the agent
 

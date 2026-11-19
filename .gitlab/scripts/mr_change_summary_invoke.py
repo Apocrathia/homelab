@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Invoke git-agent via A2A SDK for MR change-summary work.
+"""Invoke the mr-summary-agent via A2A SDK for MR change-summary work.
 
 Designed for GitLab CI use. The job pipes a rendered prompt + the source
 diff to this script and we decide whether to spend GPU on inference at all.
@@ -9,6 +9,9 @@ High-level flow:
 1. Compute a stable hash over the agent's input (the diff). This is the
    energy gate — if the hash matches an existing comment's trailer, the
    agent input hasn't meaningfully changed and we skip inference entirely.
+   When the builder provides a filtered diff (version-pin hunks only) via
+   FILTERED_DIFF_PATH, the hash covers that file instead of the raw diff,
+   so prose-only edits within already-changed files skip too.
 2. Otherwise invoke the A2A multi-turn loop. The agent posts or updates
    an MR note via the gitlab-mcp MCP server.
 3. After the agent claims completion, append (or rewrite) a hash trailer
@@ -345,6 +348,7 @@ async def main_async() -> int:
     a2a_url = os.environ.get("A2A_URL", "").strip()
     prompt_path = Path(os.environ.get("PROMPT_PATH", "")).expanduser()
     diff_path = Path(os.environ.get("DIFF_PATH", "")).expanduser()
+    filtered_diff_path = Path(os.environ.get("FILTERED_DIFF_PATH", "")).expanduser()
     changed_files_path = Path(os.environ.get("CHANGED_FILES_PATH", "")).expanduser()
     max_turns = max(1, int(os.environ.get("MAX_TURNS", "12")))
     max_consecutive_failures = max(
@@ -386,7 +390,10 @@ async def main_async() -> int:
         )
         return 1
 
-    input_hash = _compute_input_hash(diff_path, changed_files_path)
+    # Hash the filtered diff when the builder provided one, so prose-only
+    # edits within already-changed files do not re-trigger the agent.
+    hash_diff_path = filtered_diff_path if filtered_diff_path.is_file() else diff_path
+    input_hash = _compute_input_hash(hash_diff_path, changed_files_path)
     LOG.info("Input hash: %s", input_hash)
 
     have_ci_context = all((api_url, project_id, mr_iid, job_token))
