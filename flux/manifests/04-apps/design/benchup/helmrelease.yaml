@@ -41,7 +41,6 @@ spec:
               unzip -q -o /tmp/benchup.zip -d /usr/share/nginx/html/
               rm /tmp/benchup.zip
           env:
-            # renovate: datasource=github-releases depName=BenchUp3D/benchup versioning=semver
             - name: BENCHUP_VERSION
               value: "v0.7.4"
           volumeMounts:

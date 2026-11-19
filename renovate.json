@@ -96,7 +96,7 @@
       ],
       "depTypeTemplate": "image",
       "currentValueTemplate": "{{#if currentValue}}{{{currentValue}}}{{else}}latest{{/if}}",
-      "autoReplaceStringTemplate": "{{#if currentDigest}}{{{replace currentDigest newDigest (replace currentValue newValue replaceString)}}}{{else}}{{#if (containsString replaceString currentValue)}}{{{replace currentValue newValue replaceString}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{else}}{{{replaceString}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{/if}}{{/if}}",
+      "autoReplaceStringTemplate": "{{#if currentDigest}}{{{replace \"DIGEST_PLACEHOLDER\" newDigest (replace currentValue newValue (replace currentDigest \"DIGEST_PLACEHOLDER\" replaceString))}}}{{else}}{{#if (containsString replaceString currentValue)}}{{{replace currentValue newValue replaceString}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{else}}{{{replaceString}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{/if}}{{/if}}",
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n(?<indentation>[ \\t]*)(?:image|imageName|baseImage|ateomImage):[ \\t]*[\"']?(?:[^\\s\"'@:]+(?:/[^\\s\"'@:]+)*)(?::(?<currentValue>[^\\s\"'@/]+))?(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?",
         "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n(?<indentation>[ \\t]*)name:[ \\t]*[\"']?(?:[^\\s\"'@:]+/[^\\s\"'@:]+(?:/[^\\s\"'@:]+)*)(?::(?<currentValue>[^\\s\"'@/]+))?(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?"
@@ -171,7 +171,7 @@
       ],
       "depTypeTemplate": "crossplane-provider",
       "currentValueTemplate": "{{#if currentValue}}{{{currentValue}}}{{else}}latest{{/if}}",
-      "autoReplaceStringTemplate": "{{#if currentDigest}}{{{replace currentDigest newDigest (replace currentValue newValue replaceString)}}}{{else}}{{#if (containsString replaceString currentValue)}}{{{replace currentValue newValue replaceString}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{else}}{{{replaceString}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{/if}}{{/if}}",
+      "autoReplaceStringTemplate": "{{#if currentDigest}}{{{replace \"DIGEST_PLACEHOLDER\" newDigest (replace currentValue newValue (replace currentDigest \"DIGEST_PLACEHOLDER\" replaceString))}}}{{else}}{{#if (containsString replaceString currentValue)}}{{{replace currentValue newValue replaceString}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{else}}{{{replaceString}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{/if}}{{/if}}",
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n(?<indentation>[ \\t]*)package:[ \\t]*[\"']?(?:[^\\s\"'@:]+(?:/[^\\s\"'@:]+)*)(?::(?<currentValue>[^\\s\"'@/]+))?(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?"
       ]
