@@ -20,7 +20,7 @@ Homelab prefers the directory layout:
 ```
 
 Do **not** create flat `.agents/agents/<name>.md` files unless the operator
-explicitly asks — that layout is for older scaffolds and breaks discovery
+explicitly asks; that layout is for older scaffolds and breaks discovery
 parity with [`.agents/README.md`](../../README.md).
 
 There is no `agent-personas` context module in this repo. Use the **Format**
@@ -62,7 +62,7 @@ contract. Related modules that _do_ exist:
 
 1. **Name the persona.** Use a role noun, not a verb phrase: `debugger`, not
    `debug-issues`. One word or kebab role name when possible. Check
-   `.agents/agents/` **and** `.agents/skills/` for name collisions — both
+   `.agents/agents/` **and** `.agents/skills/` for name collisions in both
    surface as `/<name>`.
 
 2. **Create the directory and file:**
@@ -86,21 +86,24 @@ contract. Related modules that _do_ exist:
    makes the frontmatter invalid YAML and the persona unloadable, and the
    link and discovery checks do not parse frontmatter.
 
-4. **Write the body.** Structure every persona the same way:
+4. **Write the body.** Structure every persona the same way (the Format
+   section below is the contract):
 
-   - **Opening line** — one sentence: what the persona is and does.
-   - **Context to load** — which `.agents/context/` modules, skills, or docs to
-     read before working. Link, do not copy.
-   - **Method / focus areas** — what the persona does, as direct commands.
-   - **Repo notes** (optional) — project-specific gotchas, toolchain details,
-     naming conventions.
-   - **Boundaries** — what the persona does not do (edit files, run state-
+   - Identity: 1-3 sentences of role assumption: who this agent is.
+   - Purpose: what the persona is for, when to invoke it.
+   - Context to load: which `.agents/context/` modules, skills, or docs to
+     read first. Link, do not copy. Optional; omit if truly self-contained.
+   - Method: how the persona works, as direct commands.
+   - Boundaries: what the persona does not do (edit files, run state-
      changing commands, etc.).
-   - **Return to parent** — the structured return format. Lead with 1-3 sentences
-     answering the question. Then evidence, not narration.
+   - Return to parent: the structured return format. Lead with 1-3
+     sentences answering the question. Then evidence, not narration.
+   - Continuous Improvement: link the work loop
+     (`retrospective` + `learning-loop`) and name the persona's own
+     improvement targets.
 
 5. **Keep it under 60 lines.** A persona is a charter, not a manual. If it grows
-   past 60 lines, the role is too broad — split into two personas or move
+   past 60 lines, the role is too broad; split into two personas or move
    reference content to a linked doc.
 
 6. **Update the routing table.** Add the persona to
@@ -124,7 +127,7 @@ contract. Related modules that _do_ exist:
    python3 .agents/skills/reconcile-context/scripts/check_discovery.py
    ```
 
-`.agents/**` and adapter paths are protected — summarize the change set and
+`.agents/**` and adapter paths are protected; summarize the change set and
 get confirmation before writing
 ([`protected-paths`](../../rules/protected-paths.md)). Edit in a worktree
 ([`worktrees.md`](../../rules/worktrees.md)).
@@ -133,34 +136,41 @@ get confirmation before writing
 
 ```markdown
 ---
-name: <persona-name>
-description: "<what it does; include trigger phrases>"
+name: <role-noun>
+description: >- <what it does + trigger phrases>
 model: inherit
-readonly: true
+readonly: true|false
 ---
 
-<One sentence: what the persona is and does.>
+# <Persona name>
+
+## Identity
+
+<1-3 sentences of role assumption: who this agent IS. No "you are an AI assistant"; direct role framing is fine.>
+
+## Purpose
+
+<What the persona is for, when to invoke it. Absorbs fabric's "Project Context" and "Input" (SCOPE/ACTION parameters).>
 
 ## Context to load
 
-<Which .agents/context/ modules, skills, or docs to read. Link, do not copy.>
+<Which `.agents/context/` modules, skills, or docs to read first. Links only, never copy. Optional: omit if truly self-contained.>
 
-## <Focus areas or method>
+## Method
 
-<Direct commands: what the persona does.>
-
-## Repo notes
-
-<!-- Project-specific gotchas, toolchain details, naming conventions. -->
+<How the persona works. Fabric's "Task"/"Actions" phases and "Key Patterns" become H3s here. All checklists, tables, and phase content preserved verbatim in substance.>
 
 ## Boundaries
 
-<What the persona does not do.>
+<What the persona does not do. Absorbs fabric's "Restrictions".>
 
 ## Return to parent
 
-<Structured return format. Lead with 1-3 sentences answering the question.
-Then evidence, not narration.>
+<Structured return format. Lead with 1-3 sentences answering the question, then evidence.>
+
+## Continuous Improvement
+
+<Point to the work loop: link .agents/skills/retrospective/SKILL.md and .agents/context/learning-loop.md; name the persona's own improvement targets (e.g., the standards doc it audits, the rules it feeds).>
 ```
 
 | Field         | Values                         | Notes                                          |
@@ -186,7 +196,7 @@ Use existing homelab personas as format references (not upstream
 
 Lead with the persona name and one-sentence description. Then:
 
-- **File** — path created (`.agents/agents/<name>/agent.md`)
-- **Routing** — confirm the `subagents` rule (and `AGENTS.md` if needed) was updated
-- **Discovery** — confirm Claude adapter links
-- **Next** — suggest the first delegation to test the persona
+- File: path created (`.agents/agents/<name>/agent.md`)
+- Routing: confirm the `subagents` rule (and `AGENTS.md` if needed) was updated
+- Discovery: confirm Claude adapter links
+- Next: suggest the first delegation to test the persona
