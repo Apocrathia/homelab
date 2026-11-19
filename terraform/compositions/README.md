@@ -6,7 +6,7 @@ Broader collections of resources that wire several interconnected
 module.
 
 **This folder is intentionally empty.** A composition gets created when a real
-use case needs multiple modules working together — never to pad a
+use case needs multiple modules working together; never to pad a
 single-module stack. Single-module stacks point straight at `modules/` (e.g.
 `deployments/cloudflare/dns` → `modules/cloudflare-dns`).
 
@@ -15,7 +15,7 @@ single-module stack. Single-module stacks point straight at `modules/` (e.g.
 | Folder          | What it is                                            | Example                                     |
 | --------------- | ----------------------------------------------------- | ------------------------------------------- |
 | `modules/`      | Single-purpose building block (leaf module)           | `cloudflare-dns`, `tailscale-tailnet`       |
-| `compositions/` | Root module wiring 2+ interconnected modules          | _(none yet — see candidates below)_         |
+| `compositions/` | Root module wiring 2+ interconnected modules          | _(none yet; see candidates below)_          |
 | `deployments/`  | Terragrunt stack: state key, provider include, inputs | `deployments/cloudflare/dns/terragrunt.hcl` |
 
 Reach for a composition when resources must reference each other across
@@ -42,10 +42,10 @@ the deployment pointed at the leaf module.
 Roughly in the order they'd become real (each earns its place when the work
 is actually wanted):
 
-- **`gcp-account`** — org/billing lookup plus a budget tripwire, and later
+- **`gcp-account`**: org/billing lookup plus a budget tripwire, and later
   folders/projects/IAM. Becomes a composition when the second resource
   (e.g. `google_billing_budget` fed by the billing account id, or a
   `google_project` attached to the org) is wanted for real.
-- **`cluster-app`** — hypothetical: DNS record + Tailscale ACL entry +
+- **`cluster-app`**: hypothetical: DNS record + Tailscale ACL entry +
   whatever else a cross-provider app rollout keeps needing together. Only if
   that pattern actually repeats.
