@@ -23,11 +23,6 @@ publish-generic-app-chart:
     - |
       set -eu
 
-      # String components — define once, compose per scenario:
-      #   pull/check + log messages use the full artifact path (CHART_OCI_REF);
-      #   helm push wants the registry root (REGISTRY_OCI) and appends the
-      #   chart name itself; the packaged tgz path follows helm's
-      #   <name>-<version>.tgz naming.
       CHART_NAME="generic-app"
       CHART_DIR="helm/${CHART_NAME}"
 
