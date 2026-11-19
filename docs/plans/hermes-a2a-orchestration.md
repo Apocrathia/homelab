@@ -1,8 +1,9 @@
 ---
 title: Hermes A2A broker registration + orchestration map
 status: done
-branch: fix/hermes-a2a-orchestration
-source: docs/issues/hermes-agent-orchestration-gaps.md
+found_at: 2026-08-16
+updated_at: 2026-08-16
+area: agents
 ---
 
 # Hermes A2A orchestration

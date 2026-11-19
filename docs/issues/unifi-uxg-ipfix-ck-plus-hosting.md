@@ -15,7 +15,7 @@ slice: hitl
 ## Problem / desired state
 
 The UDP/2055 ingest path is healthy (LB VIP `10.100.1.96` /
-`ingest.services.apocrathia.com`). At filing time the collector was goflow2 —
+`ingest.services.apocrathia.com`). At filing time the collector was goflow2;
 healthy, scrapable (Mimir `up{job="goflow2"}=1`), and reached by cluster
 probes. goflow2 has since been removed (SIEM lap C): NetFlow collection is
 moving to the Tenzir netflow node's `read_netflow` listener (lap-C part 2,
@@ -33,7 +33,7 @@ Root cause is UniFi product gating, not Cilium or the collector:
 - Controller is a **Cloud Key Gen2 Plus (CK+)**
 - For UXG models, full Traffic Flows / “All Traffic” (and the IPFIX exporter
   that hangs off that stack) requires **UniFi OS Server**, **Official
-  Hosting**, or **UCK-Enterprise** — not CK+
+  Hosting**, or **UCK-Enterprise**: not CK+
 - CK+ + UXG only gets stub Flows (blocked/threat theater). UI can still show
   NetFlow form fields without a working exporter
 
@@ -66,7 +66,7 @@ with it (SIEM lap C).
 - With NetFlow (IPFIX) enabled, Gateway `tcpdump` shows UDP/2055 toward
   `10.100.1.96` (or the configured collector)
 - The flow collector exposes non-probe records labeled with the UXG as
-  exporter — i.e. the Tenzir netflow node's `read_netflow` listener
+  exporter; i.e. the Tenzir netflow node's `read_netflow` listener
   (lap-C part 2) ingests flow records from the UXG. There is no Grafana
   collector dashboard since the goflow2 removal; flows are Tenzir-side.
 
@@ -82,10 +82,10 @@ with it (SIEM lap C).
 Stage spare NUC with UniFi OS Server (self-hosted, free). Backup CK+, restore /
 re-adopt UXG, then re-test IPFIX before spending time on the collector. Note: even on
 supported hosting, UniFi IPFIX **export** has community reports of staying
-quiet while Insights → Flows works — treat export verification as a separate
+quiet while Insights → Flows works; treat export verification as a separate
 gate after hosting unlock.
 
-Do not invent SSH/`config.gateway.json` netflow on UXG — UbiOS provisioning
+Do not invent SSH/`config.gateway.json` netflow on UXG; UbiOS provisioning
 will wipe it; that path died with USG.
 
 ## Notes
@@ -93,7 +93,7 @@ will wipe it; that path died with USG.
 Evidence from 2026-08-01 dogfood:
 
 - DNS: `ingest.services.apocrathia.com` → `10.100.1.96` (public + local)
-- Shared Cilium LB IPAM key `ingest` with Alloy (syslog/CEF) — VIP path OK
+- Shared Cilium LB IPAM key `ingest` with Alloy (syslog/CEF); VIP path OK
 - Sampling on/off did not matter (exporter never sent)
 - Community: [UDM-Pro IPFIX export broken](https://community.ui.com/questions/UDM-Pro-Not-Exporting-Traffic-via-NetFlow-IPFIX-on-Network-9-3-45/09523ae8-5a34-4c54-a12b-2bd84e0c0a8d);
   [CK+ vs UOS Server Flows](https://community.ui.com/questions/986ad011-b9d0-4a5a-afe8-359760fcf8ea);
@@ -118,20 +118,20 @@ The Problem / desired state text above describes the pre-migration
 world and is retained as history.
 
 Remaining acceptance before closing: confirm live IPFIX receipt
-post-cutover — UXG's restored netflow config (enabled, v10, port 2055,
+post-cutover; UXG's restored netflow config (enabled, v10, port 2055,
 target `ingest.services.apocrathia.com`, seven networks) provisions the
 exporter and the ingest path to the flow collector is up. With goflow2
 removed (SIEM lap C), the confirming check is the Tenzir netflow
 node's `read_netflow` listener (lap-C part 2, same pool IP
-`10.100.1.96:2055`) showing flow records from the UXG — there is no
+`10.100.1.96:2055`) showing flow records from the UXG; there is no
 Grafana flows dashboard anymore. Close on confirmation.
 
-## Resolution (2026-09-21): flows live via manual NETFLOW section — stock export is controller-broken
+## Resolution (2026-09-21): flows live via manual NETFLOW section: stock export is controller-broken
 
 Flows confirmed end-to-end: UXG → goflow2 (`10.100.1.96:2055`) →
 Prometheus → Mimir → Grafana `goflow2-collector`. Series:
 `goflow2_flow_traffic_packets_total{remote_ip="10.100.1.1"}`. The
-remaining acceptance above is answered — but not the way anyone expected.
+remaining acceptance above is answered; but not the way anyone expected.
 (That goflow2 → Mimir → Grafana chain was removed in SIEM lap C; the same
 UXG → `10.100.1.96:2055` path now feeds the Tenzir netflow node's
 `read_netflow` listener, lap-C part 2.)
@@ -141,24 +141,24 @@ UXG → `10.100.1.96:2055` path now feeds the Tenzir netflow node's
 Network 10.6.106 never emits the `NETFLOW` section into the device config
 it pushes (`/data/udapi-config/udapi-net-cfg*.json` on the gateway; zero
 netflow in any config, current or historical). The CK+ era harvest shows the
-same omission — the bug predates the migration, and the "gimped flows"
+same omission; the bug predates the migration, and the "gimped flows"
 complaint was never DNS alone. The UI still renders NetFlow settings pages
-(frontend locale strings only); the backend has zero netflow references —
+(frontend locale strings only); the backend has zero netflow references;
 no code on disk, no log lines. The setting key is dead weight: the
 controller re-renders on every netflow change (cfgversion bumps) and drops
 the section at output time.
 
 The device side is fully capable: firmware 5.1.26 ships
 `iptables-netflow` + `ipt_NETFLOW.ko`, and `ubios-udapi-server` accepts a
-hand-fed `NETFLOW` section — module loads, rules land, flows egress within
+hand-fed `NETFLOW` section; module loads, rules land, flows egress within
 seconds of a `udapi-server` restart.
 
 ### Root cause (secondary): gateway-internal DNS
 
 Gateway-internal services resolve via the UTM coredns chain (NextDNS
 upstreams), which cannot see the internal zone. `svc-flow-accounting`
-logs `got error on hostname resolving` on `ingest.services.apocrathia.com`
-— LAN clients resolve it fine via the gateway's DHCP/DNS, but the
+logs `got error on hostname resolving` on `ingest.services.apocrathia.com`;
+LAN clients resolve it fine via the gateway's DHCP/DNS, but the
 gateway cannot resolve it for itself. **Gateway-internal destinations
 must be raw IPs** (hence `10.100.1.96` in the section). Same trap applies
 to any gateway-internal setting that takes a hostname.
@@ -176,10 +176,10 @@ The section dies on every controller config push (any gateway-affecting
 setting change re-renders `udapi-net-cfg.json`). Flows stop; re-apply:
 
 1. SSH to the UXG (`root@10.10.0.1`).
-2. `ls -l /data/udapi-config/udapi-net-cfg.json` — resolve the symlink to
+2. `ls -l /data/udapi-config/udapi-net-cfg.json`: resolve the symlink to
    the current versioned file.
 3. Back it up, then add the section (tested shape; `engineID` showed as 0
-   in logs — field consumed as auto or ignored):
+   in logs; field consumed as auto or ignored):
 
    ```json
    "NETFLOW": {
@@ -192,7 +192,7 @@ setting change re-renders `udapi-net-cfg.json`). Flows stop; re-apply:
    }
    ```
 
-4. `systemctl restart udapi-server` — **bounces SSH (management plane
+4. `systemctl restart udapi-server`: **bounces SSH (management plane
    rides udapi-server); reconnect after ~30 s.**
 5. Confirm: `lsmod | grep NETFLOW`; `journalctl -u udapi-server | grep
 flow-accounting` (no resolving errors); the Tenzir netflow node's
@@ -203,8 +203,8 @@ flow-accounting` (no resolving errors); the Tenzir netflow node's
 
 After every Network Application upgrade:
 `grep -c NETFLOW /data/udapi-config/udapi-net-cfg.json` on the gateway.
-Non-zero = renderer learned the feature — retire the runbook, move the
+Non-zero = renderer learned the feature; retire the runbook, move the
 destination to the UI setting (raw IP), delete the workaround.
 
-**Status: stays open** — flows run on a workaround that any config push
+**Status: stays open**: flows run on a workaround that any config push
 kills; closing waits on the vendor renderer fix.

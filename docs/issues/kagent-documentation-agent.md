@@ -15,14 +15,14 @@ slice: hitl
 ## Problem / desired state
 
 `knowledge-agent` answers via Qdrant memory, OpenZIM, DeepWiki, and
-search-agent — good for personal memory and external/repo docs, weak for
+search-agent; good for personal memory and external/repo docs, weak for
 curated product docs we crawl and own.
 
 Upstream shows crawling a docs site into sqlite-vec (doc2vec), packaging an
 MCP `query-documentation` tool, and wiring a Declarative agent to it
 ([Documentation agent](https://kagent.dev/docs/kagent/examples/documentation)).
 Desired state: a documentation agent (or tool surface on knowledge-agent)
-that complements — not replaces — knowledge-agent, for docs we choose to
+that complements (not replaces) knowledge-agent, for docs we choose to
 index (homelab README tree, selected product docs, etc.).
 
 ## Acceptance
@@ -50,7 +50,7 @@ index (homelab README tree, selected product docs, etc.).
 Start with one corpus (e.g. this repo's operator docs or one upstream product
 docset). Prefer GitOps image + PVC/ConfigMap for the DB over baking secrets
 into images. Wire as a tool knowledge-agent can call, or a sibling agent
-homelab-agent delegates to — pick one in alignment if unclear.
+homelab-agent delegates to; pick one in alignment if unclear.
 
 ## Notes
 

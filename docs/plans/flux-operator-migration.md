@@ -22,9 +22,9 @@ Upstream pattern:
 
 **In scope:**
 
-- Phase A — strict handoff from gotk bootstrap to Flux Operator /
+- Phase A: strict handoff from gotk bootstrap to Flux Operator /
   `FluxInstance` (issue acceptance)
-- Phase B — after Ready instance: hypermind-only MR preview via
+- Phase B: after Ready instance: hypermind-only MR preview via
   `ResourceSetInputProvider` + `ResourceSet`, label `deploy/flux-preview`
 - Bootstrap docs for break-glass install + GitOps steady state
 - Clean up the security scan ledger after deleting the vendor files
@@ -39,44 +39,44 @@ Upstream pattern:
 
 ## Decisions
 
-- Plan packaging — **one plan, two serial phases** — ResourceSets are the why;
+- Plan packaging: **one plan, two serial phases**; ResourceSets are the why;
   cutover still finishes before preview CRs. Splitting files rejected.
-- Sequencing — **strict serial (A then B)** — no dual ownership of controller
+- Sequencing: **strict serial (A then B)**; no dual ownership of controller
   Deployments; no ResourceSet pilot until `FluxInstance` is Ready.
-- Operator bootstrap — **GitOps `HelmRelease` + OCI `HelmRepository` under
+- Operator bootstrap: **GitOps `HelmRelease` + OCI `HelmRepository` under
   `flux-system/`** (after classic gotk bootstrap). Not Kustomize `helmCharts`
   (kustomize-controller lacks `--enable-helm`). No live `FluxInstance` until
   gotk is out of desired state.
-- Cutover result — **FluxInstance owns controllers and sync** — the vendored
+- Cutover result: **FluxInstance owns controllers and sync**; the vendored
   gotk component and sync manifests were deleted after operator adoption.
-- Root KS safety — **`prune: false` + `deletionPolicy: Orphan`** —
+- Root KS safety: **`prune: false` + `deletionPolicy: Orphan`**;
   `FluxInstance.spec.kustomize.patches` keeps the generated root
   Kustomization orphan-safe.
-- Status UI auth — **Authentik double login** (proxy + native OIDC) with
+- Status UI auth: **Authentik double login** (proxy + native OIDC) with
   `flux-admins` only; OIDC + Git SSH both live in `flux-operator-secrets`.
-- Preview shape — **side-by-side canary only** — not live object identity.
-- Canary — **hypermind** — `generic-app` HelmRelease, no DB, low blast radius.
-- MR trigger — **manual label `deploy/flux-preview` only** — opt-in; predictable
+- Preview shape: **side-by-side canary only**; not live object identity.
+- Canary: **hypermind**; `generic-app` HelmRelease, no DB, low blast radius.
+- MR trigger: **manual label `deploy/flux-preview` only**; opt-in; predictable
   teardown.
-- Preview namespace — **`hypermind-preview`** — namespaced SA; admin RoleBinding
+- Preview namespace: **`hypermind-preview`**; namespaced SA; admin RoleBinding
   in that ns only.
-- Secrets —
-  - **Git sync + Status UI OIDC** — 1Password item `flux-operator-secrets`
+- Secrets:
+  - **Git sync + Status UI OIDC**: 1Password item `flux-operator-secrets`
     → Secret of the same name. Fields: `oidc-client-id`, `oidc-client-secret`,
     `identity`, `known_hosts` (Flux SSH key name is underscore
     `known_hosts`, not kebab `known-hosts`).
     `FluxInstance.spec.sync.pullSecret: flux-operator-secrets`.
     Do **not** rely on the bootstrap-created `flux-system` Secret after
     cutover.
-  - **Phase B GitLab PAT** — separate 1Password Item into
+  - **Phase B GitLab PAT**: separate 1Password Item into
     `hypermind-preview` at implement time (API token for MR polling, not
     the deploy key).
-- Protected path — **`flux/manifests/01-bootstrap/**` needs explicit confirm\*\*
+- Protected path: **`flux/manifests/01-bootstrap/**` needs explicit confirm\*\*
   at implement time.
 
 ## Steps
 
-### Phase A — Operator cutover
+### Phase A: Operator cutover
 
 - [x] Ship operator-only GitOps (`HelmRepository` + `HelmRelease` under
       `flux-system/`). Leave gotk alone; no live `FluxInstance` yet. Confirm HR
@@ -108,7 +108,7 @@ Upstream pattern:
 Ready / Installed; `flux check` OK; controllers Ready; no gotk reference in
 bootstrap build.
 
-### Phase B — Hypermind MR ResourceSet pilot
+### Phase B: Hypermind MR ResourceSet pilot
 
 - [ ] Create `hypermind-preview` Namespace + SA + namespaced RoleBinding.
 - [ ] Wire GitLab PAT via 1Password Item into that namespace (Item name chosen
@@ -117,7 +117,7 @@ bootstrap build.
       `deploy/flux-preview` for `gitlab.com/Apocrathia/homelab` (confirm exact
       project URL at implement time).
 - [ ] Add `ResourceSet` templating per-MR `GitRepository` @ `<< inputs.sha >>` + side-by-side hypermind `HelmRelease` (name suffix `<< inputs.id >>`)
-      from MR tip — **not** the live `hypermind/hypermind` release. Validate
+      from MR tip; **not** the live `hypermind/hypermind` release. Validate
       with `flux-operator build resourceset` + mock inputs.
 - [ ] Optional: GitLab webhook `Receiver` on the InputProvider; optional
       `gitlabmergerequestcomment` / commit-status Alert + Provider.
@@ -129,10 +129,10 @@ bootstrap build.
 
 Phase A:
 
-- Flux MCP: `get_flux_instance` — present, distribution Installed, sync ready
+- Flux MCP: `get_flux_instance`; present, distribution Installed, sync ready
 - `flux check` / pods in `flux-system` Ready
 - `kubectl get gitrepository,kustomization -n flux-system flux-system`
-- `kustomize build` on bootstrap path — no `gotk-components` reference
+- `kustomize build` on bootstrap path; no `gotk-components` reference
 - Trivy on `flux/manifests/01-bootstrap/flux-system/`
 
 Phase B:

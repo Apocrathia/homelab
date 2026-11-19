@@ -5,18 +5,18 @@ Git history is the archive.
 
 ## Plans vs issues
 
-| Surface        | Holds                                                         |
-| -------------- | ------------------------------------------------------------- |
-| `docs/issues/` | **What** — problem / desired state, acceptance, feedback loop |
-| `docs/plans/`  | **How** — steps, checkboxes, decisions, implementation detail |
+| Surface        | Holds                                                        |
+| -------------- | ------------------------------------------------------------ |
+| `docs/issues/` | **What**: problem / desired state, acceptance, feedback loop |
+| `docs/plans/`  | **How**: steps, checkboxes, decisions, implementation detail |
 
-Do not bury a full plan inside an issue — link it via optional `plan:`
+Do not bury a full plan inside an issue; link it via optional `plan:`
 frontmatter on the issue. Do not invent acceptance criteria here that belong
 on the issue; keep the issue as the desired-state SoT when one exists.
 
 ## Layout
 
-Flat directory — no `open/` or `closed/` folders:
+Flat directory, no `open/` or `closed/` folders:
 
 ```
 docs/plans/
@@ -31,9 +31,9 @@ enumerating plans (same rule as issues).
 
 ## Surface
 
-| Surface       | Role                                                                               |
-| ------------- | ---------------------------------------------------------------------------------- |
-| `docs/plans/` | Durable / agent-loop SoT — prefer for find-work, multi-session, and GitOps handoff |
+| Surface       | Role                                                                              |
+| ------------- | --------------------------------------------------------------------------------- |
+| `docs/plans/` | Durable / agent-loop SoT; prefer for find-work, multi-session, and GitOps handoff |
 
 Prefer [`docs/plans/`](./) when the plan must survive chats and feed the
 development loop. When ambiguous, ask the operator.
@@ -64,16 +64,16 @@ file. Do not keep a `closed/` tree. Git history is the archive.
 | Scope fuzzy / multiple approaches    | Run [alignment](../../.agents/skills/alignment/SKILL.md) first; plan after shared intent |
 
 Agents write **locally** under this directory by default for durable plans. Do
-**not** invent Wave 4 loop skills here — follow
+**not** invent Wave 4 loop skills here; follow
 [development-loop](../../.agents/context/development-loop.md) and
 project-planner.
 
 ## Homelab constraints
 
 - **No secrets in plan bodies.** Reference 1Password Item names / vault paths
-  only — never tokens, passwords, kubeconfigs, or `.env` contents.
+  only; never tokens, passwords, kubeconfigs, or `.env` contents.
 - Plans that imply cluster mutation still need operator permission at
-  execution time — planning is not authorize-to-mutate.
+  execution time; planning is not authorize-to-mutate.
 - Agents never `git commit`. Operator commits.
 
 ## Frontmatter
@@ -104,16 +104,16 @@ Copy from [`_template.md`](./_template.md):
 1. Goal
 2. Scope (in / out)
 3. Decisions
-4. Steps — living checkboxes
-5. Feedback loop — named verify commands (e.g. `kustomize build`,
+4. Steps; living checkboxes
+5. Feedback loop; named verify commands (e.g. `kustomize build`,
    `helm template`, `yamllint`, Trivy on changed paths, Flux MCP read-only
    checks)
 6. Notes
 
 ## Related
 
-- [`_template.md`](./_template.md) — copy when authoring
-- [project-planner](../../.agents/agents/project-planner/agent.md) — plan authoring persona
-- [docs/issues/](../issues/README.md) — what / desired state
-- [docs/research/](../research/README.md) — findings (persist; not delete-on-ship)
-- [development-loop](../../.agents/context/development-loop.md) — find → plan → ship
+- [`_template.md`](./_template.md): copy when authoring
+- [project-planner](../../.agents/agents/project-planner/agent.md): plan authoring persona
+- [docs/issues/](../issues/README.md): what / desired state
+- [docs/research/](../research/README.md): findings (persist; not delete-on-ship)
+- [development-loop](../../.agents/context/development-loop.md): find → plan → ship

@@ -1,16 +1,24 @@
+---
+title: Dedicated RustFS for Agent Substrate snapshots
+status: done
+found_at: 2026-07-25
+updated_at: 2026-11-19
+area: storage
+---
+
 # Dedicated RustFS for Agent Substrate snapshots
 
 ## Goal
 
 Move Agent Substrate's golden-snapshot object storage off the `substrate`
-chart's bundled RustFS and onto `ate-cache` — a dedicated, repo-owned RustFS
+chart's bundled RustFS and onto `ate-cache`; a dedicated, repo-owned RustFS
 deployed with `helm/generic-app` into `ate-system`. Credentials come from
 1Password and reach `atelet` as `secretKeyRef`, never as plaintext.
 
 ## Why
 
 The bundled RustFS cannot survive a Helm upgrade that touches its pod template
-(`substrate-0-0-10-rollout-failure.md`, now closed — see git history):
+(`substrate-0-0-10-rollout-failure.md`, now closed; see git history):
 
 - `Deployment/rustfs` is `RollingUpdate` on a ReadWriteOnce Longhorn PVC, so the
   replacement pod hits `Multi-Attach error` and the rollout never converges.
@@ -26,14 +34,14 @@ in the chart is stateless, so upgrades stop deadlocking.
 Rendered from chart `substrate` 0.0.6 (`helm template`, artifacts in
 `.scratch/`):
 
-| Check                                                   | Result                                                                            |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `rustfs.enabled=false` removes RustFS Deployment + Job  | Yes — remaining Deployments are ateapi, ate-controller, atenet-dns, atenet-router |
-| `atelet.extraEnv` accepts `valueFrom.secretKeyRef`      | Yes — renders verbatim into the DaemonSet                                         |
-| Plaintext `rustfsadmin` anywhere in render              | None                                                                              |
-| `generic-app` default update strategy                   | `Recreate` — explicitly "to avoid Multi-Attach errors"                            |
-| `generic-app` supports Longhorn + 1Password + ClusterIP | Yes (`storage.longhorn`, `secrets.enabled`, `authentik/httproute: false`)         |
-| Current data volume                                     | 18 objects, ~127 MB, in bucket `ate-snapshots` on a 1Gi PVC                       |
+| Check                                                   | Result                                                                           |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `rustfs.enabled=false` removes RustFS Deployment + Job  | Yes; remaining Deployments are ateapi, ate-controller, atenet-dns, atenet-router |
+| `atelet.extraEnv` accepts `valueFrom.secretKeyRef`      | Yes; renders verbatim into the DaemonSet                                         |
+| Plaintext `rustfsadmin` anywhere in render              | None                                                                             |
+| `generic-app` default update strategy                   | `Recreate`: explicitly "to avoid Multi-Attach errors"                            |
+| `generic-app` supports Longhorn + 1Password + ClusterIP | Yes (`storage.longhorn`, `secrets.enabled`, `authentik/httproute: false`)        |
+| Current data volume                                     | 18 objects, ~127 MB, in bucket `ate-snapshots` on a 1Gi PVC                      |
 
 The `atelet` → S3 contract (env names the chart already uses):
 
@@ -59,13 +67,13 @@ Longhorn volume ownership lines up.
 
 | #   | Decision      | Choice                                                                                                    |
 | --- | ------------- | --------------------------------------------------------------------------------------------------------- |
-| 1   | Namespace     | `ate-system` — the cache belongs to the substrate, not to itself                                          |
-| 2   | App name      | `ate-cache` — matches the chart's `ate-*` prefix and dodges the name collision below                      |
+| 1   | Namespace     | `ate-system`: the cache belongs to the substrate, not to itself                                           |
+| 2   | App name      | `ate-cache`: matches the chart's `ate-*` prefix and dodges the name collision below                       |
 | 3   | Layout        | Inside `substrate/` as `cache-helmrelease.yaml`; the dir already carries two HelmReleases and owns the ns |
 | 4   | Volume        | `20Gi`, `numberOfReplicas: 2`                                                                             |
 | 5   | Bucket        | Resident sidecar running an idempotent `head-bucket` / `create-bucket` loop against `127.0.0.1:9000`      |
-| 6   | Existing data | **Clean start** — no migration; `AgentHarness/openclaw` cold-starts and snapshots regenerate              |
-| 7   | Console       | `:9001` on the ClusterIP Service, no HTTPRoute — port-forward only                                        |
+| 6   | Existing data | **Clean start**: no migration; `AgentHarness/openclaw` cold-starts and snapshots regenerate               |
+| 7   | Console       | `:9001` on the ClusterIP Service, no HTTPRoute; port-forward only                                         |
 | 8   | Secret        | Reuse the existing `OnePasswordItem/agent-substrate-secrets` in `ate-system`; `secrets.enabled: false`    |
 
 ### Name collision
@@ -73,7 +81,7 @@ Longhorn volume ownership lines up.
 The bundled RustFS owns `Deployment/rustfs`, `Service/rustfs`,
 `PVC/rustfs-data`, and label `app: rustfs` in `ate-system`, plus Longhorn
 `Volume/rustfs-data`. Landing in the same namespace under the name `rustfs`
-would collide on all five — including the Deployment selector, so the new
+would collide on all five; including the Deployment selector, so the new
 Deployment would adopt the bundled pods. `ate-cache` keeps every name distinct,
 which also lets both run side by side during cutover.
 
@@ -86,7 +94,7 @@ Resulting names: `Deployment/ate-cache`, `Service/ate-cache`
 1. **Rotate the 1Password item.** Refresh `access-key-id` /
    `access-key-secret` in `vaults/Secrets/items/agent-substrate-secrets`. The
    values from the earlier rotation attempt leaked into Kubernetes Events and
-   must not be reused. **Done** — operator rotated before implementation.
+   must not be reused. **Done**: operator rotated before implementation.
 2. **Add `ate-cache`.** `substrate/cache-helmrelease.yaml` (generic-app,
    `app.name: ate-cache`, 20Gi Longhorn volume, ClusterIP with `api`/`console`
    ports, `secrets`/`authentik`/`httproute` disabled, bucket-init sidecar), and
@@ -99,20 +107,20 @@ Resulting names: `Deployment/ate-cache`, `Service/ate-cache`
    Reconcile.
 5. **Verify substrate.** `atelet` DaemonSet rolls with the new env; suspend and
    resume `AgentHarness/openclaw` and confirm a fresh snapshot object lands in
-   the new bucket. **Blocked on 0.0.10** — pinned back to `0.0.6` so agents can
+   the new bucket. **Blocked on 0.0.10**: pinned back to `0.0.6` so agents can
    run; re-verify after a paired kagent lands. See
    `docs/issues/substrate-kagent-version-skew.md`.
 6. **Retest the version bump.** With RustFS out of the release, retry chart
-   `0.0.10` + `image.tag: v0.0.10`. **Done for converge** — the release holds
+   `0.0.10` + `image.tag: v0.0.10`. **Done for converge**: the release holds
    Ready without the RustFS deadlock, but agents cannot use it (proto + JWT).
    Chart/image held at `0.0.6` until the skew issue clears.
-7. **Reconcile docs.** **Done** — README updated, resolved issues deleted, the
+7. **Reconcile docs.** **Done**: README updated, resolved issues deleted, the
    remaining upstream gap is tracked in
    `docs/issues/substrate-kagent-version-skew.md`.
 
 ## Rollback
 
-Steps 1–3 are additive — the bundled RustFS keeps serving until step 4. To back
+Steps 1-3 are additive; the bundled RustFS keeps serving until step 4. To back
 out after step 4, restore `rustfs.enabled: true` and the previous `valuesFrom`
 block in `substrate/helmrelease.yaml`. Snapshots are regenerable, so there is
 nothing to restore.
@@ -131,7 +139,7 @@ nothing to restore.
 
 ## Open risks
 
-- RustFS is `1.0.0-beta.3`. Beta object store holding agent state — acceptable
+- RustFS is `1.0.0-beta.3`. Beta object store holding agent state; acceptable
   for snapshots (regenerable, agents cold-start if lost), not for anything
   authoritative.
 - Chart `0.0.10` converges with external RustFS but cannot drive agents until

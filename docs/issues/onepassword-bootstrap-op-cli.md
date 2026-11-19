@@ -26,7 +26,7 @@ Connect-server APIs the CLI exposes), without leaving credential files on
 disk longer than the command needs. Documented commands live next to
 [`flux/manifests/01-bootstrap/1password/README.md`](../../flux/manifests/01-bootstrap/1password/README.md).
 
-Steady-state secret sync for workloads stays OnePasswordItem / Connect —
+Steady-state secret sync for workloads stays OnePasswordItem / Connect;
 this issue is only the chicken-and-egg credentials that stand Connect up.
 
 ## Acceptance
@@ -38,7 +38,7 @@ this issue is only the chicken-and-egg credentials that stand Connect up.
   the happy path (break-glass / rotation notes may remain).
 - Connect Deployment and operator become Ready after the flow on a clean
   namespace (or documented recreate).
-- No credentials, tokens, or `.env` contents in git or issue bodies — vault
+- No credentials, tokens, or `.env` contents in git or issue bodies; vault
   item titles / field labels only.
 
 ## Feedback loop

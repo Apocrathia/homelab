@@ -15,7 +15,7 @@ area: storage
 Two patterns exist for CNPG backup wiring:
 
 1. Hand-written per-app `scheduled-backup.yaml` + `backup-secret.yaml` +
-   kustomization registration — the authentik precedent, now replicated
+   kustomization registration; the authentik precedent, now replicated
    across 9 more app dirs by MR !5139 (~18 near-identical files).
 2. The `generic-app` chart `postgres.backup.enabled` toggle.
 
@@ -27,12 +27,12 @@ new non-generic-app Postgres cluster.
 
 - A shared kustomize component (`flux/manifests/components/cnpg-backup` or
   similar), parameterized per cluster (name, namespace), renders
-  `ScheduledBackup` + `OnePasswordItem` backup-secret — and, if practical,
+  `ScheduledBackup` + `OnePasswordItem` backup-secret; and, if practical,
   patches `spec.backup` onto the Cluster CR via replacements.
 - Each direct-CR app dir's backup wiring reduces to a few kustomization lines.
 - Authentik migrates onto the component.
 - `kustomize build` + `helm template` + `yamllint` green on all affected dirs.
-- Live backup behavior unchanged — the next 05:00 UTC wave still completes.
+- Live backup behavior unchanged; the next 05:00 UTC wave still completes.
 
 ## Feedback loop
 
@@ -45,7 +45,7 @@ new non-generic-app Postgres cluster.
 
 kustomize v5 components + replacements (target the CNPG `Cluster` by name for
 the `spec.backup` patch). CNPG requires the barman destination on the Cluster
-CR itself, so a lone ScheduledBackup file cannot work — the component must
+CR itself, so a lone ScheduledBackup file cannot work; the component must
 deliver both halves.
 
 ## Notes

@@ -35,13 +35,13 @@ found_at: YYYY-MM-DD
 - helm template …
 - yamllint <files>
 - Trivy on changed paths
-- Flux MCP read (Kustomization / HelmRelease status) — read-only; mutate needs ask
+- Flux MCP read (Kustomization / HelmRelease status); read-only; mutate needs ask
 -->
 
 ## Implementation hint
 
-<!-- Light pointer only — not a plan. Link plan: frontmatter when how-work exists. -->
+<!-- Light pointer only; not a plan. Link plan: frontmatter when how-work exists. -->
 
 ## Notes
 
-<!-- Optional context. No secrets — 1Password Item names only. -->
+<!-- Optional context. No secrets; 1Password Item names only. -->

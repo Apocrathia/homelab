@@ -12,7 +12,7 @@ This flow is **logical** (dump → restore). It works for **any** namespace and 
 
 ## When not to use
 
-- You have a supported **physical** recovery path (Barman backup, `Backup` CR, or `VolumeSnapshot` per [CloudNativePG recovery](https://cloudnative-pg.io/documentation/current/recovery/)) — prefer that for large DBs and replication fidelity.
+- You have a supported **physical** recovery path (Barman backup, `Backup` CR, or `VolumeSnapshot` per [CloudNativePG recovery](https://cloudnative-pg.io/documentation/current/recovery/)); prefer that for large DBs and replication fidelity.
 
 ## Prerequisites
 
@@ -25,12 +25,12 @@ This flow is **logical** (dump → restore). It works for **any** namespace and 
 
    If that returns nothing, inspect the same pod’s volume mounts and list the mount directory.
 
-3. **Secrets**: you need credentials that can connect for dumps (superuser, or a role with enough rights). Use existing Kubernetes secrets or a one-off secret — do **not** commit real values to git.
+3. **Secrets**: you need credentials that can connect for dumps (superuser, or a role with enough rights). Use existing Kubernetes secrets or a one-off secret; do **not** commit real values to git.
 
 ## Outline
 
 1. Stop writers (app scale to zero or maintenance mode).
-2. Remove only the **CNPG `Cluster`** (and jobs/pods) so nothing else keeps the PVC open — **or** scale to zero and delete the cluster; keep the **PVC** if it still exists. If the operator deletes the instance PVC with the cluster but the Longhorn volume is intact, recreate PV/PVC via **`helm/cnpg-data-extract`** values **`pvc.staticLonghorn`** (see that chart’s README) instead of hand-written YAML.
+2. Remove only the **CNPG `Cluster`** (and jobs/pods) so nothing else keeps the PVC open; **or** scale to zero and delete the cluster; keep the **PVC** if it still exists. If the operator deletes the instance PVC with the cluster but the Longhorn volume is intact, recreate PV/PVC via **`helm/cnpg-data-extract`** values **`pvc.staticLonghorn`** (see that chart’s README) instead of hand-written YAML.
 3. Schedule a **temporary** pod that mounts **that PVC** read-write, runs Postgres against that PGDATA, and exposes nothing to the cluster except what you need (or use `kubectl exec` only).
 4. **`pg_dump` / `pg_dumpall`** to durable storage (another PVC, object storage, or `kubectl cp` off the node).
 5. Delete the temp workload. **Delete the old PVC** if you are replacing the volume, or leave it if you are only refreshing the cluster object (your call).

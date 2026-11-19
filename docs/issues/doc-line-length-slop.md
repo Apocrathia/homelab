@@ -1,5 +1,5 @@
 ---
-title: "Doc slop: line length, paragraph size, diagram density — repo-wide cleanup"
+title: "Doc slop: line length, paragraph size, diagram density (repo-wide cleanup)"
 kind: spec
 status: open
 severity: medium
@@ -7,7 +7,7 @@ source: review
 found_at: 2026-10-29
 ---
 
-# Doc slop: line length, paragraph size, diagram density — repo-wide cleanup
+# Doc slop: line length, paragraph size, diagram density (repo-wide cleanup)
 
 ## Problem / desired state
 
@@ -16,7 +16,7 @@ lines that wrap 5-10x at reading width, paragraphs too long to read,
 and diagrams so dense their mermaid render shrinks unreadable. If a
 doc is too much text, it does not get read.
 
-Measured across tracked markdown — 485 files, vendored skills and
+Measured across tracked markdown; 485 files, vendored skills and
 generated files excluded:
 
 - 5,399 lines over 80 columns, 1,469 of them over 150
@@ -42,7 +42,7 @@ generated files excluded:
 Irreducible exceptions (not violations): single markdown-link tokens
 (URLs cannot wrap), code/SQL/mermaid statements themselves, and
 vendored or generated files. Wide table cells that would force
-over-length source lines get restructured into lists — tables
+over-length source lines get restructured into lists; tables
 cannot wrap internally, so lists win for long content.
 
 ## Enforcement
@@ -77,10 +77,11 @@ cannot wrap internally, so lists win for long content.
   (`.agents/skills/`) and generated (`.prime/`) paths; count lines
   over 80/150 and paragraphs over 320 characters outside code
   fences. Numbers in this issue come from the 2026-10-29 run.
-- Protected paths — `AGENTS.md`/`CLAUDE.md`, `.agents/rules`,
-  `.cursor`, `.claude` — need operator confirmation before their
+- Protected paths (`AGENTS.md`/`CLAUDE.md`, `.agents/rules`,
+  `.claude`) need operator confirmation before their
   cleanup edits per protected-paths.
-- Adapter-duplicated personas exist under `.agents`, `.claude`, and
-  `.cursor`: the same fix must land in every copy.
+- Adapter-duplicated personas exist under `.agents` and `.claude`:
+  the same fix must land in every copy. (`.cursor` was retired and
+  deleted from the repo; 2026-10-22.)
 - Vendored content stays byte-identical (upstream sync rule); the
   caps apply to house-authored docs only.

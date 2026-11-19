@@ -6,36 +6,23 @@ This document provides guidance for addressing Kyverno policy violations from `a
 
 The `audit-automount-sa-token` policy audits Pods that don't explicitly disable `automountServiceAccountToken`. By default, Kubernetes mounts ServiceAccount tokens into all Pods, which is a security risk if the Pod doesn't need Kubernetes API access.
 
-**Current Violations**: ~800 resources across 80+ namespaces (Deployments, StatefulSets, DaemonSets, CronJobs, and their child Pods/ReplicaSets).
+**Violations at audit time**: ~800 resources across 80+ namespaces (Deployments, StatefulSets, DaemonSets, CronJobs, and their child Pods/ReplicaSets). Counts are historical; the generic-app share below is since mitigated by the chart default; refresh with a live Kyverno report before acting on the number.
 
 ## Workload Categories
 
 ### 1. Generic-App Helm Chart Deployments (~74 HelmReleases)
 
-**Examples**: sonarr, radarr, bazarr, plex, overseerr, demo-app, etc.
+**Mitigated**: `helm/generic-app` has defaulted
+`app.automountServiceAccountToken: false` since 2026-01
+(`71dff6471`; `helm/generic-app/values.yaml`), and
+`templates/deployment.yaml` renders it with a `| default false` guard, so
+every generic-app Deployment mounts no SA token unless an app explicitly
+opts in. Historical examples (sonarr, radarr, bazarr, plex, overseerr) have
+since left the tree; demo-app and the rest of the current fleet are covered
+by the default.
 
-**Root Cause**: The `generic-app` helm chart at `helm/generic-app/templates/deployment.yaml` doesn't set `automountServiceAccountToken: false`.
-
-**Fix**: Update the generic-app helm chart to disable SA token mounting by default:
-
-```yaml
-# In helm/generic-app/templates/deployment.yaml, add after spec.template.spec:
-spec:
-  template:
-    spec:
-      automountServiceAccountToken: false # Add this line
-      # ... rest of spec
-```
-
-This is a one-time fix that will remediate all generic-app-based deployments upon the next reconciliation.
-
-**Exceptions**: If any generic-app deployment legitimately needs API access (unlikely for most apps), add a values option:
-
-```yaml
-# values.yaml
-app:
-  automountServiceAccountToken: false # Default to false
-```
+**Exceptions**: an app that legitimately needs API access sets
+`app.automountServiceAccountToken: true` in its values.
 
 ### 2. Authentik Outposts (~50 Deployments)
 

@@ -17,12 +17,13 @@ OpenTAXII is deployed and bootstrapped (TAXII 2.1 api root + public
 flight (`feat/opentaxii-opencti-connector`). But nothing feeds the TAXII 2.1
 collection, so the staging hub still carries no content.
 
-Research (2026-10-19, primary-source cited:
-`.scratch/opentaxii-setup/research.md`) verified:
+Research (2026-10-19, primary-source cited in the since-deleted
+`.scratch/opentaxii-setup/research.md`; `.scratch` is ephemeral; the
+verified findings are inlined below) verified:
 
 - No reliable anonymous free public TAXII 2.1 feed exists to poll. CIRCL
   `cib.circl.lu` appears defunct (no live endpoint, no archive; UNVERIFIED
-  globally — research host has flaky DNS), CISA AIS 2.0 requires participant
+  globally; research host has flaky DNS), CISA AIS 2.0 requires participant
   registration + FBCA client cert + static IP allowlist, abuse.ch explicitly
   refuses STIX/TAXII exports, TAXIIstand demo is dead.
 - OpenTAXII 0.10 keeps TAXII 1.x and TAXII 2.1 storage disjoint
@@ -39,13 +40,13 @@ Desired state: real content flows into the `stix-feed` collection via a
 GitOps-managed mechanism:
 
 1. **MISP → OpenTAXII push**: MISP's TAXII 2.1 client push (url, base64
-   auth, api root, collection config — misp-project.org TAXII push blog).
+   auth, api root, collection config; misp-project.org TAXII push blog).
    Community data can enter via MISP's own free MISP-format feeds (CIRCL
    feed-osint) first. Note the existing MISP → OpenCTI direct connector
    (REST) already covers MISP→OpenCTI; this path adds the staging-hub route
    and would need a deliberate scoping decision to avoid double-import.
 2. **OpenCanary triage → STIX push**: the security README's aspirational
-   path — a triage script/scripted job reading canary alerts (Loki-side
+   path; a triage script/scripted job reading canary alerts (Loki-side
    today), building STIX 2.1 indicator bundles, POSTing to the collection.
    This is the operator-prioritized signal source ("feed any opencanary
    signals in").
@@ -81,8 +82,9 @@ Bootstrap live state: api root `9d2329b4-6a06-4f01-9c94-a2c3e6d1a501`
 of the UUID. Write access needs `is_public_write` (already set) or an
 account (`opentaxii-create-account`; management API only exposes
 `/management/auth` + `/management/health`). POST envelope validation honors
-`allow_custom_properties`. Full source citations in
-`.scratch/opentaxii-setup/research.md`.
+`allow_custom_properties`. Full source citations lived in the
+since-deleted `.scratch/opentaxii-setup/research.md` (git history is the
+archive).
 
 ## Notes
 
