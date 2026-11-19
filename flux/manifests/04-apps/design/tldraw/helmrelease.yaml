@@ -1,0 +1,143 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tldraw
+  namespace: tldraw
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: tldraw
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+      image: public.ecr.aws/docker/library/node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
+      container:
+        name: node
+        port: 5858
+      command: ["node", "/app/dist/src/server/server.node.js"]
+      env:
+        - name: NODE_ENV
+          value: production
+        - name: CONFIG_DIR
+          value: /config
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      initContainers:
+        - name: build-tldraw
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+          image: public.ecr.aws/docker/library/node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              apk add --no-cache git
+              git clone https://github.com/FoxxMD/tldraw-selfhosted.git /tmp/tldraw
+              cd /tmp/tldraw
+              git checkout "${TLDRAW_COMMIT}"
+              yarn install --frozen-lockfile
+              yarn build
+              yarn install --frozen-lockfile --production
+              mkdir -p /app
+              cp -a dist /app/
+              cp -a node_modules /app/
+          env:
+            - name: TLDRAW_COMMIT
+              value: "2af82553127a995cef5bf2c99ea5a7a3e0130e39"
+            - name: VITE_TLDRAW_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tldraw-secrets
+                  key: license-key
+          volumeMounts:
+            - name: app
+              mountPath: /app
+          volumes:
+            emptyDir:
+              - name: tmp
+                mountPath: /tmp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 5858
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 5858
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumeMounts:
+        - name: app
+          mountPath: /app
+        - name: config
+          mountPath: /config
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: app
+            capacity: 2Gi
+          - name: config
+            capacity: 1Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/tldraw-secrets"
+
+    authentik:
+      managedBy: terraform
+      enabled: true
+      category: "Design"
+      displayName: "tldraw"
+      externalHost: "https://tldraw.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/tldraw/icon.svg"
+      interceptHeaderAuth: false
+      shared: true
+
+    httproute:
+      enabled: false
+
+    tailnet:
+      enabled: true
