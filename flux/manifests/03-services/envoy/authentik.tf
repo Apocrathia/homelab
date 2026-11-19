@@ -41,8 +41,9 @@ resource "authentik_provider_proxy" "envoy-admin" {
   authorization_flow    = data.authentik_flow.provider-authorization.id
   invalidation_flow     = data.authentik_flow.invalidation.id
   authentication_flow   = data.authentik_flow.authentication.id
-  mode                  = "forward_single"
+  mode                  = "proxy"
   cookie_domain         = "gateway.services.apocrathia.com"
+  intercept_header_auth = false
   access_token_validity = "hours=1"
 }
 
