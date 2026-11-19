@@ -1,6 +1,6 @@
 # Cilium
 
-Cilium is a Kubernetes-native networking and security solution based on eBPF.
+Kubernetes networking and security built on eBPF.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
@@ -8,40 +8,22 @@ Cilium is a Kubernetes-native networking and security solution based on eBPF.
 
 Cilium is installed using the Helm chart from the Cilium project.
 
-To verify the installation, you will need to install the Cilium CLI.
+Verifying the installation needs the Cilium CLI:
 
 ```bash
 brew install cilium-cli
 ```
 
-To verify the installation, you can use the following command:
+Then check the install:
 
 ```bash
 cilium status --wait
 ```
 
-You should see something like the following:
-
-```
-$ cilium status -n cilium-system
-   /¯¯\
-/¯¯\__/¯¯\    Cilium:         OK
-\__/¯¯\__/    Operator:       OK
-/¯¯\__/¯¯\    Hubble:         disabled
-\__/¯¯\__/    ClusterMesh:    disabled
-   \__/
-
-DaemonSet         cilium             Desired: 2, Ready: 2/2, Available: 2/2
-Deployment        cilium-operator    Desired: 2, Ready: 2/2, Available: 2/2
-Containers:       cilium-operator    Running: 2
-                  cilium             Running: 2
-Image versions    cilium             quay.io/cilium/cilium:v1.9.5: 2
-                  cilium-operator    quay.io/cilium/operator-generic:v1.9.5: 2
-```
+`Cilium` and `Operator` should both report `OK`, with every desired pod in
+the DaemonSet and operator Deployment ready.
 
 ## Troubleshooting
-
-If you encounter issues during migration:
 
 1. Check Cilium pod logs:
 
@@ -56,8 +38,7 @@ If you encounter issues during migration:
    ```
 
 3. If pods can't communicate between nodes, check that:
-   - Both nodes have been migrated to Cilium
-   - The Cilium pods are running correctly
+   - The Cilium pods are running correctly on every node
    - The correct routing mode is configured
 
 ## References

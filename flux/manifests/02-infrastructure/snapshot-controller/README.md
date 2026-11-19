@@ -45,5 +45,5 @@ spec:
 EOF
 ```
 
-- **Chart**: <https://github.com/home-operations/helm-charts/tree/main/charts/snapshot-controller>
-- **Upstream**: <https://kubernetes-csi.github.io/docs/snapshot-controller.html>
+- [Chart](https://github.com/home-operations/helm-charts/tree/main/charts/snapshot-controller)
+- [Upstream](https://kubernetes-csi.github.io/docs/snapshot-controller.html)

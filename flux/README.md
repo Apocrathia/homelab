@@ -29,7 +29,7 @@ flux bootstrap gitlab \
 
 You will be asked for the GitLab Personal Access Token.
 
-Note: 1password also needs to be manually configured with it's secret. See the 1password [README](./manifests/01-bootstrap/1password/README.md) for more details.
+Note: 1Password also needs to be manually configured with its secret. See the 1Password [README](./manifests/01-bootstrap/1password/README.md) for more details.
 
 ## Deploy
 
