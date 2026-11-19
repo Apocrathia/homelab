@@ -19,3 +19,12 @@ spec:
       # (Cilium's gateway had no cap). 1h is a hung-request backstop;
       # Envoy's 5m stream idle timeout still reaps silent streams.
       requestTimeout: 3600s
+
+  # Coraza WAF body inspection buffers request bodies; EG's default 32Ki
+  # buffer limit 413s any larger POST (agent/LLM conversations, Fleet
+  # osquery batches). LimitOnly raises the ceiling for filters that buffer
+  # (the WAF) without the gateway itself buffering — streaming/WebSocket
+  # routes keep working.
+  requestBuffer:
+    limit: 32Mi
+    mode: LimitOnly
