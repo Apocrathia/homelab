@@ -3,8 +3,8 @@
 When Hermes (or another LiteLLM MCP client) should **delegate to a kagent A2A
 agent** vs call a **direct LiteLLM MCP** tool. For the in-cluster agent→agent
 graph (who can tool-call whom), see
-[`flux/.../agents/README.md`](../../flux/manifests/04-apps/artificial-intelligence/agents/README.md)
-— do not duplicate that mermaid here.
+[`flux/.../agents/README.md`](../../flux/manifests/04-apps/artificial-intelligence/agents/README.md).
+Do not duplicate that mermaid here.
 
 Lap routing (`find-work` → implement → ship) lives in
 [`development-loop.md`](./development-loop.md) and
@@ -38,7 +38,7 @@ Register kagent agents in `litellm.yml` under top-level `agents:` with
 | System agents (kagent chart) | `kagent`         | `k8s-agent`, `helm-agent`, `observability-agent`, …       |
 | Homelab tech assistant       | `kagent`         | `homelab-agent` (Discord bridge stays in `agent-homelab`) |
 
-Do not probe user agents under `kagent/<name>` — cards live under
+Do not probe user agents under `kagent/<name>`: cards live under
 `agent-<domain>/<name>`.
 
 ## Need → A2A → MCP fallback
@@ -62,7 +62,7 @@ is down or unregistered, use those aliases through LiteLLM.
 | Hermes (orchestrator, Discord, ops)      | `hermes-agent`/`hermes-agent` (registered on LiteLLM)                        | Direct MCP tools; delegate via `a2a_call` to kagent agents                      |
 | Kubernetes ops / troubleshooting         | `kagent`/`k8s-agent`                                                         | `flux` (inventory / reconcile); no general kubectl MCP                          |
 | Helm releases                            | `kagent`/`helm-agent`                                                        | `flux` (`HelmRelease` path)                                                     |
-| Cilium install / policy / debug          | `kagent`/`cilium-manager-agent`, `cilium-policy-agent`, `cilium-debug-agent` | none in LiteLLM — A2A or CLI                                                    |
+| Cilium install / policy / debug          | `kagent`/`cilium-manager-agent`, `cilium-policy-agent`, `cilium-debug-agent` | none in LiteLLM; A2A or CLI                                                     |
 | Metrics / dashboards / alerts            | `kagent`/`observability-agent`                                               | `grafana`                                                                       |
 | PromQL authoring                         | `kagent`/`promql-agent`                                                      | `grafana`                                                                       |
 

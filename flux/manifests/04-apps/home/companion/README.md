@@ -1,20 +1,20 @@
 # Companion - Stream Deck Control Software
 
-Powerful stream deck control software for broadcast and live production environments.
+Stream Deck controller for broadcast and live production.
 
 > **Navigation**: [← Back to Home README](../README.md)
 
 ## Overview
 
-Companion is an open-source controller for Elgato Stream Decks and other input devices. It provides a web-based interface for creating custom control surfaces with buttons, dials, and other controls to interface with various broadcast and production systems.
+Companion is an open-source controller for Elgato Stream Decks and other input devices. The web UI builds custom control surfaces (buttons, dials) that drive broadcast and production systems.
 
 ### Key Features
 
-- **Stream Deck Integration**: Full support for Elgato Stream Deck devices
-- **Web-based Interface**: Modern web UI for configuration and control
-- **Multi-device Support**: Works with various input devices and protocols
-- **Extensible**: Supports custom modules and integrations
-- **Network Control**: RESTful API for external control systems
+- **Stream Deck integration**: Elgato Stream Deck device support
+- **Web interface**: Browser UI for configuration and control
+- **Multi-device**: Multiple input devices and protocols
+- **Extensible**: Custom modules and integrations
+- **Network control**: REST API for external control
 
 ## Deployment
 
@@ -49,10 +49,8 @@ The application uses a Longhorn persistent volume to store:
 
 ### Accessing Companion
 
-1. **External URL**: Navigate to the external hostname configured in Authentik
-2. **Authentication**: Use your Authentik credentials to log in
-3. **Configuration**: Set up your Stream Deck devices and button layouts
-4. **Integration**: Connect to your broadcast systems and applications
+1. Open `https://companion.gateway.services.apocrathia.com`
+2. Log in with Authentik credentials
 
 ### Stream Deck Setup
 
@@ -63,7 +61,7 @@ The application uses a Longhorn persistent volume to store:
 
 ### API Access
 
-Companion provides a RESTful API for external control:
+Companion exposes a REST API for external control:
 
 ```bash
 # Example API endpoint
@@ -151,7 +149,7 @@ kubectl get events -n bitfocus --sort-by=.metadata.creationTimestamp
 
 ## Backup and Recovery
 
-The persistent storage contains all configuration data. Regular backups of the Longhorn volume are recommended for production use.
+The Longhorn volume holds all configuration data.
 
 ### Manual Backup
 

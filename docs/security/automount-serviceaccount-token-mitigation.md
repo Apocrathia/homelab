@@ -6,13 +6,13 @@ This document provides guidance for addressing Kyverno policy violations from `a
 
 The `audit-automount-sa-token` policy audits Pods that don't explicitly disable `automountServiceAccountToken`. By default, Kubernetes mounts ServiceAccount tokens into all Pods, which is a security risk if the Pod doesn't need Kubernetes API access.
 
-**Violations at audit time**: ~800 resources across 80+ namespaces (Deployments, StatefulSets, DaemonSets, CronJobs, and their child Pods/ReplicaSets). Counts are historical — the generic-app share below is since mitigated by the chart default; refresh with a live Kyverno report before acting on the number.
+**Violations at audit time**: ~800 resources across 80+ namespaces (Deployments, StatefulSets, DaemonSets, CronJobs, and their child Pods/ReplicaSets). Counts are historical; the generic-app share below is since mitigated by the chart default; refresh with a live Kyverno report before acting on the number.
 
 ## Workload Categories
 
 ### 1. Generic-App Helm Chart Deployments (~74 HelmReleases)
 
-**Mitigated** — `helm/generic-app` has defaulted
+**Mitigated**: `helm/generic-app` has defaulted
 `app.automountServiceAccountToken: false` since 2026-01
 (`71dff6471`; `helm/generic-app/values.yaml`), and
 `templates/deployment.yaml` renders it with a `| default false` guard, so

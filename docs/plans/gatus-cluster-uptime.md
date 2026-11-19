@@ -1,12 +1,12 @@
 ---
-title: "Gatus — in-cluster uptime monitoring"
+title: "Gatus: in-cluster uptime monitoring"
 status: done
 found_at: 2026-08-01
 updated_at: 2026-08-01
 area: observability
 ---
 
-# Gatus — in-cluster uptime monitoring
+# Gatus: in-cluster uptime monitoring
 
 Complementary synthetic monitoring for workloads **inside** the cluster.
 Does not replace Uptime Kuma (LAN/network services) or Uptime Robot
@@ -21,7 +21,7 @@ visible behind Authentik. Prove the pattern on `demo-app`, then expand.
 
 ## Scope
 
-**In scope (v1) — shipped:**
+**In scope (v1), shipped:**
 
 - Official home-operations `gatus-sidecar` Helm chart (Gatus + sidecar)
 - Placement under platform observability (`services-gatus`)
@@ -45,7 +45,7 @@ visible behind Authentik. Prove the pattern on `demo-app`, then expand.
 
 | Decision                    | Choice                                           | Why                                                                                                |
 | --------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| Role vs Kuma / Uptime Robot | Complement                                       | Different scopes — LAN / external / in-cluster                                                     |
+| Role vs Kuma / Uptime Robot | Complement                                       | Different scopes; LAN / external / in-cluster                                                      |
 | Chart                       | Official `gatus-sidecar` chart                   | Maintained Gatus+sidecar pairing, RBAC, ServiceMonitor                                             |
 | Sidecar model               | One sidecar in the Gatus pod only                | Watches API; does **not** inject into apps                                                         |
 | Discovery                   | `--enable-service` only                          | Opt-in via `gatus.home-operations.com/enabled`; avoids Authentik false greens from hostname probes |
@@ -111,6 +111,6 @@ demo-app Service (+ annotation)
 
 ## Notes
 
-- Service probes default to `tcp://` — set `url: http://…` for HTTP status checks.
+- Service probes default to `tcp://`; set `url: http://…` for HTTP status checks.
 - Sidecar ≠ per-app injection.
 - Hostname / HTTPRoute probes deferred (Authentik false greens).

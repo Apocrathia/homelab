@@ -1,6 +1,6 @@
 # Servarr MCP Server
 
-The Servarr MCP server provides Sonarr and Radarr integration through the Model Context Protocol.
+Sonarr and Radarr management over the Model Context Protocol.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
@@ -51,7 +51,7 @@ The hyphenated Secret keys are mounted read-only and exported as the four MCP en
 
 ## Available MCP Tools
 
-The Servarr MCP server provides tools for media management:
+Tools by service:
 
 ### Sonarr Tools
 

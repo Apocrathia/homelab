@@ -4,8 +4,8 @@
 
 One process (HelmRelease `tenzir-node-enrichment`, rendering pod
 `tenzir-node-enrichment`) reserved as the fleet's **internal-reference-data
-factory**: the node whose pipelines build curated lookup tables — fleet
-assets, baselines — into the ClickHouse store, from where the
+factory**: the node whose pipelines build curated lookup tables, fleet
+assets, baselines, into the ClickHouse store, from where the
 ingress nodes' loader pipelines pull them into their node-local
 contexts. External threat intel is NOT this node's plane: the CTI
 factory lives on the [intel node](../intel/README.md) (operator
@@ -14,35 +14,35 @@ choice (c)). Lap 2 shipped the first factory lane:
 Fleet host-inventory pull into `ocsf.fleet_assets` (the core node's
 [`fleet-assets-loader`](../core/pipelines/fleet-assets-loader.tql) is
 the consumer half). One factory pipeline, zero listeners, no
-lake writes — ClickHouse is the only sink — plus the
+lake writes (ClickHouse is the only sink), plus the
 fleet-standard diagnostics pair (`diagnostics-to-loki` /
 `error-diagnostics-to-mimir`) every node ships since the B1 lap:
 this node's own diagnostics ship from the node itself now that the
 central poller is retired (the node never had a native pair in the
 poller era).
 
-- **Pure puller, no ingest surface** — no `extraPorts`, no listener
+- **Pure puller, no ingest surface**: no `extraPorts`, no listener
   Service, no web server (and so no `certificate.yaml`): the chart
   renders only the main `tenzir-node-enrichment` Service on `:5158`
   for node RPC. All factory work is outbound (platform WebSocket,
   the Fleet API pull, and the ClickHouse write).
-- **Deploys live** — this HelmRelease carries no `spec.suspend` and
+- **Deploys live**: this HelmRelease carries no `spec.suspend` and
   is the exception in the tree: the sibling nodes are currently
   suspended (cluster-side, out of band); the operator wants this node
   up while the factory is built.
-- **Single-writer store convention** — `fleet-assets-pull` is the only
+- **Single-writer store convention**: `fleet-assets-pull` is the only
   INSERT lane into `ocsf.fleet_assets`; consumer nodes (core) only
   SELECT it. Both connect as the shared `tenzir` ClickHouse user
   (grants: `INSERT, SELECT ON ocsf.*`), so the single-writer rule is
-  documentation, not RBAC — a second writer pipeline on any node
+  documentation, not RBAC, a second writer pipeline on any node
   would need this README and its own review.
 
 ## Roadmap
 
-1. **Lap 2 — `fleet_assets` factory lane (SHIPPED)**: the hourly
+1. **Lap 2, `fleet_assets` factory lane (SHIPPED)**: the hourly
    [`fleet-assets-pull`](./pipelines/fleet-assets-pull.tql) pulls host
    inventory from the Fleet REST API (`GET /api/v1/fleet/hosts`,
-   full list — Fleet's ListOptions treat an unset `per_page` as
+   full list, Fleet's ListOptions treat an unset `per_page` as
    unlimited) and writes the fused asset rows to `ocsf.fleet_assets`
    in the ClickHouse query store (ReplicatedReplacingMergeTree keyed
    on the Fleet host uuid, DDL in
@@ -84,14 +84,14 @@ flowchart LR
 
 The solid lanes are live (lap 2): the hourly Fleet pull appends every
 host's fused asset row into the ClickHouse table. The dashed loader
-lane runs on the consumer node, not here — contexts are per-node, so
+lane runs on the consumer node, not here, contexts are per-node, so
 the ingress nodes pull their own copies (core ships its loader as
 part of this lap; netflow/tetragon follow when their sources want
 host identity).
 
 ## Storage
 
-Stateless (lap 2e): `persistence.enabled: false` — the chart renders
+Stateless (lap 2e): `persistence.enabled: false`, the chart renders
 the state volume as an emptyDir, no PVC. The factory pipeline's only
 sink is ClickHouse and nothing imports into a lake, so nothing of
 value rides the node.
@@ -117,7 +117,7 @@ header must be staged as the **`fleetdm-token` field** on the same
 `tenzir-secrets` item (mint an API-only Fleet user; the field did
 not exist yet as of 2026-10-19, verified read-only via `op`). Until
 the field lands, `fleet-assets-pull` fails its first request with an
-auth error and `restart-on-error` retries — the node itself stays up,
+auth error and `restart-on-error` retries, the node itself stays up,
 and the consumer side just sees an empty `fleet_assets` context.
 Everything else is in git; the node comes up on apply.
 

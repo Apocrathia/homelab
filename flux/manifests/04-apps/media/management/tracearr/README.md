@@ -1,6 +1,6 @@
 # Tracearr
 
-Real-time monitoring for Plex, Jellyfin, and Emby — session tracking, analytics, and account-sharing detection in one dashboard.
+Real-time monitoring for Plex, Jellyfin, and Emby: session tracking, analytics, and account-sharing detection in one dashboard.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
@@ -38,7 +38,7 @@ Create a 1Password item at `vaults/Secrets/items/tracearr-secrets` with:
 
 ## Authentication
 
-Tracearr uses local owner accounts (no native OIDC). External access goes through an Authentik **proxy** outpost — owned by the `crossplane.yaml` + `authentik.tf` file pair in this directory (the retired blueprint's objects, adopted in place); you still create the Tracearr owner account in the setup wizard after deployment.
+Tracearr uses local owner accounts (no native OIDC). External access goes through an Authentik **proxy** outpost, owned by the `crossplane.yaml` + `authentik.tf` file pair in this directory (the retired blueprint's objects, adopted in place); you still create the Tracearr owner account in the setup wizard after deployment.
 
 ## Initial Setup
 
@@ -72,5 +72,5 @@ Tracearr uses WebSocket and SSE for live updates. If streams stall behind the ga
 
 ## References
 
-- **[Tracearr Documentation](https://docs.tracearr.com/)** — Setup and configuration
-- **[GitHub Repository](https://github.com/connorgallopo/tracearr)** — Source code and Helm chart
+- **[Tracearr Documentation](https://docs.tracearr.com/)**: Setup and configuration
+- **[GitHub Repository](https://github.com/connorgallopo/tracearr)**: Source code and Helm chart

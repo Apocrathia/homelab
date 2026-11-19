@@ -4,7 +4,7 @@
 
 ## Overview
 
-Winamp 2.9 reimplemented in the browser. Skins, visualizer, equalizer, playlist — all in HTML/JS.
+Winamp 2.9 reimplemented in the browser. Skins, visualizer, equalizer, playlist. All in HTML/JS.
 
 **URL:** <https://webamp.gateway.services.apocrathia.com>
 

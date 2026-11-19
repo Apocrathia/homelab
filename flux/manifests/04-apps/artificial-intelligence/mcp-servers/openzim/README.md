@@ -1,6 +1,6 @@
 # OpenZIM MCP Server
 
-The OpenZIM MCP server provides offline knowledge base querying through ZIM format archives.
+Offline knowledge base queries against ZIM archives.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
@@ -39,7 +39,7 @@ OnePasswordItem there supplies SMB credentials to the CSI driver.
 
 ## Available MCP Tools
 
-The OpenZIM MCP server runs in advanced mode, providing specialized tools for ZIM operations:
+The OpenZIM MCP server runs in advanced mode; exposed tools:
 
 - **list_zim_files** - List available ZIM files with names and paths
 - **search_zim_file** - Search content within a ZIM file

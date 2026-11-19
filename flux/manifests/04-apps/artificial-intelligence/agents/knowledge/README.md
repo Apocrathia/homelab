@@ -4,12 +4,12 @@
 
 ## Overview
 
-This deployment includes a knowledge management agent that stores, retrieves, and synthesizes information across multiple sources:
+The knowledge agent stores, retrieves, and synthesizes information across sources:
 
-- Vector database integration via Qdrant for semantic storage and retrieval
-- Offline encyclopedic content access through OpenZIM
-- Web search delegation for current information when needed
-- Designed to be called by other agents for knowledge queries
+- Qdrant vector store for semantic storage and retrieval
+- Offline encyclopedic content through OpenZIM
+- Web search delegation for current information
+- Called by other agents for knowledge queries
 
 ## Tools
 
@@ -22,12 +22,7 @@ This deployment includes a knowledge management agent that stores, retrieves, an
 
 ## Usage
 
-The knowledge agent is designed to be called by other agents (like homelab-agent) when they need to:
-
-- Store information for later retrieval
-- Recall previously stored information
-- Look up factual/encyclopedic information
-- Search across multiple knowledge sources
+Other agents (like homelab-agent) call it to store and recall knowledge, look up encyclopedic facts, and run web searches.
 
 ## Configuration
 

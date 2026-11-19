@@ -30,18 +30,18 @@ manual chores. Not a fake enterprise platform.
 
 ## Nested `.agents/` trees
 
-App folders can carry their own `.agents/` tree — a nested `AGENTS.md`
-router plus `context/` modules and/or vendored `skills/` — isolated from the
+App folders can carry their own `.agents/` tree: a nested `AGENTS.md`
+router plus `context/` modules and/or vendored `skills/`, isolated from the
 root skill pool and loaded only when working inside that subtree. Four
-instances so far: the Grafana tooling module, the first folder-scoped module
-with a hand-authored skill
-([`flux/manifests/03-services/observability/grafana/AGENTS.md`](../../flux/manifests/03-services/observability/grafana/AGENTS.md)),
-the Renovate module, context-only with no skills yet
-([`flux/manifests/03-services/renovate-operator/AGENTS.md`](../../flux/manifests/03-services/renovate-operator/AGENTS.md)),
-the Tenzir stack, the first vendored upstream-skills instance
-([`flux/manifests/04-apps/security/tenzir/AGENTS.md`](../../flux/manifests/04-apps/security/tenzir/AGENTS.md)),
-and the Fleet MDM tree
-([`fleet/AGENTS.md`](../../fleet/AGENTS.md)).
+instances so far:
+
+- Grafana tooling, the first folder-scoped module with a hand-authored skill:
+  [`flux/manifests/03-services/observability/grafana/AGENTS.md`](../../flux/manifests/03-services/observability/grafana/AGENTS.md)
+- Renovate, context-only with no skills yet:
+  [`flux/manifests/03-services/renovate-operator/AGENTS.md`](../../flux/manifests/03-services/renovate-operator/AGENTS.md)
+- Tenzir stack, the first vendored upstream-skills instance:
+  [`flux/manifests/04-apps/security/tenzir/AGENTS.md`](../../flux/manifests/04-apps/security/tenzir/AGENTS.md)
+- Fleet MDM tree: [`fleet/AGENTS.md`](../../fleet/AGENTS.md)
 
 ## How agents should behave here
 

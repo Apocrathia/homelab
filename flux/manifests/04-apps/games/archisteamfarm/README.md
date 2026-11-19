@@ -11,7 +11,7 @@ This deployment includes:
 - ArchiSteamFarm with multi-account Steam card idling
 - Web interface for monitoring and control
 - IPC API for external integrations
-- Authentik SSO integration for secure access
+- Authentik SSO integration
 - Persistent storage for configuration and plugins
 
 ## Configuration
@@ -54,17 +54,14 @@ The init container downloads the latest releases from GitHub and installs them a
 
 ## Authentication
 
-Authentication is handled through Authentik SSO:
-
-1. **Proxy Provider**: Authentik blueprint creates a proxy provider
-2. **Custom Integration**: Custom icon and display name configured
-3. **Clean Deployment**: Works with Authentik from day one
+Authentik SSO via a proxy provider created by the Authentik blueprint, with
+a custom icon and display name.
 
 ## Security Considerations
 
 - **Secret Management**: Configuration files managed via 1Password Item CRs
 - **Init Container**: Secrets copied to config volume before ASF starts
-- **SSO Integration**: Complete authentication through Authentik proxy
+- **SSO Integration**: Authentication through the Authentik proxy
 - **IPC Security**: IPC API accessible only within cluster
 
 ## Troubleshooting

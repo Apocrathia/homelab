@@ -15,5 +15,5 @@ ship from the Cron alone.
 
 ## References
 
-- [`run-loop/SKILL.md`](../skills/run-loop/SKILL.md) — G15
+- [`run-loop/SKILL.md`](../skills/run-loop/SKILL.md): G15
 - `flux/manifests/04-apps/artificial-intelligence/tasks/run-loop-agent-invoke/`

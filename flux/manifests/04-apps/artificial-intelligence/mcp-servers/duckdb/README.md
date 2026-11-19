@@ -1,6 +1,6 @@
 # DuckDB MCP Server
 
-The [`mcp-server-motherduck`](https://github.com/motherduckdb/mcp-server-motherduck) MCP server pointed at a local DuckDB file on a Longhorn volume. Gives agents the ability to query, transform, and persist data via SQL without touching the human-facing UI.
+The [`mcp-server-motherduck`](https://github.com/motherduckdb/mcp-server-motherduck) MCP server pointed at a local DuckDB file on a Longhorn volume. Lets agents query, transform, and persist data via SQL without touching the human-facing UI.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 

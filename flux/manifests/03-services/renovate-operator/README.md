@@ -33,7 +33,7 @@ Configuration lives in two places:
 `config/` is a separate Flux Kustomization (`services-renovate-operator-config`)
 that depends on the operator one: the chart installs the `RenovateJob` CRD, so
 CRs must not apply before the chart's CRD hook completes. Applying both from
-one Kustomization deadlocks - the CR's dry-run failure aborts the apply before
+one Kustomization deadlocks: the CR's dry-run failure aborts the apply before
 the HelmRelease is ever created.
 
 Renovate behavior for processed repositories still comes from `renovate.json`
@@ -44,11 +44,11 @@ in each target repository.
 The deployment reads `renovate-operator-secret`, synced from the existing
 `renovate-secrets` 1Password item. Required fields:
 
-- `RENOVATE_TOKEN` - GitLab PAT for platform access (same value as `gitlab-token`)
-- `GITHUB_COM_TOKEN` - GitHub token for changelogs (same value as `github-token`)
-- `oidc-client-id` - Authentik OIDC client ID (copied from the live provider; feeds the HelmRelease and the tofu ProviderConfig client-id lane)
-- `oidc-client-secret` - Authentik OIDC client secret (same source)
-- `oidc-session-secret` - random string for UI session encryption (generate once)
+- `RENOVATE_TOKEN`: GitLab PAT for platform access (same value as `gitlab-token`)
+- `GITHUB_COM_TOKEN`: GitHub token for changelogs (same value as `github-token`)
+- `oidc-client-id`: Authentik OIDC client ID (copied from the live provider; feeds the HelmRelease and the tofu ProviderConfig client-id lane)
+- `oidc-client-secret`: Authentik OIDC client secret (same source)
+- `oidc-session-secret`: random string for UI session encryption (generate once)
 
 ## Authentication
 
@@ -57,7 +57,7 @@ provider-opentofu Workspace (`crossplane.yaml` + `authentik.tf`, the
 canonical file pair) owns the provider and application.
 Membership in the `kubernetes-admins` Authentik group grants admin access to
 RenovateJobs; there is no anonymous or reader access. Never expose the UI
-route without OIDC configured - the operator serves it unauthenticated
+route without OIDC configured: the operator serves it unauthenticated
 otherwise.
 
 ## Troubleshooting

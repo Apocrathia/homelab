@@ -22,7 +22,7 @@ Applications are organized by functional category:
 
 ### [Demo App](demo-app/README.md)
 
-Baseline template demonstrating Authentik SSO, Gateway API routing, and SMB storage using the `generic-app` Helm chart.
+Baseline `generic-app` deployment with Authentik SSO, Gateway API routing, and SMB storage.
 
 ### [Design](design/README.md)
 

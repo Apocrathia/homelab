@@ -1,6 +1,6 @@
 # Cilium
 
-Cilium is a Kubernetes-native networking and security solution based on eBPF.
+Kubernetes networking and security built on eBPF.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
@@ -8,13 +8,13 @@ Cilium is a Kubernetes-native networking and security solution based on eBPF.
 
 Cilium is installed using the Helm chart from the Cilium project.
 
-To verify the installation, you will need to install the Cilium CLI.
+Verifying the installation needs the Cilium CLI:
 
 ```bash
 brew install cilium-cli
 ```
 
-To verify the installation, you can use the following command:
+Then check the install:
 
 ```bash
 cilium status --wait

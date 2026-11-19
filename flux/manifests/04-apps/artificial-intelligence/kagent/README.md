@@ -4,7 +4,7 @@
 
 ## Overview
 
-AI agent orchestration platform for managing and deploying AI agents in Kubernetes.
+Agent orchestration platform for Kubernetes.
 
 ## Components
 

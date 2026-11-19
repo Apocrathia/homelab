@@ -11,11 +11,11 @@ use case; both write to the same `Uploads` SMB share.
 
 This deployment includes:
 
-- ProjectSend (Community edition) — one container running nginx, PHP-FPM, the
+- ProjectSend (Community edition): one container running nginx, PHP-FPM, the
   queue worker, and the scheduler under supervisord; health endpoint at `/up`
-- MySQL 8.4 (`projectsend-mysql`) — the database ProjectSend requires
+- MySQL 8.4 (`projectsend-mysql`): the database ProjectSend requires
   (pdo_mysql; no Postgres support upstream)
-- Valkey (`projectsend-valkey`) — sessions, cache, and job queue
+- Valkey (`projectsend-valkey`): sessions, cache, and job queue
 - Uploads land on the NAS: the `Uploads` SMB share mounts at `/uploads` and
   an init container symlinks `storage/app/files` → `/uploads` (the entrypoint
   chowns `storage/` recursively, which fails on CIFS; the symlink keeps both
@@ -31,7 +31,7 @@ This deployment includes:
 - **URL**: <https://projectsend.gateway.services.apocrathia.com>
 - **Friends (tailnet)**: same hostname via the tailnet-gateway parentRef;
   friends click "OpenID Connect" on the login page and sign in with their
-  Authentik account — auto-provisioned as a client on first login
+  Authentik account, auto-provisioned as a client on first login
 - **On the NAS**: `//storage.services.apocrathia.com/Uploads/ProjectSend/`
 
 ## Prerequisite
@@ -39,15 +39,15 @@ This deployment includes:
 The `projectsend-secrets` 1Password item must exist with fields
 `database-password` and `database-root-password` (referenced by the app and
 MySQL releases). First visit shows the setup screen for the administrator
-account — operator handles that on deploy.
+account, operator handles that on deploy.
 
 ## Configuration
 
 Everything tunable lives in `helmrelease.yaml` env vars; email, branding,
 client accounts, and the OIDC issuer/credentials (System → Settings →
 Social Login → OpenID Connect) are configured in the app UI. Files live
-under `/var/www/html/storage`, which is the SMB-mounted `Uploads` share
-— ProjectSend's internal tree (APP_KEY, database-of-record for shares) sits
+under `/var/www/html/storage`, which is the SMB-mounted `Uploads` share;
+ProjectSend's internal tree (APP_KEY, database-of-record for shares) sits
 in the same directory, so treat the subDir as app-owned.
 
 ## Troubleshooting
@@ -58,17 +58,17 @@ kubectl -n projectsend get pods,pvc
 ```
 
 - Setup screen errors on database: check `projectsend-mysql` is Ready first
-  (first boot is slow by design — the app waits for migrations).
+  (first boot is slow by design, the app waits for migrations).
 - The container runs as root with a minimal capability set (CHOWN, FOWNER,
   SETUID, SETGID, NET_BIND_SERVICE, DAC_OVERRIDE): the image's supported
-  mode — supervisord writes `/run/supervisord.pid`, nginx binds :80, workers
+  mode; supervisord writes `/run/supervisord.pid`, nginx binds :80, workers
   su-exec down to www-data, and DAC_OVERRIDE lets root write the `.env`
   symlink and nginx state into www-data-owned directories. Breaking those =
   patching the image, not this chart.
 - OIDC button errors: check the app's Social Login settings match the
-  provider. The issuer must include the per-provider path —
-  `https://auth.gateway.services.apocrathia.com/application/o/projectsend/`
-  — not the bare Authentik host (the global discovery URL returns 404 and
+  provider. The issuer must include the per-provider path,
+  `https://auth.gateway.services.apocrathia.com/application/o/projectsend/`,
+  not the bare Authentik host (the global discovery URL returns 404 and
   the redirect throws a 500). Client ID/secret come from Authentik's
   `projectsend-oidc-provider`; the redirect URI is pinned strict at
   `https://projectsend.gateway.services.apocrathia.com/auth/oidc/callback`.

@@ -79,10 +79,10 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 ### Authentik stack ownership (tofu lane)
 
 - **Pattern**: `authentik.managedBy: terraform` (default since generic-app
-  0.0.88) — the chart renders the provider-opentofu workspace
+  0.0.88); the chart renders the provider-opentofu workspace
   (`authentik-tofu-workspace.yaml`) from the app's `authentik:` values
 - **Non-chart surfaces**: the file pair (`crossplane.yaml` + `authentik.tf`)
-  stitched by kustomize — `flux/manifests/03-services/authentik/tiles/` and
+  stitched by kustomize; `flux/manifests/03-services/authentik/tiles/` and
   the per-area pairs (flux-system, cilium, …)
 - **Legacy**: the chart-rendered `authentik-blueprint.yaml` ConfigMap lane was
   retired in generic-app 0.0.88; authentik's own tree blueprints

@@ -9,7 +9,7 @@ Each file is the pipeline's `definition`, verbatim.
 archive rule's pipeline mints the per-record `metadata.uid` (the chain
 locator + sort tie-break), sorts the pass in (time, uid) order, and
 stamps the per-node attestation chain (chain_uid = tenzir-node-core)
-before the to_clickhouse INSERT — the attestation covers the record
+before the to_clickhouse INSERT, the attestation covers the record
 exactly as archived. The mechanics live in the homelab package
 ([`packages/homelab/operators/record_integrity/`](../../../packages/homelab/operators/record_integrity/README.md)).
 

@@ -7,7 +7,7 @@ inventory/compliance plane; this tree owns package/user/system desired state.
 unattended-upgrades vs RedHat dnf / dnf-automatic).
 
 Archaeology: earlier patterns lived in `homelab.gh/Ansible/` (compose-era docker
-roles, k3s bootstrap, vaulted local `secrets`). Do **not** port those — compose
+roles, k3s bootstrap, vaulted local `secrets`). Do **not** port those; compose
 and Ansible-managed k8s are gone. Keep the useful bits: purpose groups,
 `common` tags (`packages` / `system` / `user`), `requirements.yml`, GitHub
 `authorized_keys`.
@@ -73,7 +73,7 @@ GitLab only needs `OP_CONNECT_TOKEN` (already used by tofu). `OP_CONNECT_HOST`
 defaults to `http://onepassword-connect.onepassword-system.svc:8080`.
 
 Check/apply connect as the `ansible` service account (deploy key, NOPASSWD
-sudo) — no become password is fetched. Jobs use
+sudo); no become password is fetched. Jobs use
 `mcr.microsoft.com/devcontainers/python:3.12` so uid 1000 has a
 passwd entry (`vscode`) and OpenSSH can start under the non-root runner.
 Runner `HOME` stays `/home/gitlab-runner` (writable emptyDir); ansible gets
@@ -82,7 +82,7 @@ absolute `IdentityFile` / `UserKnownHostsFile` under that path.
 ## Service account
 
 `roles/common` (user tag) maintains a dedicated `ansible` automation account on
-every host — CI never logs in as a human account:
+every host; CI never logs in as a human account:
 
 - locked password (`password_lock: true` → shadow `!`): password-aging policy
   cannot break sudo, and the account cannot be brute-forced
@@ -99,28 +99,28 @@ Bootstrap is a prerequisite, not optional: a host in inventory without its
 `ansible` account fails CI with SSH auth errors; missing from the CI
 `known_hosts` blob, it fails with a host-key mismatch.
 
-1. **Inventory** — add the host + `ansible_host` DNS under the right purpose
+1. **Inventory**: add the host + `ansible_host` DNS under the right purpose
    group in [`inventory/hosts.yml`](./inventory/hosts.yml) (the NUC note there
    is a live example).
-2. **Bootstrap (day-0, once)** — from a laptop, as root:
+2. **Bootstrap (day-0, once)**: from a laptop, as root:
    `ansible-playbook playbooks/bootstrap.yml --limit <newhost> -u root`
    (run from `ansible/`; `-K` if root needs a password). Creates `ianyoung`
-   **and** the `ansible` service account — deploy key, NOPASSWD sudo. After
+   **and** the `ansible` service account; deploy key, NOPASSWD sudo. After
    this, `common.yml` keeps both converged.
-3. **Stage CI's known_hosts** — CI runs with host-key checking on. From the
+3. **Stage CI's known_hosts**: CI runs with host-key checking on. From the
    laptop: `ssh-keyscan <newhost-fqdn>`, verify the fingerprint against the
    host console if you care (TOFU is fine on the tailnet), then append the
    output to the `ansible_gitops_known_hosts` field in the 1Password
    `ansible-secrets` item. The next job re-fetches the field, so no restart
    is needed.
-4. **Verify** — next MR touching `ansible/**` runs `ansible-check` as
+4. **Verify**: next MR touching `ansible/**` runs `ansible-check` as
    `ansible@<newhost>`; a main push applies.
 
 ## Secrets
 
 1Password is the SoT for the deploy key and known_hosts. Use multiline text
 fields (not concealed) for PEM / `known_hosts`. The deploy
-public key is committed in `group_vars/all.yml` — public material, repo is SoT.
+public key is committed in `group_vars/all.yml`; public material, repo is SoT.
 Local laptop runs can use `~/.ssh/ansible_gitops_ed25519` directly; that is
 not the CI path.
 

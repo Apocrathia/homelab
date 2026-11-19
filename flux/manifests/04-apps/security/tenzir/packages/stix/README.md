@@ -15,7 +15,7 @@ provenance recorded here.
 
 ## Runtime vs repo-side content
 
-Only `package.yaml` and `operators/` are runtime content — the four files
+Only `package.yaml` and `operators/` are runtime content, the four files
 render as ConfigMaps and mount read-only at `/etc/tenzir/packages/stix/`
 ([kustomization](../../kustomization.yaml)). `tests/`, `examples/`,
 `fixtures/`, and `changelog/` are repo-side: the tenzir-test harness runs

@@ -13,7 +13,7 @@ Each file is the pipeline's `definition`, verbatim. The
 `metadata.uid` (the chain locator + sort tie-break), bounds the stamp
 in a 60s event-time window, sorts each window in (time, uid) order,
 and stamps the per-node attestation chain (chain_uid =
-tenzir-node-tetragon) before the to_clickhouse INSERT — the
+tenzir-node-tetragon) before the to_clickhouse INSERT, the
 attestation covers the record exactly as stored. The mechanics live
 in the homelab package
 ([`packages/homelab/operators/record_integrity/`](../../../packages/homelab/operators/record_integrity/README.md));

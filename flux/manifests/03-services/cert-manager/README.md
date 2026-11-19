@@ -1,63 +1,41 @@
-# Cert Manager - Certificate Management
+# Cert Manager
 
-Kubernetes add-on to automate the management and issuance of TLS certificates.
+Kubernetes add-on that automates TLS certificate issuance, renewal, and management.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
 ## Overview
 
-cert-manager automates certificate management with:
+cert-manager automates certificate management:
 
-- **Automatic Certificate Issuance**: Automated TLS certificate provisioning
-- **Multiple Issuers**: Support for Let's Encrypt, private CAs, and self-signed
-- **DNS Integration**: Automatic DNS-01 challenge solving
-- **Certificate Renewal**: Automatic certificate renewal before expiration
-- **CRD-Based Management**: Kubernetes-native certificate management
+- Automatic issuance and renewal before expiration
+- Let's Encrypt, private CA, and self-signed issuers
+- Automatic DNS-01 challenge solving
+- Kubernetes-native CRD management
 
 ## Architecture
 
-### Core Components
+### Core components
 
-**cert-manager Controller**
+The **cert-manager controller** manages Certificate, Issuer, and
+ClusterIssuer resources, solves ACME challenges, and drives issuance and
+renewal.
 
-- **Certificate Management**: Manages Certificate resources
-- **Issuer Management**: Handles Issuer and ClusterIssuer resources
-- **Challenge Solving**: Handles ACME challenge responses
-- **Certificate Lifecycle**: Manages certificate issuance and renewal
+**cainjector** injects CA data into webhooks and manages CA certificate
+secrets and trust bundles.
 
-**cainjector**
+**webhook** validates Certificate and Issuer resources at admission.
 
-- **Webhook Injection**: Injects CA data into webhooks
-- **Secret Management**: Manages CA certificate secrets
-- **Trust Bundle Management**: Manages trusted certificate bundles
+### Custom resources
 
-**webhook**
+**Certificate** requests an X.509 certificate: private key generated
+automatically, multiple DNS SANs, configurable key usage.
 
-- **Validation**: Validates Certificate and Issuer resources
-- **Admission Control**: Kubernetes admission webhook
-- **Resource Validation**: Ensures resource correctness
+**Issuer/ClusterIssuer** declares the signing authority: ACME (Let's
+Encrypt), private CA, self-signed, or Vault.
 
-### Custom Resources
-
-**Certificate**
-
-- **TLS Certificates**: X.509 certificate management
-- **Private Keys**: Automatic private key generation
-- **Subject Alternative Names**: Support for multiple DNS names
-- **Key Usage**: Configurable certificate usage extensions
-
-**Issuer/ClusterIssuer**
-
-- **ACME Issuers**: Let's Encrypt integration
-- **CA Issuers**: Private certificate authority
-- **Self-Signed Issuers**: Self-signed certificate generation
-- **Vault Issuers**: HashiCorp Vault integration
-
-**CertificateRequest**
-
-- **Request Processing**: Internal certificate request processing
-- **Status Tracking**: Certificate request status management
-- **Approval Workflow**: Manual approval for private CAs
+**CertificateRequest** carries per-request state and the manual approval
+workflow for private CAs.
 
 ## 1Password Setup
 
@@ -71,38 +49,30 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 
 ## Features
 
-### Certificate Types
+### Certificate types
 
-- **TLS Certificates**: Standard TLS server certificates
-- **Client Certificates**: Client authentication certificates
-- **CA Certificates**: Certificate authority certificates
-- **Self-Signed**: Self-signed certificates for internal use
+- TLS server, client-auth, CA, and self-signed certificates
 
-### Issuing Authorities
+### Issuing authorities
 
-- **Let's Encrypt**: Public certificate authority with staging/production
-- **Private CA**: Internal certificate authorities
-- **Self-Signed**: Generated certificates for development/testing
-- **External Issuers**: Integration with external certificate services
+- Let's Encrypt (staging and production), private CAs, self-signed, and external issuer integrations
 
-### Challenge Types
+### Challenge types
 
-- **HTTP-01**: HTTP-based challenge validation
-- **DNS-01**: DNS-based challenge validation (recommended)
-- **Self-Signed**: No challenge validation required
+- HTTP-01 and DNS-01 (recommended); self-signed needs no challenge
 
 ## Configuration
 
 ### ClusterIssuers
 
 All three issuers live in `cluster-issuer.yaml` (don't duplicate their specs
-here — they drift):
+here; they drift):
 
-| Issuer                | Purpose                                               |
-| --------------------- | ----------------------------------------------------- |
-| `letsencrypt-staging` | Staging ACME — test issuance before switching to prod |
-| `letsencrypt-prod`    | Production ACME certificates                          |
-| `self-signed`         | Self-signed CA for internal/dev certificates          |
+| Issuer                | Purpose                                              |
+| --------------------- | ---------------------------------------------------- |
+| `letsencrypt-staging` | Staging ACME: test issuance before switching to prod |
+| `letsencrypt-prod`    | Production ACME certificates                         |
+| `self-signed`         | Self-signed CA for internal/dev certificates         |
 
 Both Let's Encrypt issuers solve DNS-01 challenges against Cloudflare with the
 `cloudflare-api-token-secret` 1Password-backed secret (`api-token` field).
@@ -136,60 +106,46 @@ The `main-gateway` wildcard lives in
 
 ## Integration with Homelab
 
-### Gateway API Integration
+### Gateway API integration
 
-- **TLS Termination**: Gateway API TLS certificate references
-- **Certificate Management**: Automatic certificate provisioning
-- **Domain Validation**: DNS-01 challenge solving
-- **Certificate Rotation**: Automatic certificate renewal
+- Certificates for Gateway listeners and routes (this repo uses Gateway API only, no Ingress)
+- Automatic provisioning and renewal against DNS-01 validation
 
-### Application Integration
+### Application integration
 
-- **Gateway API TLS**: Certificates for Gateway listeners and routes (this repo uses Gateway API only — no Ingress)
-- **Service Certificates**: mTLS between services
-- **Client Authentication**: Client certificate validation
-- **Certificate Authority**: Private CA for internal services
+- mTLS service certificates and client-certificate validation
+- Private CA for internal services
 
-### DNS Integration
+### DNS integration
 
-- **Cloudflare DNS**: Automatic DNS challenge solving
-- **API Token Management**: Secure API token storage
-- **Zone Management**: Support for multiple DNS zones
-- **Propagation Waiting**: Configurable DNS propagation waits
+- Cloudflare DNS-01 challenge solving
+- API token stored securely; multiple zones and configurable propagation waits
 
-### Monitoring Integration
+### Monitoring integration
 
-- **Metrics Collection**: Prometheus metrics for certificate status
-- **Dashboard Integration**: Grafana dashboards for certificate monitoring
-- **Alert Configuration**: Alerts for certificate expiration
-- **Health Monitoring**: Certificate health and validity monitoring
+- Prometheus metrics and Grafana dashboards for certificate status
+- Expiration alerts and validity monitoring
 
 ## Security Considerations
 
-### Certificate Security
+### Certificate security
 
-- **Private Key Protection**: Secure private key storage
-- **Certificate Validation**: Proper certificate chain validation
-- **Revocation Checking**: Certificate revocation list checking
-- **Key Rotation**: Automatic key rotation and renewal
+- Private keys stored securely, rotated and renewed automatically
+- Chain validation and revocation checking
 
-### DNS Security
+### DNS security
 
-- **API Token Security**: Secure storage of DNS API tokens
-- **DNS Spoofing Protection**: DNS-01 challenge validation
-- **Zone Access Control**: Limited DNS zone access
-- **Challenge Cleanup**: Automatic cleanup of DNS challenges
+- DNS API tokens stored securely
+- DNS-01 validation, limited zone access, automatic challenge cleanup
 
-### Network Security
+### Network security
 
-- **TLS Encryption**: End-to-end encryption for certificate operations
-- **Network Policies**: Restrict certificate management traffic
-- **API Security**: Secure communication with certificate authorities
-- **Audit Logging**: Comprehensive audit trail
+- TLS for certificate operations, network policies restricting management traffic
+- Secure communication with certificate authorities; audit logging
 
 ## Troubleshooting
 
-### Common Issues
+### Common issues
 
 1. **Certificate Issuance Failures**
 
@@ -261,33 +217,32 @@ kubectl logs -n cert-manager deployment/cert-manager-webhook
 
 ## Best Practices
 
-### Certificate Management
+### Certificate management
 
-1. **Staging First**: Always test with staging issuer first
-2. **DNS Validation**: Prefer DNS-01 over HTTP-01 challenges
-3. **Wildcard Usage**: Use wildcards appropriately, not for everything
-4. **Renewal Monitoring**: Monitor certificate expiration dates
+1. Test with the staging issuer first
+2. Prefer DNS-01 over HTTP-01 challenges
+3. Use wildcards deliberately, not for everything
+4. Watch expiration dates
 
-### DNS Configuration
+### DNS configuration
 
-1. **API Token Security**: Use restricted API tokens
-2. **DNS Propagation**: Configure appropriate propagation times
-3. **Zone Management**: Keep DNS zones organized
-4. **Access Control**: Limit DNS API access
+1. Restricted API tokens
+2. Appropriate propagation times
+3. Organized zones and limited DNS API access
 
 ### Operations
 
-1. **Resource Limits**: Set appropriate resource limits
-2. **Monitoring**: Monitor certificate lifecycle events
-3. **Backup**: Backup certificate configurations
-4. **Updates**: Keep cert-manager updated
+1. Appropriate resource limits
+2. Lifecycle monitoring
+3. Back up certificate configurations
+4. Keep cert-manager updated
 
 ### Security
 
-1. **Private Key Management**: Secure private key handling
-2. **Certificate Validation**: Validate certificate chains
-3. **Access Control**: Implement least privilege access
-4. **Audit**: Regular security audits of certificate practices
+1. Secure private key handling
+2. Validate certificate chains
+3. Least-privilege access
+4. Regular audits of certificate practices
 
 ## Resource Requirements
 

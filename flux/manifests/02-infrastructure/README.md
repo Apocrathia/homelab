@@ -6,12 +6,12 @@ Core infrastructure components required for cluster operation.
 
 ## Overview
 
-The infrastructure layer provides the foundational services that enable the cluster to function:
+The infrastructure layer provides:
 
 - **Networking**: Cilium CNI with Gateway API support
 - **Storage**: Longhorn distributed storage with SMB integration
-- **Monitoring**: Comprehensive monitoring and observability stack
-- **Security**: Policy enforcement and security scanning
+- **Monitoring**: monitoring and observability stack
+- **Security**: policy enforcement and security scanning
 
 ## Components
 
@@ -35,12 +35,10 @@ The infrastructure layer provides the foundational services that enable the clus
 
 ## Architecture
 
-The infrastructure layer provides:
-
-- **Network Foundation**: Cilium CNI with eBPF-based networking
-- **Storage Foundation**: Distributed storage with backup and disaster recovery
-- **Monitoring Foundation**: Metrics collection, visualization, and alerting
-- **Security Foundation**: Policy enforcement and compliance monitoring
+- Cilium CNI with eBPF-based networking
+- Distributed storage with backup and disaster recovery
+- Metrics collection, visualization, and alerting
+- Policy enforcement and compliance monitoring
 
 ## Dependencies
 
@@ -51,38 +49,38 @@ The infrastructure layer provides:
 
 ## Integration Points
 
-### With Bootstrap Layer
+### With the bootstrap layer
 
-- **CRD Dependencies**: Requires CRDs from bootstrap layer
-- **Helm Repositories**: Uses Helm repositories configured in bootstrap
-- **1Password Integration**: Leverages 1Password Connect for secrets
+- CRDs come from the bootstrap layer
+- Chart sources come from the bootstrap Helm repositories
+- Secrets come from 1Password Connect
 
-### With Services Layer
+### With the services layer
 
-- **Storage Provisioning**: Provides storage classes for services
-- **Network Policies**: Enables network security for services
-- **Monitoring**: Provides monitoring infrastructure for services
-- **Security**: Provides policy enforcement for services
+- Storage classes for services
+- Network policies for services
+- Monitoring infrastructure for services
+- Policy enforcement for services
 
 ## Security Considerations
 
-### Network Security
+### Network security
 
-- **Cilium Policies**: Network policy enforcement and isolation
-- **Gateway API**: Secure external access with TLS termination
-- **Load Balancer**: Controlled external access and IP management
+- Cilium policies enforce network isolation
+- Gateway API fronts external access with TLS termination
+- LoadBalancer access and IP assignment stay controlled
 
-### Storage Security
+### Storage security
 
-- **Longhorn Encryption**: Data encryption at rest and in transit
-- **Access Control**: RBAC-based access to storage resources
-- **Backup Security**: Secure backup credentials and data
+- Longhorn encrypts data at rest and in transit
+- RBAC gates access to storage resources
+- Backup credentials and data stay secure
 
-### Monitoring Security
+### Monitoring security
 
-- **Metrics Security**: Secure metrics collection and storage
-- **Dashboard Access**: Controlled access to monitoring dashboards
-- **Alert Security**: Secure alerting and notification channels
+- Metrics collection and storage are secured
+- Dashboard access is controlled
+- Alerting and notification channels are secured
 
 ## Troubleshooting
 

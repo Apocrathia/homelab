@@ -1,6 +1,6 @@
 # Terminus
 
-Self-hosted TRMNL BYOS server for managing e-ink devices, playlists, screens, and firmware on your own infrastructure.
+Self-hosted TRMNL BYOS server for e-ink devices: playlists, screens, firmware.
 
 > **Navigation**: [← Back to Home README](../README.md)
 

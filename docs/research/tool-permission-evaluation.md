@@ -6,7 +6,7 @@ found_at: 2026-08-17
 area: security
 ---
 
-# Tool permission guardrail — MCP governance evaluation
+# Tool permission guardrail: MCP governance evaluation
 
 > Research note (August 2026). Evaluated the LiteLLM `tool_permission`
 > guardrail as a governance layer for MCP tools brokered through the
@@ -35,8 +35,8 @@ with tool calls).
 
 Two behaviours:
 
-- `block` — rejects the request with HTTP 400 immediately.
-- `rewrite` — silently strips disallowed tools and injects error text into
+- `block`: rejects the request with HTTP 400 immediately.
+- `rewrite`: silently strips disallowed tools and injects error text into
   `message.content` / `tool_result` entries so the client knows the tool
   was blocked while the rest of the completion continues.
 
@@ -51,7 +51,7 @@ OpenAI-style `function` tools in chat completions.
 **Caveat:** The `mcp_guardrail` docs page is sparse (4KB stub). Live
 testing against the gateway with `POST /v1/mcp/…` calls is needed to
 confirm MCP tool scanning. The MCP gateway path differs from
-`/v1/chat/completions` — it is unclear whether `tool_permission`
+`/v1/chat/completions`; it is unclear whether `tool_permission`
 hooks fire on the MCP gateway route or only on chat completions.
 
 ### What a useful config would look like
@@ -82,7 +82,7 @@ hooks fire on the MCP gateway route or only on chat completions.
 ```
 
 This would allow read/query tools through while blocking destructive
-operations. `rewrite` mode is preferred over `block` for agentic traffic —
+operations. `rewrite` mode is preferred over `block` for agentic traffic;
 a hard 400 mid-agent-loop is worse than a graceful skip.
 
 ### Per-user/per-key scoping
@@ -95,12 +95,12 @@ rules for unauthenticated agents vs. the operator.
 
 **Viable for deployment** with the caveat that MCP gateway routing needs
 verification. If tool scanning only fires on `/v1/chat/completions` and
-not on the MCP gateway, then MCP tools are not governed — which makes
+not on the MCP gateway, then MCP tools are not governed, which makes
 the guardrail a no-op for our primary tool surface.
 
 ## Conclusion
 
-`inconclusive` — the guardrail has the right primitives (regex deny/allow,
+`inconclusive`: the guardrail has the right primitives (regex deny/allow,
 graceful rewrite) but MCP applicability is unconfirmed. Needs a live
 experiment: deploy the config, run a `firecrawl-firecrawl_scrape` call
 through the MCP gateway, and verify the guardrail sees it.
@@ -115,6 +115,6 @@ through the MCP gateway, and verify the guardrail sees it.
 
 ## What not to do
 
-- Don't use `block` mode — agent loops can't recover from a 400.
-- Don't deploy without a live MCP test — the stub docs are insufficient
+- Don't use `block` mode; agent loops can't recover from a 400.
+- Don't deploy without a live MCP test; the stub docs are insufficient
   evidence.

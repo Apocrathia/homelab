@@ -49,7 +49,7 @@ This server is accessible only through the LiteLLM proxy. See the [main README](
 
 ## Available MCP Tools
 
-The Flux MCP server provides these capabilities:
+Tools by category:
 
 ### Resource Management
 

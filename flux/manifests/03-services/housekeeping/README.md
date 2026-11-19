@@ -1,4 +1,4 @@
-# Housekeeping - Cluster Maintenance Automation
+# Housekeeping
 
 Automated maintenance tasks for cluster health and organization.
 
@@ -22,7 +22,7 @@ Prevents etcd database bloat by periodically defragmenting when fragmentation ex
 
 ## Troubleshooting
 
-### etcd Defrag Issues
+### etcd defrag issues
 
 ```bash
 # Check cronjob status

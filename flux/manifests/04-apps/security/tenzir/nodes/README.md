@@ -14,13 +14,13 @@ connectivity chart, sizing math, and retention profile.
 - [`investigations/`](./investigations/README.md): the agent investigations
   plane (case/evidence records, isolated blast radius)
 - [`enrichment/`](./enrichment/README.md): the internal-reference-data
-  factory (curated lookup tables — fleet assets, baselines — into
+  factory (curated lookup tables for fleet assets and baselines, loaded into
   ClickHouse; its first lane, the hourly Fleet host-inventory pull
-  into `ocsf.fleet_assets`, shipped in lap 2 — the core node's
+  into `ocsf.fleet_assets`, shipped in lap 2, the core node's
   loader is the consumer half)
 - [`introspection/`](./introspection/README.md): the introspection
   plane (its local diagnostics lane pair ships its own pipelines'
-  diagnostics — every node ships its own pair since B1 and the
+  diagnostics, every node ships its own pair since B1 and the
   central poller is retired; charter direction: scheduled inward
   detection passes over the ocsf.\* tables)
 - [`intel/`](./intel/README.md): the CTI factory plane (OpenCTI TAXII

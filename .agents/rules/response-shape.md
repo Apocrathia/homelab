@@ -1,5 +1,5 @@
 ---
-description: Ultra-short scannable replies — answer first, bulk in files, no interview walls
+description: Ultra-short scannable replies; answer first, bulk in files, no interview walls
 alwaysApply: true
 ---
 
@@ -34,7 +34,7 @@ Match depth to complexity. A one-line fix does not need five paragraphs of conte
 - **Questions:** [`.agents/context/questions.md`](../context/questions.md)
   / `question-format.md`. No multi-Ask markdown dumps.
 - **Subagents:** summarize; never paste the full child output.
-- **Structured output** (JSON/YAML/fixed schema): emit the payload only — no
+- **Structured output** (JSON/YAML/fixed schema): emit the payload only; no
   prose prepend unless the schema asks for it.
 - **Omit:** tool narration, diff replay, question restatement, announcement
-  sections — full list in [`output.md`](../context/output.md).
+  sections; full list in [`output.md`](../context/output.md).

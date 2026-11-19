@@ -30,7 +30,7 @@ Internal only via LiteLLM gateway - no external HTTPRoute.
 
 ## Available Tools
 
-The server provides tools for:
+Tools:
 
 - **Repository management**: Create, fork, search repositories
 - **Branch operations**: Create branches, push files

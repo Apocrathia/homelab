@@ -9,14 +9,14 @@ Loop: [`development-loop.md`](../../.agents/context/development-loop.md).
 
 ## Research vs issues vs plans
 
-| Surface          | Holds                                                             |
-| ---------------- | ----------------------------------------------------------------- |
-| `docs/issues/`   | **What** — desired state; delete-on-ship                          |
-| `docs/plans/`    | **How** — steps; delete-on-ship                                   |
-| `docs/research/` | **Findings** — assessments + experiment logs; **keep** after ship |
+| Surface          | Holds                                                            |
+| ---------------- | ---------------------------------------------------------------- |
+| `docs/issues/`   | **What**: desired state; delete-on-ship                          |
+| `docs/plans/`    | **How**: steps; delete-on-ship                                   |
+| `docs/research/` | **Findings**: assessments + experiment logs; **keep** after ship |
 
 Recommendations in a writeup become [`file-issue`](../../.agents/skills/file-issue/SKILL.md)
-candidates later — not silent GitOps changes.
+candidates later; not silent GitOps changes.
 
 ## Layout
 
@@ -61,14 +61,14 @@ as the durable record. Only derived issues/plans delete when implemented.
 [`find-work`](../../.agents/skills/find-work/SKILL.md) may emit an
 `Invoke: autoresearch` brief **only** when:
 
-1. Tiers 1–7 have **zero** eligible rows
+1. Tiers 1-7 have **zero** eligible rows
 2. A seed is `status: approved` (or a Launch brief carries a complete contract)
 3. Budgets are present (defaults in the skill)
 
 Empty queue **and** no approved seed → empty-queue stop. Do not invent
 research.
 
-`run-loop` mode=`scout` never runs the experiment loop — it may only surface
+`run-loop` mode=`scout` never runs the experiment loop; it may only surface
 seed candidates in the Discord/lap report.
 
 ## Seed backlog (operator approval required)
@@ -93,11 +93,11 @@ Statuses: `seed` | `approved` | `running` | `complete` | `dropped`.
 | New assessment (no metric loop)  | Copy `_template.md` → `docs/research/<slug>.md`; `kind: assessment` |
 | New autoresearch run             | Need approved seed + contract; follow `autoresearch` skill          |
 | Duplicate slug on default branch | Pick a new slug; do not overwrite a shipped writeup                 |
-| Secrets                          | Never — redact eval errors; no tokens in JSON or prose              |
+| Secrets                          | Never; redact eval errors; no tokens in JSON or prose               |
 
 ## Metrics
 
-Prefer **Grafana** (PromQL / LogQL via Grafana MCP) for runtime hypotheses —
+Prefer **Grafana** (PromQL / LogQL via Grafana MCP) for runtime hypotheses;
 latency, error rate, CPU, WAL growth, rebuild time, scan cost. Local render /
 scan evals are for static claims only. Grafana only sees the **live** cluster;
 unapplied manifest edits do not move metrics (operator apply between keeps when

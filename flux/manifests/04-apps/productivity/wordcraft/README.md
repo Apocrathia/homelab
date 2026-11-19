@@ -4,7 +4,7 @@
 
 ## Overview
 
-WordCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+WordCraft is an open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** <https://wordcraft.gateway.services.apocrathia.com>
 

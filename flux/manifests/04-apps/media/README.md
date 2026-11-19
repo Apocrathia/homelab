@@ -1,6 +1,6 @@
 # Media Applications
 
-Media server ecosystem for personal media collection management, streaming, and acquisitions.
+Media applications for collection management, streaming, and acquisitions.
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
@@ -96,8 +96,8 @@ All media applications integrate with:
 
 - **Authentik SSO**: Authentication through proxy or OIDC providers
 - **Gateway API**: External access via Cilium Gateway
-- **Prometheus**: Metrics collection and monitoring
-- **Loki**: Centralized logging
+- **Prometheus**: Metrics
+- **Loki**: Logs
 
 ## Common Patterns
 

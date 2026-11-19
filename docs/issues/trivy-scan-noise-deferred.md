@@ -41,7 +41,7 @@ those on; this deferral is not their backlog.
 
 ## Repro
 
-N/A — scoping record for scan triage.
+N/A; scoping record for scan triage.
 
 ## Acceptance
 

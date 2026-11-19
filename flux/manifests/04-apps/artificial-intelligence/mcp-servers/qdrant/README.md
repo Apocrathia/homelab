@@ -8,7 +8,7 @@ MCP server for knowledge storage and semantic search via Qdrant vector database.
 
 ## Overview
 
-Provides semantic memory and knowledge retrieval capabilities:
+Semantic memory and knowledge retrieval:
 
 - Store information with automatic embedding generation
 - Semantic search across stored knowledge

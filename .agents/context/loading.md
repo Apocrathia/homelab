@@ -32,6 +32,6 @@ folder after the README.
 
 **Slim startup:** for "what's next" / "find something to do", required load is
 `find-work` plus the thin loop context it points at. Do not dump SRE, debug, or
-implement skills until a brief is selected. Repo loading owns startup — do not
+implement skills until a brief is selected. Repo loading owns startup: do not
 document third-party always-invoke plugins in portable context (they may be
 absent).

@@ -16,7 +16,7 @@ area: other
 > in the tree.
 >
 > Settled 2026-10-11: the file pair won and the generic-app variant is the
-> documented antipattern — see
+> documented antipattern; see
 > [Outcome](#outcome-2026-10-11-the-file-pair-is-the-pattern-the-chart-lane-is-the-antipattern).
 
 ## Sources
@@ -33,14 +33,14 @@ area: other
 | flux-iac/tofu-controller              | github.com/flux-iac/tofu-controller (v0.16.5, 2026-08-06)                                          | pattern C                                   |
 | goauthentik TF provider               | github.com/goauthentik/terraform-provider-authentik (v2026.8.0)                                    | coverage engine, 103 resources              |
 | Authentik 2026.8.2 source             | `authentik/blueprints/v1/{tasks,importer}.py`, `authentik/blueprints/apps.py` @ `version/2026.8.2` | blueprint lifecycle ground truth            |
-| Authentik blueprint docs              | docs.goauthentik.io — Blueprints (read 2026-09-15)                                                 | doc-vs-source discrepancy                   |
-| Crossplane v2 docs                    | docs.crossplane.io — v2 provider model, finalizers, deletionPolicy                                 | lifecycle semantics                         |
+| Authentik blueprint docs              | docs.goauthentik.io; Blueprints (read 2026-09-15)                                                  | doc-vs-source discrepancy                   |
+| Crossplane v2 docs                    | docs.crossplane.io; v2 provider model, finalizers, deletionPolicy                                  | lifecycle semantics                         |
 
 ## Question surveyed
 
 Can the lab get true declarative lifecycle (create / update / delete / drift
 repair) for per-app config in external systems, driven by the same Flux
-reconcile loop that deploys the apps — replacing the one-shot Authentik
+reconcile loop that deploys the apps; replacing the one-shot Authentik
 blueprint import?
 
 ### The problem, precisely
@@ -48,7 +48,7 @@ blueprint import?
 Today every app that needs an Authentik entry ships a blueprint ConfigMap:
 
 1. App kustomization renders `authentik-blueprint.yaml` into a ConfigMap
-   labeled `authentik_blueprint: "true"` — 22 per-app blueprints across the
+   labeled `authentik_blueprint: "true"`; 22 per-app blueprints across the
    tree, plus 12 service-level blueprints (gitlab, okta, proxmox, … under
    `flux/manifests/03-services/authentik/blueprints/`, same ConfigMap +
    label pattern), 3 generic-app chart templates that render per-consumer
@@ -60,37 +60,37 @@ Today every app that needs an Authentik entry ships a blueprint ConfigMap:
 
 Gaps in that model, verified against Authentik 2026.8.2 behavior:
 
-- **Delete propagation** — removing the ConfigMap removes the file, not the
+- **Delete propagation**: removing the ConfigMap removes the file, not the
   Authentik objects. Deletion needs a second blueprint with `state: absent`
   (see
   `flux/manifests/04-apps/productivity/cryptpad/authentik-blueprint-cleanup.yaml`),
   kept forever.
-- **Drift repair** — applies are file-event driven, not periodic. Verified in
+- **Drift repair**: applies are file-event driven, not periodic. Verified in
   the 2026.8.2 source (`authentik/blueprints/v1/tasks.py`,
   `authentik/blueprints/apps.py`): the hourly `blueprints_discovery` task and
   file-create events run through `check_blueprint_v1_file`, which applies only
   when the file's sha512 differs from `last_applied_hash`. File **modify**
-  events, however, send `apply_blueprint` directly — ungated by hash. So the
+  events, however, send `apply_blueprint` directly; ungated by hash. So the
   docs' "applied regularly (every 60 minutes)" describes discovery cadence,
   and manual UI edits to attrs-covered fields are repaired only when something
   rewrites the blueprint file. Nothing reconciles live objects on a timer:
   untouched files never re-apply, and a worker restart does not re-apply
   either (startup dispatches hash-gated discovery). That is event-triggered
   repair, not drift detection.
-- **Visibility** — no per-object status reaches Flux. Failed imports set the
+- **Visibility**: no per-object status reaches Flux. Failed imports set the
   blueprint instance's status to `error` (visible in the Authentik admin
   UI) and log to the worker, but Flux keeps showing the ConfigMap as healthy
   even when the import failed.
-- **Atomicity (not actually a problem)** — applies _are_ transactional:
+- **Atomicity (not actually a problem)**: applies _are_ transactional:
   `Importer.apply()` wraps the whole import in a Django `atomic()` block and
   rolls back on failure (`importer.py`, 2026.8.2). A failed import leaves no
   partial objects.
-- **No orphan cleanup** — the apply loop only upserts `state: present`
+- **No orphan cleanup**: the apply loop only upserts `state: present`
   entries and deletes `state: absent` ones; objects whose entries were
   removed from a blueprint are never touched again (verified in
-  `authentik/blueprints/v1/importer.py`, 2026.8.2 — there is no
+  `authentik/blueprints/v1/importer.py`, 2026.8.2; there is no
   previously-managed-models cleanup).
-- **Cache staleness** — the 24h per-user app-access cache is not purged by
+- **Cache staleness**: the 24h per-user app-access cache is not purged by
   group/binding changes, so membership edits appear to lag or "not apply" for
   up to a day regardless of which config mechanism drives them.
 
@@ -100,7 +100,7 @@ The repo already runs OpenTofu + Terragrunt in GitLab CI for external infra
 (Proxmox, Talos, Cloudflare, GitLab, Okta, Tailscale). That pipeline is
 merge-event-triggered on `terraform/**/*`: batch runs in in-cluster runners
 only when an MR touches the HCL, never on a schedule. It manages **static**
-inventory — resources that exist independent of any cluster workload.
+inventory; resources that exist independent of any cluster workload.
 
 Per-app Authentik config is different. The desired state lives next to each
 app's Flux manifests, changes whenever an app is added or removed, and should
@@ -141,13 +141,13 @@ would apply to any external system with an API.
 | C   | Flux tofu-controller                       | tofu-controller CRs        | full (goauthentik TF provider)     |
 | D   | Status quo: blueprint ConfigMaps + sidecar | Authentik blueprint import | full (blueprint schema)            |
 
-### A — Native Crossplane provider: not viable for Authentik
+### A: Native Crossplane provider: not viable for Authentik
 
 - `crossplane-contrib/provider-authentik` does not exist (404); there is no
   official or contrib-maintained Crossplane provider for Authentik.
 - GitHub search surfaces only hobby one-offs: `rmk2/provider-authentik`,
   `EqO/provider-authentik`, `dhm116/provider-upjet-authentik`,
-  `hops-ops/provider-authentik` — 0–3 stars, no community, several generated
+  `hops-ops/provider-authentik`; 0-3 stars, no community, several generated
   but unreleased. None are adoption-grade for the lab's IdP.
 - Generalizes badly: the same is true for several systems the lab runs
   (the crossplane README already warns cloudflare/okta community providers are
@@ -156,37 +156,37 @@ would apply to any external system with an API.
 
 ### Coverage target: goauthentik Terraform provider
 
-The maintained surface is `goauthentik/terraform-provider-authentik` — 141
+The maintained surface is `goauthentik/terraform-provider-authentik`; 141
 stars, release v2026.8.0 (2026-09-09) tracking Authentik 2026.8, pushed within
 the last week. It covers Application, OAuth2/LDAP/proxy/SAML providers, Group,
 User, policy bindings, flows, and outposts. Any pattern that can run Terraform
 gets full, current Authentik coverage. There is no native provider to
 compete with it.
 
-### B — Terraform via Crossplane Workspace: healthy, with a lineage caveat
+### B: Terraform via Crossplane Workspace: healthy, with a lineage caveat
 
 - `upbound/provider-terraform` is archived **and deleted** (repo 404s); the
-  project moved to `crossplane-contrib/provider-terraform` — active, v1.2.0
+  project moved to `crossplane-contrib/provider-terraform`; active, v1.2.0
   (2026-08-24), Crossplane v2-compatible. It is **frozen at Terraform CLI
   1.5.7** (BSL ceiling, per its own README).
 - The modern sibling is `upbound/provider-opentofu` (v1.1.8, 2026-09-11,
-  near-monthly releases) — same Workspace pattern, built on OpenTofu, which
+  near-monthly releases); same Workspace pattern, built on OpenTofu, which
   this repo already runs (tofu 1.12.x in CI). This is the natural pick.
 - Workspace mechanics today: no `Module` CR, no `moduleRef`, no `StoreConfig`.
   A `Workspace` CR carries `source: Inline` (HCL string) or `source: Remote`
   (git URL + pull policy), inputs via `vars`/`varmap`/`varFiles`/`env`
   (SecretKeyRef/ConfigMapKeyRef supported), and optional init/plan/apply/destroy
   args. v1.1.8 ships both cluster-scoped (`opentofu.upbound.io`) and
-  namespaced (`opentofu.m.upbound.io`) Workspace CRDs — per-app locality in
+  namespaced (`opentofu.m.upbound.io`) Workspace CRDs; per-app locality in
   the app's own directory/namespace works.
 - One critical gotcha: the provider does not persist Terraform state.
   Modules must declare their own backend. The canonical in-cluster option is
   the Terraform/OpenTofu `kubernetes` backend (state stored as a k8s Secret).
 - CRD footprint is small: 7 CRDs total in the v1.1.8 package (Workspace,
   ProviderConfig, ProviderConfigUsage in both cluster- and namespaced scopes,
-  plus namespaced ClusterProviderConfig) — unlike a native upjet provider.
+  plus namespaced ClusterProviderConfig); unlike a native upjet provider.
 
-### C — Flux tofu-controller: the Flux-native alternative
+### C: Flux tofu-controller: the Flux-native alternative
 
 - `flux-iac/tofu-controller` is active: v0.16.5 (2026-08-06), Apache-2.0,
   commits through 2026-09-02. Successor of Weaveworks tf-controller; default
@@ -204,29 +204,29 @@ auto` or named-plan approval for PR-style review; `branchPlanner` (tech
   the same job; running both for different systems is defensible but adds
   two IaC mental models to the lab.
 
-### B vs C vs D — lifecycle semantics
+### B vs C vs D: lifecycle semantics
 
-| Concern                   | B. Crossplane Workspace          | C. tofu-controller             | D. Blueprint (today)            |
-| ------------------------- | -------------------------------- | ------------------------------ | ------------------------------- |
-| Create / update           | tofu init+apply per poll (10m)   | plan/apply per `interval`      | file events + gated discovery   |
-| Delete external on CR del | **yes (default)** → tofu destroy | **no (default)** — opt-in flag | no — needs `state: absent` hack |
-| Drift (manual UI edit)    | repaired by 10m plan/apply       | detected on, repaired on loop  | never detected                  |
-| Status visible to Flux    | Workspace conditions             | Terraform CR conditions + plan | none (worker logs only)         |
-| Per-app manifest locality | yes (namespaced `.m.` Workspace) | yes (namespaced CR, sourceRef) | yes (ConfigMap in app dir)      |
-| Failure isolation         | per-Workspace                    | runner pod per reconcile       | import task, all-or-log         |
-| State                     | own backend (k8s Secret ok)      | k8s Secret (default backend)   | none (Authentik DB is state)    |
+| Concern                   | B. Crossplane Workspace          | C. tofu-controller             | D. Blueprint (today)           |
+| ------------------------- | -------------------------------- | ------------------------------ | ------------------------------ |
+| Create / update           | tofu init+apply per poll (10m)   | plan/apply per `interval`      | file events + gated discovery  |
+| Delete external on CR del | **yes (default)** → tofu destroy | **no (default)**: opt-in flag  | no; needs `state: absent` hack |
+| Drift (manual UI edit)    | repaired by 10m plan/apply       | detected on, repaired on loop  | never detected                 |
+| Status visible to Flux    | Workspace conditions             | Terraform CR conditions + plan | none (worker logs only)        |
+| Per-app manifest locality | yes (namespaced `.m.` Workspace) | yes (namespaced CR, sourceRef) | yes (ConfigMap in app dir)     |
+| Failure isolation         | per-Workspace                    | runner pod per reconcile       | import task, all-or-log        |
+| State                     | own backend (k8s Secret ok)      | k8s Secret (default backend)   | none (Authentik DB is state)   |
 
-Pattern A (native MR) is omitted — no maintained Authentik provider exists
+Pattern A (native MR) is omitted; no maintained Authentik provider exists
 (see above). For systems that _do_ have healthy upjet providers, A's row would
 read: delete-on-delete default, 10m drift repair, MR conditions, namespaced
-MRs in v2 — the best per-resource ergonomics of the four.
+MRs in v2; the best per-resource ergonomics of the four.
 
 ### State and secrets
 
 - Crossplane v2 **removed external secret stores**. The only sanctioned
   credential path is a plain k8s Secret referenced by the ProviderConfig.
-  For this lab: `OnePasswordItem` → Secret → `ProviderConfig.spec.credentials`
-  — the existing pattern, no External Secrets Operator needed.
+  For this lab: `OnePasswordItem` → Secret → `ProviderConfig.spec.credentials`;
+  the existing pattern, no External Secrets Operator needed.
 - provider-opentofu's ProviderConfig takes a **credentials array**:
   `{filename, source: Secret, secretRef}` entries materialized as files in
   the workspace, plus an injected HCL `configuration` block that wires them
@@ -234,7 +234,7 @@ MRs in v2 — the best per-resource ergonomics of the four.
   `provider "authentik" {}`.
 - Terraform state under pattern B: the `kubernetes` backend with
   `in_cluster_config = true` stores each Workspace's state as a k8s Secret.
-  Keep this **separate from the CI stack's GitLab HTTP backend** — the
+  Keep this **separate from the CI stack's GitLab HTTP backend**: the
   existing `terraform/` deployments are CI-reconciled static infra; cluster
   Workspaces are Flux-reconciled app config. Two stacks, two states, never
   the same backend.
@@ -251,18 +251,18 @@ MRs in v2 — the best per-resource ergonomics of the four.
 ### Operational cost
 
 - A generated native provider-authentik would add **~103 CRDs** (one per TF
-  resource) — the crossplane README already mandates `defaultActivations`
+  resource); the crossplane README already mandates `defaultActivations`
   scoping against exactly this. The Workspace pattern avoids it entirely:
   7 CRDs total.
 - Memory: Upbound's published benchmark puts a _huge_ provider (AWS, 1,000
   MRs) at ~405 MiB average per provider pod; a homelab-scale Authentik
   workspace set would sit far below. No published numbers exist for
-  provider-authentik at any scale (unverified — would need measuring). The
+  provider-authentik at any scale (unverified; would need measuring). The
   Crossplane chart ships no default requests/limits; set them when the
   provider lands.
 - Reconcile cadence: upjet/Workspace default poll is 10m per resource
   (`crossplane.io/poll-interval` annotation overrides). A per-app Workspace
-  set means N tofu plans per 10m against the Authentik API — trivial at
+  set means N tofu plans per 10m against the Authentik API; trivial at
   ~20 workspaces, but worth watching since each plan re-reads state and hits
   the API.
 - No rate-limit/429/concurrency issues are filed against
@@ -295,15 +295,15 @@ confirm.
 
 The live work landed. The lean toward B held, with two refinements the survey
 could not know: the HCL moved into a per-app inline file pair (no shared
-module pull), and the generic-app variant of B — rendering Crossplane from
-helm values — was rejected as an antipattern (operator decision 2026-10-11).
+module pull), and the generic-app variant of B; rendering Crossplane from
+helm values; was rejected as an antipattern (operator decision 2026-10-11).
 
 ### The canonical pattern: `crossplane.yaml` + `authentik.tf`
 
 Every standalone provider-opentofu authentik consumer owns two files in its
 app dir, stitched by the app kustomization:
 
-- `crossplane.yaml` — 3 docs:
+- `crossplane.yaml`: 3 docs:
   - `OnePasswordItem` `authentik-terraform-token` (`itemPath:
 vaults/Secrets/items/crossplane-terraform-secrets`).
   - `ProviderConfig` `<app>-authentik`: credentials turn the token Secret
@@ -312,13 +312,13 @@ vaults/Secrets/items/crossplane-terraform-secrets`).
     `in_cluster_config`).
   - `Workspace` `<app>-authentik`: `source: Inline`, `module: ""` placeholder,
     `managementPolicies: [Observe, Create, Update]` (the v2-native prune
-    guard), and NO varmap — values live in the HCL.
-- `authentik.tf` — the root HCL, single source of truth:
+    guard), and NO varmap; values live in the HCL.
+- `authentik.tf`: the root HCL, single source of truth:
   `goauthentik/authentik 2026.8.0`; provider
   `url = https://auth.gateway.services.apocrathia.com`,
   `token = file("authentik-token")`; resources inline; NO import blocks (state
   carries the objects; state loss = manual `tofu import` re-adoption).
-- `kustomization.yaml` — `configMapGenerator` (`name: <app>-authentik-module`,
+- `kustomization.yaml`: `configMapGenerator` (`name: <app>-authentik-module`,
   `files: [authentik.tf]`) plus a replacements rule (`data.[authentik.tf]` →
   `Workspace spec.forProvider.module`). The stitched module is byte-identical
   to the file; the module ConfigMap renders without the `authentik_blueprint`
@@ -326,7 +326,7 @@ vaults/Secrets/items/crossplane-terraform-secrets`).
 
 The PARTIAL `backend "kubernetes" {}` block in `authentik.tf` is
 load-bearing: provider-opentofu passes `-backend-config` from `backendFile`,
-and without the block tofu silently falls back to a LOCAL backend — empty
+and without the block tofu silently falls back to a LOCAL backend; empty
 state, duplicate create set.
 
 `terraform/modules/authentik-app` is not called under the file pair: the
@@ -346,11 +346,11 @@ part the live work replaced.
 
 Operator decision (2026-10-11, verbatim): "i do not like the generic-app
 inside of crossplane pattern... document that as an antipattern." The
-`authentik.managedBy: terraform` lane — the chart rendering the
+`authentik.managedBy: terraform` lane; the chart rendering the
 provider-opentofu stack from helm values, including chart-tag-pinned module
 refs
 (`git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-<version>`)
-inside Workspace specs — is the documented antipattern. The lane was built
+inside Workspace specs; is the documented antipattern. The lane was built
 for fleet-scale adoption (gated imports + gate-time varmap injection); komga
 and demo-app still run it, retirement planned. Do not extend the lane or add
 consumers; the live workspaces must not break while it winds down. New

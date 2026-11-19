@@ -2,7 +2,7 @@
 
 ## Version 0.0.91
 
-- **main-gateway and tailnet-gateway move to envoy-system** — all-in on
+- **main-gateway and tailnet-gateway move to envoy-system**: all-in on
   Envoy Gateway; the Cilium gateway controller is retired. Chart defaults
   follow: `authentik.gateway.namespace`, `httproute.gateway.namespace`,
   and `tailnet.gateway.namespace` now default to envoy-system, and the
@@ -11,7 +11,7 @@
 
 ## Version 0.0.90
 
-- **Outpost parity restored for proxy apps on the tofu lane** — the
+- **Outpost parity restored for proxy apps on the tofu lane**: the
   chart-generated authentik tofu module now declares the per-app
   outpost (service-connection lookup + `authentik_outpost` with the full
   retired-blueprint config: parentRefs main-gateway always, tailnet when
@@ -22,15 +22,15 @@
   auto-created HTTPRoute -> no DNS record -> hostnames NXDOMAIN. The
   flipped apps' live blueprint-era outposts are untouched by this
   release (their tofu state simply gains an outpost resource that
-  plans a CREATE — adopt it with `authentik.outpostAdopt` first, see
+  plans a CREATE; adopt it with `authentik.outpostAdopt` first, see
   below).
 - **New values key `authentik.outpostAdopt`** (proxy mode only, default
-  false) — a transient wave key, deliberately separate from the
+  false); a transient wave key, deliberately separate from the
   varmap-era `var.adoption` machinery (no varmap key, no uuid in git,
   two-way validation untouched): true renders the generated module's
   outpost import ARMED so the next crossplane apply imports the app's
   live blueprint-era outpost into tofu state (an armed render resolves
-  the baked outpost name through a `data "authentik_outpost"` lookup —
+  the baked outpost name through a `data "authentik_outpost"` lookup;
   outposts import by UUID, never by name); false renders the import
   inert and the outpost resource plans a plain CREATE. The W3 wave MR
   sets it true per flipped app; the cleanup MR flips it back once the
@@ -40,11 +40,11 @@
 ## Version 0.0.89
 
 - **The chart-generated authentik tofu module now gates the application
-  import like every other import** — it rides the same
+  import like every other import**: it rides the same
   `for_each = var.adoption ? toset(["g"]) : toset([])` adoption gate
   (0.0.87 shipped it UNGATED). A born-tofu app has no authentik
   application yet, so the ungated import wedged tofu on "Cannot import
-  non-existent remote object" forever — nothing could create an
+  non-existent remote object" forever; nothing could create an
   application that the import itself demanded at plan time (cyberchef
   was the first net-new app to hit it). With the gate, born-tofu apps
   plan a plain CREATE for the application and the chicken-and-egg is
@@ -55,50 +55,50 @@
 
 ## Version 0.0.88
 
-- **authentik.managedBy default flips to `terraform`** — the blueprint lane is
+- **authentik.managedBy default flips to `terraform`**: the blueprint lane is
   retired. The three blueprint ConfigMap templates (proxy, oidc, bookmark) are
   deleted from the chart; new apps deploy tofu-first. The tofu workspace
   template (authentik-tofu-workspace.yaml) is the only authentik lane.
   Zero-behavior-change for the 62 already-flipped apps (they rendered tofu
-  docs before this; they render the same docs after — the default only
+  docs before this; they render the same docs after; the default only
   catches apps that never declared managedBy). The two dead artifacts
   (odysseus, huntarr2) are tree-commented-out and never deploy.
 
 ## Version 0.0.87 (Latest)
 
 - **`authentik.managedBy: terraform` rewritten to the chart-generated
-  inline HCL lane — the Remote+varmap antipattern is dead**:
+  inline HCL lane; the Remote+varmap antipattern is dead**:
   `templates/authentik-tofu-workspace.yaml` now renders the same
   file-pair shape the merged exemplars use (gatus proxy MINUS the
-  outpost resource — the shared tofu-owned outposts own outposts now;
+  outpost resource; the shared tofu-owned outposts own outposts now;
   immich oidc + the `oidc-client-id` file lane; jetkvm tile), with the
   CHART generating each app's HCL from the same values the blueprint
   templates read. `source: Inline`, NO varmap key, NO module ref, NO
   chart-tag pin (the create-chart-tag first-reconcile race is gone).
   `managedBy: blueprint` (default) renders byte-identical blueprint
-  ConfigMaps — zero drift for un-flipped apps.
+  ConfigMaps; zero drift for un-flipped apps.
 - **Adoption machinery baked into the generated HCL**: the application
   import stays UNGATED by slug literal; every generated id (provider pk,
   binding uuids, custom-mapping pm_uuids) rides a
-  `for_each = var.adoption ? toset(["g"]) : toset([])` gated import —
+  `for_each = var.adoption ? toset(["g"]) : toset([])` gated import;
   plain variable-id imports are BANNED (the jetkvm blink: tofu silently
   skips an empty-id import and plans a duplicate create). Two-way
   plan-time validation fails loudly both directions. Witness ids remain
   gate-time-only (recipe §8 born-with-varmap on the live Workspace,
-  cleared after the gate) — never in git.
+  cleared after the gate); never in git.
 - **MISP rules embedded**: oidc `grant_types` pins the values list
   live-verbatim (new `authentik.oidc.grantTypes` key, default
-  `[authorization_code, refresh_token]` — the blueprint shape); declared
+  `[authorization_code, refresh_token]`; the blueprint shape); declared
   2-value stays 2-value, a live default-set row reproduces the full
   seven explicitly. `response_types` never written (not in the
   goauthentik 2026.8.0 TF schema); `token_validity` never written (dead
   attr).
 - **New values keys (additive, defaults match live rows)**:
   `authentik.internalHost` (proxy compose), `authentik.accessTokenValidity`
-  (proxy provider attr, default `hours=1` — always sent; the TF default
+  (proxy provider attr, default `hours=1`; always sent; the TF default
   minutes=10 would PATCH live rows),
   `authentik.oidc.grantTypes`, `authentik.oidc.clientIdFromSecret`
-  (enabled/name/key — the file lane; mutually exclusive with
+  (enabled/name/key; the file lane; mutually exclusive with
   `oidc.clientId`, render fails on both/neither). Dead keys on the tofu
   path documented in values.yaml (outpost shape → the shared stack;
   `oidc.clientSecret`; `oidc.tokenValidity`).
@@ -115,20 +115,20 @@
 
 ## Version 0.0.86
 
-- **`authentik.terraform.varmap` passthrough REMOVED — the values surface is
+- **`authentik.terraform.varmap` passthrough REMOVED; the values surface is
   compose-only**: the workspace varmap is built entirely from the
-  chart-composed inputs (`authentik` values — the same surface the blueprint
+  chart-composed inputs (`authentik` values; the same surface the blueprint
   templates read); the `authentik.terraform.varmap` values merge and its
   documented block in values.yaml are gone. Steady-state renders are
   byte-identical for apps that never overrode it (the passthrough was a
-  no-op for them — komga: 26/26 composed, zero overrides). Adoption
+  no-op for them; komga: 26/26 composed, zero overrides). Adoption
   injection is a live WORKSPACE merge-patch on `spec.forProvider.varmap` at
   gate time (the OIDC adopt-gate recipe §1 step 4; kubectl patch, Flux
-  suspended) — never values: the komga pilot's helmrelease-values injection
+  suspended); never values: the komga pilot's helmrelease-values injection
   worked only because this passthrough existed, and a documented varmap
   block invites ids into git. Per-app config deltas become proper
   `authentik` values keys (the compose surface), never a raw varmap. The
-  adoption-shape render gates are gone with it — the module's plan-time
+  adoption-shape render gates are gone with it; the module's plan-time
   variable validation is the adoption guard (adoption requires every shape
   id; ids without adoption fail). The workspace `spec.forProvider.varmap`
   stays as the module interface: composed by the chart, patched at gates.
@@ -140,14 +140,14 @@
   shared `terraform/modules/authentik-app` module gains
   `import_custom_scope_mapping_ids` (map: mapping name → live pm_uuid) and a
   keyed import block for `authentik_property_mapping_provider_scope.custom`
-  (for_each-gated to zero instances on the empty map — blip and steady
+  (for_each-gated to zero instances on the empty map; blip and steady
   shapes carry no import at all, so behavior is unchanged outside adoption).
   Fixes the komga pilot's wave-1a blocker: an adopt apply for an oidc app
   with custom scope mappings planned "N to import, 1 to add" and the create
   failed HTTP 400 on the unique property-mapping name. Unblocks adoption for
   the six oidc fleet apps carrying custom mappings (komga, kavita, chaptarr,
   mealie, romm, calibre-web-automated). The map rides the same gate-time
-  adoption varmap patch as the other import ids — never git; the module's
+  adoption varmap patch as the other import ids; never git; the module's
   adoption validation now fails loudly when an adopt app with a declared
   custom mapping lacks its pm_uuid, and rejects non-empty ids without
   adoption. Module-only change: zero chart template diffs (workspace ref
@@ -155,14 +155,14 @@
 
 ## Version 0.0.84
 
-- **Authentik tofu-native support (`authentik.managedBy`)**: new values knob —
+- **Authentik tofu-native support (`authentik.managedBy`)**: new values knob;
   `blueprint` (default; zero behavior change for existing apps) or
   `terraform` (the fleet path). `managedBy: terraform` renders the
   provider-opentofu docs from chart templates (OnePasswordItem +
   ProviderConfig + Workspace) and suppresses the blueprint ConfigMaps. The
   values-only contract: the chart composes the module's standard inputs from
   the `authentik` values and the app's `authentik.terraform.varmap` (native
-  types — booleans stay booleans, import ids are quoted strings) merges on
+  types; booleans stay booleans, import ids are quoted strings) merges on
   top. No per-app `terraform.tf`, no module ConfigMap, no `valuesFrom`, no
   kustomization additions. proxy and oidc modes (bookmark stays blueprint
   and fails the render loudly under terraform). The Workspace pulls the
@@ -171,10 +171,10 @@
   tag (`generic-app-<version>`). Known behavior: right after a chart bump
   the tag lands via CI minutes after merge, so the first workspace
   reconcile fails once (`pathspec ... did not match`) and self-heals on the
-  next poll — one transient ReconcileError cycle per chart bump is expected.
+  next poll; one transient ReconcileError cycle per chart bump is expected.
   The Workspace renders `managementPolicies: [Observe, Create, Update]`:
   crossplane v2 removed `deletionPolicy`, so excluding the Delete action is
-  the v2-native orphan — a GitOps prune of the Workspace object can never
+  the v2-native orphan; a GitOps prune of the Workspace object can never
   run tofu destroy on the live Authentik stack.
 
 ## Version 0.0.83
@@ -262,16 +262,16 @@
   - `app.replicas: 0` was rendered as `2`.
   - Longhorn `numberOfReplicas: 0` (per-volume or chart default) was replaced by the next default.
   - Sidecar `runAsUser: 0` without `securityContext.runAsUser` fell back to `1000` instead of inheriting the app or sidecar value.
-  - Authentik `openInNewTab: false`, `authentikHostInsecure: false`, and OIDC `includeClaimsInIdToken: false` were rendered as `true` when omitted from values was not the issue — explicit `false` was.
+  - Authentik `openInNewTab: false`, `authentikHostInsecure: false`, and OIDC `includeClaimsInIdToken: false` were rendered as `true` when omitted from values was not the issue; explicit `false` was.
   - `interceptHeaderAuth: false` was already safe (`default false`) but aligned to `hasKey` for consistency.
 
 ## Version 0.0.73
 
-- **`hasKey` for boolean securityContext fields on initContainers and sidecars**: Truthy gates (`{{- if .X.Y }}`) on `readOnlyRootFilesystem`, `allowPrivilegeEscalation`, and `runAsNonRoot` silently dropped explicit `false` values because Go templates treat `false` as falsy. Switched to `hasKey` so explicit `false` is rendered. Also fixes `postgres.affinity.enablePodAntiAffinity` (CNPG default is `true`, so consumers couldn't actually disable pod anti-affinity). User-visible impact: consumer helmreleases that set `allowPrivilegeEscalation: false` on init containers (gluetun, install scripts, etc.) or `runAsNonRoot: false` / `readOnlyRootFilesystem: false` on sidecars will now actually emit those fields. Most affected: init containers that need `allowPrivilegeEscalation: false` — K8s default is `true`, so the bug left them able to escalate.
+- **`hasKey` for boolean securityContext fields on initContainers and sidecars**: Truthy gates (`{{- if .X.Y }}`) on `readOnlyRootFilesystem`, `allowPrivilegeEscalation`, and `runAsNonRoot` silently dropped explicit `false` values because Go templates treat `false` as falsy. Switched to `hasKey` so explicit `false` is rendered. Also fixes `postgres.affinity.enablePodAntiAffinity` (CNPG default is `true`, so consumers couldn't actually disable pod anti-affinity). User-visible impact: consumer helmreleases that set `allowPrivilegeEscalation: false` on init containers (gluetun, install scripts, etc.) or `runAsNonRoot: false` / `readOnlyRootFilesystem: false` on sidecars will now actually emit those fields. Most affected: init containers that need `allowPrivilegeEscalation: false`; K8s default is `true`, so the bug left them able to escalate.
 
 ## Version 0.0.72
 
-- **`stdin` and `tty` passthroughs on main container and sidecars**: Added optional `app.container.stdin`/`app.container.tty` and per-sidecar `stdin`/`tty` fields. Renders the corresponding container spec fields when set, omitted otherwise. Enables CLI-as-server patterns where the workload reads from stdin and exits on EOF (e.g., DuckDB's `start_ui_server()`, which dies when the duckdb CLI's stdin closes). Strictly additive — no behavior change for existing releases.
+- **`stdin` and `tty` passthroughs on main container and sidecars**: Added optional `app.container.stdin`/`app.container.tty` and per-sidecar `stdin`/`tty` fields. Renders the corresponding container spec fields when set, omitted otherwise. Enables CLI-as-server patterns where the workload reads from stdin and exits on EOF (e.g., DuckDB's `start_ui_server()`, which dies when the duckdb CLI's stdin closes). Strictly additive; no behavior change for existing releases.
 
 ## Version 0.0.71
 
@@ -307,7 +307,7 @@
   - Mount Kubernetes Secrets directly into the main application container
   - Supports `name`, `mountPath`, `secretName`, `subPath`, and `readOnly`
   - Uses `.secretName | default .name` for the volume source, matching the `configMap` pattern
-  - Integrated into the volume deduplication strategy — no duplicate volumes across containers
+  - Integrated into the volume deduplication strategy; no duplicate volumes across containers
 
 ## Version 0.0.63
 
@@ -322,15 +322,15 @@
 - **Secret volume support for initContainers and sidecars**: Added `volumes.secret` alongside existing `emptyDir` and `configMap` volume types
   - Mount Kubernetes Secrets (e.g. TLS certs from cert-manager) directly into init containers and sidecar containers
   - Supports `name`, `mountPath`, `secretName`, `subPath`, and `readOnly`
-  - Integrated into the volume deduplication strategy — no duplicate volumes across containers
+  - Integrated into the volume deduplication strategy; no duplicate volumes across containers
 
 ## Version 0.0.60
 
 - **Authentik bookmark mode**: Added `authentik.mode: "bookmark"` for dashboard-only entries with no auth provider or outpost
-  - Creates an `authentik_core.application` with `meta_launch_url` — shows up in the authentik dashboard as a clickable link
+  - Creates an `authentik_core.application` with `meta_launch_url`; shows up in the authentik dashboard as a clickable link
   - Supports `metaDescription` and `metaPublisher` for richer dashboard entries
   - Replaces the need to hand-roll blueprint ConfigMaps in kustomization.yaml (as Plex was doing)
-  - No deployment, service, or routing behavior changes — bookmark mode only affects the authentik blueprint
+  - No deployment, service, or routing behavior changes; bookmark mode only affects the authentik blueprint
 
 ## Version 0.0.59
 
@@ -504,7 +504,7 @@
 
 - **NEW: PostgreSQL Resource Limits Support**: Added resource requests and limits configuration for PostgreSQL pods
   - **Resource Configuration**: Configure CPU and memory requests/limits for PostgreSQL pods via `postgres.resources`
-  - **OOM Prevention**: Prevents OOM kills by ensuring PostgreSQL pods have proper memory guarantees and limits
+  - **OOM Prevention**: Prevents OOM kills by giving PostgreSQL pods memory guarantees and limits
   - **Template Enhancement**: Updated `postgres.yaml` template to support resource configuration in CloudNativePG Cluster spec
   - **Optional Configuration**: Resources are optional - existing deployments without resource limits continue to work
   - **Best Practice**: Recommended for production workloads to ensure stable database performance and prevent unexpected pod terminations
@@ -512,9 +512,9 @@
 
 ## Version 0.0.41
 
-- **Fixed Volume Deduplication**: Comprehensive fix for duplicate volume errors across all container types
+- **Fixed Volume Deduplication**: Fixes duplicate volume errors across all container types
   - **Problem Solved**: Duplicate volume definitions when multiple containers (main, initContainers, sidecars) reference the same configMap or emptyDir
-  - **Comprehensive Deduplication**: Uses a dict to track ALL created volumes across all sources - first occurrence wins
+  - **Deduplication**: Uses a dict to track ALL created volumes across all sources - first occurrence wins
   - **Cross-Container Safe**: Multiple initContainers, sidecars, or any combination can reference the same volume name without conflicts
   - **emptyDir Support**: Deduplicates emptyDir volumes (not just configMaps)
   - **Backward Compatible**: Existing deployments continue to work unchanged
@@ -561,7 +561,7 @@
   - **Pod Anti-Affinity**: Configurable pod anti-affinity for better performance and high availability
   - **Monitoring Support**: Optional PodMonitor integration for Prometheus metrics (follows CNPG v1.27+ best practices, does not use deprecated `enablePodMonitor`)
   - **Backward Compatible**: Disabled by default, no impact on existing deployments
-  - **Documentation**: Comprehensive documentation with connection examples and configuration patterns
+  - **Documentation**: Connection examples and configuration patterns
 
 ## Version 0.0.36
 
@@ -605,7 +605,7 @@
 
 ## Version 0.0.31
 
-- **Enhanced VPN Sidecar Documentation**: Added comprehensive documentation and examples for VPN sidecar patterns using init containers with `restartPolicy: Always`
+- **VPN Sidecar Documentation**: Added documentation and examples for VPN sidecar patterns using init containers with `restartPolicy: Always`
   - **New Documentation**: Added dedicated VPN Sidecar Pattern section with generic configuration examples
   - **Generic Examples**: Provided flexible VPN sidecar configuration template applicable to various VPN clients
   - **Best Practices**: Documented key benefits including device access, elevated privileges, persistent connections, and network isolation
@@ -635,7 +635,7 @@
   - **VPN Support**: Enables VPN containers (like Gluetun) to run as init containers with persistent connections
   - **Device Access**: Retains init container privileges for TUN device creation and elevated security contexts
   - **Template Enhancement**: Added conditional restartPolicy rendering in deployment template
-  - **Documentation**: Added comprehensive examples and use cases for restartPolicy feature
+  - **Documentation**: Added examples and use cases for the restartPolicy feature
 
 ## Version 0.0.26
 
@@ -647,7 +647,7 @@
   - **Override Support**: Sidecars can now override specific security settings while inheriting others from the app level
   - **VPN Container Support**: Enables proper configuration of VPN sidecars (like Gluetun) that require elevated privileges and capabilities
 
-- **Enhanced Documentation**: Added comprehensive sidecar security context documentation with examples and inheritance behavior
+- **Documentation**: Added sidecar security context docs with examples and inheritance behavior
 
 ## Version 0.0.23
 
@@ -712,7 +712,7 @@
   - **Sidecars**: Can define `volumes.emptyDir` and `volumes.configMap` with mount info
   - **Main Container**: Existing `app.volumes` support maintained and improved
 
-- **Updated Documentation**: Comprehensive documentation overhaul
+- **Updated Documentation**: Documentation overhaul
   - **Storage Architecture**: Clear explanation of pod-wide vs container-specific storage
   - **Usage Examples**: Updated examples showing new structure and capabilities
   - **Volume Naming**: Documented volume naming conventions and patterns

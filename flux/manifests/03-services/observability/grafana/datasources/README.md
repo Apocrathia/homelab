@@ -4,7 +4,7 @@ GrafanaDatasource CRs the [grafana operator](../helmrelease.yaml) syncs into
 the kube-prometheus-stack Grafana instance. Secrets never land in git: each CR
 carries `${field-name}` placeholders, and the operator substitutes them from
 the `grafana-secrets` Secret (1Password item
-`vaults/Secrets/items/grafana-secrets`) via `valuesFrom` — git only ever names
+`vaults/Secrets/items/grafana-secrets`) via `valuesFrom`: git only ever names
 fields, never values.
 
 > **Navigation**: [← Back to Grafana README](../README.md)
@@ -25,7 +25,7 @@ image does not bundle it). Connection uses the plugin's default native
 protocol on port 9000; the service also exposes HTTP 8123. Auth is the
 `grafana` ClickHouse user defined in `cluster.yaml` (SELECT-only on
 `ocsf.*`), substituted from `grafana-secrets` fields
-`clickhouse-grafana-user` and `clickhouse-grafana-password` — the
+`clickhouse-grafana-user` and `clickhouse-grafana-password`; the
 password value must match the `clickhouse-grafana-password` field on the
 `tenzir-secrets` item that materializes the CHI's
 `tenzir-secrets` Secret in `tenzir`.

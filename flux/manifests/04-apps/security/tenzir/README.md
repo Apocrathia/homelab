@@ -4,7 +4,7 @@
 
 Seven standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own pipelines and
-no node-local storage — every write attests and INSERTs to ClickHouse
+no node-local storage, every write attests and INSERTs to ClickHouse
 in-stream ([stateless migration
 plan](../../../../../docs/plans/tenzir-stateless-migration.md)). The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to
@@ -15,19 +15,19 @@ owns only the NetFlow collector (UniFi exporters behind
 `tenzir-ingest-lb`), so neither feed's lifecycle can starve or disturb
 detection. The [investigations node](./nodes/investigations/README.md)
 owns the agent investigations plane: case/evidence envelopes in,
-`investigations.records` on ClickHouse out — an isolated blast radius the
+`investigations.records` on ClickHouse out, an isolated blast radius the
 detection plane never shares. The [enrichment
 node](./nodes/enrichment/README.md) is the internal-reference-data
-factory: it builds the curated lookup tables — fleet assets,
-baselines — into ClickHouse for the other nodes to pull; its first
+factory: it builds the curated lookup tables (fleet assets,
+baselines) into ClickHouse for the other nodes to pull; its first
 lane, the hourly Fleet host-inventory pull into `ocsf.fleet_assets`,
 shipped in lap 2 (the core node's loader is the consumer half).
 The [introspection
 node](./nodes/introspection/README.md) is the introspection plane:
 every node ships its own pipeline diagnostics to Loki and Mimir
-through its node-config lane pair (B1 — the introspection node's pair
+through its node-config lane pair (B1, the introspection node's pair
 covers its own pipelines, and the central poller Deployment is
-retired), and the node's charter direction is inward detection —
+retired), and the node's charter direction is inward detection:
 scheduled volume/freshness passes over the ocsf.\* tables landing
 operational findings.
 The [intel node](./nodes/intel/README.md) is the CTI factory plane: its
@@ -56,10 +56,10 @@ egress. The class taxonomy and the bus semantics live in
 
 The parquet lane is retired (rollout MR-5 teardown, plan
 [`docs/plans/clickhouse-rollout.md`](../../../../../docs/plans/clickhouse-rollout.md)):
-the nodes write ClickHouse alone — in-stream attest + INSERT, no
-archive rules — and the existing
+the nodes write ClickHouse alone, in-stream attest + INSERT, no
+archive rules, and the existing
 `s3://tenzir/ocsf/` archive stays untouched in the rustfs bucket as
-frozen, unqueried history — deleting it is a separate operator call. No
+frozen, unqueried history, deleting it is a separate operator call. No
 backfill replays it into ClickHouse (operator decision 2026-10-17: the
 parquet history has no value to preserve).
 
@@ -83,7 +83,7 @@ flowchart LR
 
 The chart is the whole topology for detection: feeders, the bus,
 sigma, the in-stream attest + INSERT write path, and the Grafana query
-plane — no node storage anywhere. The one agent-side consumer
+plane, no node storage anywhere. The one agent-side consumer
 is the [investigator agent](../../artificial-intelligence/agents/investigator/README.md)
 (P-3): high-severity findings alert through Grafana with the `agent_invoke`
 label ([findings alert rule](../../../03-services/observability/grafana/alerting/tenzir-findings.yaml))
@@ -115,7 +115,7 @@ and the rendered Secret keys match them:
   `enrichment-node-token` / `introspection-node-token` / `intel-node-token`: the
   pre-provisioned Tenzir Platform node tokens, one per node
 - `opencti-taxii-token`: the OpenCTI TAXII 2.1 bearer token, written
-  by the opencti lane — its slice-7 handoff
+  by the opencti lane, its slice-7 handoff
   ([`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md));
   the intel node's opencti-taxii-factory-walk and
   opencti-taxii-factory-poll pipelines read it
@@ -125,9 +125,9 @@ The same item carries the ClickHouse credentials (the store's
 `clickhouse-*` fields were consolidated onto this item 2026-10-27):
 `clickhouse-password` is the ClickHouse `tenzir` writer password six
 nodes read as `TENZIR_SECRETS__CLICKHOUSE_PASSWORD`
-— the direct `to_clickhouse` INSERT legs on core, tetragon, and
+: the direct `to_clickhouse` INSERT legs on core, tetragon, and
 netflow, the factory INSERT legs on enrichment and intel, and
-investigations' attest-verify findings leg —
+investigations' attest-verify findings leg.
 `clickhouse-grafana-password` is the CHI `grafana` user's password, and
 `clickhouse-investigations-{writer,reader}-password` carry the
 investigations node's two ClickHouse users (see
@@ -171,7 +171,7 @@ tables) directly from the source pipeline; ClickHouse is the record.
 The only in-flight state is in-memory: the 60s event-time sort window
 that orders the attestation chain (batch ordering, not a storage tier)
 and the node-local contexts. Core's Base Event fallback INSERTs with
-the mappable classes; unmapped kinds never reach ClickHouse — the
+the mappable classes; unmapped kinds never reach ClickHouse, the
 source pipelines drop them at the class gate. The retired
 `s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs bucket
 as frozen history (deleting it is a separate operator call). The

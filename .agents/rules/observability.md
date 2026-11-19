@@ -1,11 +1,11 @@
 ---
 alwaysApply: false
-description: Observability practices — monitoring, logging, alerting, metrics, health indicators
+description: Observability practices; monitoring, logging, alerting, metrics, health indicators
 ---
 
 # Observability
 
-- Implement comprehensive monitoring.
+- Implement monitoring.
 - Establish logging standards.
 - Define alerting criteria.
 - Document metrics collection methods.

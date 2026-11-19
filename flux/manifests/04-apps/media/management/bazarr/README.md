@@ -11,7 +11,7 @@ This deployment includes:
 - Bazarr subtitle management with automated downloads
 - SubGen (Whisper ASR webservice) sidecar for AI-powered subtitle generation
 - LinuxServer.io container with standard configuration pattern
-- Authentik SSO integration for secure access
+- Authentik SSO integration
 - Read-only SMB mounts for media library access
 - Longhorn persistent storage for configuration and Whisper models
 
@@ -91,16 +91,13 @@ Larger models require more CPU/memory and take longer to process.
 
 ## Authentication
 
-Authentication is handled through Authentik SSO:
-
-1. **Proxy Provider**: Authentik blueprint creates a proxy provider
-2. **Automatic Setup**: HTTPRoute and outpost created automatically
-3. **Clean Deployment**: Works with Authentik from day one
+Authentik SSO via a proxy provider from the Authentik blueprint; the
+HTTPRoute and outpost are created automatically.
 
 ## Security Considerations
 
-- **SSO Integration**: Complete authentication through Authentik proxy
-- **Read-only Access**: Media libraries mounted as read-only for security
+- **SSO Integration**: Authentication through the Authentik proxy
+- **Read-only Access**: Media libraries mounted as read-only
 - **LinuxServer.io Pattern**: Standard security context for container compatibility
 - **Network Policies**: Cilium NetworkPolicy for traffic control
 

@@ -1,5 +1,5 @@
 ---
-title: "rom-audit — Grafana dashboard"
+title: "rom-audit: Grafana dashboard"
 status: done
 found_at: 2026-07-29
 updated_at: 2026-11-19
@@ -21,14 +21,14 @@ One dashboard in folder **Games** so an operator can answer, after a run:
 
 ## Decisions
 
-| Decision        | Choice                                                                                        |
-| --------------- | --------------------------------------------------------------------------------------------- |
-| Scope           | Both job health and library quality (one screen)                                              |
-| Folder          | `Games` (created via `spec.folder` if missing)                                                |
-| Provisioning    | Fleet clone: JSON → ConfigMap → `GrafanaDashboard` CR                                         |
-| Datasource      | Template var `loki` → `"uid": "${loki}"`                                                      |
-| Default range   | 30d (weekly schedule + one-shots)                                                             |
-| Stream selector | Prefer `container_runtime="containerd"` and/or `max by (pod)` — Alloy can double-ship streams |
+| Decision        | Choice                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| Scope           | Both job health and library quality (one screen)                                             |
+| Folder          | `Games` (created via `spec.folder` if missing)                                               |
+| Provisioning    | Fleet clone: JSON → ConfigMap → `GrafanaDashboard` CR                                        |
+| Datasource      | Template var `loki` → `"uid": "${loki}"`                                                     |
+| Default range   | 30d (weekly schedule + one-shots)                                                            |
+| Stream selector | Prefer `container_runtime="containerd"` and/or `max by (pod)`; Alloy can double-ship streams |
 
 ## Layout on disk
 
@@ -83,23 +83,23 @@ for those.
 ## Panels (9)
 
 Validated against live Loki. Per-system views are **tables** (Fleet-style
-`labelsToFields`) — Loki instant series do not label Stat/BarGauge cleanly
+`labelsToFields`); Loki instant series do not label Stat/BarGauge cleanly
 (`Value #A`). Classification stats use `byFrameRefID` display names and
 `max(max by (pod) (...))` so a full CronJob wins over small one-shots.
 
-1. **Classification totals** — Stat — matched / unknown / wrong_name / total
-2. **Systems health** — Stat — ok / error / skipped
-3. **Matched by system** — Table — `system_summary` status=ok
-4. **Unknown by system** — Table
-5. **Wrong-name by system** — Table
-6. **File status mix** — Donut — `event=file` by status (incl. `inventory` if present)
-7. **Unknown files** — Logs
-8. **Wrong-name files** — Logs
-9. **System errors / skipped** — Logs
+1. **Classification totals** (Stat): matched / unknown / wrong_name / total
+2. **Systems health** (Stat): ok / error / skipped
+3. **Matched by system** (Table): `system_summary` status=ok
+4. **Unknown by system** (Table)
+5. **Wrong-name by system** (Table)
+6. **File status mix** (Donut): `event=file` by status (incl. `inventory` if present)
+7. **Unknown files** (Logs)
+8. **Wrong-name files** (Logs)
+9. **System errors / skipped** (Logs)
 
 ## Out of scope
 
-- Pod label fixes (`app.kubernetes.io/name` on CronJob) — nice later, not required
+- Pod label fixes (`app.kubernetes.io/name` on CronJob); nice later, not required
 - Alerting rules
 - Alloy structured_metadata promotion
 - grafana.com import / sidecar-only ConfigMaps

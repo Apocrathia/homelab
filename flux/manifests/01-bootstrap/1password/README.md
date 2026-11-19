@@ -20,7 +20,7 @@ The 1Password Connect Operator requires two main credentials:
 Chicken-and-egg: these two Secrets must exist before Connect can sync anything
 else. Today that is still a manual create (below). Desired follow-on: pull both
 from the vault with `op` during bootstrap so credential files never linger on
-disk — tracked in
+disk. Tracked in
 [`docs/issues/onepassword-bootstrap-op-cli.md`](../../../../docs/issues/onepassword-bootstrap-op-cli.md).
 
 ### Step 1: Create 1Password Connect Credentials
@@ -43,11 +43,10 @@ disk — tracked in
 
 ### Step 2: Generate Connect API Token
 
-1. In the same Connect Server settings page:
-2. Click "Create Access Token"
-3. Give the token a name (e.g., "Homelab K8s Operator")
-4. Save the token securely - it will only be shown once
-5. Create a Kubernetes secret with the token:
+1. In the same Connect Server settings page, click "Create Access Token"
+2. Give the token a name (e.g., "Homelab K8s Operator")
+3. Save the token securely - it will only be shown once
+4. Create a Kubernetes secret with the token:
    ```bash
    kubectl create secret generic 1password-token \
      --namespace=onepassword-system \

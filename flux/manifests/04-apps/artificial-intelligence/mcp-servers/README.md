@@ -1,12 +1,12 @@
 # MCP Servers
 
-Model Context Protocol servers providing specialized functionality for AI clients.
+Model Context Protocol servers that expose tools to AI clients.
 
 > **Navigation**: [← Back to AI README](../README.md)
 
 ## Overview
 
-All MCP servers are internal-only and accessible exclusively through the LiteLLM proxy. This provides:
+All MCP servers are internal-only and reachable only through the LiteLLM proxy, which gives:
 
 - Unified authentication and access control
 - Centralized logging and observability

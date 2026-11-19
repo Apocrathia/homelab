@@ -21,7 +21,7 @@ APIs through OpenTofu workspaces. Adding another provider is still a single
 
 - **Scope**: core control plane + `provider-opentofu` (OpenTofu workspaces)
 - **CRDs**: applied by the chart init container (`crossplane core init`), not
-  by Helm — Helm upgrades never skip CRD changes
+  by Helm; Helm upgrades never skip CRD changes
 - **Version line**: v2.x; cluster-scoped MRs are legacy in v2, namespaced MRs
   are the default
 
@@ -32,7 +32,7 @@ APIs through OpenTofu workspaces. Adding another provider is still a single
 | Control plane | `crossplane` chart from the official `crossplane-stable` repo                                                       |
 | RBAC manager  | Enabled (chart default), 1 replica                                                                                  |
 | Webhooks      | Enabled (chart default), served in-cluster on 9443                                                                  |
-| Secrets       | None required — providers bring their own `ProviderConfig`                                                          |
+| Secrets       | None required; providers bring their own `ProviderConfig`                                                           |
 | Dashboard     | [Crossview](https://github.com/crossplane-contrib/crossview) chart 4.6.0, `crossview-*` manifests in this directory |
 
 ## Adding a provider
@@ -42,8 +42,8 @@ APIs through OpenTofu workspaces. Adding another provider is still a single
 2. Create a `ProviderConfig` referencing a 1Password-backed secret
    (`OnePasswordItem`, never a bare Secret).
 3. Scope the managed resource activation policy to only the MRs actually
-   used (`provider.packages.defaultActivations` or a `ManagedResourceActivationPolicy`)
-   — Upjet-generated providers ship hundreds of CRDs otherwise.
+   used (`provider.packages.defaultActivations` or a `ManagedResourceActivationPolicy`):
+   Upjet-generated providers ship hundreds of CRDs otherwise.
 
 Provider health should be checked on the
 [Upbound Marketplace](https://marketplace.upbound.io/providers) before
@@ -54,24 +54,24 @@ stale.
 
 [`upbound/provider-opentofu`](https://github.com/upbound/provider-opentofu)
 v1.1.8 (`provider-opentofu.yaml`) runs OpenTofu modules against external
-systems through `Workspace` managed resources — Pattern B from
+systems through `Workspace` managed resources: Pattern B from
 [`docs/research/crossplane-connector-pattern.md`](../../../../docs/research/crossplane-connector-pattern.md).
 First consumers: headlamp's Authentik entry
 (`flux/manifests/03-services/headlamp/crossplane.yaml`) and
-chaos-mesh's (`flux/manifests/03-services/chaos-mesh/crossplane.yaml`) —
+chaos-mesh's (`flux/manifests/03-services/chaos-mesh/crossplane.yaml`):
 the chaos-mesh workspace owns a full proxy stack in one module, outpost
 included (the `authentik_outpost` resource carries `protocol_providers`, so
 the separate `authentik_outpost_provider_attachment` resource is retired).
 
 - **CRDs**: 7 (Workspace, ProviderConfig, ProviderConfigUsage in both scopes
-  plus namespaced ClusterProviderConfig) — small enough that no
+  plus namespaced ClusterProviderConfig): small enough that no
   `defaultActivations` scoping is needed
 - **Workspaces live per-app**: in the consuming app's directory and
   namespace, against a namespaced `ProviderConfig`
   (`opentofu.m.upbound.io/v1beta1`)
 - **State**: each module declares a `kubernetes` backend
   (`in_cluster_config = true`); state lands as a `tfstate-*` Secret in the
-  Workspace namespace — kept separate from the CI tofu stack's GitLab HTTP
+  Workspace namespace, kept separate from the CI tofu stack's GitLab HTTP
   backend. The provider runtime SA already gets cluster-wide secret/lease
   access via the `crossplane:provider:<revision>:system` ClusterRole, so the
   backend needs no extra RBAC.
@@ -79,11 +79,11 @@ the separate `authentik_outpost_provider_attachment` resource is retired).
   `ProviderConfig.spec.credentials` array, materialized as a file in the
   workspace and read from HCL via `file()`. The Authentik API token belongs to
   the `ak-terraform` service account, managed by the tofu system unit
-  [`authentik/system/terraform-service-account/`](../authentik/system/terraform-service-account/README.md)
-  — adopt-only, the token never rotates; workspaces read it from the
+  [`authentik/system/terraform-service-account/`](../authentik/system/terraform-service-account/README.md):
+  adopt-only, the token never rotates; workspaces read it from the
   `authentik-terraform-token` 1Password-backed Secret
 - **Deletion**: deleting a Workspace runs `tofu destroy` by default
-  (external objects go with the CR — the inverse of the blueprint
+  (external objects go with the CR; the inverse of the blueprint
   ConfigMap pattern)
 
 ## Crossview dashboard
@@ -91,16 +91,16 @@ the separate `authentik_outpost_provider_attachment` resource is retired).
 [Crossview](https://github.com/crossplane-contrib/crossview) renders providers,
 managed resources, and compositions from live cluster state. It runs beside the
 control plane in `crossplane-system` with a read-only ClusterRole
-(get/list/watch — it can read secrets cluster-wide but cannot mutate) and a
+(get/list/watch: it can read secrets cluster-wide but cannot mutate) and a
 CNPG PostgreSQL cluster (`crossview-postgres`, see `crossview-postgres.yaml`)
-for session state — same pattern as every other DB-backed app. The chart's
+for session state, same pattern as every other DB-backed app. The chart's
 bundled single-replica postgres stays disabled: it cannot roll in place on a
 RWO Longhorn PVC.
 
 - **URL**: `https://crossplane.gateway.services.apocrathia.com` (Gateway API
   HTTPRoute on `main-gateway`, chart-rendered); the SSO entrypoint is
-  `/api/auth/oidc` — the root path serves the local login form
-- **Auth**: native OIDC against Authentik — the provider-opentofu
+  `/api/auth/oidc`: the root path serves the local login form
+- **Auth**: native OIDC against Authentik: the provider-opentofu
   Workspace (`crossplane.yaml` + `authentik.tf`, the canonical file pair)
   owns `crossview-oidc-provider` and a Platform-group launchpad entry;
   local admin fallback via 1Password

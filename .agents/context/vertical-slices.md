@@ -14,7 +14,7 @@ UI + check).
 **Horizontal:** "set up the database schema" (one layer only).
 
 In this lab, a slice is often: one Flux app change + local render/lint + Trivy
-on changed paths + docs/issue close — not "rewrite all Helm values."
+on changed paths + docs/issue close, not "rewrite all Helm values."
 
 ## Why vertical
 

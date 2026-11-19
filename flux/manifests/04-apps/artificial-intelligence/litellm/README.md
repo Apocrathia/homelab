@@ -1,6 +1,6 @@
 # LiteLLM
 
-Unified interface for 100+ LLMs with OpenAI proxy compatibility, allowing seamless integration with various AI models through a single API.
+Unified proxy for 100+ LLM providers behind a single OpenAI-compatible API.
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 

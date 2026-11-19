@@ -1,6 +1,6 @@
-# Mimir - Long-term Metrics Storage
+# Mimir: long-term metrics storage
 
-This directory contains the deployment configuration for Grafana Mimir, which provides long-term storage for Prometheus metrics.
+Flux manifests for Grafana Mimir, long-term storage for Prometheus metrics.
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
@@ -8,14 +8,14 @@ This directory contains the deployment configuration for Grafana Mimir, which pr
 
 Mimir is deployed in distributed mode with the following components:
 
-- **Ingester**: Receives and stores metrics
-- **Distributor**: Routes incoming metrics to ingesters
-- **Querier**: Handles queries against stored metrics
-- **Store Gateway**: Provides access to long-term storage
-- **Compactor**: Compacts and deduplicates metrics
-- **External RustFS**: Object storage backend for metrics data
+- Ingester: receives and stores metrics
+- Distributor: routes incoming metrics to ingesters
+- Querier: handles queries against stored metrics
+- Store gateway: provides access to long-term storage
+- Compactor: compacts and deduplicates metrics
+- External RustFS: object storage backend for metrics data
 
-## Storage Configuration
+## Storage configuration
 
 Mimir uses external RustFS for object storage with separate buckets for
 different data types (create all three in RustFS before first deploy):
@@ -41,10 +41,10 @@ Prometheus is configured to remote write all metrics to Mimir via the gateway at
 
 ## Access
 
-- **Metrics API**: `http://mimir-gateway.mimir-system.svc:80/prometheus/`
-- **External RustFS**: `http://storage.services.apocrathia.com:9009`
+- Metrics API: `http://mimir-gateway.mimir-system.svc:80/prometheus/`
+- External RustFS: `http://storage.services.apocrathia.com:9009`
 
-## Security Notes
+## Security notes
 
 - RustFS credentials live in the `mimir-secrets` 1Password item (fields above); nothing sensitive is stored in git
 - External RustFS endpoint is configured as `storage.services.apocrathia.com:9009` (no protocol prefix)

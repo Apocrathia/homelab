@@ -15,27 +15,27 @@ variables. **1Password is the secret store.**
 
 Pattern:
 
-1. **Bootstrap** — GitLab (and local) hold **Connect** credentials only:
+1. **Bootstrap**: GitLab (and local) hold **Connect** credentials only:
    `OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`. No `op` CLI in CI.
-2. **Resolve** — OpenTofu `1Password/onepassword` **ephemeral** items feed
+2. **Resolve**: OpenTofu `1Password/onepassword` **ephemeral** items feed
    other providers (GitLab + Cloudflare + Okta + Proxmox done).
-3. **Migrate** — delete duplicated GitLab CI secrets as each consumer moves.
+3. **Migrate**: delete duplicated GitLab CI secrets as each consumer moves.
 
 **Prove first** on the GitLab stack (read-only project data, then
 `managed-by-terraform` label).
 
-Do **not** commit vault UUIDs — vault **name** in HCL only.
+Do **not** commit vault UUIDs; vault **name** in HCL only.
 
 ## Scope
 
 **In scope:**
 
 - GitLab stack: Connect → onepassword ephemeral → `gitlabhq/gitlab` provider
-- Vault identity via **name** (e.g. `Secrets`) — **no vault UUID in git**
+- Vault identity via **name** (e.g. `Secrets`); **no vault UUID in git**
 - Item titles (non-secret) in HCL; secret **values** never in git
 - Prefer `CI_JOB_TOKEN` for HTTP state / MR notes where possible
 - After spike: same pattern for Cloudflare / Proxmox / Okta
-- Docs; retire `sync-gitlab-ci-variables.sh` for provider tokens
+- Docs: retire `sync-gitlab-ci-variables.sh` for provider tokens
 
 **Out of scope:**
 
@@ -48,24 +48,24 @@ Do **not** commit vault UUIDs — vault **name** in HCL only.
 
 ## Decisions
 
-- Auth — **1Password Connect** (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`) —
+- Auth: **1Password Connect** (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`);
   provider talks HTTP to Connect; **no `op` binary** in the runner. Host:
   in-cluster Service
   `http://onepassword-connect.onepassword-system.svc:8080` (runners are on
   the cluster; ingress for Connect is not enabled).
-- Why not SA-only — provider still shells out to `op` for
+- Why not SA-only: provider still shells out to `op` for
   `OP_SERVICE_ACCOUNT_TOKEN` today; Connect is the no-CLI path.
-- GitLab blast — Connect token is still a project CI var (visible to other
+- GitLab blast: Connect token is still a project CI var (visible to other
   jobs). Prefer a Connect token scoped to the vaults tofu needs; do not also
   store provider PATs in GitLab.
-- Vault UUID — **not in git**. `data.onepassword_vault` by name.
-- State in CI — prefer `gitlab-ci-token` + `CI_JOB_TOKEN` (later spike).
-- Never — TF → GitLab variable sync as the secret bus; never
+- Vault UUID: **not in git**. `data.onepassword_vault` by name.
+- State in CI: prefer `gitlab-ci-token` + `CI_JOB_TOKEN` (later spike).
+- Never: TF → GitLab variable sync as the secret bus; never
   `data.onepassword_item` for these tokens while state is in GitLab.
 
 ## Steps
 
-### Phase 0 — Inventory + Connect + GitLab pattern spike
+### Phase 0: Inventory + Connect + GitLab pattern spike
 
 - [x] Scaffold `terraform/providers/gitlab.hcl` (ephemeral → gitlab).
 - [x] Scaffold `terraform/modules/gitlab-project` + `deployments/gitlab/homelab`.
@@ -78,22 +78,22 @@ Do **not** commit vault UUIDs — vault **name** in HCL only.
       `OP_CONNECT_TOKEN` (masked/protected). Host is the in-cluster Service
       (defaulted in tofu CI YAML).
 - [x] CI engine / local OpenTofu support ephemeral.
-- [ ] Spike A — GitLab stack:
+- [ ] Spike A; GitLab stack:
   - ephemeral → `provider "gitlab"`
   - Step 1: read-only `data.gitlab_project`
   - Step 2: label `managed-by-terraform`
   - Success = no GitLab PAT / vault UUID in env or git; only Connect + state
     bootstrap
-- [ ] Spike B/C — `CI_JOB_TOKEN` for state / MR notes.
-- [ ] If Connect→ephemeral→provider fails, stop — do not stuff PATs back into
+- [ ] Spike B/C; `CI_JOB_TOKEN` for state / MR notes.
+- [ ] If Connect→ephemeral→provider fails, stop; do not stuff PATs back into
       GitLab CI.
 
-### Phase 1 — Harden GitLab stack (post-spike)
+### Phase 1: Harden GitLab stack (post-spike)
 
 - [ ] Keep module scope to: project data + `managed-by-terraform` label.
 - [ ] Docs; CI green with Connect + job-token state once Spike B lands.
 
-### Phase 2 — Cloudflare / Proxmox / Okta
+### Phase 2: Cloudflare / Proxmox / Okta
 
 - [x] Cloudflare: Connect + ephemeral → `cloudflare` provider
       (`cloudflare-terraform-secrets` credential field); strip from sync script
@@ -103,13 +103,13 @@ Do **not** commit vault UUIDs — vault **name** in HCL only.
       (`proxmox-terraform-secrets` credential field); strip from sync script + CI preflight
 - [ ] Delete obsolete `PROXMOX_VE_*` / `OKTA_API_TOKEN` GitLab CI variables (operator)
 
-### Phase 3 — CI bootstrap cleanup
+### Phase 3: CI bootstrap cleanup
 
 - [ ] Prefer `CI_JOB_TOKEN` for HTTP state when present.
 - [ ] Switch MR comment curls to job token if Spike C passed.
 - [ ] Local README: Connect env + `terragrunt` (no wrapper script).
 
-### Phase 4 — Docs and cutover
+### Phase 4: Docs and cutover
 
 - [ ] Rewrite env / CI sections as needed.
 - [ ] Delete or gut `sync-gitlab-ci-variables.sh`.
@@ -138,7 +138,7 @@ Do **not** commit vault UUIDs — vault **name** in HCL only.
 | Check                       | Result                                |
 | --------------------------- | ------------------------------------- |
 | Auth mode                   | **Connect** (no `op` in CI)           |
-| Vault UUID in git           | **No** — name `Secrets`               |
+| Vault UUID in git           | **No**: name `Secrets`                |
 | `with-op` / zip bootstrap   | **Removed**                           |
 | Spike A                     | Blocked on Connect token + item title |
 | Connect reachable from SaaS | Operator must confirm                 |
@@ -152,12 +152,12 @@ Do **not** commit vault UUIDs — vault **name** in HCL only.
 | Okta               | (Connect only)     | `okta-terraform-secrets`       | `credential` | ephemeral → provider |
 | Proxmox            | (Connect only)     | `proxmox-terraform-secrets`    | `credential` | ephemeral → provider |
 | Connect bootstrap  | `OP_CONNECT_TOKEN` | `1password-terraform-secrets`  | `credential` | CI / local env       |
-| HTTP state (CI)    | `TF_HTTP_PASSWORD` | —                              | —            | `CI_JOB_TOKEN`       |
+| HTTP state (CI)    | `TF_HTTP_PASSWORD` | -                              | -            | `CI_JOB_TOKEN`       |
 | HTTP state (local) | `TF_HTTP_PASSWORD` | (PAT item)                     |              | local env only       |
-| MR comments (CI)   | `TOFU_TOKEN`       | —                              | —            | prefer job token     |
+| MR comments (CI)   | `TOFU_TOKEN`       | -                              | -            | prefer job token     |
 
 Ephemeral `onepassword_item` only exposes built-in attrs (`credential`,
-`password`, …) — put provider tokens in the API Credential **credential**
+`password`, …); put provider tokens in the API Credential **credential**
 field (not custom labels like `api-token`).
 
 ### Operator checklist

@@ -254,7 +254,7 @@ export TALOSCONFIG="~/.talos/config"
 kubectl get nodes
 ```
 
-> **Note (workload isolation)**: Talos 1.14 generates a `SecurityProfileConfig` document that enables `workloadIsolation` (sandboxd) by default. Our unified patch deliberately deletes that document to preserve current (non-isolated) behavior — the interaction between sandboxd and Longhorn's privileged CSI pods and host iscsid is untested. Opt in later by replacing the delete with `workloadIsolation: true` and testing during a maintenance window; the change needs a reboot to take effect.
+> **Note (workload isolation)**: Talos 1.14 generates a `SecurityProfileConfig` document that enables `workloadIsolation` (sandboxd) by default. Our unified patch deliberately deletes that document to preserve current (non-isolated) behavior; the interaction between sandboxd and Longhorn's privileged CSI pods and host iscsid is untested. Opt in later by replacing the delete with `workloadIsolation: true` and testing during a maintenance window; the change needs a reboot to take effect.
 
 ## Upgrading Talos Linux
 
@@ -269,7 +269,7 @@ kubectl get nodes
    ```
 
 2. **Update Configuration**: first bump the installer image in
-   [`patches/unified-patch.yaml`](./patches/unified-patch.yaml) — the live
+   [`patches/unified-patch.yaml`](./patches/unified-patch.yaml): the live
    factory image (schematic hash + version) lives there and is
    Renovate-managed; the shape is:
 

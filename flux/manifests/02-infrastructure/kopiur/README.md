@@ -3,7 +3,7 @@
 [Kopia](https://kopia.io)-native Kubernetes backup operator
 ([home-operations/kopiur](https://github.com/home-operations/kopiur)), written
 in Rust on kube-rs. Intended to replace Longhorn's recurring backup jobs for
-cluster volumes (pilot in flight — see Status).
+cluster volumes (pilot in flight; see Status).
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
@@ -31,7 +31,7 @@ soak). `features.credentialProjection.enabled` lets the shared repository
 project credentials into mover namespaces.
 
 kopiur is alpha software (`v1alpha1`, CRD surface may change between
-releases) — chart version is pinned and Renovate-managed.
+releases). Chart version is pinned and Renovate-managed.
 
 ## Configuration
 

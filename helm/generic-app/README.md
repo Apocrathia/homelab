@@ -560,7 +560,7 @@ The chart supports all Kubernetes lifecycle hook types for init containers and s
 
 ### Health Check Probes
 
-The chart supports optional health check probes (liveness, readiness, and startup) for both main containers and sidecars. Probes are opt-in and disabled by default, ensuring no impact on existing deployments.
+The chart supports optional health check probes (liveness, readiness, and startup) for both main containers and sidecars. Probes are opt-in and disabled by default, so existing deployments are unaffected.
 
 **Configuration:**
 
@@ -917,9 +917,9 @@ blueprint lane was retired in 0.0.88; `terraform` is the default and only
 lane):
 
 - **`terraform` (the tofu lane)**: the chart renders the provider-opentofu
-  stack — `OnePasswordItem` (workspace token) + `ProviderConfig` (token
+  stack; `OnePasswordItem` (workspace token) + `ProviderConfig` (token
   file, optional `oidc-client-id` file, per-app backend args) +
-  `Workspace` (`source: Inline`) — with **chart-generated per-app HCL**.
+  `Workspace` (`source: Inline`); with **chart-generated per-app HCL**.
   The Workspace carries NO varmap in git and NO module ref (the
   Remote+chart-tag module-pull antipattern is retired): every value lands
   inline in the generated HCL, composed from the `authentik` values
@@ -929,44 +929,44 @@ lane):
 The generated HCL is shape-identical to the merged file-pair exemplars
 (`gatus`/`immich`/`jetkvm`):
 
-- **ADOPTION machinery is baked in**: every import — the application
-  INCLUDED — rides the `for_each = var.adoption ? toset(["g"]) : toset([])`
+- **ADOPTION machinery is baked in**: every import (the application
+  INCLUDED) rides the `for_each = var.adoption ? toset(["g"]) : toset([])`
   adoption gate, default off: born-tofu apps CREATE (not import) the
   application (an ungated import wedges tofu on "Cannot import
-  non-existent remote object" — nothing can create what the import
+  non-existent remote object"; nothing can create what the import
   demands at plan time), and flips arm its slug import at the gate
-  (authentik applications import by slug — a static literal). Plain
-  variable-id imports are BANNED — tofu silently skips an empty-id
+  (authentik applications import by slug; a static literal). Plain
+  variable-id imports are BANNED; tofu silently skips an empty-id
   import and plans a duplicate create (the jetkvm blink). Two-way
   plan-time validation fails loudly both ways: `adoption=true` with any
   id empty; ids set with `adoption=false`.
 - **Proxy mode declares the per-app outpost** (0.0.90 restored blueprint
   parity): service-connection lookup + `authentik_outpost` with the full
-  retired-blueprint config — parentRefs main-gateway always, tailnet
+  retired-blueprint config; parentRefs main-gateway always, tailnet
   when `tailnet.enabled`. The outpost provisions its own HTTPRoute from
   `kubernetes_httproute_parent_refs`, so ExternalDNS reads the route
   hostname for DNS and proxy apps render no route of their own
   (`authentikHostInsecure`, `serviceConnection`, `replicas`, `namespace`,
-  `logLevel`, `gateway.*` feed the outpost config — none of them are dead
+  `logLevel`, `gateway.*` feed the outpost config; none of them are dead
   keys on the tofu path anymore). oidc gates run no outposts; bookmark
   has no provider.
 - **Outpost adoption rides `authentik.outpostAdopt`** (proxy mode only,
-  default false) — a transient WAVE key with a RENDER-TIME gate,
+  default false); a transient WAVE key with a RENDER-TIME gate,
   deliberately separate from the varmap-era `var.adoption` switch (no
   varmap key, no uuid in git, the two-way validation untouched):
   `true` renders the module's outpost import ARMED so the next
   crossplane apply imports the app's live blueprint-era outpost into
-  tofu state instead of colliding with it — an armed render also emits a
+  tofu state instead of colliding with it; an armed render also emits a
   `data "authentik_outpost"` lookup that resolves the baked
   `<app>-outpost` name to the live uuid at plan time (outposts import
   by UUID, never by name: the authentik outpost pk IS a uuid and the
   provider retrieves by pk). `false` (steady state + born-tofu apps)
-  renders the import inert — the outpost resource plans a plain
+  renders the import inert; the outpost resource plans a plain
   CREATE. The W3 wave MR sets it true per flipped app; the cleanup MR
   flips it back once the imports land (an armed import whose target is
   already in state is inert).
 - **MISP rules**: oidc `grant_types` pins the values list live-verbatim
-  (always sent explicitly — authentik 2026.8 no longer backfills it);
+  (always sent explicitly; authentik 2026.8 no longer backfills it);
   `response_types` never written (not in the goauthentik 2026.8.0 TF
   schema); `token_validity` never written (dead attr in 2026.8).
 - Render guards fail loudly on flip miswires: unknown mode, `shared`
@@ -974,25 +974,25 @@ The generated HCL is shape-identical to the merged file-pair exemplars
   provider keys on the wrong mode, empty `grantTypes`,
   `outpostAdopt` set on an oidc/bookmark app.
 
-**Client-id lanes (oidc)** — exactly one per app, the render fails on
+**Client-id lanes (oidc)**: exactly one per app, the render fails on
 both set or neither:
 
 - `oidc.clientIdFromSecret.enabled: true` (the file lane): the
   ProviderConfig materializes the SAME 1Password-backed Secret key the
   app consumes as the `oidc-client-id` file, and the HCL reads
-  `client_id = trimspace(file("oidc-client-id"))` — the value never
+  `client_id = trimspace(file("oidc-client-id"))`; the value never
   enters git. Flip MRs also REMOVE the helmrelease
   `valuesFrom → authentik.oidc.clientId` entry (flux merges valuesFrom
   pre-render; the tofu lane must not see the client_id value). Defaults:
   `name: ""` → `<app>-secrets`, `key: "oidc-client-id"`.
-- `oidc.clientId: "<literal>"` (the static lane, fresh creates —
+- `oidc.clientId: "<literal>"` (the static lane, fresh creates;
   misp/opencti style).
 - `oidc.clientSecret` never on the tofu path (Sensitive, generated
-  server-side — tofu must not manage it).
+  server-side; tofu must not manage it).
 
 **W0 imperative (merge-time)**: komga + demo-app run `managedBy:
 terraform` today on the retired Remote lane. This rewrite REPLACES their
-rendered Workspace (Remote+varmap → Inline) — their next `helm upgrade`
+rendered Workspace (Remote+varmap → Inline); their next `helm upgrade`
 hot-switches the workspace shape. At merge time: `flux suspend
 helmrelease komga demo-app` and run the W0 retirement same-window
 (`docs/plans/authentik-chart-tofu-lane.md` §Waves): delete each workspace
@@ -1003,7 +1003,7 @@ Secret (`tfstate-komga-authentik-komga`,
 then re-adopt each through the normal gate. After W0 no Remote residue
 exists anywhere.
 
-**Flip runbook (per app)** — recipe §8 adapted to chart apps; the full
+**Flip runbook (per app)**: recipe §8 adapted to chart apps; the full
 gate lives in `docs/plans/authentik-chart-tofu-lane.md` §The flip + gate
 runbook:
 
@@ -1019,7 +1019,7 @@ runbook:
 4. Render + patch + apply ONCE (born-with-varmap): `helm template` with
    the merged values → the 3 tofu docs, module inline, NO varmap; patch
    the rendered Workspace `spec.forProvider.varmap` with the reduced
-   witness key set (adoption: true + the app's ids — ONLY the keys the
+   witness key set (adoption: true + the app's ids; ONLY the keys the
    HCL declares); stamp helm ownership on all 3 docs
    (`app.kubernetes.io/managed-by: Helm`,
    `helm.toolkit.fluxcd.io/name|namespace`,
@@ -1036,11 +1036,11 @@ runbook:
 
 Why `managementPolicies` (no `Delete`): crossplane v2 removed
 `spec.deletionPolicy` (the structural schema silently prunes it), so the
-Workspace renders `managementPolicies: [Observe, Create, Update]` — the
+Workspace renders `managementPolicies: [Observe, Create, Update]`; the
 v2-native orphan. A GitOps prune of the Workspace object can never run
 `tofu destroy` against the live Authentik stack. Deliberate
 decommission requires temporarily restoring `["*"]` (or a manual `tofu
-destroy`) — the guard is intentional.
+destroy`); the guard is intentional.
 
 ### PostgreSQL Database
 
@@ -1197,7 +1197,7 @@ backup:
 Prerequisites and behavior:
 
 - The app **namespace** must carry the label matching the repository's
-  `allowedNamespaces` selector (`backup.apocrathia.com/repo: nas-rustfs`) —
+  `allowedNamespaces` selector (`backup.apocrathia.com/repo: nas-rustfs`);
   namespaces are app-owned, so the label lives in the app's `namespace.yaml`.
 - The backup mover inherits the app's own securityContext (`pvcConsumer`), so
   files the app writes with owner-only permissions are readable. This requires
@@ -1301,7 +1301,7 @@ gatus:
 ```
 
 Without an explicit `url`, the chart forces `http://` so status conditions
-work — gatus-sidecar otherwise derives `tcp://` from Service ports.
+work; gatus-sidecar otherwise derives `tcp://` from Service ports.
 
 ### LoadBalancer Configuration
 

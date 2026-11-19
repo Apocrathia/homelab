@@ -1,6 +1,6 @@
 # qBittorrent with VPN
 
-Torrent client with integrated VPN routing via Gluetun init container for secure downloads.
+Torrent client with VPN routing via a Gluetun init container.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
@@ -9,7 +9,7 @@ Torrent client with integrated VPN routing via Gluetun init container for secure
 This deployment includes:
 
 - qBittorrent torrent client with web UI
-- Gluetun VPN init container for secure routing
+- Gluetun VPN init container for traffic routing
 - VPN-only traffic with kill switch protection
 - Authentik SSO integration for web access
 - SMB mounts for download storage
@@ -41,18 +41,15 @@ Create a 1Password item:
 
 ## Authentication
 
-Authentication is handled through Authentik SSO:
-
-1. **Proxy Provider**: Authentik blueprint creates a proxy provider
-2. **Automatic Setup**: HTTPRoute and outpost created automatically
-3. **Clean Deployment**: Works with Authentik from day one
+Authentik SSO via a proxy provider from the Authentik blueprint; the
+HTTPRoute and outpost are created automatically.
 
 ## Security Considerations
 
 - **VPN-only Traffic**: All torrent traffic routes through encrypted VPN tunnel
 - **Kill Switch**: Gluetun blocks non-VPN traffic with built-in firewall
 - **Network Policies**: Kubernetes network policies restrict traffic flow
-- **SSO Integration**: Complete authentication through Authentik proxy
+- **SSO Integration**: Authentication through the Authentik proxy
 
 ## Troubleshooting
 

@@ -1,12 +1,12 @@
 # UnPoller
 
-UniFi network monitoring and metrics collection system that exports data to Prometheus and Grafana.
+UniFi metrics collector for Prometheus and Grafana.
 
 > **Navigation**: [← Back to Management README](../README.md)
 
 ## Overview
 
-UnPoller collects metrics from Ubiquiti UniFi controllers and exports them to monitoring systems including Prometheus, InfluxDB, Loki, and Datadog. This deployment integrates with the homelab's Prometheus and Grafana infrastructure.
+UnPoller collects metrics from UniFi controllers and exports to Prometheus, InfluxDB, Loki, and Datadog; this deployment uses Prometheus and Grafana.
 
 ## Configuration
 
@@ -22,11 +22,13 @@ The UniFi controller credentials are stored in 1Password and referenced via the 
 
 ### Configuration Method
 
-This deployment uses environment variables for configuration, following the [UnPoller configuration documentation](https://unpoller.com/docs/install/configuration). Sensitive credentials are stored in 1Password and injected via `valueFrom.secretKeyRef`, while all other settings are configured via environment variables in the HelmRelease.
+Environment variables in the HelmRelease, per the [UnPoller configuration
+documentation](https://unpoller.com/docs/install/configuration); credentials
+come from 1Password via `valueFrom.secretKeyRef`.
 
 ### Metrics Collection
 
-UnPoller exposes metrics on port 9130 and integrates with:
+UnPoller exposes metrics on port 9130 for:
 
 - **Prometheus**: Metrics scraping via ServiceMonitor
 - **Grafana**: Pre-built dashboards for UniFi monitoring

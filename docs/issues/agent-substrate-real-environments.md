@@ -17,14 +17,14 @@ slice: hitl
 Shipped (verified in tree 2026-11-19): Agent Substrate + the
 `kagent-default` WorkerPool run in `ate-system`, kagent (0.10.6) carries the
 substrate integration values, and the `hello-substrate` smoke `SandboxAgent`
-is deployed — the original "no substrate, no WorkerPool" problem is closed.
+is deployed; the original "no substrate, no WorkerPool" problem is closed.
 
 Remaining acceptance residue:
 
 - The operator/agent docs note on substrate vs plain Declarative pods
   (lifecycle, snapshots, WorkerPool slots, Go-only, footprint, PSA).
 - The deferred Hermes `AgentHarness` (was gated on a stable kagent 0.10;
-  kagent is now 0.10.6 — re-triage the deferral).
+  kagent is now 0.10.6; re-triage the deferral).
 
 Upstream:
 [Agent Substrate](https://kagent.dev/docs/kagent/examples/agent-substrate),
@@ -56,7 +56,7 @@ Follow upstream kind walkthrough patterns adapted here (Gateway,
 
 ## Notes
 
-- Homelab kagent chart is already ≥ 0.9.x class — confirm substrate flags
+- Homelab kagent chart is already ≥ 0.9.x class; confirm substrate flags
   exist for the pinned chart before writing values.
 - Capacity: long-lived harnesses pin WorkerPool slots; size replicas
   accordingly.

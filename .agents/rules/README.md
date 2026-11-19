@@ -47,7 +47,7 @@ Source of truth for **all** agent rules (Markdown). Frontmatter (`alwaysApply`,
 | --------------------------------- | ----------------------------------------------------------------------------- |
 | `operations.md`                   | Maintenance and ops practices, backup/recovery, QA-during-ops                 |
 | `observability.md`                | Monitoring, logging, alerting, metrics, health indicators                     |
-| `mcp.md`                          | MCP tools usage — when to prefer MCP over CLI, tool selection                 |
+| `mcp.md`                          | MCP tools usage: when to prefer MCP over CLI, tool selection                  |
 | `context7.md`                     | Context7 MCP usage patterns for retrieving up-to-date library documentation   |
 | `deepwiki.md`                     | DeepWiki MCP usage patterns for repository research and antipattern detection |
 | `conventional-commit-messages.md` | Conventional Commits specification for commit messages                        |

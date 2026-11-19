@@ -52,7 +52,7 @@ area: security
 - Guardrails live at the gateway, in GitOps, `pre_call`, `default_on: true`.
   Central enforcement is the right shape; the failure is one bad pattern, not
   the architecture.
-- MASK (not BLOCK) for credential patterns — agent loops survive masking; a
+- MASK (not BLOCK) for credential patterns; agent loops survive masking; a
   hard 400 mid-loop is worse.
 
 ## Key findings
@@ -67,7 +67,7 @@ area: security
 - Live repro through the gateway: asked gpt-3.5-turbo to echo a repo path; it
   returned `[AWS_SECRET_KEY_REDACTED]` in place of the 40-char run. The mask is
   applied to the request payload in transit; the model then echoes the
-  placeholder, so the corruption lands permanently in transcripts — and in
+  placeholder, so the corruption lands permanently in transcripts; and in
   agent tool calls (observed: a 40-char test key written in a Prime Agent code
   cell arrived at execution pre-masked).
 - The other configured patterns (`aws_access_key`, `github_token`,
@@ -108,13 +108,13 @@ Validated detect-secrets 1.5.0 plugins against the same corpus:
 - **Test surfaces**: `POST /guardrails/apply_guardrail` runs any configured
   guardrail against arbitrary text (CI-able), plus a UI test playground.
 - **Custom regex limits**: `pattern_type: regex` entries support only
-  `pattern`, `name`, `action` — no keyword-gating (that exists only for
+  `pattern`, `name`, `action`; no keyword-gating (that exists only for
   prebuilt conditional categories). So context must live inside the regex
   itself, and MASK replaces the whole match span.
 
 ## Conclusion
 
-`proven` — the incident is a detector-quality problem, and the platform already
+`proven`: the incident is a detector-quality problem, and the platform already
 ships the pieces for a layered posture. The prebuilt `aws_secret_key` regex is
 unsuitable for code-heavy traffic; detect-secrets alone is too narrow; the
 answer is a small set of context-aware custom regexes plus selective use of the
@@ -122,7 +122,7 @@ newer guardrail types.
 
 ## Recommendations
 
-Proposed posture, in layers. Items 1–3 are the immediate fix; 4–7 are
+Proposed posture, in layers. Items 1-3 are the immediate fix; 4-7 are
 follow-ups to file as issues (separate lap).
 
 1. **Replace the `aws_secret_key` prebuilt** with two custom regexes,
@@ -170,7 +170,7 @@ follow-ups to file as issues (separate lap).
 - Do not re-enable the prebuilt `aws_secret_key` anywhere; it will keep eating
   paths.
 - Do not BLOCK on credential patterns for agent traffic.
-- Do not enable email/phone/SSN masking on the engineering gateway — it
+- Do not enable email/phone/SSN masking on the engineering gateway; it
   mangles normal technical conversation for no local benefit.
 - Do not run LLM-judge or moderation on every request; cost and latency for
   near-zero marginal safety on internal traffic.

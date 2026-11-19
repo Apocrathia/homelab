@@ -11,7 +11,7 @@ form, or multi-choice UI). That is the preferred channel for discrete decisions.
 1. Look at **your current tool list** for a tool meant to ask the operator
    (names vary: often something like ask / question / choice / interview).
 2. If it is present and the decision has ~2–4 concrete options, **call that
-   tool**. Put the options in the tool payload — do not also paste them as a
+   tool**. Put the options in the tool payload; do not also paste them as a
    markdown wall.
 3. If the tool is absent, do not invent a call and do not hunt the filesystem or
    MCP catalog for it. Fall back to one prose Ask (below).
@@ -44,4 +44,4 @@ tool list.
 **Gaps/concerns:** Only if real. Omit the heading when empty.
 
 Short findings above a single question-tool call are fine. Restating that
-tool’s options as a numbered chat list is not.
+tool's options as a numbered chat list is not.

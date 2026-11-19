@@ -27,7 +27,7 @@ Matrix homeserver (Synapse) with SSO delegated to Matrix Authentication Service,
 
 ### Sable
 
-Sable — Discord-like OIDC-native Matrix client (Rust + Svelte). Deployed
+Sable, Discord-like OIDC-native Matrix client (Rust + Svelte). Deployed
 alongside Element in the matrix namespace; documented in the
 [Matrix README](./matrix/README.md) (no separate doc).
 

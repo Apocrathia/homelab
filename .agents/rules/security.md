@@ -19,7 +19,7 @@ description: Security scanning workflow, secret hygiene, and core security princ
 ## Core principles
 
 - **Never commit secrets** or sensitive data to the repository. See [`secrets.md`](./secrets.md) for patterns when editing config files.
-- **Use 1Password Item Custom Resources** to manage secrets — not native Kubernetes Secret resources.
+- **Use 1Password Item Custom Resources** to manage secrets, not native Kubernetes Secret resources.
 - Follow the principle of **least privilege**.
 - Implement proper access controls and RBAC.
 - Keep all components up to date with security patches (Renovate handles version bumps).

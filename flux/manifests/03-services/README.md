@@ -1,12 +1,12 @@
 # Services
 
-Platform services that provide core functionality to the homelab cluster.
+Platform services for the homelab cluster.
 
 > **Navigation**: [← Back to Flux README](../../README.md)
 
 ## Components
 
-### Core Services
+### Core services
 
 - [**Gateway**](gateway/README.md) - `main-gateway` edge listener and its policies (Cilium LB IPAM + L2)
 - [**Envoy Gateway**](envoy/) - Gateway API controller serving the `envoy` GatewayClass
@@ -16,11 +16,11 @@ Platform services that provide core functionality to the homelab cluster.
 - [**ExternalDNS**](external-dns/README.md) - UniFi DNS record management for Gateway API routes and services
 - [**Tailnet DNS**](tailnet-dns/README.md) - Split-DNS resolver serving the app zone to Tailscale users
 
-### Monitoring and Observability
+### Monitoring and observability
 
-- [**Observability Stack**](observability/README.md) - LGTM stack (Loki, Grafana, Tempo, Mimir), Alloy collectors, OTel operator, Gatus, and Prometheus extras — see its README for the full component index
+- [**Observability Stack**](observability/README.md) - LGTM stack (Loki, Grafana, Tempo, Mimir), Alloy collectors, OTel operator, Gatus, and Prometheus extras. See its README for the full component index
 
-### Security and Compliance
+### Security and compliance
 
 - [**Kyverno**](kyverno/README.md) - Policy management and enforcement
 - [**Tetragon**](tetragon/README.md) - eBPF runtime security (kernel-level detection)
@@ -28,13 +28,13 @@ Platform services that provide core functionality to the homelab cluster.
 - [**External Secrets Operator**](external-secrets/README.md) - Integration with external secret management systems
 - [**Chaos Mesh**](chaos-mesh/README.md) - Chaos engineering platform (namespace-gated experiments)
 
-### Data Services
+### Data services
 
 - [**PostgreSQL Operator**](postgresql/README.md) - CloudNativePG operator for Kubernetes-native PostgreSQL
 - [**ClickHouse Operator**](clickhouse/README.md) - Altinity operator (clusters live with the Tenzir stack)
 - [**Backup**](backup/README.md) - Kopia backup plane (kopiur ClusterRepository + workload policies)
 
-### Development and Operations
+### Development and operations
 
 - [**Headlamp**](headlamp/README.md) - Kubernetes web UI
 - **GitLab Integration** - GitLab Agent and Runner
@@ -48,15 +48,13 @@ Platform services that provide core functionality to the homelab cluster.
 
 ## Architecture
 
-The services layer provides:
-
-- **Identity Management**: SSO and authentication through Authentik
-- **Traffic Management**: Gateway API for external access and routing
-- **Security**: Runtime monitoring, policy enforcement, scanning, and compliance
-- **Monitoring**: Comprehensive observability and alerting
-- **Data Services**: PostgreSQL operator for database management
-- **Development Tools**: CI/CD integration and development workflows
-- **Operations**: Automated maintenance, housekeeping, and upgrade orchestration
+- SSO and authentication through Authentik
+- Gateway API for external access and routing
+- Runtime monitoring, policy enforcement, scanning, and compliance
+- Observability and alerting
+- PostgreSQL operator for database management
+- CI/CD integration and development workflows
+- Automated maintenance, housekeeping, and upgrade orchestration
 
 ## Dependencies
 
@@ -68,11 +66,11 @@ The services layer provides:
 
 All services implement:
 
-- **RBAC**: Role-based access control
-- **Network Policies**: Traffic isolation and control
-- **Secret Management**: 1Password integration and External Secrets Operator for sensitive data
-- **Audit Logging**: Comprehensive audit trails
-- **TLS Encryption**: End-to-end encryption for all communications
+- Role-based access control
+- Network policies for traffic isolation
+- Secrets through 1Password integration and External Secrets Operator
+- Audit logging
+- TLS encryption for service communications
 
 ## References
 

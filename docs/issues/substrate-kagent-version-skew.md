@@ -17,10 +17,10 @@ slice: hitl
 Substrate chart `0.0.10` cannot be driven by any released kagent. Two independent
 defects, both upstream:
 
-| #   | Defect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Evidence                                                                                                                           |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Client/server proto skew.** kagent `0.9.12` vendors the substrate client at `v0.0.6` (`go/go.mod` replace directive); even kagent `0.10.0-beta10` only pins `v0.0.9`. Calls against the `0.0.10` server fail to unmarshal.                                                                                                                                                                                                                                                                                  | `rpc error: code = Internal desc = grpc: error unmarshalling request: proto: cannot parse invalid wire-format data`                |
-| 2   | **JWT issuer discovery is anonymous for custom issuers.** Substrate ≥ `0.0.7` only attaches the pod ServiceAccount token when the issuer host is `kubernetes.default.svc` (`isInClusterKubernetesIssuer` in `cmd/ateapi/main.go`). Talos issues tokens as `https://kubernetes.apocrathia.com:6443` and runs the API server with anonymous auth disabled, so the OIDC discovery fetch is rejected at authentication — before RBAC. The existing `oidc-discovery-viewer` ClusterRoleBinding is never consulted. | `rpc error: code = Unauthenticated desc = invalid bearer token: while fetching OIDC Discovery document: non-200 response code 401` |
+| #   | Defect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Evidence                                                                                                                           |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Client/server proto skew.** kagent `0.9.12` vendors the substrate client at `v0.0.6` (`go/go.mod` replace directive); even kagent `0.10.0-beta10` only pins `v0.0.9`. Calls against the `0.0.10` server fail to unmarshal.                                                                                                                                                                                                                                                                                 | `rpc error: code = Internal desc = grpc: error unmarshalling request: proto: cannot parse invalid wire-format data`                |
+| 2   | **JWT issuer discovery is anonymous for custom issuers.** Substrate ≥ `0.0.7` only attaches the pod ServiceAccount token when the issuer host is `kubernetes.default.svc` (`isInClusterKubernetesIssuer` in `cmd/ateapi/main.go`). Talos issues tokens as `https://kubernetes.apocrathia.com:6443` and runs the API server with anonymous auth disabled, so the OIDC discovery fetch is rejected at authentication; before RBAC. The existing `oidc-discovery-viewer` ClusterRoleBinding is never consulted. | `rpc error: code = Unauthenticated desc = invalid bearer token: while fetching OIDC Discovery document: non-200 response code 401` |
 
 On `0.0.10`, an `SSL_CERT_FILE` postRenderer pointing at the mounted SA CA fixes
 the TLS layer of defect 2 (system roots do not trust the Talos CA) but cannot
@@ -35,7 +35,7 @@ version, and JWT auth that works with a custom Kubernetes issuer on Talos.
 `HelmRelease/substrate` and `HelmRelease/substrate-crds` are pinned to chart
 `0.0.6` / `image.tag v0.0.6` (paired with kagent `0.10.6` as of 2026-11-19;
 the hold is substrate-side, not kagent-side). Close Renovate MRs
-that bump substrate until this issue's acceptance criteria pass — do not merge
+that bump substrate until this issue's acceptance criteria pass; do not merge
 a version bump without re-checking the feedback loop below.
 
 ## Repro
@@ -44,7 +44,7 @@ a version bump without re-checking the feedback loop below.
    ServiceAccount issuer is not `kubernetes.default.svc`.
 2. Apply any `AgentHarness` or `SandboxAgent`.
 3. kagent controller logs show the two errors above; the agent never reports
-   Ready. Deletion also hangs — the cleanup finalizers need working API calls
+   Ready. Deletion also hangs; the cleanup finalizers need working API calls
    (clear finalizers manually to unstick).
 
 ## Acceptance
@@ -72,7 +72,7 @@ kubectl exec -n ate-system deploy/ate-cache -c ate-cache -- sh -c 'ls /data/ate-
 
 If defect 2 still applies (≥ `0.0.7` + custom issuer), re-add the
 `SSL_CERT_FILE` postRenderer on `ate-api-server` (path:
-`/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`) — necessary for TLS,
+`/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`); necessary for TLS,
 not sufficient for the missing SA token.
 
 ## Implementation hint
@@ -81,7 +81,7 @@ Watch kagent releases for a substrate pin bump (Renovate proposes both charts).
 When pairing lands, defect 2 still needs one of: upstream support for custom
 in-cluster issuers (token attach or TokenReview), or enabling anonymous auth on
 the Talos API server plus a `system:service-account-issuer-discovery` binding
-to `system:unauthenticated` — a Talos (`talos/**`, protected path) and security
+to `system:unauthenticated`; a Talos (`talos/**`, protected path) and security
 decision for the operator.
 
 ## Notes

@@ -1,12 +1,12 @@
 # JupyterHub
 
-Multi-user Jupyter notebook server for interactive computing with Authentik OIDC authentication and shared SMB storage.
+Multi-user Jupyter notebook server with Authentik OIDC and shared SMB storage.
 
 > **Navigation**: [← Back to Artificial Intelligence](../README.md)
 
 ## Overview
 
-Zero to JupyterHub on Kubernetes (z2jh) deployment providing:
+Zero to JupyterHub on Kubernetes (z2jh) deployment with:
 
 - **Multi-user Support**: KubeSpawner dynamically creates user notebook pods
 - **Authentik OIDC**: Native OAuth integration for SSO

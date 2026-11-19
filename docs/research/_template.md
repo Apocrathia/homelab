@@ -19,8 +19,8 @@ area: flux # flux | helm | observability | security | storage | networking | oth
 
 ## Hypothesis and setup
 
-<!-- For kind: experiment — paste contract fields + baseline metric + budgets.
-     For kind: assessment — state the question surveyed. -->
+<!-- For kind: experiment; paste contract fields + baseline metric + budgets.
+     For kind: assessment; state the question surveyed. -->
 
 - Hypothesis:
 - In-scope paths:
@@ -36,7 +36,7 @@ area: flux # flux | helm | observability | security | storage | networking | oth
 
 | ID  | Description | Metric | Δ baseline | Status |
 | --- | ----------- | ------ | ---------- | ------ |
-| 0   | baseline    | …      | —          | keep   |
+| 0   | baseline    | …      | -          | keep   |
 
 ## What already aligns
 
@@ -48,7 +48,7 @@ What worked, failed, or surprised.
 
 ## Conclusion
 
-`proven` | `disproven` | `exhausted` | `inconclusive` — with evidence.
+`proven` | `disproven` | `exhausted` | `inconclusive`; with evidence.
 
 ## Recommendations
 

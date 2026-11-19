@@ -4,14 +4,14 @@
 
 ## Overview
 
-[Jellyfin](https://jellyfin.org/) is a free and open-source media server for streaming movies, TV shows, music, and more. It's a fork of Emby with no premium features locked behind paywalls.
+[Jellyfin](https://jellyfin.org/) is a free and open-source media server for streaming movies, TV shows, and music. It's a fork of Emby with no premium features locked behind paywalls.
 
 ## Access
 
 - **URL**: <https://jellyfin.gateway.services.apocrathia.com>
 - **Friends (tailnet)**: the same chart-rendered HTTPRoute gains a
   `tailnet-gateway` parentRef via a postRenderers patch in
-  `helmrelease.yaml` — one route object serves LAN and friends on the
+  `helmrelease.yaml`, one route object serves LAN and friends on the
   identical hostname. Direct backend (OIDC-mode app: Jellyfin enforces
   Authentik SSO itself, redirect URIs already minted on this hostname;
   the IdP is dual-parentRef'd for friends).

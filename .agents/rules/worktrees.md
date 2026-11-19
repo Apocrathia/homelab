@@ -8,7 +8,7 @@ alwaysApply: true
 The workspace root checkout is for the human. Agents do not edit files there.
 
 Ship stays authorization-gated ([`constraints.md#commit-and-ship`](../context/constraints.md#commit-and-ship)).
-Worktrees isolate checkouts — they do **not** by themselves authorize commit,
+Worktrees isolate checkouts; they do **not** by themselves authorize commit,
 push, or merge. Authorized contribute uses [`ship-work`](../skills/ship-work/SKILL.md);
 unauthorized handoff uses [`draft-commit`](../skills/draft-commit/SKILL.md).
 See [`.agents/context/development-loop.md`](../context/development-loop.md#ship-model).
@@ -43,24 +43,24 @@ existence checks.
    ```
 
    If local `main` has diverged from `origin/main` in a way that makes the base
-   unclear, **stop and ask** — do not guess. Never invent a base from a stale
+   unclear, **stop and ask**; do not guess. Never invent a base from a stale
    local `main` when the fetch failed or the divergence is unclear. Do not
    switch the workspace root checkout.
 
 4. Run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) **before**
-   creating a new worktree — **own-scope only**: this session's own old trees
+   creating a new worktree, **own-scope only**: this session's own old trees
    plus merged orphan branches (no worktree). Other sessions' trees are
    protected by their [leases](#worktree-leases); a repo-wide sweep needs an
    explicit operator ask. Skip when
    resuming an existing worktree for this task (step 2). Keep or ask on unique
-   WIP / dirty trees per that skill — do not block the lap waiting on ask-only
+   WIP / dirty trees per that skill; do not block the lap waiting on ask-only
    candidates.
 5. Create one on a **new** branch (never reuse whatever branch the human has in
    the workspace root):
    - `cd "$repo_root"` then `mkdir -p .worktrees/<type>` and
      `git worktree add -b <type>/<slug> .worktrees/<type>/<slug> <base>`.
    - Immediately write the worktree lease (see
-     [Worktree leases](#worktree-leases)) — before any other step.
+     [Worktree leases](#worktree-leases)), before any other step.
 6. Run shell commands that mutate the tree, and edit files, only inside the
    worktree directory. Pass the worktree **absolute path** to subagents.
 
@@ -71,7 +71,7 @@ worktree. Repo-relative paths (`flux/...`, `.agents/...`) resolve there and open
 the wrong tree (or a file that does not have your edits).
 
 When the lap is in a worktree, **always surface the full absolute path** in chat,
-code citations, tool args, and subagent prompts — e.g.
+code citations, tool args, and subagent prompts, e.g.
 `/Users/…/homelab/.worktrees/chore/slug/flux/…`, not `flux/…`.
 
 Same rule for operator-facing links and "see file X" references. Relative is
@@ -116,7 +116,7 @@ plan numbers, phases, or status. Put plan and issue refs in the MR body.
 ## Worktree leases
 
 Parallel agent sessions share `.worktrees/`. A tree that is merged + clean can
-still be another live session's active lap — a fresh tree is merged + clean by
+still be another live session's active lap; a fresh tree is merged + clean by
 definition until its first edit, and sessions keep working after their MR
 merges. "Merged + clean" is therefore never enough to remove a tree. Every
 worktree created under the step-5 contract gets a lease:
@@ -125,7 +125,7 @@ worktree created under the step-5 contract gets a lease:
   `$repo_root/.scratch/worktree-leases/<branch-with-slashes-as-underscores>.lock`
   (e.g. `fix/amp-exporter-new-hostname` → `fix_amp-exporter-new-hostname.lock`).
 - **Content:** `session: <id>`, `branch: <name>`, `created: <ISO-8601 UTC>`.
-- **Write it immediately after `git worktree add`** — the gap between add and
+- **Write it immediately after `git worktree add`**: the gap between add and
   first edit is exactly when trees get killed.
 - **Liveness:** mtime younger than **24h** = live. A session may `touch` its
   own lease to extend it; expired leases protect nothing.
@@ -140,7 +140,7 @@ worktree created under the step-5 contract gets a lease:
 
 After merge (or when abandoning the lap), tear down via
 [`clock-out`](../skills/clock-out/SKILL.md) (session worktree) or
-`git worktree remove` + delete the branch — and delete the tree's lease. Never
+`git worktree remove` + delete the branch, and delete the tree's lease. Never
 `rm -rf` a worktree path.
 Also run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) before
 creating a **new** worktree (step 4 under Before any file change). Bulk /

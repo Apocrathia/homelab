@@ -3,8 +3,8 @@
 [Altinity Kubernetes Operator for ClickHouse](https://github.com/Altinity/clickhouse-operator)
 manages the cluster, but this folder is operator-only: the `clickhouse`
 namespace and the Altinity operator HelmRelease. The cluster the
-operator manages — ClickHouseInstallation, Keeper, creds, and the
-ClickHouse datalake — is dedicated to the Tenzir security stack and
+operator manages (ClickHouseInstallation, Keeper, creds, and the
+ClickHouse datalake) is dedicated to the Tenzir security stack and
 lives nested under it:
 [`flux/manifests/04-apps/security/tenzir/clickhouse/`](../../04-apps/security/tenzir/clickhouse/README.md)
 (dedication is structural: the cluster exists to be that stack's
@@ -31,12 +31,12 @@ pruned out of it by that relocation.
 
 The Altinity operator HelmRelease installs the
 `clickhouse.altinity.com` / `clickhouse-keeper.altinity.com` CRDs through
-the chart's pre-install hook job - CRs applied before the hook completes
+the chart's pre-install hook job: CRs applied before the hook completes
 fail with "no matches for kind". The two Flux Kustomizations split the
 layers: `services-clickhouse` (this folder: namespace + operator
 HelmRelease) reconciles first; `services-clickhouse-cluster`
 ([the CR layer under the tenzir tree](../../04-apps/security/tenzir/clickhouse/README.md))
-applies gated on it via `dependsOn` - the services-tetragon-policies /
+applies gated on it via `dependsOn`, the services-tetragon-policies /
 services-chaos-mesh-experiments / services-renovate-operator-config
 pattern.
 

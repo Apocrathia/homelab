@@ -1,6 +1,6 @@
 # GitLab Runner Setup Guide
 
-This guide explains how to set up the GitLab Runner in your Kubernetes cluster.
+How to set up the GitLab Runner in your Kubernetes cluster.
 
 > **Navigation**: [← Back to Services README](../../README.md)
 
@@ -10,7 +10,7 @@ This guide explains how to set up the GitLab Runner in your Kubernetes cluster.
 - Access to your 1Password account to store the runner tokens
 - Flux CD installed in your cluster
 
-## Setup Steps
+## Setup steps
 
 ### 1. Get the Runner Authentication Token from GitLab
 
@@ -20,7 +20,7 @@ runner authentication token only.
 1. In your GitLab project or group, go to **Settings > CI/CD > Runners**
 2. Click **New instance runner** (or the project/group equivalent)
 3. Give it a name, check the **Run untagged jobs** option if desired, and create it
-4. Copy the displayed token — it starts with `glrt-`
+4. Copy the displayed token: it starts with `glrt-`
 
 ### 2. Store the Token in 1Password
 
@@ -32,9 +32,9 @@ runner authentication token only.
 The 1Password Operator materializes the Kubernetes secret (`secret.yaml`);
 the chart injects the token into the runner config from its `runner-token` key.
 
-### 3. Verify the Installation
+### 3. Verify the installation
 
-Once the runner is deployed, you can verify it's working by:
+Once the runner is deployed, verify it's working:
 
 1. In GitLab, go to **Settings > CI/CD > Runners**
 2. You should see your runner listed as "online"
@@ -43,12 +43,12 @@ Once the runner is deployed, you can verify it's working by:
    kubectl logs -n gitlab-runner deployment/gitlab-runner
    ```
 
-## Configuration Details
+## Configuration details
 
 - Runner manager replica count, concurrency, and check interval live in `helmrelease.yaml`
 - Runners use the Kubernetes executor to spawn job pods
 - Job pods run the Alpine image pinned in `config.toml` (Renovate-managed)
-- Build containers run privileged for buildah user namespaces (job containers stay unprivileged) — see `config.toml`
+- Build containers run privileged for buildah user namespaces (job containers stay unprivileged); see `config.toml`
 - A Docker Hub image-pull secret (`docker-externalsecret.yaml`) avoids pull rate limits
 
 ## Troubleshooting

@@ -4,7 +4,7 @@
 
 ## Overview
 
-DeckCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+DeckCraft is an open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** <https://deckcraft.gateway.services.apocrathia.com>
 

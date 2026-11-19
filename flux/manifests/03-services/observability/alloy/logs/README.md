@@ -1,18 +1,18 @@
-# Grafana Alloy - Log Collection
+# Grafana Alloy: log collection
 
-This directory contains the deployment configuration for Grafana Alloy, which provides log collection capabilities for the cluster and external syslog/CEF ingestion.
+The shared Alloy log collector: pod logs, OTLP traces, and external syslog/CEF ingestion.
 
 > **Navigation**: [← Back to Observability README](../../README.md)
 
 ## Architecture
 
-Alloy is deployed as a DaemonSet with the following components:
+Alloy is deployed as a DaemonSet:
 
-- **Alloy**: OpenTelemetry Collector-based log collection agent
-- **Kubernetes Log Source**: Collects logs from all pods via Kubernetes API
-- **Syslog Receiver**: Ingests RFC3164/5424 syslog from network devices
-- **CEF Receiver**: Ingests CEF-formatted logs from UniFi devices
-- **Loki Exporter**: Sends logs to Loki for storage and querying
+- Alloy: OpenTelemetry Collector-based log collection agent
+- Kubernetes log source: collects logs from all pods
+- Syslog receiver: RFC3164/5424 from network devices
+- CEF receiver: CEF-formatted logs from UniFi devices
+- Loki exporter: sends logs to Loki for storage and querying
 
 ## Log Collection
 
@@ -20,10 +20,10 @@ Alloy is deployed as a DaemonSet with the following components:
 
 Alloy automatically collects logs from all pods in the cluster:
 
-- **Source**: Container logs from all namespaces
-- **Format**: JSON with Kubernetes metadata
-- **Destination**: Loki endpoint at `loki-write.loki-system.svc:3100`
-- **Labels**: namespace, pod, container, cluster, component
+- Source: container logs from all namespaces
+- Format: JSON with Kubernetes metadata
+- Destination: Loki endpoint at `loki-write.loki-system.svc:3100`
+- Labels: namespace, pod, container, cluster, component
 
 ### External Syslog Ingestion
 
@@ -40,23 +40,23 @@ Alloy accepts syslog from external devices via a shared LoadBalancer IP:
 
 ## Features
 
-- **Automatic Discovery**: Collects logs from all pods automatically
-- **Rich Metadata**: Adds namespace, pod, container, and service labels
-- **Timestamp Parsing**: Proper log timestamp extraction and formatting
-- **Kubernetes Integration**: Native k8s attributes and resource detection
-- **Security**: Non-root execution with proper security contexts
+- Collects logs from all pods automatically
+- Adds namespace, pod, container, and service labels
+- Parses and formats log timestamps
+- Native k8s attributes and resource detection
+- Non-root execution with security contexts
 
 ## Configuration
 
 ### Log Processing Pipeline
 
-1. **Filelog Receiver**: Scrapes log files from all pods
-2. **Regex Parser**: Extracts timestamps from log entries
-3. **Timestamp Processor**: Converts to proper time format
-4. **K8s Attributes**: Adds Kubernetes metadata
-5. **Resource Processor**: Maps k8s attributes to log labels
-6. **Batch Processor**: Batches logs for efficient transmission
-7. **Loki Exporter**: Sends to Loki with proper labeling
+1. Filelog receiver scrapes log files from all pods
+2. Regex parser extracts timestamps from log entries
+3. Timestamp processor converts to proper time format
+4. K8s attributes processor adds Kubernetes metadata
+5. Resource processor maps k8s attributes to log labels
+6. Batch processor batches logs for transmission
+7. Loki exporter sends to Loki with labels
 
 ### Log Labels
 
@@ -82,18 +82,18 @@ Each log entry includes:
 - Uses internal service endpoint for cluster communication
 - JSON format with proper label mapping
 
-### With Existing Monitoring
+### With existing monitoring
 
-- Follows your existing namespace and labeling conventions
-- Integrates with your Prometheus stack
-- Uses your existing security patterns
+- Matches the cluster's namespace and labeling conventions
+- Feeds the existing Prometheus stack
+- Reuses the cluster's security patterns
 
 ## Security
 
-- **Non-root execution**: Runs as user 10001
-- **Read-only filesystem**: Secure container configuration
-- **RBAC**: Minimal permissions for log collection
-- **Security contexts**: Proper pod and container security
+- Non-root execution as user 10001
+- Read-only filesystem
+- Minimal RBAC for log collection
+- Pod and container security contexts
 
 ## Monitoring
 
@@ -105,21 +105,21 @@ Alloy components can be monitored via:
 
 ## Troubleshooting
 
-### Check Alloy Status
+### Check Alloy status
 
 ```bash
 kubectl get pods -n alloy-system
 kubectl logs -n alloy-system -l app.kubernetes.io/name=alloy
 ```
 
-### Verify Log Collection
+### Verify log collection
 
 ```bash
 # Check if logs are reaching Loki
 kubectl exec -n loki-system deployment/loki -- logcli query '{namespace="kube-system"}' --limit=5
 ```
 
-### Configuration Issues
+### Configuration issues
 
 ```bash
 # Check Alloy configuration

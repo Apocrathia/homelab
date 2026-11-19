@@ -1,6 +1,6 @@
 # Materialious
 
-Materialious is a modern, material-design frontend for YouTube built on Invidious, with a bundled backend, account system, CORS proxy, and server-side SponsorBlock/DeArrow/Return-YouTube-Dislike support. This deploys the `materialious-full` image, which is its own Deployment and not part of the Invidious app.
+Materialious is a material-design frontend for YouTube built on Invidious, with a bundled backend, account system, CORS proxy, and server-side SponsorBlock/DeArrow/Return-YouTube-Dislike support. This deploys the `materialious-full` image, which is its own Deployment and not part of the Invidious app.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 

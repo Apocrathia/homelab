@@ -9,9 +9,9 @@ DeepWiki (`user-deepwiki` MCP) provides AI-powered documentation for GitHub repo
 
 ## Tools
 
-- `read_wiki_structure` — get topic list for a repo
-- `read_wiki_contents` — get full documentation for a repo
-- `ask_question` — ask targeted questions about a repo (supports up to 10 repos at once)
+- `read_wiki_structure`: get topic list for a repo
+- `read_wiki_contents`: get full documentation for a repo
+- `ask_question`: ask targeted questions about a repo (supports up to 10 repos at once)
 
 All tools take `repoName` in `owner/repo` format (e.g. `fluxcd/flux2`).
 

@@ -15,7 +15,7 @@ Guest pads are reachable without an account on both doors.
 
 ## Overview
 
-2026.10.0 splits the server into http/front/core/storage node processes under one container, described by `infra.js` (topology and public origins; the infra-level keys moved out of `config.js`). This pod runs a single-node topology: all nodes on loopback, so `app.replicas` must stay at 1 — a second replica would start a separate mesh cluster against the same data. Browser websockets hit port 3000 and are proxied to the front node internally; `app.container.extraPorts` documents the sandbox server on 3001 (both gateway hostnames keep routing to 3000, matching upstream's example nginx).
+2026.10.0 splits the server into http/front/core/storage node processes under one container, described by `infra.js` (topology and public origins; the infra-level keys moved out of `config.js`). This pod runs a single-node topology: all nodes on loopback, so `app.replicas` must stay at 1, a second replica would start a separate mesh cluster against the same data. Browser websockets hit port 3000 and are proxied to the front node internally; `app.container.extraPorts` documents the sandbox server on 3001 (both gateway hostnames keep routing to 3000, matching upstream's example nginx).
 
 ## Authentication
 

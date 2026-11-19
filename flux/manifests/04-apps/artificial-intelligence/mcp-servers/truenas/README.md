@@ -1,6 +1,6 @@
 # TrueNAS MCP Server
 
-The TrueNAS MCP server provides TrueNAS Core and SCALE management through the Model Context Protocol.
+TrueNAS Core and SCALE management over the Model Context Protocol.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
@@ -46,7 +46,7 @@ The Secret is mounted at `/var/run/secrets/mcp` and maps `truenas-url` and `true
 
 ## Available MCP Tools
 
-The TrueNAS MCP server provides tools for storage and system management:
+Tools:
 
 ### Universal Features (Core & SCALE)
 

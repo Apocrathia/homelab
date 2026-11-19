@@ -31,31 +31,31 @@ NUC (BLKNUC7i7DNK1E).
 - Ansible-managed Kubernetes / k3s / Proxmox cluster bootstrap (Talos + Flux /
   OpenTofu own that)
 - UniFi OS Server install play (superseded: UOS Server installed manually
-  2026-09-20 — no install play materialized)
+  2026-09-20; no install play materialized)
 - Full CIS / `devsec.hardening` on day one
 - Storing deploy keys as GitLab CI variables (Connect is the bus)
 
 ## Decisions
 
-- **Execution** — GitLab CI push over SSH, not AWX — mirrors `fleet/` gitops.
+- **Execution**: GitLab CI push over SSH, not AWX; mirrors `fleet/` gitops.
   Semaphore was trialed as a UI/ops surface (2026-09-16→18) and retired: it
   demanded a parallel execution plane (duplicated secrets, its own runtime,
   glibc shims for tofu) that CI already covers. Nightly drift correction
   runs as a scheduled CI pipeline instead.
-- **Secrets** — 1Password item `ansible-secrets` (vault `Secrets`); CI fetches
+- **Secrets**: 1Password item `ansible-secrets` (vault `Secrets`); CI fetches
   via Connect (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`, same as tofu). Fields:
   `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline text).
   No committed vault file / no GitLab SSH vars.
-- **Layout** — lowercase `ansible/`; purpose inventory groups; thin playbooks +
+- **Layout**: lowercase `ansible/`; purpose inventory groups; thin playbooks +
   `site.yml`; minimal `ansible.cfg` (not a dumped defaults file).
-- **Become** — none needed: CI connects as the `ansible` service account
+- **Become**: none needed: CI connects as the `ansible` service account
   (NOPASSWD sudoers entry). `common_passwordless_sudo` stays false for humans
   (phase 1 used `--become-password-file` from Connect `sudo-password`; retired
   2026-09-16).
-- **Port from homelab.gh** — `common` tags, GitHub `.keys` authorized_keys,
+- **Port from homelab.gh**: `common` tags, GitHub `.keys` authorized_keys,
   timezone/`github_username` group vars, `requirements.yml`. Drop
   `ignore_errors: true`, k8s/docker/proxmox roles, compose files.
-- **Service account (2026-09-08)** — dedicated `ansible` user per host, locked
+- **Service account (2026-09-08)**: dedicated `ansible` user per host, locked
   password, deploy-key auth (`exclusive`), `sudoers.d` NOPASSWD. Motivated by
   MR !4392 CI failure: `game` had a hidden 60-day password-aging policy
   (manual CIS residue, not repo-managed) that expired `ianyoung`'s password
@@ -71,7 +71,7 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Fetch deploy key + known_hosts + `sudo-password` from 1Password Connect
 - [x] Confirm Connect token can read `Secrets` / `ansible-secrets`
 - [x] Install deploy pubkey on hosts; MR `ansible-check` green
-- [x] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml` —
+- [x] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml`;
       unifi-os NUC 2026-09-08 (day-0 python3 pre-task added to bootstrap.yml)
 - [x] Service account phase 1: role manages `ansible` user (locked password,
       deploy key, NOPASSWD sudo); merged !4399, applied + verified on both
@@ -79,10 +79,10 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Service account phase 2: flip `ansible_user`, drop become password from
       CI + README/CI notes (operator follow-up: delete the `sudo-password`
       field from the 1Password `ansible-secrets` item)
-- [x] Stage UniFi NUC + Track A cutover — done 2026-09-20: UOS Server on unifi-os
+- [x] Stage UniFi NUC + Track A cutover; done 2026-09-20: UOS Server on unifi-os
       (static .3 per VLAN), site restored from CK+ backup, 13/13 devices migrated
       with set-inform, unifi.apocrathia.com CNAMEs here, CK+ powered off
-- [x] Expand roles only when a host needs them (no speculative roles) —
+- [x] Expand roles only when a host needs them (no speculative roles);
       kopia, ollama, tailscale, nginx_site, acme_sh each landed for a
       concrete host need; no speculative roles in the tree
 
@@ -95,7 +95,7 @@ NUC (BLKNUC7i7DNK1E).
 
 ## Notes
 
-- Hardware for UniFi: BLKNUC7i7DNK1E, 32 GiB RAM, 1 TB NVMe — overkill for UOS
+- Hardware for UniFi: BLKNUC7i7DNK1E, 32 GiB RAM, 1 TB NVMe; overkill for UOS
   Server; hosting tier was the IPFIX gate, not CPU.
 - Inventory (current): `game` → `game.services.apocrathia.com`,
   `ians-gaming-pc` → `ians-gaming-pc.access.apocrathia.com`,

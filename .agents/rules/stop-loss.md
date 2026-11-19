@@ -11,7 +11,7 @@ Surface to the operator:
 
 - What you were trying to do.
 - The 3 things you tried and what failed each time (verbatim error if there is one).
-- What you'd try next if given approval — but don't actually try it.
+- What you'd try next if given approval, but don't actually try it.
 
 Cosmetic flag tweaks count as the same approach. Genuinely different tactics (different tool, different framing, asking the operator) do not.
 

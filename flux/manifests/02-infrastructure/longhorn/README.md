@@ -16,7 +16,7 @@ Longhorn provides persistent storage with:
 ## Access
 
 - **Web UI**: `https://longhorn.gateway.services.apocrathia.com`
-- **Authentication**: Authentik SSO — owned by the `crossplane.yaml` + `authentik.tf` file pair in this directory (the retired blueprint's objects, adopted in place)
+- **Authentication**: Authentik SSO, owned by the `crossplane.yaml` + `authentik.tf` file pair in this directory (the retired blueprint's objects, adopted in place)
 
 ## Configuration
 
@@ -25,13 +25,13 @@ See `helmrelease.yaml` for storage settings including replica count, data locali
 ### 1Password Setup
 
 `longhorn-backup-target-secret` (OnePasswordItem in `secret.yaml`) holds the
-backup-target credentials. Field names are fixed UPPER_CASE keys — longhorn
+backup-target credentials. Field names are fixed UPPER_CASE keys. Longhorn
 reads them directly and cannot remap them (rationale in the CIFS → S3
 migration note below):
 
-- `AWS_ACCESS_KEY_ID` — S3 access key
-- `AWS_SECRET_ACCESS_KEY` — S3 secret key
-- `AWS_ENDPOINTS` — S3 endpoint
+- `AWS_ACCESS_KEY_ID`: S3 access key
+- `AWS_SECRET_ACCESS_KEY`: S3 secret key
+- `AWS_ENDPOINTS`: S3 endpoint
 
 Values live in the vault item, not in docs.
 
@@ -61,7 +61,7 @@ kubectl get backuptargets -n longhorn-system
 ### Orphan BackupVolume prune
 
 Longhorn v1.13.0 never garbage-collects `BackupVolume` CRs for deleted
-volumes — over ~1 year 347 orphans accumulated (74% of all CRs), and each one
+volumes. Over ~1 year 347 orphans accumulated (74% of all CRs), and each one
 costs the backup-target sync a mount/ls/umount subprocess chain on **every**
 poll pass.
 
@@ -75,8 +75,8 @@ base names (strip the trailing `-<8 hex>` hash) against live volumes:
   BackupVolume CRs through longhorn's own deletion flow, which **also removes
   the target-side data**, so the orphan cannot be re-synced back. Deleting the
   CR alone (via the `longhorn.io/delete-custom-resource-only` label) leaves
-  the target-side data intact and the next target sync re-creates the CR —
-  regrowth.
+  the target-side data intact; the next target sync re-creates the CR, so
+  orphans regrow.
 - Orphans whose newest backup is younger than the grace window
   (`PRUNE_GRACE_DAYS` in `prune-cronjob.yaml`) are kept: a post-mortem
   restore window for recently deleted volumes, and cover for in-flight
@@ -85,23 +85,23 @@ base names (strip the trailing `-<8 hex>` hash) against live volumes:
   remote cleanup; the CR comes back on the next sync and the prune retries.
 
 RBAC (`prune-rbac.yaml`) grants only what the cross-check and the deletion
-flow need — nothing more.
+flow need, nothing more.
 
 ### CIFS → S3 migration
 
 The backup target moved from the NAS CIFS share to the same box speaking S3
 (rustfs). Why: every CIFS probe cost a full SMB mount/ls/umount subprocess
-chain — the sync livelock below — while S3 does listing without per-op
+chain (the sync livelock below), while S3 does listing without per-op
 mounts. Existing in-cluster rustfs consumers (loki, mimir, tempo, kopia,
 tenzir) already use the same endpoint shape.
 
 **Accepted tradeoff (operator, 2026-10-15):** switching targets makes all
-CIFS-era backups **invisible to longhorn** — they stop showing in the UI and
+CIFS-era backups **invisible to longhorn**: they stop showing in the UI and
 cannot be restored from it. The data itself **remains on the NAS** under the
 old share until separately cleaned; nothing deletes it. Restore points
 rebuild on the new target as the recurring jobs run, with the schedules and
 retention configured in `recurringjobs.yaml`. The first sync against the new
-target also garbage-collects the stale CIFS-era BackupVolume CRs — they do
+target also garbage-collects the stale CIFS-era BackupVolume CRs: they do
 not exist on the new store, so longhorn's own
 `cleanupBackupVolumeNotExistOnBackupTarget` pass drops them; the prune
 CronJob keeps the new target clean from then on.
@@ -122,12 +122,12 @@ fields on the item can be dropped once the migration is verified.
 
 `helmrelease.yaml` raises `defaultBackupStore.pollInterval` above the chart
 default. v1.13.0's backup-target sync
-probes **every** BackupVolume against the target per pass — each probe is a
+probes **every** BackupVolume against the target per pass: each probe is a
 subprocess chain (backup head + ls + umount) doing a full SMB mount against
 slow CIFS. With the whole CR set the pass could not drain inside the
 chart-default interval, so the gate re-opened immediately and the sync loop
 ran continuously: this was the dominant continuous longhorn-manager process
-churn (62–88% of node export bytes during the 2026-10-15 flood investigation).
+churn (62-88% of node export bytes during the 2026-10-15 flood investigation).
 The raised interval gives each pass room to finish; cron driven backups are
 unaffected. Orphan pruning shrinks each pass further (~470 → ~120 CRs).
 
@@ -150,7 +150,7 @@ kubectl logs -n longhorn-system deployment/longhorn-manager
 kubectl describe volume <volume-name> -n longhorn-system
 ```
 
-### Common Issues
+### Common issues
 
 **Volume attachment failures:**
 

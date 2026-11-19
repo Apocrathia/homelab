@@ -1,13 +1,13 @@
-# Metrics Server - Resource Metrics Collection
+# Metrics Server
 
-Scalable, efficient source of container resource metrics for Kubernetes autoscaling pipelines.
+Container resource metrics for Kubernetes autoscaling pipelines.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
 ## Overview
 
 Metrics Server aggregates CPU/memory usage from kubelet summary APIs on each
-node and serves them through the `metrics.k8s.io` API — the data source the
+node and serves them through the `metrics.k8s.io` API: the data source the
 Horizontal Pod Autoscaler and `kubectl top` rely on.
 
 - Deployed into `kube-system` (`helmrelease.yaml`); chart version pinned and

@@ -15,7 +15,7 @@ no license file; vendored as-is with provenance recorded here.
 
 ## Runtime vs repo-side content
 
-Only `package.yaml` and `operators/` are runtime content — the five files
+Only `package.yaml` and `operators/` are runtime content, the five files
 render as ConfigMaps and mount read-only at `/etc/tenzir/packages/netflow/`
 ([kustomization](../../kustomization.yaml)). `tests/`, `examples/`, and
 `changelog/` are repo-side: the tenzir-test harness runs the baselines from

@@ -6,11 +6,11 @@ Foundational GitOps resources required to reconcile the homelab cluster.
 
 ## Components
 
-- [**Flux System**](flux-system/README.md) — Flux Operator, FluxInstance, root
+- [**Flux System**](flux-system/README.md): Flux Operator, FluxInstance, root
   Git sync, Status UI authentication, and RBAC.
-- [**1Password Connect**](1password/README.md) — secrets operator and setup.
-- [**Helm Repositories**](helm/README.md) — shared chart sources.
-- [**Custom Resource Definitions**](crds/README.md) — extended Kubernetes APIs.
+- [**1Password Connect**](1password/README.md): secrets operator and setup.
+- [**Helm Repositories**](helm/README.md): shared chart sources.
+- [**Custom Resource Definitions**](crds/README.md): extended Kubernetes APIs.
 
 ## Steady-state reconciliation
 

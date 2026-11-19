@@ -1,12 +1,12 @@
-# Kube Prometheus Stack - Monitoring and Observability
+# Kube Prometheus Stack
 
-Comprehensive monitoring solution for Kubernetes based on Prometheus, Grafana, and Alertmanager.
+Prometheus, Grafana, and Alertmanager monitoring for Kubernetes.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
 ## Overview
 
-The kube-prometheus-stack provides a complete monitoring platform with:
+The kube-prometheus-stack provides:
 
 - **Prometheus**: Metrics collection and storage
 - **Grafana**: Visualization and dashboards
@@ -17,48 +17,27 @@ The kube-prometheus-stack provides a complete monitoring platform with:
 
 ## Architecture
 
-### Core Components
+### Core components
 
-**Prometheus**
+**Prometheus** scrapes metrics from Kubernetes components, stores them as
+time series, queries them with PromQL, and evaluates alert rules.
 
-- **Metrics Collection**: Scrapes metrics from Kubernetes components
-- **Time Series Storage**: Efficient storage for time series data
-- **Query Language**: PromQL for data querying and analysis
-- **Alerting Engine**: Rule-based alerting system
+**Grafana** serves pre-built and custom dashboards over multiple data
+sources, with alerting integrated against Prometheus and its own
+authentication and user management.
 
-**Grafana**
+**Alertmanager** routes and groups alerts to notification channels,
+silences them when asked, and runs clustered for high availability.
 
-- **Dashboards**: Pre-built and custom dashboards
-- **Data Sources**: Multiple data source support
-- **Alerting**: Integrated alerting with Prometheus
-- **User Management**: Authentication and authorization
+### Supporting components
 
-**Alertmanager**
+**Node Exporter** collects node CPU, memory, disk, and network metrics.
 
-- **Alert Routing**: Configurable alert routing and grouping
-- **Notification**: Multiple notification channels
-- **Silencing**: Alert suppression and management
-- **High Availability**: Clustered deployment
+**Kube State Metrics** exports state metrics for Kubernetes objects: pods,
+nodes, deployments, overall cluster health.
 
-### Supporting Components
-
-**Node Exporter**
-
-- **System Metrics**: Node-level system metrics
-- **Hardware Monitoring**: CPU, memory, disk, network metrics
-- **Process Information**: System process monitoring
-
-**Kube State Metrics**
-
-- **Kubernetes Objects**: State metrics for Kubernetes objects
-- **Resource Usage**: Pod, node, deployment metrics
-- **Cluster State**: Overall cluster health metrics
-
-**Prometheus Operator**
-
-- **CRD Management**: Custom resources for Prometheus components
-- **Configuration Management**: Declarative configuration
-- **Lifecycle Management**: Automated deployment and scaling
+**Prometheus Operator** manages the Prometheus components through CRDs:
+declarative configuration and automated deployment and scaling.
 
 ## 1Password Setup
 
@@ -73,46 +52,38 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 
 ## Features
 
-### Monitoring Capabilities
+### Monitoring
 
-- **Cluster Monitoring**: Node and pod-level metrics
-- **Application Monitoring**: Custom application metrics
-- **Service Monitoring**: Service availability and performance
-- **Infrastructure Monitoring**: Network and storage metrics
+- Node, pod, service, application, network, and storage metrics
 
-### Alerting Features
+### Alerting
 
-- **Rule-Based Alerting**: Configurable alert rules
-- **Multi-Channel Notifications**: Email, Slack, PagerDuty, etc.
-- **Alert Grouping**: Intelligent alert grouping and routing
-- **Silencing**: Alert suppression during maintenance
+- Rule-based alerts with grouping, routing, and silencing
+- Notifications through email, Slack, PagerDuty, etc.
 
 ### Visualization
 
-- **Pre-built Dashboards**: Kubernetes, node, and application dashboards
-- **Custom Dashboards**: User-defined visualizations
-- **Data Exploration**: Ad-hoc queries and analysis
-- **Real-time Updates**: Live data updates
+- Pre-built Kubernetes, node, and application dashboards
+- Custom dashboards and ad-hoc PromQL exploration
+- Live-updating panels
 
 ## Access and Usage
 
-### Grafana Access
+### Grafana access
 
-- **Internal URL**: `http://grafana.prometheus-system.svc:80`
-- **External Access**: Via Gateway API with Authentik authentication
-- **Admin Credentials**: Stored in 1Password `local-account` item
+- Internal URL: `http://grafana.prometheus-system.svc:80`
+- External access via Gateway API with Authentik authentication
+- Admin credentials in the 1Password `local-account` item
 
-### Prometheus Access
+### Prometheus access
 
-- **Internal URL**: `http://prometheus-k8s.prometheus-system.svc:9090`
-- **Query API**: REST API for metrics querying
-- **Alert Rules**: Configurable alerting rules
+- Internal URL: `http://prometheus-k8s.prometheus-system.svc:9090`
+- REST query API and configurable alert rules
 
-### Alertmanager Access
+### Alertmanager access
 
-- **Internal URL**: `http://alertmanager-operated.prometheus-system.svc:9093`
-- **Alert Status**: View active and resolved alerts
-- **Silence Management**: Manage alert suppressions
+- Internal URL: `http://alertmanager-operated.prometheus-system.svc:9093`
+- View active and resolved alerts; manage silences
 
 ## Configuration
 
@@ -120,82 +91,65 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 
 Resource limits and requests are configured in `helmrelease.yaml`.
 
-### Storage Configuration
+### Storage
 
-- **Prometheus Data**: Persistent volume for metrics storage
-- **Grafana Data**: Persistent volume for dashboards and settings
-- **Retention**: Configurable metrics retention period
+- Prometheus metrics and Grafana data each sit on persistent volumes
+- Metrics retention is configurable
 
-### Security Configuration
+### Security
 
-- **RBAC**: Role-based access control
-- **Network Policies**: Network traffic restrictions
-- **TLS**: Secure communication between components
-- **Authentication**: SSO integration with Authentik
+- RBAC and network policies restrict access
+- TLS between components; Authentik provides SSO
 
 ## Integration with Homelab
 
 ### Authentik Integration
 
-- **SSO**: Single sign-on for Grafana access via the proxy provider
-- **Ownership**: the `crossplane.yaml` + `authentik.tf` file pair in this directory owns the app's whole Authentik stack (proxy provider, application, admins binding, outpost) through a provider-opentofu Workspace stitched at kustomize build time — the retired blueprint's objects, adopted in place
-- **skip_path_regex**: `/api/`, `/mcp`, and `/sse` stay unauthenticated (the MCP server needs bearer access)
-- **Audit Logging**: Authentication and access logging
+- Single sign-on for Grafana access via the proxy provider
+- Ownership: the `crossplane.yaml` + `authentik.tf` file pair in this directory owns the app's whole Authentik stack (proxy provider, application, admins binding, outpost) through a provider-opentofu Workspace stitched at kustomize build time; the retired blueprint's objects, adopted in place
+- `skip_path_regex` keeps `/api/`, `/mcp`, and `/sse` unauthenticated (the MCP server needs bearer access)
+- Authentication and access logging
 
-### Longhorn Integration
+### Longhorn
 
-- **Storage Monitoring**: Longhorn-specific dashboards
-- **Backup Monitoring**: Backup job monitoring
-- **Performance Metrics**: Storage performance visualization
+- Longhorn dashboards, backup job monitoring, and storage performance metrics
 
-### Cilium Integration
+### Cilium
 
-- **Network Monitoring**: Network policy monitoring
-- **Security Metrics**: Security event visualization
-- **Performance**: Network performance dashboards
+- Network policy monitoring, security events, and network performance dashboards
 
-### Application Integration
+### Applications
 
-- **ServiceMonitors**: Automatic service discovery
-- **PodMonitors**: Pod-level metrics collection
-- **Custom Metrics**: Application-specific monitoring
-- **Alerting**: Application-specific alerts
+- ServiceMonitors and PodMonitors for automatic discovery and pod-level collection
+- Application-specific metrics and alerts
 
 ## Dashboards and Alerts
 
-### Pre-configured Dashboards
+### Pre-configured dashboards
 
-- **Kubernetes Cluster**: Node and pod overview
-- **Kubernetes Resources**: Resource usage and limits
-- **Prometheus**: Prometheus server metrics
-- **Grafana**: Grafana server metrics
-- **Alertmanager**: Alert management overview
-- **Node Exporter**: Node-level system metrics
-- **Longhorn**: Storage system monitoring
+- Kubernetes cluster: node and pod overview, resource usage and limits
+- Component health: Prometheus, Grafana, Alertmanager, Node Exporter
+- Longhorn: storage system monitoring
 
-### Alert Rules
+### Alert rules
 
-- **Node Down**: Alert when nodes become unavailable
-- **Pod CrashLoopBackOff**: Alert on crashing pods
-- **High Resource Usage**: CPU and memory threshold alerts
-- **Storage Issues**: Disk space and I/O alerts
-- **Network Issues**: Network connectivity problems
+- Node down, pod CrashLoopBackOff
+- High CPU and memory usage
+- Disk space and I/O issues, network connectivity problems
 
 ## Security Considerations
 
-### Access Control
+### Access control
 
-- **Grafana Authentication**: SSO through Authentik
-- **Prometheus Security**: Network policies and RBAC
-- **Alertmanager Access**: Restricted to administrators
-- **API Security**: TLS and authentication
+- Grafana authentication is SSO through Authentik
+- Prometheus sits behind network policies and RBAC
+- Alertmanager access is restricted to administrators; APIs use TLS and authentication
 
-### Data Protection
+### Data protection
 
-- **Metrics Encryption**: Data encryption in transit
-- **Access Logging**: Comprehensive audit trails
-- **Backup Strategy**: Regular backup of configurations
-- **Compliance**: Security and compliance monitoring
+- Metrics encrypted in transit
+- Access logging for audit trails
+- Configuration backups; security and compliance monitoring
 
 ## Troubleshooting
 
@@ -236,7 +190,6 @@ Resource limits and requests are configured in `helmrelease.yaml`.
 ```bash
 # Check all components
 kubectl get pods -n prometheus-system
-kubectl get pods -n prometheus-system
 
 # Check Prometheus health
 kubectl port-forward -n prometheus-system svc/prometheus-k8s 9090:9090
@@ -268,23 +221,23 @@ kubectl logs -n prometheus-system -l app.kubernetes.io/name=alertmanager
 
 ## Best Practices
 
-### Configuration Management
+### Configuration
 
-1. **Version Pinning**: Pin Helm chart versions
-2. **Configuration Backup**: Regular backup of Grafana dashboards
-3. **Alert Tuning**: Fine-tune alert thresholds
-4. **Dashboard Organization**: Organize dashboards by namespace
+1. Pin Helm chart versions
+2. Back up Grafana dashboards regularly
+3. Fine-tune alert thresholds
+4. Organize dashboards by namespace
 
 ### Operations
 
-1. **Resource Monitoring**: Monitor monitoring stack resources
-2. **Metrics Retention**: Configure appropriate retention periods
-3. **Alert Management**: Regular review and cleanup of alerts
-4. **Performance Tuning**: Optimize Prometheus query performance
+1. Watch the monitoring stack's own resource usage
+2. Set retention periods deliberately
+3. Review and clean up alerts regularly
+4. Optimize slow Prometheus queries
 
 ### Security
 
-1. **Access Control**: Implement least privilege access
-2. **Network Security**: Use network policies and encryption
-3. **Monitoring**: Monitor the monitoring stack itself
-4. **Updates**: Regular security updates
+1. Least-privilege access
+2. Network policies and encryption
+3. Monitor the monitoring stack itself
+4. Apply security updates

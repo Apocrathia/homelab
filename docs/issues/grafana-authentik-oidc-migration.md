@@ -54,7 +54,7 @@ N/A (feature). Current proxy + skips:
 - Call a Grafana `/api/` endpoint without an Authentik session: expect Grafana
   auth failure (401/403), not an unauthenticated success.
 - Confirm MCP (or equivalent) still works with a Grafana service-account token.
-- Read-only: `kubectl get httproute -A` / Authentik outpost list — no leftover
+- Read-only: `kubectl get httproute -A` / Authentik outpost list; no leftover
   Grafana proxy outpost route (operator-led).
 
 ## Implementation hint
@@ -69,6 +69,6 @@ Grafana org/role mapping if you rely on `X-authentik-groups` today.
 ## Notes
 
 - Raised from the 2026-08-01 full-repo security review (SEC-002; the review
-  report never landed as a repo file — `found_by` records the session);
+  report never landed as a repo file; `found_by` records the session);
   operator chose OIDC migration over narrowing skip regex.
-- Do not put OIDC client secrets in Git — OnePassword Item only.
+- Do not put OIDC client secrets in Git; OnePassword Item only.

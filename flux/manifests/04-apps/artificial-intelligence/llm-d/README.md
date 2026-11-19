@@ -6,7 +6,7 @@ Kubernetes-native distributed inference serving stack for large language models 
 
 ## Overview
 
-llm-d accelerates distributed inference by integrating industry-standard open technologies:
+llm-d runs distributed inference by combining:
 
 - **vLLM**: Default model server and inference engine
 - **Inference Gateway (IGW)**: Request scheduler and load balancer

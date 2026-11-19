@@ -45,9 +45,9 @@ Per-VM CPU, memory, disk, and network settings live in each deployment's `terrag
 
 Public DNS records (Okta custom domain, etc.) live in the deployment
 `terragrunt.hcl`. Auth is **1Password Connect** → ephemeral item
-`cloudflare-terraform-secrets` (API Credential **credential** field) — same
+`cloudflare-terraform-secrets` (API Credential **credential** field); same
 pattern as GitLab. Do not export `CLOUDFLARE_API_TOKEN`. Do not manage
-cert-manager `_acme-challenge` records for other names here — the cluster owns
+cert-manager `_acme-challenge` records for other names here; the cluster owns
 those. Okta's own `_acme-challenge.okta` challenge is an exception
 (vendor-owned verification).
 
@@ -62,11 +62,11 @@ those. Okta's own `_acme-challenge.okta` challenge is an exception
 
 Org name and base URL live in `providers/okta.hcl`. Auth is **1Password
 Connect** → ephemeral item `okta-terraform-secrets` (API Credential
-**credential** field) — same pattern as GitLab / Cloudflare. Do not export
+**credential** field); same pattern as GitLab / Cloudflare. Do not export
 `OKTA_API_TOKEN`.
 
 The `home-egress` network zone's gateway is the plan-time public egress IP
-(`data.http` probe, default `https://icanhazip.com`) — home egress is
+(`data.http` probe, default `https://icanhazip.com`); home egress is
 dynamic, so it is never hardcoded in HCL. Plan/apply must run somewhere that
 egresses to the internet; CI runners sit on the lab network and see the same
 IP.
@@ -85,9 +85,9 @@ through a terragrunt dependency on `okta/network-zone`.
 
 Auth for this stack: **1Password Connect** (no `op` CLI). Set
 `OP_CONNECT_HOST` (CI default:
-`http://onepassword-connect.onepassword-system.svc:8080` — in-cluster
+`http://onepassword-connect.onepassword-system.svc:8080`; in-cluster
 Service; runners are on the cluster) and `OP_CONNECT_TOKEN`. Vault is looked
-up by **name** (`Secrets` — no UUID in git). Put the GitLab PAT in a 1Password
+up by **name** (`Secrets`; no UUID in git). Put the GitLab PAT in a 1Password
 API Credential item **credential** field and set
 `onepassword_gitlab_pat_item_title` in the deployment `terragrunt.hcl`. Do not
 export `GITLAB_TOKEN`. See
@@ -108,7 +108,7 @@ cd terraform/deployments/gitlab/homelab && terragrunt plan
 | `tailscale/tailnet` | `tailscale-tailnet` | Policy file + DNS + tailnet settings for `taila8ef8c.ts.net` |
 
 The tailnet policy file lives in the deployment directory (`policy.hujson`)
-and is managed WHOLE by `tailscale_acl` — it was imported verbatim from the
+and is managed WHOLE by `tailscale_acl`; it was imported verbatim from the
 live tailnet before first plan. `acls_externally_managed_on` locks the admin
 console's policy editor once applied (live since 2026-08-25). The tailnet's
 custom domain (`tailnet.apocrathia.com`) is console-managed (no provider/API
@@ -116,7 +116,7 @@ support). Auth is **1Password Connect** → ephemeral item
 `tailscale-terraform-secrets` (API Credential: **username** = OAuth client ID,
 **credential** = client secret). The global DNS resolver is ControlD's legacy
 resolvers (premium profile, source-IP authorized via DDNS), hardcoded
-in-module — the resolver IPs are non-secret.
+in-module; the resolver IPs are non-secret.
 Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
 `feature_settings`, `auth_keys`, `users:read`, `log_streaming`,
 `logs:configuration:read`, `devices:core`, `devices:core:read`,
@@ -142,7 +142,7 @@ HashiCorp switched Terraform to BSL 1.1 in August 2023. OpenTofu is the Linux Fo
 
 ### Why Terragrunt?
 
-Terragrunt wraps OpenTofu to reduce duplication. Backend configuration is automatic — no copy-paste of backend blocks across deployments.
+Terragrunt wraps OpenTofu to reduce duplication. Backend configuration is automatic; no copy-paste of backend blocks across deployments.
 
 Terragrunt auto-detects OpenTofu when both are installed.
 
@@ -332,7 +332,7 @@ brew install opentofu terragrunt
 Create an API token in Proxmox (Datacenter → Permissions → API Tokens → Add).
 Store the full token (`user@pam!tokenname=secret`) in the
 `proxmox-terraform-secrets` API Credential **credential** field (vault
-`Secrets`) — not in git or GitLab CI.
+`Secrets`); not in git or GitLab CI.
 
 **Option A**: Uncheck "Privilege Separation" to inherit user permissions.
 
@@ -355,13 +355,13 @@ Create a scoped API token (My Profile → API Tokens → Create Token):
 
 Restrict the token to the target zone. Prefer a dedicated token for Terraform
 (separate from the cert-manager DNS-01 token in the cluster). Store the token
-in 1Password — not in git. Public DNS RRsets belong in the deployment HCL.
+in 1Password; not in git. Public DNS RRsets belong in the deployment HCL.
 
 ### Okta API Token
 
 Create an API token in Okta (Security → API → Tokens). Store it in the
 `okta-terraform-secrets` API Credential **credential** field (vault
-`Secrets`) — not in git or GitLab CI. Org name and base URL live in
+`Secrets`); not in git or GitLab CI. Org name and base URL live in
 `providers/okta.hcl` (same identity already present in the Cloudflare CNAME
 for the custom domain).
 
@@ -404,7 +404,7 @@ Sync from `terraform/.env` (values piped to glab; not echoed):
 ./scripts/terraform/sync-gitlab-ci-variables.sh -y          # write
 ```
 
-The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). Provider tokens (`PROXMOX_VE_*`, `CLOUDFLARE_API_TOKEN`, `OKTA_API_TOKEN`, GitLab PAT) are **not** synced — those stacks use Connect ephemeral.
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). Provider tokens (`PROXMOX_VE_*`, `CLOUDFLARE_API_TOKEN`, `OKTA_API_TOKEN`, GitLab PAT) are **not** synced; those stacks use Connect ephemeral.
 
 | Variable                 | Type     | Protected | Masked |
 | ------------------------ | -------- | --------- | ------ |
@@ -489,7 +489,7 @@ terragrunt run --all -- validate
 
 ### Proxmox VMs
 
-VMs already exist in Proxmox — import them into state rather than recreate.
+VMs already exist in Proxmox; import them into state rather than recreate.
 
 #### Step 1: Capture Current VM Configuration
 
@@ -594,7 +594,7 @@ terragrunt import -lock=false tailscale_dns_configuration.this dns_configuration
 terragrunt import -lock=false tailscale_tailnet_settings.this tailnet_settings
 ```
 
-Keep `policy.hujson` byte-identical to the intended policy — `tailscale_acl`
+Keep `policy.hujson` byte-identical to the intended policy; `tailscale_acl`
 overwrites the WHOLE policy file.
 
 ## Pre-commit Hooks

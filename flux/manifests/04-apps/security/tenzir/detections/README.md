@@ -31,7 +31,7 @@ Finding 2004). The tetragon node publishes its own node-local `ocsf`
 topic with Process Activity (1007), File System Activity (1001), and
 Network Activity (4001), and the netflow node likewise: its collector
 publishes Network Activity (4001) node-local. One `sigma-detect`
-pipeline on the core node subscribes — netflow events reach the store
+pipeline on the core node subscribes, netflow events reach the store
 and Grafana, not the sigma pass (no sigma rule targets netflow fields,
 so no coverage is lost; the tetragon and netflow node-local topics have
 no sigma consumer by design).
@@ -55,17 +55,17 @@ the same stamp via the trivy pipeline's direct leg.
 
 ## Class taxonomy
 
-| Class                 | uid  | Source                                                                                                                                                |
-| --------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API Activity          | 6003 | kube-apiserver audit (k8s map)                                                                                                                        |
-| Authentication        | 3002 | authentik logins (authentik map)                                                                                                                      |
-| Account Change        | 3001 | authentik account mutations (authentik map)                                                                                                           |
-| Network Activity      | 4001 | netflow flows (tenzir/library map), tetragon kprobe connect attempts (tetragon map)                                                                   |
-| Detection Finding     | 2004 | sigma matches, trivy ExposedSecretReport                                                                                                              |
-| Vulnerability Finding | 2002 | trivy VulnerabilityReport (homelab convention: Tenzir upstream documents no vulnerability-finding mapping)                                            |
-| Process Activity      | 1007 | tetragon exec and exit (tetragon map)                                                                                                                 |
-| File System Activity  | 1001 | tetragon secret-file-access kprobe (tetragon map)                                                                                                     |
-| Base Event            | 0    | fleet rows, authentik non-IAM actions, unknown tetragon kinds: cannot name a class — INSERTed as Base Event on core, dropped at tetragon's class gate |
+| Class                 | uid  | Source                                                                                                                                               |
+| --------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API Activity          | 6003 | kube-apiserver audit (k8s map)                                                                                                                       |
+| Authentication        | 3002 | authentik logins (authentik map)                                                                                                                     |
+| Account Change        | 3001 | authentik account mutations (authentik map)                                                                                                          |
+| Network Activity      | 4001 | netflow flows (tenzir/library map), tetragon kprobe connect attempts (tetragon map)                                                                  |
+| Detection Finding     | 2004 | sigma matches, trivy ExposedSecretReport                                                                                                             |
+| Vulnerability Finding | 2002 | trivy VulnerabilityReport (homelab convention: Tenzir upstream documents no vulnerability-finding mapping)                                           |
+| Process Activity      | 1007 | tetragon exec and exit (tetragon map)                                                                                                                |
+| File System Activity  | 1001 | tetragon secret-file-access kprobe (tetragon map)                                                                                                    |
+| Base Event            | 0    | fleet rows, authentik non-IAM actions, unknown tetragon kinds: cannot name a class, INSERTed as Base Event on core, dropped at tetragon's class gate |
 
 Mappings resolve class ids with the lookup idiom instead of hard-coded
 numbers: `ocsf_class_uid("Network Activity")` reads better than
@@ -73,7 +73,7 @@ numbers: `ocsf_class_uid("Network Activity")` reads better than
 mappers; the numbers exist for the reader.
 
 Unmapped kinds never reach the store: the source pipelines drop the
-Base Event fallback at the class gate — except on core, where fleet
+Base Event fallback at the class gate, except on core, where fleet
 rows and authentik's non-IAM arm map to Base Event deliberately and
 INSERT as `ocsf.Base_Event`. When a feed grows a real class mapping,
 it joins the class gate's allowlist.

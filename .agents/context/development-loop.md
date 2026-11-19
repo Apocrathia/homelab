@@ -47,17 +47,17 @@ flowchart TD
   class discover,alignment,execute,review,recdocs,recctx,draft,ship,retro,cleanup skill
 ```
 
-| Skill                                             | Role                                                                                                                                          |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`ship-work`](../skills/ship-work/SKILL.md)       | Authorized contribute: commit → push → open MR → hard-gate [`watch-mr`](../skills/watch-mr/SKILL.md) until merged / dismissed / blocked       |
-| [`draft-commit`](../skills/draft-commit/SKILL.md) | Default when **not** authorized — propose Conventional Commit + optional draft MR body; may still ship when authorized (attended → `main` OK) |
-| [`self-improve`](../skills/self-improve/SKILL.md) | Full discover → execute → reconcile → ship → retro → clock-out orchestrator                                                                   |
-| [`run-loop`](../skills/run-loop/SKILL.md)         | Scout / cron / AFK brief walker (complementary; not the full contribute graph)                                                                |
-| [`watch-mr`](../skills/watch-mr/SKILL.md)         | GitLab MR babysit (threads, CI, conflicts); never merge                                                                                       |
-| [`clock-out`](../skills/clock-out/SKILL.md)       | Session teardown after merge                                                                                                                  |
-| Agent worktrees                                   | **Required** for file edits — `.worktrees/<type>/<slug>` per [`worktrees.md`](../rules/worktrees.md). Isolation ≠ ship authority.             |
+| Skill                                             | Role                                                                                                                                         |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`ship-work`](../skills/ship-work/SKILL.md)       | Authorized contribute: commit → push → open MR → hard-gate [`watch-mr`](../skills/watch-mr/SKILL.md) until merged / dismissed / blocked      |
+| [`draft-commit`](../skills/draft-commit/SKILL.md) | Default when **not** authorized: propose Conventional Commit + optional draft MR body; may still ship when authorized (attended → `main` OK) |
+| [`self-improve`](../skills/self-improve/SKILL.md) | Full discover → execute → reconcile → ship → retro → clock-out orchestrator                                                                  |
+| [`run-loop`](../skills/run-loop/SKILL.md)         | Scout / cron / AFK brief walker (complementary; not the full contribute graph)                                                               |
+| [`watch-mr`](../skills/watch-mr/SKILL.md)         | GitLab MR babysit (threads, CI, conflicts); never merge                                                                                      |
+| [`clock-out`](../skills/clock-out/SKILL.md)       | Session teardown after merge                                                                                                                 |
+| Agent worktrees                                   | **Required** for file edits: `.worktrees/<type>/<slug>` per [`worktrees.md`](../rules/worktrees.md). Isolation ≠ ship authority.             |
 
-**Autonomous / self-improve:** never direct `main` — feature branch + MR; human
+**Autonomous / self-improve:** never direct `main`; feature branch + MR, human
 merges. **Attended** soft-ship may still push `main` via `draft-commit` when
 explicitly that mode.
 
@@ -85,7 +85,7 @@ find-work (read-only)
 ```
 
 **Observation vs durable state:** a local apply is short-lived when it differs
-from Git — Flux will reassert the repository on the next reconcile. Durable
+from Git; Flux will reassert the repository on the next reconcile. Durable
 desired state is commit + push (then Flux). Do not rely on child suspends or
 re-applies to keep uncommitted cluster state; see
 [`traps.md`](./traps.md#gitops--flux).
@@ -101,7 +101,7 @@ gap → (alignment if fuzzy) → file-issue (docs/issues/)
   → clock-out after merge
 ```
 
-Research (idle-only; writeups **persist** — not delete-on-ship):
+Research (idle-only; writeups **persist**, not delete-on-ship):
 
 ```
 approved seed / Launch brief with full contract
@@ -115,29 +115,29 @@ approved seed / Launch brief with full contract
 
 ### Available now
 
-| Fork                       | Invoke                                                                                                         |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Fuzzy scope / HITL         | [`alignment`](../skills/alignment/SKILL.md)                                                                    |
-| File / update / close gaps | [`file-issue`](../skills/file-issue/SKILL.md)                                                                  |
-| Context / link drift       | [`reconcile-context`](../skills/reconcile-context/SKILL.md) + `context-steward`                                |
-| Plan authoring             | `project-planner` → [`docs/plans/`](../../docs/plans/README.md) (SoT)                                          |
-| Rank / pick next work      | [`find-work`](../skills/find-work/SKILL.md) (read-only)                                                        |
-| Constant / unattended loop | [`run-loop`](../skills/run-loop/SKILL.md) — scout/AFK brief walker; stop gates ironclad                        |
-| Full contribute graph      | [`self-improve`](../skills/self-improve/SKILL.md) — find → execute → reconcile → ship-work → retro → clock-out |
-| One Launch-brief lap       | [`implement-change`](../skills/implement-change/SKILL.md)                                                      |
-| Babysit open MR            | [`watch-mr`](../skills/watch-mr/SKILL.md) — threads / CI / conflicts; never merge                              |
-| Idle research (tier 8)     | [`autoresearch`](../skills/autoresearch/SKILL.md) → [`docs/research/`](../../docs/research/README.md)          |
-| Docs / issue / plan close  | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)                                                          |
-| Local verify before ship   | [`review-loop`](../skills/review-loop/SKILL.md)                                                                |
-| Commit / MR handoff        | [`draft-commit`](../skills/draft-commit/SKILL.md) (default when not authorized)                                |
-| Authorized ship (MR)       | [`ship-work`](../skills/ship-work/SKILL.md) — commit → push → MR → watch-mr                                    |
-| Post-merge teardown        | [`clock-out`](../skills/clock-out/SKILL.md)                                                                    |
-| Manifest edit / verify     | `manifest-implementer` / `manifest-verifier`                                                                   |
-| Ops / security signals     | `site-reliability-engineer` / `security-analyst`                                                               |
-| Doc audits                 | `documentation-reviewer`                                                                                       |
-| Domain deploy / restore    | `helm-deployment`, `mcp-deployment`, restore skills                                                            |
+| Fork                       | Invoke                                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Fuzzy scope / HITL         | [`alignment`](../skills/alignment/SKILL.md)                                                                   |
+| File / update / close gaps | [`file-issue`](../skills/file-issue/SKILL.md)                                                                 |
+| Context / link drift       | [`reconcile-context`](../skills/reconcile-context/SKILL.md) + `context-steward`                               |
+| Plan authoring             | `project-planner` → [`docs/plans/`](../../docs/plans/README.md) (SoT)                                         |
+| Rank / pick next work      | [`find-work`](../skills/find-work/SKILL.md) (read-only)                                                       |
+| Constant / unattended loop | [`run-loop`](../skills/run-loop/SKILL.md): scout/AFK brief walker; stop gates ironclad                        |
+| Full contribute graph      | [`self-improve`](../skills/self-improve/SKILL.md): find → execute → reconcile → ship-work → retro → clock-out |
+| One Launch-brief lap       | [`implement-change`](../skills/implement-change/SKILL.md)                                                     |
+| Babysit open MR            | [`watch-mr`](../skills/watch-mr/SKILL.md): threads / CI / conflicts; never merge                              |
+| Idle research (tier 8)     | [`autoresearch`](../skills/autoresearch/SKILL.md) → [`docs/research/`](../../docs/research/README.md)         |
+| Docs / issue / plan close  | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)                                                         |
+| Local verify before ship   | [`review-loop`](../skills/review-loop/SKILL.md)                                                               |
+| Commit / MR handoff        | [`draft-commit`](../skills/draft-commit/SKILL.md) (default when not authorized)                               |
+| Authorized ship (MR)       | [`ship-work`](../skills/ship-work/SKILL.md): commit → push → MR → watch-mr                                    |
+| Post-merge teardown        | [`clock-out`](../skills/clock-out/SKILL.md)                                                                   |
+| Manifest edit / verify     | `manifest-implementer` / `manifest-verifier`                                                                  |
+| Ops / security signals     | `site-reliability-engineer` / `security-analyst`                                                              |
+| Doc audits                 | `documentation-reviewer`                                                                                      |
+| Domain deploy / restore    | `helm-deployment`, `mcp-deployment`, restore skills                                                           |
 
-Lap reports: `.scratch/laps/` (see that dir’s README; ephemeral; Discord
+Lap reports: `.scratch/laps/` (see that dir's README; ephemeral; Discord
 notify-only, not SoT). Hot-MR locks: `.scratch/watch-mr/locks/` (skip if another
 session owns the MR). Research sandbox: `.scratch/research/<slug>/` (gitignored;
 default experiment in-scope).
@@ -230,7 +230,7 @@ slices (~1000 absolute changed lines / MR). One implement lap = one MR.
 
 ## Out of scope
 
-Permanent — not deferred trackers.
+Permanent, not deferred trackers.
 
 - Auto-merge / auto-approve MRs (human merges)
 - Auto-allow protected paths or cluster mutation

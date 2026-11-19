@@ -2,7 +2,7 @@
 
 CSI driver that lets workloads mount SMB shares as persistent volumes. This
 deployment installs the driver only; the shares themselves are static
-per-app PVs — there is no StorageClass and no dynamic provisioning.
+per-app PVs. There is no StorageClass and no dynamic provisioning.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
@@ -17,7 +17,7 @@ per-app PVs — there is no StorageClass and no dynamic provisioning.
 
 ## How apps consume it
 
-Each consumer owns its share wiring in its own directory —
+Each consumer owns its share wiring in its own directory.
 `04-apps/games/rom-audit/smb-storage.yaml` is the canonical example:
 
 1. A static `PersistentVolume` with `csi.driver: smb.csi.k8s.io`,
@@ -25,7 +25,7 @@ Each consumer owns its share wiring in its own directory —
    `nodeStageSecretRef` naming the app's credentials secret
 2. A matching PVC with `storageClassName: ""` and `volumeName` pinned to
    the PV
-3. Credentials materialized by a `OnePasswordItem` CR — never a bare
+3. Credentials materialized by a `OnePasswordItem` CR, never a bare
    managed Secret and never `kubectl create secret`:
 
    ```yaml

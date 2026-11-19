@@ -15,7 +15,7 @@ kube-apiserver creates the audit log with mode `0600` inside a `0700`
 directory (upstream `pkg/server/options/audit.go`), so only root can read
 it. The shared Alloy DaemonSet runs as UID 10001. This DaemonSet runs as
 root with a read-only hostPath mount, all capabilities dropped, no
-privilege escalation, and no Service, ports, or cluster access — the
+privilege escalation, and no Service, ports, or cluster access: the
 smallest root surface that can read the file.
 
 ## Configuration
@@ -47,9 +47,9 @@ operator step.
 
 ## Chart exposure minimization
 
-- `serviceAccount.automountServiceAccountToken: false` — the SA is zero-RBAC
+- `serviceAccount.automountServiceAccountToken: false`: the SA is zero-RBAC
   (`rbac.create: false`) and no token is ever mounted into the pod
-- `alloy.enableHttpServerPort: false` — the chart drops the containerPort and
+- `alloy.enableHttpServerPort: false`: the chart drops the containerPort and
   the readiness probe; the config-reloader still reloads via the pod-local
   loopback listener (`--server.http.listen-addr=127.0.0.1:12345`)
 

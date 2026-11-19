@@ -1,9 +1,9 @@
-# Tailnet DNS - split-DNS resolver for friends
+# Tailnet DNS: split-DNS resolver for friends
 
 Tailnet-internal DNS for `gateway.services.apocrathia.com`, so invited friends
 (and the operator's own tailnet devices) resolve the same hostnames the LAN
 uses, pointed at `tailnet-gateway` instead of `main-gateway`. LAN-only zones
-(`access.apocrathia.com`, `services.apocrathia.com`) are covered too — see
+(`access.apocrathia.com`, `services.apocrathia.com`) are covered too; see
 [How it works](#how-it-works).
 
 > **Navigation**: [← Back to Services README](../README.md)
@@ -17,7 +17,7 @@ queries here. App records point at `tailnet-gateway`'s
 tailnet address (`100.120.155.113`); LAN-only names (e.g.
 `storage.services.apocrathia.com`, `ians-gaming-pc.access.apocrathia.com`)
 resolve to LAN IPs via their VLAN resolvers (access 10.100.0.1, services
-10.100.1.1) — visible to friends but unroutable for them (deny-by-default).
+10.100.1.1), visible to friends but unroutable for them (deny-by-default).
 
 | Component     | Implementation                                                                                                                                                                                                                                                                                           |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,7 +38,7 @@ resolve to LAN IPs via their VLAN resolvers (access 10.100.0.1, services
    (unknown names there NXDOMAIN, never the VLAN answer), static
    game-host and matrix records, and a forward of LAN-only names (e.g.
    `storage.services.apocrathia.com`, the NAS) to the services VLAN
-   resolver `10.100.1.1` — the same answers LAN clients get. The
+   resolver `10.100.1.1`, the same answers LAN clients get. The
    `access.apocrathia.com` block forwards its zone to the access VLAN's
    own DNS at `10.100.0.1`. All other zones are refused; this is not a
    general resolver.
@@ -58,7 +58,7 @@ ExternalDNS rebuilds every record on its next sync; expect a sub-minute gap.
 ## Static zones: the game host and matrix server_name
 
 The Corefile serves a static `hosts`-plugin record for the bare AMP game
-host inside the domain zone block: one address, both names —
+host inside the domain zone block: one address, both names,
 `game.services.apocrathia.com game.apocrathia.com` as aliases (a
 services-only zone would not match the bare name, so the record lives in
 the `apocrathia.com` block). Static because nothing in-cluster sources
@@ -71,11 +71,11 @@ The same hosts block also serves `matrix.apocrathia.com`, the Synapse
 `server_name`: `100.120.155.113`, the `tailnet-gateway` operator-proxy
 device IP (`cilium-gateway-tailnet-gateway` LoadBalancer EXTERNAL-IP),
 stable across restarts like the resolver device's. The record is the
-federation/client door for the `server_name` host — remote Synapse peers
+federation/client door for the `server_name` host: remote Synapse peers
 on the tailnet fetch `https://matrix.apocrathia.com/.well-known/matrix/server`
 and send federation to `:443` on `tailnet-gateway`, riding the existing
 `autogroup:member -> tag:k8s tcp:443` grant. Deliberately no public DNS
-record — the tailnet is the only serving path. Static for the same
+record: the tailnet is the only serving path. Static for the same
 reason as the game host: nothing in-cluster sources the bare name (the
 etcd leg only serves the `gateway.services.apocrathia.com` app zone).
 
@@ -87,7 +87,7 @@ device. The nameserver must be an IP, and the proxy device's tailnet
 IP is only knowable after first deploy:
 
 1. After Flux rolls out this stack, read the device IP: the proxy runs
-   as a StatefulSet pod, so exec it directly -
+   as a StatefulSet pod, so exec it directly:
    `kubectl -n tailscale-system exec sts/<ts-tailnet-dns-*> -- tailscale ip -4`
    (or read the `tailnet-dns` device in the Tailscale admin console).
 2. Set the restricted nameserver via Terraform

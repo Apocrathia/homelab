@@ -9,7 +9,7 @@ Flux `HelmRepository` sources for every chart the cluster deploys.
 - One `HelmRepository` per source, all in `repositories/` (plain HTTP charts)
   or OCI (registry references). Flux reconciles each source on its configured
   interval and serves chart indices to the `HelmReleases` that reference them.
-- The inventory is the directory itself — `repositories/kustomization.yaml`
+- The inventory is the directory itself: `repositories/kustomization.yaml`
   lists every source. Do not duplicate the list or the update intervals here;
   they drift. `ls flux/manifests/01-bootstrap/helm/repositories/` or
   `kubectl get helmrepositories -n flux-system` shows the current set.

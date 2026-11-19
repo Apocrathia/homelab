@@ -9,10 +9,10 @@ Each file is the pipeline's `definition`, verbatim.
 
 `ocsf-archive.tql` is the record_integrity lane's stamping point: the
 archive rule's pipeline mints the per-record `metadata.uid` (the chain
-locator + sort tie-break — load-bearing here, v5 flow stamps tie whole
+locator + sort tie-break, load-bearing here, v5 flow stamps tie whole
 datagrams deep), sorts the pass in (time, uid) order, and stamps the
 per-node attestation chain (chain_uid = tenzir-node-netflow) before
-the to_clickhouse INSERT — the attestation covers the record exactly
+the to_clickhouse INSERT, the attestation covers the record exactly
 as archived. The mechanics live in the homelab package
 ([`packages/homelab/operators/record_integrity/`](../../../packages/homelab/operators/record_integrity/README.md)).
 

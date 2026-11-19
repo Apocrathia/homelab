@@ -68,8 +68,10 @@ flux/
 - For HelmReleases, pipe values directly to helm template: `yq '.spec.values' <helmrelease.yaml> | helm template <release-name> <chart-path> -f -`
 
 3. For complex changes or when local validation is insufficient, apply changes to the cluster for testing before committing
-4. **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
-5. **Default: no commit/push** - operator ships; commit/push only when authorized for this lap ([`constraints.md#commit-and-ship`](../../.agents/context/constraints.md#commit-and-ship))
+4. **Do not make any changes without first consulting the operator**,
+   presenting options, and obtaining explicit approval
+5. **Default: no commit/push**: operator ships; commit/push only when
+   authorized for this lap ([`constraints.md#commit-and-ship`](../../.agents/context/constraints.md#commit-and-ship))
 6. Flux will automatically reconcile changes
 
 ## Security Considerations
@@ -83,7 +85,7 @@ flux/
 3. Regular security scanning of container images
 4. Network segmentation using network policies
 5. **After making changes in any package dependency/manifest files, scan the project for security vulnerabilities**
-6. **Use Gateway API only** - do not use traditional Ingress resources
+6. **Use Gateway API only**: do not use traditional Ingress resources
 
 ## Monitoring and Maintenance
 
@@ -96,12 +98,12 @@ flux/
 ## Best Practices
 
 1. Version all deployments
-2. **Never use `latest` or mutable image tags** - they're garbage for GitOps
+2. **Never use `latest` or mutable image tags**: they're garbage for GitOps
 
    - `latest` is unpredictable, unreproducible, and breaks rollbacks
    - Always pin to explicit semantic versions (e.g., `v1.2.3`, `1.2.3`)
    - If you see `latest` in a manifest, fix that shit immediately
-   - Renovate handles version bumps - let it do its job
+   - Renovate handles version bumps; let it do its job
    - **Add Renovate comments** so versions get tracked:
 
      ```yaml
@@ -123,6 +125,6 @@ flux/
    - Use Flux's fromValues function to reference secret values
    - Maintain clear documentation of secret references
 7. Authentik integration:
-   - **Do not create HTTPRoute when configuring services with the Authentik proxy provider** — Authentik manages routing via the outpost.
+   - **Do not create HTTPRoute when configuring services with the Authentik proxy provider**; Authentik manages routing via the outpost.
    - HTTPRoute is required for Authentik OIDC mode, not proxy mode.
    - **Clean out any old Ingress resources** in favor of Gateway API.

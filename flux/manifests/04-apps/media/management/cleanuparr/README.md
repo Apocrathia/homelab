@@ -1,6 +1,6 @@
 # Cleanuparr
 
-Automated download management system that monitors and cleans up unwanted or blocked files in Sonarr, Radarr, and download clients.
+Monitors and removes unwanted or blocked downloads in Sonarr, Radarr, and the download clients.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
@@ -8,9 +8,8 @@ Automated download management system that monitors and cleans up unwanted or blo
 
 This deployment includes:
 
-- Cleanuparr automated download cleanup system
 - Official Cleanuparr container with .NET runtime
-- Authentik SSO integration for secure access
+- Authentik SSO integration
 - Longhorn persistent storage for configuration
 - Integration with \*Arr applications and download clients
 
@@ -47,11 +46,8 @@ The deployment uses standard .NET container security:
 
 ## Authentication
 
-Authentication is handled through Authentik SSO:
-
-1. **Proxy Provider**: Authentik blueprint creates a proxy provider
-2. **Automatic Setup**: HTTPRoute and outpost created automatically
-3. **Clean Deployment**: Works with Authentik from day one
+Authentik SSO via a proxy provider from the Authentik blueprint; the
+HTTPRoute and outpost are created automatically.
 
 ## Integration
 
@@ -76,8 +72,8 @@ After deployment, configure Cleanuparr through the web interface:
 
 ## Security Considerations
 
-- **SSO Integration**: Complete authentication through Authentik proxy
-- **Non-root Execution**: Runs as unprivileged user for security
+- **SSO Integration**: Authentication through the Authentik proxy
+- **Non-root Execution**: Runs as unprivileged user
 - **Network Policies**: Cilium NetworkPolicy for traffic control
 - **Malware Protection**: Built-in malware detection and blocking
 

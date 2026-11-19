@@ -8,7 +8,7 @@ Threat-intelligence and detection platforms for the homelab.
 
 ### [Coraza](./coraza/)
 
-Browser-based WAF testing tool — write SecLang rules and test them against
+Browser-based WAF testing tool: write SecLang rules and test them against
 HTTP requests. A static mirror of the Coraza Playground (the open-source
 ModSecurity-compatible WAF compiled to WebAssembly), fetched by an init
 container and served by nginx; no backend, no database.
@@ -39,7 +39,7 @@ the MISP import connector are included.
 
 OpenAEV (Open Adversarial Exposure Validation, formerly OpenBAS) is Filigran's
 open-source exposure-validation platform: attack simulation campaigns and
-tabletop exercises with defense coverage measurement — the attack-side sibling
+tabletop exercises with defense coverage measurement, the attack-side sibling
 of OpenCTI. Runs as four generic-app workloads (platform, OpenSearch engine,
 RabbitMQ, CNPG PostgreSQL) with Authentik OIDC SSO and NAS rustfs object
 storage.
@@ -55,7 +55,7 @@ TAXII 2.1 server for STIX indicator exchange, backed by CloudNativePG, feeding
 the MISP/OpenCTI pipeline. It exists to feed OpenCTI a distinct, manageable
 feed: an on-ramp that turns any in-lab STIX producer (canary triage, MISP
 push, future scripts) into one authenticated TAXII 2.1 collection the existing
-taxii2 connector imports, keeping producers decoupled from OpenCTI's API and
+taxii2 connector imports; producers stay decoupled from OpenCTI's API and
 token. Why a separate hub: OpenCTI's embedded TAXII server is outbound-only
 (it serves the graph; it does not accept pushes), so inbound STIX otherwise
 means OpenCTI API scripts; there is no off-the-shelf OpenCanary connector in
@@ -77,7 +77,7 @@ normalize kube-apiserver audit, tetragon, authentik, fleet, trivy, and
 NetFlow feeds to a unified OCSF bus, run SigmaHQ + homelab Sigma rules
 over it, and archive findings into the ClickHouse datalake after a
 15-minute hot window. The ClickHouse cluster is nested under the tenzir
-tree ([`tenzir/clickhouse/`](./tenzir/clickhouse/README.md) — the OCSF
+tree ([`tenzir/clickhouse/`](./tenzir/clickhouse/README.md), the OCSF
 lake and the single-JSON-column investigations store); the Altinity
 operator managing it stays at
 [`03-services/clickhouse/`](../../03-services/clickhouse/README.md).

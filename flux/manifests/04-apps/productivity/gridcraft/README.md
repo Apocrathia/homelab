@@ -4,7 +4,7 @@
 
 ## Overview
 
-GridCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+GridCraft is an open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** <https://gridcraft.gateway.services.apocrathia.com>
 

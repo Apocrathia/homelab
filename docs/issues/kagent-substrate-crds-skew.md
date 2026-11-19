@@ -34,7 +34,7 @@ functionality stays down until this is resolved.
   (`go/core/pkg/sandboxbackend/substrate/lifecycle_actortemplate.go` in the
   v0.10.0 tag). PauseImage comes from the `--substrate-pause-image` default.
 - The installed substrate-crds 0.0.6 ActorTemplate CRD requires
-  `["pauseImage","runsc","snapshotsConfig","workerPoolRef"]` — it has no
+  `["pauseImage","runsc","snapshotsConfig","workerPoolRef"]`; it has no
   `workerSelector` field.
 - Upstream substrate is at v0.0.25 (installed: 0.0.6, applied 2026-08-08).
   kagent 0.10.0 was developed against newer substrate CRDs where the

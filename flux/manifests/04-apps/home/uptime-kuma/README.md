@@ -1,6 +1,6 @@
 # Uptime Kuma
 
-Self-hosted monitoring tool for tracking service uptime and performance across multiple protocols.
+Uptime and latency monitoring across multiple protocols.
 
 > **Navigation**: [← Back to Home README](../README.md)
 
@@ -12,8 +12,8 @@ This deployment includes:
 - Real-time notifications with 90+ providers
 - Public-facing status pages with custom domains
 - Performance tracking with response time charts
-- Modern web interface with dark/light themes
-- Authentik SSO integration for secure access
+- Web interface with dark/light themes
+- Authentik SSO integration
 
 ## Configuration
 
@@ -28,18 +28,15 @@ This deployment includes:
 
 ## Authentication
 
-Authentication is handled through Authentik SSO:
-
-1. **Proxy Provider**: Authentik blueprint creates a proxy provider
-2. **Automatic Setup**: HTTPRoute and outpost created automatically
-3. **Clean Deployment**: Works with Authentik from day one
+Authentik SSO via a proxy provider from the Authentik blueprint; the
+HTTPRoute and outpost are created automatically.
 
 ## Security Considerations
 
-- **Rootless Container**: Runs as user 1000:1000 for security hardening
-- **No Linux Capabilities**: Maximum security hardening
+- **Rootless Container**: Runs as user 1000:1000
+- **No Linux Capabilities**: All capabilities dropped
 - **Read-only Root Filesystem**: Disabled only where necessary
-- **SSO Integration**: Complete authentication through Authentik proxy
+- **SSO Integration**: Authentication through the Authentik proxy
 
 ## Troubleshooting
 

@@ -6,7 +6,7 @@ Non-negotiables for every harness.
 
 - **Explore freely:** read, search, validate, lint, scan (workspace root OK).
 - **Edit in a worktree:** file changes go under `.worktrees/<type>/<slug>` on a
-  dedicated branch — not the workspace root checkout. Run
+  dedicated branch, not the workspace root checkout. Run
   [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) before creating a
   new worktree. See [`worktrees.md`](../rules/worktrees.md).
 - **Ask before** live cluster mutation (`kubectl apply/delete`, `flux reconcile`,
@@ -24,7 +24,7 @@ Non-negotiables for every harness.
   in the session does not carry forward.
 - **Authorized contribute path:** [`ship-work`](../skills/ship-work/SKILL.md)
   (commit → push → MR → [`watch-mr`](../skills/watch-mr/SKILL.md)). Autonomous
-  / self-improve never direct `main` — feature branch + MR; human merges.
+  / self-improve never direct `main`: feature branch + MR; human merges.
 - **Hooks always run.** Never bypass with `--no-verify` or equivalent, even
   when authorized.
 - **Hard stops even when authorized:**
@@ -33,13 +33,13 @@ Non-negotiables for every harness.
   - Amending someone else's commit, or a commit already pushed.
   - Staging clearly unrelated WIP.
   - Merge or approve an MR without an explicit operator ask.
-- **Advisory, not a stop:** messy or incomplete-looking diffs — warn, proceed
+- **Advisory, not a stop:** messy or incomplete-looking diffs: warn, proceed
   if authorized.
 - **Ship target + diverged-main recipe:** attended vs autonomous targets, and
   the diverged-main stash/rebase/push recipe, live once in
   [`development-loop.md`](./development-loop.md) and
-  [`draft-commit`](../skills/draft-commit/SKILL.md) — do not duplicate here.
-- **Ship model:** hybrid work graph — see
+  [`draft-commit`](../skills/draft-commit/SKILL.md). Do not duplicate here.
+- **Ship model:** hybrid work graph; see
   [`development-loop.md#ship-model`](./development-loop.md#ship-model)
   (`ship-work` / `self-improve` / `clock-out` adopted; `draft-commit` remains
   the unauthorized default; `run-loop` remains scout/AFK).
@@ -51,7 +51,7 @@ Non-negotiables for every harness.
 - **1Password Item CRs** for secrets, not bare Kubernetes `Secret` manifests as
   the managed source.
 - **Secret sync between Kubernetes and 1Password: plain ESO PushSecret
-  manifests** — never custom script-in-ConfigMap CronJob glue
+  manifests**, never custom script-in-ConfigMap CronJob glue
   ([`secrets.md`](../rules/secrets.md) for the canonical shapes).
 - Prefer Prettier + yamllint conventions for YAML/markdown the project already uses.
 

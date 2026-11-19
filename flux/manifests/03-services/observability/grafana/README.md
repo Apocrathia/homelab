@@ -6,7 +6,7 @@ The Grafana Operator manages dashboards and datasources for the existing kube-pr
 
 ## Overview
 
-This deployment installs the Grafana Operator using the official Helm chart from the Grafana repository. The operator connects to the existing kube-prometheus-stack Grafana instance and enables:
+This deployment installs the Grafana Operator from the official Helm chart. It connects to the existing kube-prometheus-stack Grafana instance and enables:
 
 - Dashboard management through `GrafanaDashboard` CRDs
 - Datasource management through `GrafanaDatasource` CRDs
@@ -16,13 +16,13 @@ This deployment installs the Grafana Operator using the official Helm chart from
 
 ## Architecture
 
-- **Grafana UI**: Provided by kube-prometheus-stack in `prometheus-system` namespace
-- **Grafana Operator**: Manages external Grafana instance via `Grafana` CRD
-- **Dashboard Management**: CRD-based dashboard deployment and synchronization
+- Grafana UI provided by kube-prometheus-stack in the `prometheus-system` namespace
+- Grafana Operator manages the external Grafana instance via the `Grafana` CRD
+- Dashboards deploy and sync through CRDs
 
 ## Usage
 
-### Creating Dashboards
+### Creating dashboards
 
 Deploy dashboards using `GrafanaDashboard` CRDs:
 
@@ -40,7 +40,7 @@ spec:
     id: 22928 # Import from Grafana.com
 ```
 
-### Managing Datasources
+### Managing datasources
 
 Configure datasources using `GrafanaDatasource` CRDs:
 
@@ -66,8 +66,8 @@ spec:
 
 Datasources deployed by this folder ([`datasources/`](./datasources/)):
 
-- `homeassistant` — InfluxDB (Home Assistant), InfluxQL
-- `ocsf-clickhouse` — ClickHouse OCSF query store via the pinned
+- `homeassistant`: InfluxDB (Home Assistant), InfluxQL
+- `ocsf-clickhouse`: ClickHouse OCSF query store via the pinned
   `grafana-clickhouse-datasource@4.20.0` catalog plugin (kube-prometheus-stack
   `grafana.plugins:` value), native protocol on the `clickhouse-tenzir` service
 
@@ -82,7 +82,7 @@ Two ESO PushSecrets mirror grafana-operator service-account tokens into 1Passwor
 - [`push-secret-mcp.yaml`](./push-secret-mcp.yaml): Secret `mcp-server-token` → item `grafana-mcp-service-account`
 - [`push-secret-gcx.yaml`](./push-secret-gcx.yaml): Secret `gcx-token` → item `homelab-gcx-token` (pre-created `API_CREDENTIAL`; the update path preserves category, the create path would hardcode `SERVER`)
 
-Both use `refreshInterval: 168h` with `deletionPolicy: None`. ESO v2.12 PushSecret PUTs the provider item on every reconcile even when the value is unchanged, which bumps the item's updated-at and floats it to the top of the vault list — so the refresh interval IS the bump frequency until upstream adds change-gating. Tokens rotate rarely; convergence is ≤7 days, and a stale vault token fails closed (401 in gcx) and heals on the next reconcile.
+Both use `refreshInterval: 168h` with `deletionPolicy: None`. ESO v2.12 PushSecret PUTs the provider item on every reconcile even when the value is unchanged, which bumps the item's updated-at and floats it to the top of the vault list: the refresh interval IS the bump frequency until upstream adds change-gating. Tokens rotate rarely; convergence is ≤7 days, and a stale vault token fails closed (401 in gcx) and heals on the next reconcile.
 
 `gcx-service-account.yaml` is the dedicated Grafana service account for gcx consumers, decoupled from the mcp-server account.
 

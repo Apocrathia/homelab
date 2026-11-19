@@ -22,7 +22,7 @@ Desired (phase 4): fill gaps on selected non-`generic-app` HelmReleases.
 
 ## Acceptance
 
-- At least 3–5 high-value foreign charts monitored in Gatus
+- At least 3-5 high-value foreign charts monitored in Gatus
 - Prefer chart-native Service / common annotations over `postRenderers`
 - At most sparse use of `postRenderers` (escape hatch, not the pattern)
 - In-cluster HTTP URLs; existing Grafana rules cover them
@@ -34,7 +34,7 @@ Desired (phase 4): fill gaps on selected non-`generic-app` HelmReleases.
 
 ## Implementation hint
 
-Phases 1–3 are done. Remaining set is truly "gaps", not the whole catalog.
+Phases 1-3 are done. Remaining set is truly "gaps", not the whole catalog.
 
 Candidates (not committed): `litellm`, `openwebui`, `headlamp`, `immich`,
 `qdrant`, `renovate`.

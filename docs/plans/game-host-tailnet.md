@@ -18,7 +18,7 @@ tailnet split-DNS work:
   (CGNAT) address through the existing `tailnet-dns` split-DNS resolver
 - the AMP web UI moves from `:8080` plain HTTP to `https://` on 443 behind
   nginx with a Let's Encrypt cert minted via Cloudflare DNS-01 (no public
-  A record, no open ports — Cloudflare API only)
+  A record, no open ports; Cloudflare API only)
 - AMP authenticates through Authentik via OIDC; the existing `amp` bookmark
   application is upgraded to a real OIDC application
 - web UI access is admins-only; game instance ports are open to all tailnet
@@ -26,7 +26,7 @@ tailnet split-DNS work:
 
 ## References
 
-- CubeCoders AMP HTTPS setup (nginx reverse proxy — the vhost this role
+- CubeCoders AMP HTTPS setup (nginx reverse proxy; the vhost this role
   templates is based on):
   <https://discourse.cubecoders.com/t/setting-up-secure-http-https-with-amp/2305>
 - CubeCoders AMP OIDC with Authentik (AMPConfig.conf keys, AMP\_ role prefix):
@@ -37,7 +37,7 @@ tailnet split-DNS work:
   <https://discourse.cubecoders.com/t/setup-oidc-using-authelia/37220>
 - acme.sh DNS API (dns_cf) and options:
   <https://github.com/acmesh-official/acme.sh/wiki/dnsapi#1-cloudflare-option>
-- acme.sh default CA is ZeroSSL since v3.0 — `--server letsencrypt` pins LE:
+- acme.sh default CA is ZeroSSL since v3.0; `--server letsencrypt` pins LE:
   <https://codeberg.org/neilpang/acme.sh/wiki/Change-default-CA>
 
 - Tailscale policy file syntax (grants, tagOwners, tests):
@@ -48,18 +48,18 @@ tailnet split-DNS work:
 
 ## Slices
 
-1. **Ansible — nginx + acme.sh (DNS-01)** (`ansible/roles/nginx_site` +
+1. **Ansible: nginx + acme.sh (DNS-01)** (`ansible/roles/nginx_site` +
    in-repo `ansible/roles/acme_sh`, `ansible/playbooks/game.yml`): generic
-   reverse-proxy site — 443 ssl -> upstream with websocket headers. The
+   reverse-proxy site; 443 ssl -> upstream with websocket headers. The
    in-repo acme_sh role owns the four commands (clone, install, issue,
    install-cert) with Cloudflare DNS-01 and `--server letsencrypt` pinned
    (acme.sh defaults to ZeroSSL); renewal cron + reloadcmd are acme.sh's
-   own. A Galaxy wrapper was evaluated and dropped — our usage is one
+   own. A Galaxy wrapper was evaluated and dropped; our usage is one
    domain on one host, and the wrapper's install plumbing outweighed its
    logic. All AMP specifics (domain, upstream, shared webroot, token
    lookup) live in `ansible/inventory/host_vars/game.yml`. The roles are
    app-agnostic: the next host is a host_vars entry plus a playbook line.
-2. **Ansible — tailscale** (`ansible/roles/tailscale`): join with
+2. **Ansible: tailscale** (`ansible/roles/tailscale`): join with
    host_vars-declared tags (`tag:game` for this host), no subnet routes,
    accept tailnet DNS.
 3. **Authentik blueprint** (`flux/manifests/03-services/authentik/blueprints/amp.yaml`):
@@ -82,7 +82,7 @@ tailnet split-DNS work:
   vault `Secrets`, title `tailscale-ansible-authkey`, token in the default
   `credential` field. CI picks it up via `ansible/ci/fetch_op_secrets.py`
   (1Password Connect) and passes it as `-e @op_secrets.json`. Blast radius:
-  any holder of the key joins as `tag:game` — note the revoke procedure in
+  any holder of the key joins as `tag:game`; note the revoke procedure in
   the 1Password item (console: Settings -> Keys -> revoke). No interactive
   login on the host: the role passes `--authkey`, and pre-authorization
   skips the console approval click. The LAN was already the trust boundary
@@ -101,11 +101,11 @@ One tag (`tag:game`) with explicit per-port grants is the honest model while
 the host is the unit: game instances are ports on it, and each port addition
 is a reviewed policy diff. Per-instance tags would mean re-keying the host
 per game (authkeys are tag-scoped). When a second game HOST appears, that is
-the moment for `tag:game-2` etc. — same join role, new tagOwners entry.
+the moment for `tag:game-2` etc.; same join role, new tagOwners entry.
 
 ## Notes
 
-- The tailnet sharing surface is 443 (admins) + game ports (members) only —
+- The tailnet sharing surface is 443 (admins) + game ports (members) only;
   no tailnet grant touches 8080, so AMP's LAN-bound web port stays LAN-only.
   `amp-exporter` keeps hitting `http://game.apocrathia.com:8080` over the
   LAN and needs no change.
@@ -116,7 +116,7 @@ the moment for `tag:game-2` etc. — same join role, new tagOwners entry.
 
 ## Verification
 
-Post-ship (binding census — import race watch): the blueprint CM change makes
+Post-ship (binding census; import race watch): the blueprint CM change makes
 all 4 Authentik workers re-import the file; the same race that left demo-app
 with duplicate admins bindings can fire (unique_together has NULL policy_id;
 Postgres NULLs never collide). After this lands, run the census and expect
@@ -128,7 +128,7 @@ WHERE target = (amp application) AND "group" = (admins group);
 ```
 
 Also: `AMP_Super Admins` is a role-mapping group (AMP reads the prefixed
-name from the groups claim), NOT an access tier — it must never carry app
+name from the groups claim), NOT an access tier; it must never carry app
 policybindings of its own. Do not add any in review or follow-ups.
 
 1. Admin device: `https://game.apocrathia.com` loads with a valid LE cert,

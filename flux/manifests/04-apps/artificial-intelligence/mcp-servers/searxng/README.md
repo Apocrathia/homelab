@@ -1,6 +1,6 @@
 # SearXNG MCP Server
 
-The SearXNG MCP server provides web search capabilities through the Model Context Protocol.
+Web search via the internal SearXNG instance, exposed over MCP.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
@@ -38,7 +38,7 @@ This server is accessible only through the LiteLLM proxy. See the [main README](
 
 ## Available MCP Tools
 
-The SearXNG MCP server provides these tools:
+Tools:
 
 1. **searxng_web_search**
 
