@@ -1,4 +1,4 @@
-# CIS macOS 26 Tahoe — MDM profiles
+# CIS macOS 26 Tahoe: MDM profiles
 
 Vendored from Fleet
 [`ee/cis/macos-26/test/profiles`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26/test/profiles)
