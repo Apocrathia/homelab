@@ -5,9 +5,7 @@
 Dedicated Grafana Alloy DaemonSet that tails
 `/var/log/audit/kube/kube-apiserver.log` on every control plane and dual-writes
 each line to Loki and to the Tenzir detection node (`accept_otlp` 4318). The
-path is the Talos 1.14 default (live apiserver `--audit-log-path`, verified
-2026-10-12); the pre-1.14 `/var/log/kube-apiserver/audit.log` location died in
-the 2026-10-10 config roll and starved the k8s-audit lanes until this fix.
+path is the Talos 1.14 default (live apiserver `--audit-log-path`).
 
 ## Why it is not part of the shared Alloy
 

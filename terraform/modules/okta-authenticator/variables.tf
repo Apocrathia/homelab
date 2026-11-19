@@ -4,7 +4,7 @@ variable "authenticators" {
     the Okta key, e.g. "webauthn"). Creating an existing key is a soft import;
     destroy only deactivates. settings is the raw jsonencode()d Okta settings
     object for that key (e.g. {"allowedFor" = "recovery"} for email/phone);
-    not used for webauthn — see var.webauthn instead.
+    not used for webauthn; see var.webauthn instead.
   EOT
   type = map(object({
     key                = string
@@ -36,14 +36,14 @@ variable "authenticators" {
 
 variable "webauthn" {
   description = <<-EOT
-    WebAuthn (Security Key / FIDO2) method settings — the passkey levers.
+    WebAuthn (Security Key / FIDO2) method settings: the passkey levers.
     null (default) leaves the org's settings untouched. Attachment: ANY
     (passkeys + roaming security keys), PLATFORM (device-bound only), or
     CROSS_PLATFORM (roaming keys only). aaguid_groups keys are group names.
     The provider always sends this list: {} asserts Okta's default (no custom
     AAGUID groups), so existing custom org groups must be declared here or the
     first apply clears them. Omitted scalars (e.g. hardware_protected) are
-    safe — null keeps the org value.
+    safe; null keeps the org value.
   EOT
   type = object({
     user_verification                  = optional(string, "PREFERRED")

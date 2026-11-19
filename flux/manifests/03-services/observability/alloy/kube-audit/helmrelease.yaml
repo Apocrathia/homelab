@@ -33,7 +33,7 @@ spec:
     # minimum, so raise the minimum to public-preview.
     controller:
       type: daemonset
-      # The alloy chart reads scheduling keys only under controller: — values
+      # The alloy chart reads scheduling keys only under controller:: values
       # at the root are ignored.
       # Control planes only (audit.log does not exist on workers). This cluster
       # runs control-plane-only, so this is 4/4 nodes.
@@ -77,7 +77,7 @@ spec:
       # 0700-dir/0600-file owned by 65534. Root without caps cannot cross
       # that DAC barrier (live-verified: Permission denied with drop-ALL).
       # Scope of privilege: one read-only hostPath volume, the single
-      # DAC_READ_SEARCH cap (file reads only — no write/kill/sys overrides),
+      # DAC_READ_SEARCH cap (file reads only: no write/kill/sys overrides),
       # no privilege escalation, read-only root filesystem.
       securityContext:
         runAsNonRoot: false

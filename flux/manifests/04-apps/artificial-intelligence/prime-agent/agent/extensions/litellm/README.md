@@ -1,4 +1,4 @@
-# litellm — LiteLLM gateway model provider
+# litellm: LiteLLM gateway model provider
 
 `index.ts` registers the LiteLLM gateway as the model provider and
 discovers the live model catalog from it at startup (no local copy;
@@ -8,7 +8,7 @@ discovers the live model catalog from it at startup (no local copy;
 
 ## Configuration
 
-- `LITELLM_BASE_URL` — OpenAI-compatible base URL including `/v1`.
+- `LITELLM_BASE_URL`, OpenAI-compatible base URL including `/v1`.
   The pod uses in-cluster LiteLLM service DNS; the Mac points at the
   gateway hostname via its environment.
 - Auth: the `/login`-written `auth.json` entry wins when present; falls

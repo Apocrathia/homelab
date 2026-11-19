@@ -22,7 +22,7 @@ spec:
     matchLabels:
       app: copyparty
   ingress:
-    # Authentik proxy outpost — the only header-injecting source
+    # Authentik proxy outpost: the only header-injecting source
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: authentik
@@ -30,7 +30,7 @@ spec:
         - ports:
             - port: "3923"
               protocol: TCP
-    # gatus synthetic probes (no identity headers — unauthenticated view)
+    # gatus synthetic probes (no identity headers: unauthenticated view)
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: gatus

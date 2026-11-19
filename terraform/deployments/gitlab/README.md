@@ -1,4 +1,4 @@
-# gitlab — GitLab deployment
+# gitlab: GitLab deployment
 
 The GitLab lane: `homelab/` scaffolds the Apocrathia/homelab project
 through the gitlab-project module.

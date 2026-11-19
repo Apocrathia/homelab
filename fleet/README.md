@@ -63,16 +63,14 @@ Drop `.keep` when you add real content.
   directly into Home with the fleet enroll secret). Controls are inlined under
   `controls:` in that file (disk encryption + script library globs). Policy
   `platforms/all/policies/fleet-dm-was-here.yml` fails when the Desktop
-  marker is missing and runs `fleet-dm-was-here.sh` (pass→fail only; ~hourly
-  cadence).
+  marker is missing and runs `fleet-dm-was-here.sh` (pass→fail only).
 - **Fleet software (Fleet-maintained apps)** → `software.fleet_maintained_apps`
   in `fleets/home.yml`. The `/darwin` slug scopes each app to macOS (GitOps
-  rejects built-in labels like `macOS`). Install+patch (presence policy +
-  `type: patch`): 1Password, Ableton Live Suite, Claude, Cursor, Fleet Desktop,
-  Ghostty, Slack under `platforms/macos/policies/`. Self-service only (My Device,
-  no auto-install): Blender, ChatGPT, Discord, GitHub Desktop, HandBrake, OBS,
-  Obsidian, Podman Desktop, Rectangle, Spotify, Steam, Syncthing, Tailscale,
-  VLC, Zoom. Home loads every platform policy tree via
+  rejects built-in labels like `macOS`). Install+patch apps pair a presence policy
+  with a `type: patch` policy under `platforms/macos/policies/`; rosters live
+  in `fleets/home.yml`. Self-service-only apps (My Device, no auto-install
+  policies) are the remaining `fleet_maintained_apps` entries in
+  `fleets/home.yml`. Home loads every platform policy tree via
   `paths: ../platforms/**/policies/**/*.yml`; drop a new `.yml` under any
   `platforms/*/policies/` and GitOps picks it up. Overlapping globs that match
   the same file will fail GitOps (ambiguous).

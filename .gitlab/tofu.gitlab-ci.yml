@@ -105,7 +105,7 @@ tofu-plan:
             if (refresh[unit] == "") {
               return
             }
-            print "<details><summary><code>" unit "</code> — Proxmox address refresh</summary>"
+            print "<details><summary><code>" unit "</code>: Proxmox address refresh</summary>"
             print ""
             print "```hcl"
             printf "%s", refresh[unit]
@@ -211,7 +211,7 @@ tofu-plan:
                 continue
               }
 
-              print "<details open><summary><code>" unit "</code> — " status[unit] "</summary>"
+              print "<details open><summary><code>" unit "</code>: " status[unit] "</summary>"
               print ""
               print "```hcl"
               printf "%s", body[unit]
@@ -286,7 +286,7 @@ tofu-plan:
       exit ${PLAN_EXIT:-0}
   allow_failure: false
 
-# Scheduled drift detection — notify only, never apply. Non-blocking for Pages/scorecard.
+# Scheduled drift detection: notify only, never apply. Non-blocking for Pages/scorecard.
 tofu-drift:
   extends:
     - .tofu-base

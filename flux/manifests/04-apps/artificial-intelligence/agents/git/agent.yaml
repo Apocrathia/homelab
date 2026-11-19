@@ -126,7 +126,7 @@ spec:
             - get_merge_request
             - get_merge_request_diffs
             - list_merge_request_diffs
-            # MR notes (top-level comments) — used by change-summary skill
+            # MR notes (top-level comments): used by change-summary skill
             - get_merge_request_notes
             - create_merge_request_note
             - update_merge_request_note

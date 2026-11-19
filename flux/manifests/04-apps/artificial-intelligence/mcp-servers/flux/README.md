@@ -17,7 +17,8 @@ This deployment includes:
 
 ## Features
 
-- **Cluster State Analysis**: Understand Flux installation status and resource configurations
+The Flux MCP exposes cluster-state analysis, event/log correlation, reconcile and suspend/resume triggers, and dependency-graph diagrams.
+
 - **Root Cause Analysis**: Correlate events, logs, and configuration changes
 - **GitOps Automation**: Trigger reconciliations, suspend/resume resources
 - **Visual Pipelines**: Generate diagrams of Flux dependencies and workflows
@@ -35,7 +36,7 @@ The deployment includes a dedicated ServiceAccount with ClusterRole permissions 
 
 ### Transport
 
-`transportType: http` — native streamable HTTP on port 8080.
+`transportType: http`, native streamable HTTP on port 8080.
 
 ### Security
 

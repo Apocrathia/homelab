@@ -1,23 +1,23 @@
-// Fleet host inventory -> ocsf.fleet_assets (factory pipeline, lap 2).
+// Fleet host inventory -> ocsf.fleet_assets (factory pipeline).
 // Pulls GET /api/v1/fleet/hosts (docs: https://fleetdm.com/docs/rest-api
-// #list-hosts — envelope {"hosts": [...]}, and with no pagination
+// #list-hosts: envelope {"hosts": [...]}, and with no pagination
 // params Fleet's ListOptions treat per_page=0 as unlimited, so one
-// request returns the full host list — verified against the Fleet
-// server source; if the fleet ever outgrows a single response, add a
-// paginate lambda on the `after` + `order_key=hostname` keyset params)
+// request returns the full host list (Fleet server source); if the
+// fleet ever outgrows a single response, add a paginate lambda on the
+// `after` + `order_key=hostname` keyset params)
 // and writes the fused asset row into ClickHouse. The
 // ReplicatedReplacingMergeTree keyed on the Fleet host uuid replaces
 // each host's prior row at merge (last_seen version column);
-// mode="append" fails loudly if the MR DDL is missing.
+// mode="append" fails loudly if the ClickHouse DDL is missing.
 // every 1h fires at pipeline start, then hourly.
 every 1h {
   from_http "https://fleet.gateway.services.apocrathia.com/api/v1/fleet/hosts",
     headers={Authorization: f"Bearer {secret("fleetdm-token")}"} {
     // raw=true is load-bearing: the reader's per-batch inference upcasts
-    // all-parseable seen_time strings to `time` (and primary_ip strings to
-    // `ip`), which made the guard below time-vs-string — `gt` unimplemented
-    // warned and dropped every host (the lap-2 bug) — and turned the
-    // primary_ip check into `ip in list<string>`, warning and nulling the
+    // all-parseable seen_time strings to `time` (and primary_ip strings
+    // to `ip`), which would make the guard below time-vs-string (`gt`
+    // unimplemented warns and drops every host) and turn the primary_ip
+    // check into `ip in list<string>`, warning and nulling the
     // enrichment key. raw keeps every field a plain JSON string so both
     // compares stay type-correct (warnings are blockers on this node).
     read_json raw=true
@@ -26,7 +26,7 @@ every 1h {
   this = hosts
   // Fleet's Go zero time ("0001-01-01T00:00:00Z") would violate the
   // DateTime64(9) floor; the string compare drops never-checked-in hosts
-  // (ADE placeholders) lexically (uniform RFC3339 sorts chronologically —
+  // (ADE placeholders) lexically (uniform RFC3339 sorts chronologically;
   // and time() on the zero-time string would itself warn), before time()
   // ever sees them, and the base timestamp parse is left to time() below.
   where seen_time? > "1970-01-01T00:00:01"

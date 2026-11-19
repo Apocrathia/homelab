@@ -34,7 +34,7 @@ spec:
     # Inline module stitched at kustomize build time via the
     # configMapGenerator + replacements rule in kustomization.yaml.
     # The HCL file (authentik.tf) is the single source of truth.
-    # FRESH CREATE: no live tfstate — first sync creates the
+    # FRESH CREATE: no live tfstate: first sync creates the
     # entire Element OIDC provider + application + binding.
     source: Inline
     module: ""

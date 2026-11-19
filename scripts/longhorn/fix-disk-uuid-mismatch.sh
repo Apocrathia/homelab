@@ -9,7 +9,7 @@
 #
 # If EVERY node's disk is broken, eviction is a DEADLOCK: there is no healthy disk to receive
 # replicas. You must introduce at least one schedulable disk (e.g. a second path with a fresh
-# filesystem on each node — see scripts/longhorn/README.md "Disk UUID Mismatch").
+# filesystem on each node: see scripts/longhorn/README.md "Disk UUID Mismatch").
 #
 # Usage:
 #   ./fix-disk-uuid-mismatch.sh rescan              # bump force-disk-rescan (cheap try)
@@ -49,7 +49,7 @@ cmd_rescan() {
       echo "  ${n}: annotated"
     fi
   done
-  echo "Wait 1–2 minutes, then: $0 status"
+  echo "Wait 1-2 minutes, then: $0 status"
 }
 
 cmd_status() {

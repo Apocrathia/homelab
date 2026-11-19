@@ -36,7 +36,7 @@ lanes, one blast radius:
   inside the Grafana tenzir-findings rule, a chain break pages through
   the agent_invoke bridge (homelab-agent -> the investigator) instead
   of waiting for a human to read pod logs (the scheduled-walk box in
-  `docs/issues/tenzir-record-integrity-attestations.md`, landed).
+  `docs/issues/tenzir-record-integrity-attestations.md`).
 - **Query lane**: the node REST API (web server `:5160`,
   `/api/v0/pipeline/launch` + `/api/v0/serve`, `X-Tenzir-Token` auth):
   agents launch bounded `from_clickhouse` pipelines over
@@ -108,7 +108,7 @@ flowchart LR
   in the write lane) and the `investigations-attest-verify` pipeline
   walks the chains hourly, writing break findings into the lake's
   `ocsf.Detection_Finding` so the Grafana rails page on them
-  (`docs/issues/tenzir-record-integrity-attestations.md`, landed); the
+  (`docs/issues/tenzir-record-integrity-attestations.md`); the
   one credential expansion beyond the two investigations users is the
   `tenzir` lake writer (INSERT/SELECT on `ocsf.*`) the findings leg
   holds.
@@ -163,7 +163,8 @@ the 2 GB RAM floor (catalog term ~0 at an empty lake). Limits live in
 ## Retention
 
 None locally, no lake to retain. The PVC carries node state only
-(platform registration, web-token state, diagnostics) at a 5Gi cap; the
+(platform registration, web-token state, diagnostics; size in
+`helmrelease.yaml`); the
 record is `investigations.records` on ClickHouse, which has **no TTL by
 design**: a case record is a durable audit record. The tiered storage
 policy rides for consistency with the lake tables, but no TTL clause

@@ -1,19 +1,19 @@
 ---
 # kopia backup sources for the gaming PC. Game library lives on dedicated
-# fast storage and is re-downloadable — not backed up.
+# fast storage and is re-downloadable; not backed up.
 kopia_backup_paths:
   - /etc
   - /home/ianyoung
 
-# Operator shell environment (roles/common user tag): fastfetch is already
-# installed (2.66.0, newer than the repo pin would be — present keeps it);
-# eza joins the bat/thefuck set already on this host.
+# Operator shell environment (roles/common user tag): fastfetch is listed
+# present so applies never downgrade the host's copy; eza joins the
+# bat/thefuck set.
 common_packages_extra:
   - eza
   - fastfetch
 
 # Sunshine game-stream host (roles/common sunshine tag). KMS capture reads
-# the DRM framebuffer directly — no xdg-desktop-portal involvement, so the
+# the DRM framebuffer directly; no xdg-desktop-portal involvement, so the
 # KDE "Allow remote control?" prompt never appears after the nightly
 # reboot. Physical desktop with a real monitor, so the KMS limitation
 # (cannot see KWin virtual outputs) does not apply here.

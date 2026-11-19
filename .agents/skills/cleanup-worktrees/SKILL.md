@@ -45,7 +45,7 @@ base=$(git rev-parse --verify origin/main 2>/dev/null || echo main)
 ```
 
 If local `main` and `origin/main` have diverged in a confusing way, **stop and
-ask** — do not guess the merge base.
+ask**; do not guess the merge base.
 
 ### 2. Inventory
 
@@ -66,28 +66,28 @@ rather than relying on the merged/content-equivalent checks alone.
 ### 3. Classify each non-main worktree / local branch
 
 For each candidate branch `B` (skip `main`, the primary checkout, and any
-worktree registered outside `$repo_root/.worktrees/` — an external checkout
+worktree registered outside `$repo_root/.worktrees/`, an external checkout
 belongs to its owner's workflow, so keep or ask rather than classify it here):
 
-| Check              | How                                                                                                                                                                 | Outcome                                                                        |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Active session     | Newest of branch reflog (`git reflog show "$B" -1 --date=unix`) and worktree HEAD reflog (`git -C <path> reflog show HEAD -1 --date=unix`) is newer than 60 min ago | **Keep** — a live session may own it                                           |
-| Live lease         | `.scratch/worktree-leases/<branch>.lock` mtime < 24h (see [`worktrees.md`](../../rules/worktrees.md#worktree-leases))                                               | **Keep**; report holder — merged + clean is NOT enough under parallel sessions |
-| Fully merged       | `git merge-base --is-ancestor "$B" "$base"`                                                                                                                         | Safe (clean or force-ok below) only outside the active/lease window            |
-| Content-equivalent | Cherry-equivalent **or** squash-equivalent (see below)                                                                                                              | Treat as safe; tip need not be an ancestor                                     |
-| Unique WIP         | Not fully merged and not content-equivalent                                                                                                                         | **Keep** or ask                                                                |
-| Dirty worktree     | `git -C <path> status --porcelain --ignored`                                                                                                                        | See force rules                                                                |
-| Open MR/PR         | MR (or PR) still open for that head                                                                                                                                 | **Keep** unless operator says abandon                                          |
+| Check              | How                                                                                                                                                                 | Outcome                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Active session     | Newest of branch reflog (`git reflog show "$B" -1 --date=unix`) and worktree HEAD reflog (`git -C <path> reflog show HEAD -1 --date=unix`) is newer than 60 min ago | **Keep**: a live session may own it                                           |
+| Live lease         | `.scratch/worktree-leases/<branch>.lock` mtime < 24h (see [`worktrees.md`](../../rules/worktrees.md#worktree-leases))                                               | **Keep**; report holder; merged + clean is NOT enough under parallel sessions |
+| Fully merged       | `git merge-base --is-ancestor "$B" "$base"`                                                                                                                         | Safe (clean or force-ok below) only outside the active/lease window           |
+| Content-equivalent | Cherry-equivalent **or** squash-equivalent (see below)                                                                                                              | Treat as safe; tip need not be an ancestor                                    |
+| Unique WIP         | Not fully merged and not content-equivalent                                                                                                                         | **Keep** or ask                                                               |
+| Dirty worktree     | `git -C <path> status --porcelain --ignored`                                                                                                                        | See force rules                                                               |
+| Open MR/PR         | MR (or PR) still open for that head                                                                                                                                 | **Keep** unless operator says abandon                                         |
 
 **Content-equivalent** (either path is enough):
 
 1. **Cherry-equivalent:** `git cherry "$base" "$B"` prints no `+` lines
-   (every commit is `-` — same patch already on `$base` under a different SHA)
+   (every commit is `-`, same patch already on `$base` under a different SHA)
    **and** `git merge-tree --write-tree "$base" "$B"` equals `"$base^{tree}"`.
 2. **Squash-equivalent:** the combined patch from the merge-base to `$B`
    matches some single commit already on `$base` (squash merges) **and**
    `git diff --quiet "$c" "$B"` against that matched commit. Per-commit
-   `git cherry` misses this — a squash commit's patch-id does not equal the
+   `git cherry` misses this; a squash commit's patch-id does not equal the
    individual pre-squash commits.
 
 ```bash
@@ -132,7 +132,7 @@ ask.
   corruption), **and**
 - Operator asked for cleanup (this skill's trigger).
 
-If dirtiness looks like real uncommitted work, **ask** — do not force.
+If dirtiness looks like real uncommitted work, **ask**; do not force.
 
 ### 4–5. Remove
 
@@ -170,12 +170,12 @@ Confirm only the primary checkout remains when that is the intent.
 
 ## Hard rules
 
-- Never `rm -rf` a worktree directory — always `git worktree remove`.
+- Never `rm -rf` a worktree directory; always `git worktree remove`.
 - Never delete `main` or remove the primary worktree.
 - Never discard unique unmerged commits or real uncommitted WIP without an
   explicit operator call.
 - Never remove a worktree with a live lease (< 24h) whose holder is not this
-  session — report the holder instead. "Merged + clean" does not mean "not in
+  session; report the holder instead. "Merged + clean" does not mean "not in
   use" when sessions run in parallel.
 - Pre-create runs are own-scope (this session's trees + merged orphans);
   repo-wide sweeps need an explicit operator ask.

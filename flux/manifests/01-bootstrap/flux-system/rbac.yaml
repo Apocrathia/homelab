@@ -1,6 +1,6 @@
 ---
 # Maps Authentik group flux-admins to Flux Status UI admin role.
-# Group name matches the OIDC groups claim (no oidc: prefix — that is for
+# Group name matches the OIDC groups claim (no oidc: prefix; that is for
 # API-server kube-auth only).
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

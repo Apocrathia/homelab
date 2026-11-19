@@ -1,4 +1,4 @@
-# `review-loop` — local verify before ship (skill)
+# `review-loop`: local verify before ship (skill)
 
 `SKILL.md` defines the local verify loop before `draft-commit`: format,
 lint, link and discovery checks, `helm`/`kustomize` renders, and Trivy on

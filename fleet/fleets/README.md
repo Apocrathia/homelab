@@ -1,4 +1,4 @@
-# Fleets — one YAML file per fleet
+# Fleets: one YAML file per fleet
 
 `home.yml` defines the Home fleet: policy and script globs, controls (disk
 encryption, IdP-backed setup experience), Fleet-maintained apps, and the enroll

@@ -18,7 +18,7 @@ spec:
       chart: substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate
       # Held at 0.0.6 until kagent vendors a matching client and JWT issuer
-      # discovery works on Talos — see docs/issues/substrate-kagent-version-skew.md.
+      # discovery works on Talos: see docs/issues/substrate-kagent-version-skew.md.
       # Close Renovate bumps until that issue's acceptance criteria pass.
       version: "0.0.6"
       sourceRef:
@@ -89,7 +89,7 @@ spec:
     image:
       registry: ghcr.io/kagent-dev/substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateapi
-      # Held with the chart — see version comment above.
+      # Held with the chart: see version comment above.
       tag: "v0.0.6"
 
     # Snapshots live in ate-cache (cache-helmrelease.yaml), not the bundled

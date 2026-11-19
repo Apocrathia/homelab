@@ -1,4 +1,4 @@
-# macos — macOS Fleet assets
+# macos: macOS Fleet assets
 
 The fullest platform tree: `commands/`, `configuration-profiles/`,
 `declaration-profiles/`, `enrollment-profiles/`, `policies/`, `reports/`,

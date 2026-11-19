@@ -62,7 +62,7 @@ Authentication is handled through Authentik OIDC with config-file based setup:
 
 OAuth is pre-configured in the HelmRelease with these settings:
 
-- **Issuer URL**: `https://auth.gateway.services.apocrathia.com/application/o/immich/`
+- **OIDC settings** (issuer, scope, auto-register, button text): configured in `helmrelease.yaml`
 - **Scope**: `openid email profile`
 - **Auto Register**: Enabled
 - **Button Text**: "Sign in with Authentik"
@@ -75,7 +75,7 @@ A CronJob imports photos from the SMB staging share nightly at 3 AM:
 
 - **Source**: `//storage.services.apocrathia.com/Pictures/Immich/import`
 - **Behavior**: Recursively uploads all files, deletes after successful upload
-- **Concurrency**: 4 parallel uploads
+- **Concurrency**: parallel upload count set in `helmrelease.yaml`
 - **Duplicates**: Immich skips by content checksum; re-uploads of the same
   file do not create new assets. Staging deletes do not touch
   `Pictures/iCloud` (icloudpd's mirror).

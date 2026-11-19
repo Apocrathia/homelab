@@ -204,7 +204,7 @@ spec:
         summary: "{{ $labels.group }}/{{ $labels.name }} still down after 1h"
         description: >-
           Gatus probe for {{ $labels.group }}/{{ $labels.name }}
-          ({{ $labels.type }}) has been failing for 1 hour — investigate.
+          ({{ $labels.type }}) has been failing for 1 hour: investigate.
       labels:
         severity: critical
         team: platform

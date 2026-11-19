@@ -10,8 +10,7 @@ spec:
     spec:
       chart: generic-app
       # The inline tofu lane (chart-generated HCL, no module refs, no chart-tag
-      # pin) ships in 0.0.87 — the W0 flip bump; the helmrelease stays
-      # suspended until the W0 gate (plan §Waves).
+      # pin).
       # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
       version: "0.0.91"
       sourceRef:
@@ -145,7 +144,7 @@ spec:
     # Authentik stack owned by the chart-rendered provider-opentofu Workspace
     # with chart-generated inline HCL (the file-pair pattern, same shape as
     # gatus/immich/jetkvm: no module refs, no varmap in git). The chart
-    # composes the HCL from this block; adoption ids never enter git — they
+    # composes the HCL from this block; adoption ids never enter git: they
     # ride a gate-time live patch on the Workspace varmap (the W0 runbook in
     # the MR body). Live attrs match the composed surface (sub_mode
     # user_email, the email scope shadowed by the custom
@@ -180,8 +179,8 @@ spec:
         redirectUris:
           - url: "https://komga.gateway.services.apocrathia.com/login/oauth2/code/authentik"
             matchingMode: "strict"
-        # Live-verbatim pin (the MISP lesson): the 2026.8 API no longer
-        # backfills grant_types — always sent in the generated HCL.
+        # Live-verbatim pin: the Authentik 2026.8 API does not backfill grant_types;
+        # backfills grant_types: always sent in the generated HCL.
         grantTypes:
           - "authorization_code"
           - "refresh_token"
@@ -189,7 +188,7 @@ spec:
         # ProviderConfig materializes the SAME 1Password-backed Secret key the
         # app consumes (komga-secrets.oidc-client-id) as the tofu workdir's
         # oidc-client-id file; the generated HCL reads
-        # client_id = trimspace(file("oidc-client-id")) — the value never
+        # client_id = trimspace(file("oidc-client-id")): the value never
         # enters git.
         clientIdFromSecret:
           enabled: true

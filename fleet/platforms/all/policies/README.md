@@ -1,4 +1,4 @@
-# Policies (all platforms) — osquery checks shared by every fleet
+# Policies (all platforms): osquery checks shared by every fleet
 
 Holds `fleet-dm-was-here.yml`: it fails when the "Fleet DM Was Here" Desktop
 marker is missing and triggers the script in `../scripts/`. Home loads this

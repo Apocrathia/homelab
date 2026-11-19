@@ -71,6 +71,6 @@ If images are not generating, check Sidekiq logs. If devices cannot connect, con
 
 ## References
 
-- **[Terminus repository](https://github.com/usetrmnl/terminus)** — source, Docker, and Kubernetes docs
-- **[TRMNL](https://trmnl.com)** — hardware and hosted service
-- **[Generic-App Chart](../../../../../helm/generic-app/README.md)** — deployment template
+- **[Terminus repository](https://github.com/usetrmnl/terminus)**, source, Docker, and Kubernetes docs
+- **[TRMNL](https://trmnl.com)**, hardware and hosted service
+- **[Generic-App Chart](../../../../../helm/generic-app/README.md)**, deployment template

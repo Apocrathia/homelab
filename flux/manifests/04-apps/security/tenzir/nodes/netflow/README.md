@@ -18,7 +18,7 @@ core node's liveness series), and
 netflow-attest-verify (the hourly record_integrity walk, the
 verification half of the attestation lane below). The diagnostics
 pushers (error-diagnostics-to-mimir, diagnostics-to-loki) ship from
-this node again, restored per-node with the B1 lap after the
+this node again, restored per-node after the
 central poller's retirement. The split exists so the
 collector's lifecycle (listener restarts, pod rolls, future
 vendor-traffic surprises) cannot touch the detection plane, and so
@@ -27,11 +27,9 @@ loader is equally decoupled, a slow or failed MMDB fetch never
 stalls flow ingest (the context keeps serving the last good
 database).
 
-The collector moved here from the core node (2026-10-17); the
-`tenzir-ingest-lb` LoadBalancer moved with it
-([`service-ingest.yaml`](./service-ingest.yaml)), same name, same
-pool IP `10.100.1.96`, same alloy pairing, only the selector points at
-this pod.
+The collector and the `tenzir-ingest-lb` LoadBalancer live here
+([`service-ingest.yaml`](./service-ingest.yaml)); pool IP `10.100.1.96`,
+same alloy pairing, only the selector points at this pod.
 
 ## Connectivity
 
@@ -108,7 +106,7 @@ No node-local retention: `netflow-ingest` stamps the OCSF
 and INSERTs the one OCSF class this node stores (Network Activity 4001) directly to the per-class `ocsf.<Class_Name>` tables on the
 ClickHouse OCSF store. No lake, no compaction rule, no PVC (the
 stateless completion; history in the plan doc). ClickHouse is the
-OCSF record. The retired `s3://tenzir/ocsf/` parquet archive stays
+OCSF record. The `s3://tenzir/ocsf/` parquet archive stays
 untouched in the rustfs bucket as frozen history; deleting it is a
 separate operator call.
 
@@ -147,7 +145,7 @@ tests pin the chain, the tie-break, and both break types.
   that boots after them drops undecodable data for up to 20 minutes.
   UDP is fire-and-forget; while the LB has no Ready endpoints,
   datagrams vanish. Rollout order: bring this node up and verify flow
-  ingress before retiring the collector on the core node.
+  ingress before any collector cutover.
 - **Probe-only today**: the UXG exporter only emits via the manual
   NETFLOW section workaround (any controller config push kills it;
   vendor renderer bug, the issue stays open). The node exists to

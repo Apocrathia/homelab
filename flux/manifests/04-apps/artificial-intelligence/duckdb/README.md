@@ -1,6 +1,6 @@
 # DuckDB
 
-The official [DuckDB](https://duckdb.org/) UI deployed behind Authentik for ad-hoc SQL and notebook-style data exploration. DuckDB is an in-process analytical database — think SQLite, but for OLAP — that can query Parquet, CSV, JSON, S3, and its own native files without needing a separate server.
+The official [DuckDB](https://duckdb.org/) UI deployed behind Authentik for ad-hoc SQL and notebook-style data exploration. DuckDB is an in-process analytical database, think SQLite, but for OLAP, that can query Parquet, CSV, JSON, S3, and its own native files without needing a separate server.
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
@@ -13,12 +13,12 @@ This deployment runs the upstream `duckdb/duckdb` distroless CLI image and start
 - `/shared` is an SMB-backed read-write mount of `//storage.services.apocrathia.com/Library/Databases/DuckDB`, shared with the MCP server. Use this for Parquet/CSV/JSON files that should be reachable from both the UI and agents.
 - An nginx sidecar bridges the cluster network to DuckDB's localhost-only UI server (see _Architecture_ below).
 
-For an agent-callable DuckDB instance, see [`mcp-servers/duckdb`](../mcp-servers/duckdb/) — separate process, separate `.duckdb` file, same `/shared` SMB mount.
+For an agent-callable DuckDB instance, see [`mcp-servers/duckdb`](../mcp-servers/duckdb/), separate process, separate `.duckdb` file, same `/shared` SMB mount.
 
 ## Configuration
 
 Data sharing with agents runs through the SMB mount (Parquet/CSV, not the
-locked `.duckdb` file) — see
+locked `.duckdb` file), see
 [Sharing data with the MCP server](#sharing-data-with-the-mcp-server). See
 `helmrelease.yaml` for complete deployment configuration.
 
@@ -34,7 +34,7 @@ COPY (SELECT * FROM my_table) TO '/shared/exports/my_table.parquet' (FORMAT PARQ
 SELECT * FROM read_parquet('/shared/agent-outputs/*.parquet');
 ```
 
-Concurrent reads of the same file are safe. Concurrent writes to the same file will clobber — adopt a directory naming convention (e.g., `/shared/notebooks/`, `/shared/agents/`, `/shared/datasets/`) if you expect both sides to write.
+Concurrent reads of the same file are safe. Concurrent writes to the same file will clobber, adopt a directory naming convention (e.g., `/shared/notebooks/`, `/shared/agents/`, `/shared/datasets/`) if you expect both sides to write.
 
 ## Access
 
@@ -43,7 +43,7 @@ Concurrent reads of the same file are safe. Concurrent writes to the same file w
 
 ## Architecture
 
-The DuckDB UI is upstream-designed as a single-user local development tool. It calls `server.listen("localhost", 4213)` — and on the distroless cc-debian12 image that `getaddrinfo` resolves to `::1` first, so the listener ends up on IPv6 loopback (`[::1]:4213`), not IPv4. The UI also validates `Origin`/`Referer` against `http://localhost:4213` for CSRF. To make it reachable behind the gateway, an nginx sidecar runs in the same pod, proxies to `[::1]:4213`, and rewrites those headers inbound:
+The DuckDB UI is upstream-designed as a single-user local development tool. It calls `server.listen("localhost", 4213)`, and on the distroless cc-debian12 image that `getaddrinfo` resolves to `::1` first, so the listener ends up on IPv6 loopback (`[::1]:4213`), not IPv4. The UI also validates `Origin`/`Referer` against `http://localhost:4213` for CSRF. To make it reachable behind the gateway, an nginx sidecar runs in the same pod, proxies to `[::1]:4213`, and rewrites those headers inbound:
 
 ```mermaid
 flowchart LR
@@ -59,11 +59,11 @@ flowchart LR
 
 The official UI has **no concept of users**. Authentik gates who can reach the gateway, but everyone behind the gate sees the same notebooks and queries the same database. Treat this as a shared scratchpad, not a per-user workspace.
 
-The DuckDB CLI also exits when stdin closes. The container needs `stdin: true` on the pod spec to keep the UI process alive — a passthrough not currently exposed by the generic-app chart. The first-deploy pod will crash-loop until the chart adds that field; this is intentional and used as the empirical confirmation step before bumping the chart.
+The DuckDB CLI also exits when stdin closes. The container needs `stdin: true` on the pod spec to keep the UI process alive, a passthrough not currently exposed by the generic-app chart. The first-deploy pod will crash-loop until the chart adds that field; this is intentional and used as the empirical confirmation step before bumping the chart.
 
 ## Authentication
 
-Authentik proxy provider in front of the gateway. The DuckDB UI itself has no authentication, so the proxy is the only line of defense — do not expose the service externally without it.
+Authentik proxy provider in front of the gateway. The DuckDB UI itself has no authentication, so the proxy is the only line of defense, do not expose the service externally without it.
 
 ## Troubleshooting
 

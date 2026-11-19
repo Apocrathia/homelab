@@ -10,7 +10,7 @@ Open-source SketchUp-style 3D modeler for woodworking. Import .skp files, push/p
 
 ## Configuration
 
-Deployed via the generic-app Helm chart — see `helmrelease.yaml` for complete
+Deployed via the generic-app Helm chart, see `helmrelease.yaml` for complete
 deployment configuration.
 
 ## Authentication

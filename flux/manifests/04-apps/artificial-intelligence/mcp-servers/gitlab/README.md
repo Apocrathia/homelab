@@ -9,7 +9,7 @@ GitLab API integration via Model Context Protocol (native streamable HTTP).
 - kmcp `MCPServer` (`gitlab`) running `zereight050/gitlab-mcp` with native
   streamable-http on `/mcp`
 - Callers authenticate per-request with a GitLab PAT (`Private-Token` or
-  `Authorization: Bearer`) — no server-side env PAT
+  `Authorization: Bearer`), no server-side env PAT
 - Internal access only (LiteLLM / kagent); no Gateway HTTPRoute
 
 **Endpoint:** `http://gitlab.mcp-gitlab.svc.cluster.local:8080/mcp`
@@ -18,7 +18,7 @@ GitLab API integration via Model Context Protocol (native streamable HTTP).
 
 ### Transport
 
-`transportType: http` — native streamable-http (`STREAMABLE_HTTP=true`,
+`transportType: http`, native streamable-http (`STREAMABLE_HTTP=true`,
 `REMOTE_AUTHORIZATION=true`). Prefer this over stdio/agentgateway for
 concurrency; stdio session leaks under Renovate change-summary load.
 
@@ -44,8 +44,8 @@ session state, a request landing on the wrong pod 404s its session.
 The 1Password item `gitlab-mcp-secrets` holds `gitlab-token` (PAT with `api`,
 `read_user`, `read_repository`) and `OAUTH_STATELESS_SECRET` (base64url key
 that seals session headers). The pod mounts ONLY the `OAUTH_STATELESS_SECRET`
-field — a subPath file-mount in `mcpserver.yaml`, read by the `sh -c` wrapper
-— so `gitlab-token` is never exposed to the pod. With remote authorization,
+field, a subPath file-mount in `mcpserver.yaml`, read by the `sh -c` wrapper
+,so `gitlab-token` is never exposed to the pod. With remote authorization,
 kagent's `RemoteMCPServer` injects the PAT as `Private-Token` (see
 `agents/git/remotemcpserver.yaml` / `agents/git/secret.yaml`). LiteLLM
 forwards `Private-Token` / `Authorization` from the caller.
@@ -70,6 +70,6 @@ kubectl logs -n mcp-gitlab -l app.kubernetes.io/name=gitlab --tail=50
 
 ## References
 
-- [zereight/gitlab-mcp](https://github.com/zereight/gitlab-mcp) — MCP server
-- [GitLab API](https://docs.gitlab.com/ee/api/) — GitLab API documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) — Model Context Protocol
+- [zereight/gitlab-mcp](https://github.com/zereight/gitlab-mcp), MCP server
+- [GitLab API](https://docs.gitlab.com/ee/api/), GitLab API documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/), Model Context Protocol

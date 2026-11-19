@@ -2,7 +2,7 @@
 # current. Requires ableton-live-suite/darwin under software.fleet_maintained_apps
 # on the same fleet.
 #
-# Patch policies only fail when the app is installed and outdated — missing
+# Patch policies only fail when the app is installed and outdated; missing
 # hosts pass. The install policy covers first-time install.
 ---
 - name: macOS - Ableton Live Suite installed

@@ -46,7 +46,7 @@ spec:
         allowPrivilegeEscalation: false
         # Caddy writes runtime state to /data and /config, both chowned to
         # nobody in the upstream Dockerfile. readOnlyRootFilesystem false
-        # matches the upstream image (no tmpfs needed — Caddy only writes to
+        # matches the upstream image (no tmpfs needed: Caddy only writes to
         # those two directories).
         readOnlyRootFilesystem: false
       volumes:

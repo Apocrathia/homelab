@@ -18,9 +18,8 @@ The 1Password Connect Operator requires two main credentials:
 2. **Connect API Token**
 
 Chicken-and-egg: these two Secrets must exist before Connect can sync anything
-else. Today that is still a manual create (below). Desired follow-on: pull both
-from the vault with `op` during bootstrap so credential files never linger on
-disk. Tracked in
+else, so they are created manually (below). An `op`-driven bootstrap that pulls
+both from the vault is tracked in
 [`docs/issues/onepassword-bootstrap-op-cli.md`](../../../../docs/issues/onepassword-bootstrap-op-cli.md).
 
 ### Step 1: Create 1Password Connect Credentials

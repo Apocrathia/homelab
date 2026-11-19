@@ -33,11 +33,11 @@ sidecar, not from the ConfigMap.
 
 ### Opt in a Service
 
-Prefer `generic-app` values (chart ≥ 0.0.76 defaults `gatus.enabled: true`):
+Prefer `generic-app` values (the chart defaults `gatus.enabled: true`):
 
 ```yaml
 gatus:
-  # enabled: true  # chart default — set false to opt out
+  # enabled: true # chart default: set false to opt out
   group: demo # optional; defaults to app.name
   # path: /health  # set when / is not a valid health check
 ```
@@ -55,7 +55,7 @@ metadata:
     gatus.home-operations.com/enabled: "true"
     gatus.home-operations.com/endpoint: |
       group: demo
-      # Service ports default to tcp:// — set url for HTTP status checks.
+      # Service ports default to tcp://: set url for HTTP status checks.
       url: http://demo-app.demo-app.svc:80
       conditions:
         - "[STATUS] == 200"
@@ -81,7 +81,7 @@ CNPG bootstrap and the Gatus container both consume this Secret.
 ## Authentication
 
 Authentik proxy outpost (Platform group), owned by the `crossplane.yaml` +
-`authentik.tf` file pair in this directory (the retired blueprint's objects,
+`authentik.tf` file pair in this directory: the outpost
 adopted in place). Chart `httpRoute` / `ingress` stay off; the outpost owns
 the Gateway API route.
 

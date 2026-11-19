@@ -89,7 +89,7 @@ Authentication is handled through Authentik SSO:
 - **Statistics**: Enabled at `/api/v1/stats`
 - **Registration**: Disabled (SSO-only access)
 - **Login**: Disabled (SSO-only access)
-- **Gatus probe**: `/api/v1/stats` (chart 0.0.76+ stamps gatus annotations)
+- **Gatus probe**: `/api/v1/stats` (the chart stamps gatus annotations)
 
 ## Troubleshooting
 

@@ -66,7 +66,7 @@ spec:
           cpu: 1
           memory: 512Mi
 
-      # Agent Substrate — sibling install in ate-system (not the bundled subchart)
+      # Agent Substrate: sibling install in ate-system (not the bundled subchart)
       substrate:
         enabled: true
         ateApiEndpoint: "dns:///api.ate-system.svc:443"
@@ -78,11 +78,11 @@ spec:
           namespace: ate-system
           name: kagent-default
 
-    # Keep bundled substrate subchart off — ate-system owns the data plane
+    # Keep bundled substrate subchart off: ate-system owns the data plane
     substrate:
       enabled: false
 
-    # WorkerPool CR is managed under substrate/ (ate-system) — chart create
+    # WorkerPool CR is managed under substrate/ (ate-system): chart create
     # would land privileged ateom pods in kagent and fail PSA baseline.
     substrateWorkerPool:
       create: false

@@ -1,13 +1,11 @@
 ---
 # LoadBalancer service for NetFlow ingest on the shared ingest pool IP
-# (flux/manifests/03-services/observability/ingest/), replacing the removed
-# goflow2 collector on the same IP and port so UniFi exporters keep pointing
+# (flux/manifests/03-services/observability/ingest/): UniFi exporters point
 # at ingest.services.apocrathia.com:2055. The tenzir node accepts the UDP
 # datagrams itself (accept_udp "0.0.0.0:2055", binary=true + read_netflow).
-# Moved from nodes/core with only the selector flipped to the dedicated
-# netflow node's pod: name, namespace, pool IP, and the alloy pairing
-# annotations stay identical, so Flux updates the Service in place and only
-# the endpoint set changes.
+# The Service's selector points at the dedicated netflow node's pod: name,
+# namespace, pool IP, and the alloy pairing annotations stay identical, so
+# Flux updates the Service in place and only the endpoint set changes.
 apiVersion: v1
 kind: Service
 metadata:

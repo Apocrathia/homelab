@@ -1,13 +1,13 @@
 // Verification half of the detection-plane record_integrity lane: read
-// the last 90 minutes of every core-node ocsf class back (phase 2,
-// tetragon parity: the direct leg's 60s window + 30s tolerance means a
-// straggler is ~90s gone — at 90m the gap is a 1h silent outage, found
+// the last 90 minutes of every core-node ocsf class back (tetragon
+// parity: the direct leg's 60s window + 30s tolerance means a
+// straggler is ~90s gone; at 90m the gap is a 1h silent outage, found
 // fast), recompute each record's attestation fingerprint over the
 // canonical serialization, and walk the per-node prev_event chain; a
 // Detection Finding (2004) drops for every break.
 //
-// SCHEDULED, hourly. Window dropped from 24h to 90m (tetragon parity):
-// the shorter window is the direct leg's traffic-light — if a chain
+// SCHEDULED, hourly. Window is 90m (tetragon parity):
+// the shorter window is the direct leg's traffic-light; if a chain
 // breaks at 90m, the leg's straggler drop has been eating records for
 // an hour; find the gap and the leak is contained.
 //
@@ -15,15 +15,13 @@
 // ocsf.Detection_Finding via ocsf_derive + ocsf_cast → the Grafana
 // tenzir-findings rule pages through the agent_invoke bridge.
 //
-// READ PATH (2026-11-05 write-outage fix): each class leg reads through
-// homelab::record_integrity::ocsf::read — sql mode pins the 90-minute
-// bound and the attestation prefilter INTO the executed query (the old
-// table-mode + client-side `where time > now() - 90m` shape never
-// reached the server: the pushdown only forwards foldable-literal
-// comparisons, so every walk retried as an unbounded full-table scan
-// and the replica saturation 30s-timeout'd the fleet's write plane),
+// READ PATH: each class leg reads through
+// homelab::record_integrity::ocsf::read: sql mode pins the 90-minute
+// bound and the attestation prefilter INTO the executed query (a
+// client-side `where time > now() - 90m` never reaches the server, so
+// it walks as an unbounded full-table scan),
 // then rebuilds the catch-all record exactly as table mode would and
-// strips the round-trip column artifacts — the records verify sees
+// strips the round-trip column artifacts; the records verify sees
 // are the pre-INSERT shapes its recompute needs.
 every 1h {
   homelab::record_integrity::ocsf::read table="ocsf.API_Activity",

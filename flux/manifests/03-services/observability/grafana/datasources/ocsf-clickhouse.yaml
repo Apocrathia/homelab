@@ -23,7 +23,6 @@ spec:
       app.kubernetes.io/name: grafana
       app.kubernetes.io/instance: kube-prometheus-stack
   # grafana-operator v5 preferred field (spec.datasource.uid is deprecated).
-  # MR-4 dashboard JSON references this uid when panels cut over.
   uid: ocsf-clickhouse
   # ClickHouse auth (username + password) substituted from the
   # grafana-secrets 1Password item (vaults/Secrets/items/grafana-secrets)

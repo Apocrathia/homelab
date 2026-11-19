@@ -1,4 +1,4 @@
-# hardening — devsec hardening role
+# hardening: devsec hardening role
 
 SSH and OS hardening from the devsec collection, plus an opt-in ufw firewall.
 No host has the firewall assigned yet.

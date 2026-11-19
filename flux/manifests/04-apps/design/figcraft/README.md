@@ -4,7 +4,7 @@
 
 ## Overview
 
-FigCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+FigCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://figcraft.gateway.services.apocrathia.com`
 

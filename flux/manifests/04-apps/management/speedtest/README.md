@@ -14,7 +14,7 @@ Self-hosted HTML5 network speed test for measuring LAN, tailnet, and WAN through
 ## Access
 
 - **External URL**: `https://speedtest.gateway.services.apocrathia.com`
-- **Tailnet**: same URL via split DNS — the door friends use
+- **Tailnet**: same URL via split DNS, the door friends use
 - **Internal Service**: `http://speedtest.speedtest.svc.cluster.local:80`
 
 ## Configuration

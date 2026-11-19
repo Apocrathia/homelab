@@ -13,7 +13,7 @@ agent_options:
 controls:
   # Require Apple Silicon Macs (macOS 14+) to pass Apple's hardware
   # attestation challenge (ACME) before DEP/ADE enrollment completes.
-  # Intel Macs fall back to SCEP. Fleet Premium, 4.84+.
+  # Intel Macs fall back to SCEP. Requires Fleet Premium.
   apple_require_hardware_attestation: true
 org_settings:
   server_settings:
@@ -31,7 +31,7 @@ org_settings:
     metadata_url: https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/metadata/
     enable_sso_idp_login: true
     enable_jit_provisioning: true
-  # End-user (device user) IdP — macOS Setup Assistant (ADE), Windows MDM,
+  # End-user (device user) IdP: macOS Setup Assistant (ADE), Windows MDM,
   # Linux Orbit enrollment. Separate SAML connection from staff SSO above:
   # Fleet uses a different ACS URL per connection, and authentik allows one
   # ACS URL per provider, so this points at the fleetdm-mdm application

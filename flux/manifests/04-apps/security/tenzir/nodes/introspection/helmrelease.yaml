@@ -30,11 +30,11 @@ spec:
   values:
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
-    # "tenzir-node" — release tenzir-node-introspection + entry
+    # "tenzir-node": release tenzir-node-introspection + entry
     # introspection would double to
     # tenzir-node-introspection-introspection. The override pins fullname
     # at tenzir-node so the entry renders tenzir-node-introspection (pod,
-    # Service; verified by helm template against chart 0.1.0).
+    # Service).
     fullnameOverride: tenzir-node
     # No Kubernetes API access from the node: its entire surface is
     # user-space I/O (OTLP/UDP/HTTP ingest, outbound dials to
@@ -64,13 +64,13 @@ spec:
     # sibling nodes; this node reads its own pre-provisioned token from
     # the introspection-node-token field of the tenzir-secrets Secret (vault
     # field added by the operator; the platform node is already
-    # registered — workspace t-vrj4igpf). Platform tokens are per-node,
+    # registered; workspace t-vrj4igpf). Platform tokens are per-node,
     # never shared.
     #
-    # No ingest surface: no extraPorts — the chart-rendered main
+    # No ingest surface: no extraPorts; the chart-rendered main
     # Service on :5158 carries node RPC only; all work is outbound
     # (platform WebSocket, plus this node's own lane pair dialing
-    # loki-write and the Mimir gateway). Since the B1 lap every node
+    # loki-write and the Mimir gateway). Every node
     # ships its own diagnostics pair through its node config (the two
     # pipelines below cover this node), and the central poller
     # Deployment is retired.
@@ -81,7 +81,7 @@ spec:
           key: introspection-node-token
 
     # Stateless: the introspection node imports nothing, runs no
-    # archive rule — its only pipelines are diagnostics-to-loki and
+    # archive rule; its only pipelines are diagnostics-to-loki and
     # error-diagnostics-to-mimir. No lake. No PVC.
     persistence:
       # enabled false is load-bearing: the chart defaults to a 10Gi PVC
@@ -102,7 +102,7 @@ spec:
           # nothing to server.log, so pipeline failures that point at the
           # log for their diagnostics would surface blind. server.log
           # opens at /var/log/tenzir on every boot, which
-          # readOnlyRootFilesystem makes unwritable — the tenzir-logs
+          # readOnlyRootFilesystem makes unwritable; the tenzir-logs
           # emptyDir (extraVolumes below) backs the path; keep the
           # key/mount pair together on any new node.
           file-verbosity: warning
@@ -115,20 +115,20 @@ spec:
               description: |
                 Ships every live, not-hidden pipeline diagnostic to Loki as
                 job=tenzir-diagnostics entries (node label =
-                introspection) — the sibling lanes' exact shape, covering
+                introspection): the sibling lanes' exact shape, covering
                 this node's own two pipelines. to_fluent_bit resolves
                 $pipeline_name and $severity
                 per event and consumes both out of the shipped body
-                (live-verified 2026-10-17 probe); drop discards the ANSI
+                (probe); drop discards the ANSI
                 escape-coded rendered field, so the line keeps the rest of
-                the diagnostic record — pipeline_id, hidden, run,
-                timestamp, message, notes, annotations — and the labels
+                the diagnostic record: pipeline_id, hidden, run,
+                timestamp, message, notes, annotations; and the labels
                 carry pipeline + severity. Hidden entries (platform-UI
                 pipeline deprecation noise) stay out. Plain HTTP to
                 loki-write, cluster-internal. live=true without retro: no
                 store-backlog replay on start, so restarts never re-ship
-                history (Loki has no dedup) — since B1 every node ships
-                its own pair; this one covers this node's pipelines.
+                history (Loki has no dedup); every node ships its own
+                pair; this one covers this node's pipelines.
               definition: ""
               restart-on-error: 1 minute
             error-diagnostics-to-mimir:
@@ -141,13 +141,13 @@ spec:
                 with sum_over_time. They otherwise live only in the
                 diagnostics stream, not in metrics. Sibling lanes' exact
                 shape, byte-identical to every node's pair modulo the
-                node label (all seven pairs since B1).
+                node label (all seven pairs so far).
               definition: ""
               restart-on-error: 1 minute
 
     # Sized with the docs' size-a-node formula at introspection volume
     # (near zero): no sources, no destinations beyond the two thin ship
-    # lanes — the formula's max(2, ·) floor pins 2 cores and the 2 GB RAM
+    # lanes; the formula's max(2, ·) floor pins 2 cores and the 2 GB RAM
     # floor (investigations/enrichment parity at near-zero volume).
     # Requests stay small: limits are caps, not reservations.
     resources:
@@ -161,8 +161,7 @@ spec:
     extraVolumes:
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
-      # readOnlyRootFilesystem makes unwritable — the 2026-10-17
-      # crashloop on the warning-level siblings. emptyDir, same
+      # readOnlyRootFilesystem makes unwritable. emptyDir, same
       # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
       # disk cost.
       - name: tenzir-logs

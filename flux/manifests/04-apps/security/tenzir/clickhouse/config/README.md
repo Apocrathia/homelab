@@ -4,7 +4,7 @@
 
 The two XML files here are the source of truth for the tenzir
 ClickHouse cluster's `config.d` content; the cluster CR
-([`../cluster.yaml`](../cluster.yaml)) no longer carries them inline.
+([`../cluster.yaml`](../cluster.yaml)) carries only placeholder keys (the replacements stitch overwrites them).
 
 | File                                                 | Role                                                                                                                                                                                       |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

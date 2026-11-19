@@ -9,7 +9,7 @@ Open-source device management platform built on osquery. Inventory, queries, and
 - Fleet server via the official Helm chart
 - MySQL and Valkey from the chart's bundled subcharts (dev/test posture)
 - Gateway API access; TLS terminated at the gateway
-- Authentik SAML for user SSO + device-user (end-user) IdP auth; SCIM backchannel for IdP vitals on hosts (no proxy — agents need open API paths)
+- Authentik SAML for user SSO + device-user (end-user) IdP auth; SCIM backchannel for IdP vitals on hosts (no proxy, agents need open API paths)
 - Org settings managed as GitOps under [`fleet/`](../../../../../fleet/) (`fleetctl gitops`)
 
 ## Access
@@ -79,7 +79,7 @@ start; `fleet/default.yml` applies it via `$FLEET_GLOBAL_ENROLL_SECRET` in CI.
 
 ## Authentication
 
-Users authenticate with Authentik via SAML (tofu-managed in [`03-services/authentik/system/fleetdm/`](../../../03-services/authentik/system/fleetdm/)). Do not put Authentik proxy in front of Fleet — osquery/MDM agents must reach the API without an outpost.
+Users authenticate with Authentik via SAML (tofu-managed in [`03-services/authentik/system/fleetdm/`](../../../03-services/authentik/system/fleetdm/)). Do not put Authentik proxy in front of Fleet, osquery/MDM agents must reach the API without an outpost.
 
 SSO settings live in `fleet/default.yml` under `org_settings.sso_settings` (applied by GitOps). IdP icon: `fleet/platforms/all/icons/authentik.svg`.
 
@@ -105,14 +105,14 @@ Device users authenticate with Authentik during setup (macOS Setup Assistant via
 - IdP settings: `fleet/default.yml` → `org_settings.mdm.end_user_authentication` (all-fleets, GitOps-applied)
 - Enable per fleet: `fleet/fleets/home.yml` → `controls.setup_experience.enable_end_user_authentication`
 - NameID (email) matches the SCIM `userName` mapping, so setup maps to SCIM users; the SAML `name` attribute feeds the local account's full name (`AccountConfiguration`)
-- Fleet pushes the updated enrollment profile (`configuration_web_url`) to Apple on the DEP sync (~1/min). Takes effect for devices that enroll **after** enabling — already-enrolled hosts are unaffected
-- The tofu unit and this config land in the same MR. Fleet validates the GitOps YAML syntax only at apply time and fetches the IdP metadata when a device starts the setup flow — a missing Authentik app surfaces at device setup, not at apply
+- Fleet pushes the updated enrollment profile (`configuration_web_url`) to Apple on the DEP sync (~1/min). Takes effect for devices that enroll **after** enabling, already-enrolled hosts are unaffected
+- The tofu unit and this config land in the same MR. Fleet validates the GitOps YAML syntax only at apply time and fetches the IdP metadata when a device starts the setup flow, a missing Authentik app surfaces at device setup, not at apply
 
 ### SCIM (IdP vitals on hosts)
 
-Premium feature. Authentik pushes users/groups to Fleet over SCIM so hosts can show IdP full name, groups, and department ([Fleet guide](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts#other-idps)). This is separate from SAML SSO — keep both.
+Premium feature. Authentik pushes users/groups to Fleet over SCIM so hosts can show IdP full name, groups, and department ([Fleet guide](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts#other-idps)). This is separate from SAML SSO, keep both.
 
-The tofu unit creates `fleetdm-scim-provider` as a **backchannel** on the Fleet DM application, plus a trimmed user property mapping (Fleet's SCIM schema rejects Authentik's default extra attributes). Token is **not** in the repo or tofu state — authentik's serializer keeps it write-only, so it stays UI-held.
+The tofu unit creates `fleetdm-scim-provider` as a **backchannel** on the Fleet DM application, plus a trimmed user property mapping (Fleet's SCIM schema rejects Authentik's default extra attributes). Token is **not** in the repo or tofu state, authentik's serializer keeps it write-only, so it stays UI-held.
 
 1. In Fleet, create an [API-only user](https://fleetdm.com/docs/using-fleet/fleetctl-cli#create-api-only-user) with **Maintainer** (access to `/scim/*`). Copy its API token.
 2. In Authentik: **Applications → Providers → fleetdm-scim-provider → Edit**. Paste the token into **Token**, save.
@@ -131,7 +131,7 @@ node's `http-ingest` listener (`FLEET_WEBHOOK_RESULT_URL`), where they are
 parsed, mapped to OCSF Base Events, and stored (see the
 [Tenzir README](../../security/tenzir/)). The webhook
 plugin only logs delivery errors, so Tenzir downtime never blocks Fleet
-(webhook-plugin semantics verified at fleet v4.92.3 and v4.93.0).
+plugin only logs delivery errors, so Tenzir downtime never blocks Fleet.
 
 ### Result rows: validate the tee with a live query (OPERATOR-LED)
 
@@ -140,21 +140,21 @@ rows, and no scheduled query has returned anything yet. Prove the result
 path end to end with one throwaway query:
 
 1. Add a snapshot scheduled query to the fleet GitOps YAML
-   (`fleet/fleets/home.yml`; the modern key is `reports:` — `queries:` is the
+   (`fleet/fleets/home.yml`; the modern key is `reports:`, `queries:` is the
    deprecated alias; `interval` makes it scheduled and `logging` defaults to
-   snapshot — fleet v4.93.0 `QuerySpec`):
+   snapshot — `QuerySpec` semantics):
    ```yaml
    reports:
      - name: siem result-path validation
-       description: Lap C validation — remove after confirming rows in Tenzir
+       description: Lap C validation, remove after confirming rows in Tenzir
        query: SELECT * FROM osquery_info
        interval: 300
    ```
 2. Apply it the usual GitOps way (push to the default branch or wait for the
    hourly `fleet-gitops` schedule), then confirm in Fleet that the host ran
    it (Queries → the query → results).
-3. Result rows POST straight to Tenzir (they no longer ride pod stdout).
-   Verify the tee landed as OCSF on the detection node — the http-ingest
+3. Result rows POST straight to Tenzir. Verify the tee lands as OCSF on the detection node
+   Verify the tee landed as OCSF on the detection node, the http-ingest
    pipeline shows the POSTs, and the stored rows show up as product
    fleet/fleetdm Base Events:
    ```sh
@@ -175,7 +175,7 @@ path end to end with one throwaway query:
 4. Remove the query block after validation.
 
 Executing a Fleet query against enrolled hosts is a cluster-adjacent
-mutation — operator-led, not agent-run.
+mutation, operator-led, not agent-run.
 
 Status rows stay in Loki via container stdout:
 
@@ -192,7 +192,7 @@ under `grafana/` (`dashboard.json` → ConfigMap `fleet-dm-dashboard`).
 
 HTTP panels filter with `|= "component=http "` (trailing space). Alloy already
 sets stream label `component=alloy`, so `| logfmt | component="http"` never
-matches — Loki renames the line field to `component_extracted`.
+matches, Loki renames the line field to `component_extracted`.
 
 ## Troubleshooting
 

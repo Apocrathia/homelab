@@ -31,21 +31,21 @@ Loop contract:
 - Hot-MR lock is foreign and still fresh (see locks)
 - Tiers 1–2 work is still eligible (debt-first: clear prod/correctness first)
 
-## CRITICAL — never ship the MR
+## CRITICAL: never ship the MR
 
 This skill maintains; it does **not** land the MR unless the operator named
 that exact action.
 
-| Action                                           | Allowed?                                                                                                                                                                                                                  |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Read MR / pipelines / discussions / approvals    | Yes                                                                                                                                                                                                                       |
-| Reply on a thread                                | Only if operator asked                                                                                                                                                                                                    |
-| Resolve a thread                                 | Only if operator asked                                                                                                                                                                                                    |
-| Retry / play a failed job                        | Only if operator asked                                                                                                                                                                                                    |
-| Approve                                          | **Never** unless operator asked for that approve                                                                                                                                                                          |
-| Merge                                            | **Never** unless operator asked for that specific act                                                                                                                                                                     |
-| Undraft / mark ready / `git push` / `git commit` | Ship-authorized for this lap only — soft ship language or explicit `commit`/`push` ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)); not on a bare "ready the MR" / "undraft" ask alone |
-| Cluster mutate                                   | **Never** without explicit ask                                                                                                                                                                                            |
+| Action                                           | Allowed?                                                                                                                                                                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Read MR / pipelines / discussions / approvals    | Yes                                                                                                                                                                                                                      |
+| Reply on a thread                                | Only if operator asked                                                                                                                                                                                                   |
+| Resolve a thread                                 | Only if operator asked                                                                                                                                                                                                   |
+| Retry / play a failed job                        | Only if operator asked                                                                                                                                                                                                   |
+| Approve                                          | **Never** unless operator asked for that approve                                                                                                                                                                         |
+| Merge                                            | **Never** unless operator asked for that specific act                                                                                                                                                                    |
+| Undraft / mark ready / `git push` / `git commit` | Ship-authorized for this lap only: soft ship language or explicit `commit`/`push` ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)); not on a bare "ready the MR" / "undraft" ask alone |
+| Cluster mutate                                   | **Never** without explicit ask                                                                                                                                                                                           |
 
 Default posture: **read + report**. Mutating GitLab or git only when the
 operator (or a Launch brief that explicitly authorizes that action) said so.
@@ -60,7 +60,7 @@ Prefer **`user-gitlab`** MCP over `glab` / raw API.
    CLI deep-dive to fake the skill.
 
 CLI is a last resort for reads when MCP is down and the operator still wants a
-signal dump — still no merge/approve/push without ask.
+signal dump; still no merge/approve/push without ask.
 
 ## Workflow
 
@@ -78,14 +78,14 @@ signal dump — still no merge/approve/push without ask.
 
 ## Maintain-eligible signals
 
-| Signal             | Maintain-eligible when                                      | Notes                               |
-| ------------------ | ----------------------------------------------------------- | ----------------------------------- |
-| Unresolved threads | Open discussions need reply/resolve                         | Do not resolve unless asked         |
-| Failing CI         | Pipeline/jobs red on the MR                                 | Retry only if asked                 |
-| Conflicts          | Cannot merge cleanly                                        | Report; do not force-push           |
-| Approvals          | Missing required approvals                                  | Never self-approve unless asked     |
-| Draft              | Still marked draft / WIP                                    | Undraft only if asked               |
-| Ready              | No threads, green CI, no conflicts, approvals OK, not draft | **Drop tier-3** — not maintain work |
+| Signal             | Maintain-eligible when                                      | Notes                              |
+| ------------------ | ----------------------------------------------------------- | ---------------------------------- |
+| Unresolved threads | Open discussions need reply/resolve                         | Do not resolve unless asked        |
+| Failing CI         | Pipeline/jobs red on the MR                                 | Retry only if asked                |
+| Conflicts          | Cannot merge cleanly                                        | Report; do not force-push          |
+| Approvals          | Missing required approvals                                  | Never self-approve unless asked    |
+| Draft              | Still marked draft / WIP                                    | Undraft only if asked              |
+| Ready              | No threads, green CI, no conflicts, approvals OK, not draft | **Drop tier-3**: not maintain work |
 
 If ready → say so and stop. find-work should not keep re-queuing it as tier-3.
 
@@ -119,7 +119,7 @@ Convention doc: `.scratch/watch-mr/README.md` (gitignored; not a link target).
 Pasteable block; keep chat the index.
 
 ```text
-## watch-mr — !{iid}
+## watch-mr: !{iid}
 
 **URL:** <mr url>
 **State:** open | merged | closed | skip (<why>)
@@ -146,16 +146,16 @@ Pasteable block; keep chat the index.
   via a shallow scout.
 - This skill **executes** the lap for one named MR.
 - find-work must **not** deep-dive threads/CI/approvals the way this skill
-  does — scout = eligibility signal; watch-mr = maintenance pass.
+  does, scout = eligibility signal; watch-mr = maintenance pass.
 
 ## Homelab constraints
 
 - Merge / approve: **never** unless the operator explicitly asked for that
   specific action.
 - `git commit` / push / undraft / mark ready: ship-authorized for this lap
-  only — soft ship language or explicit `commit`/`push`; see
+  only: soft ship language or explicit `commit`/`push`; see
   [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
-- Ask before cluster mutate — this skill does not apply or reconcile.
+- Ask before cluster mutate; this skill does not apply or reconcile.
 - Protected paths: do not expand MR fixes into unconfirmed protected edits.
 - Advice ≠ implement: consultative language → options only until asked.
 - Stop-loss: 3 identical failures of the same approach → surface and stop.
@@ -166,5 +166,5 @@ Pasteable block; keep chat the index.
 - [`.agents/context/development-loop.md`](../../context/development-loop.md)
 - [`find-work`](../find-work/SKILL.md)
 - [`draft-commit`](../draft-commit/SKILL.md)
-- [`run-loop`](../run-loop/SKILL.md) (when present — lap orchestrator)
+- [`run-loop`](../run-loop/SKILL.md) (when present: lap orchestrator)
 - [`.agents/context/tools.md`](../../context/tools.md)

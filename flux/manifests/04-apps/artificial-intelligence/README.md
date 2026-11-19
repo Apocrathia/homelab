@@ -105,7 +105,8 @@ flowchart TB
 
 ## Design Principles
 
-- **Unified Entry Point**: Single gateway handles all external traffic
+All services sit behind the shared Cilium gateway (path-based routing, TLS termination); each app runs in its own namespace, and the LLM proxy exposes an OpenAI-compatible API. Tempo captures OpenTelemetry traces.
+
 - **Path-Based Routing**: Services distinguished by URL path prefix
 - **TLS Termination**: Gateway handles encryption, internal traffic can be plaintext
 - **Namespace Isolation**: Each service runs in its own namespace

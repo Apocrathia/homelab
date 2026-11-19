@@ -24,7 +24,7 @@ resource "okta_authenticator" "this" {
 
 # Lookup only when the method is managed but the authenticator is NOT in
 # var.authenticators (settings-only case). When webauthn is in the map, the
-# method takes the resource id directly — a depends_on here would defer this
+# method takes the resource id directly; a depends_on here would defer this
 # read to apply time, and core rejects deferred data in required attributes.
 data "okta_authenticator" "webauthn" {
   count = var.webauthn != null && !contains(keys(var.authenticators), "webauthn") ? 1 : 0

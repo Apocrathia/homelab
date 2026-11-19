@@ -21,7 +21,7 @@ spec:
 
     replicaCount: 1
 
-    # Persistence off — history lives in CNPG; sidecar config is emptyDir.
+    # Persistence off: history lives in CNPG; sidecar config is emptyDir.
     strategy:
       type: RollingUpdate
 

@@ -1,14 +1,14 @@
 # Tailscale provider for OpenTofu/Terragrunt
 # Include from deployments under terraform/deployments/tailscale/
 #
-# Auth chain (1Password Connect — no `op` CLI):
+# Auth chain (1Password Connect, no `op` CLI):
 #   OP_CONNECT_HOST + OP_CONNECT_TOKEN → provider "onepassword"
 #   data.onepassword_vault by name → vault UUID (not stored in git)
 #   ephemeral onepassword_item → provider "tailscale" OAuth client credentials
 #
 # Connect (in-cluster): http://onepassword-connect.onepassword-system.svc:8080
 # Do not set TAILSCALE_API_KEY / TAILSCALE_OAUTH_* in the environment for this stack.
-# Do not commit vault UUIDs — only vault name + item title (non-secret).
+# Do not commit vault UUIDs; only vault name + item title (non-secret).
 #
 # Item: tailscale-terraform-secrets (API Credential)
 #   username   = OAuth client ID

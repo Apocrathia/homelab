@@ -10,20 +10,20 @@ every RustFS consumer in the homelab.
 - Endpoint: `http://storage.services.apocrathia.com:9009` (S3 API **and**
   admin API on the same port; no TLS on the LAN segment)
 - Build: RustFS `1.0.0-beta.12`, data root `/mnt/Pool/Backup/S3`
-  (rustfs-only folder; relocated 2026-09-11 out of the Library SMB share)
+  (rustfs-only folder)
 - Root credentials: 1Password item **`rustfs-terraform-secrets`**
   (`username` / `credential` fields; the pair this runbook's scripts read;
   the item also carries duplicated `root-access-key` / `root-access-secret`
   fields with the same shapes, presumably legacy. Both pairs resolve to the
-  same root identity as of 2026-10-10)
+  same root identity.)
 - The web console is **not exposed on the LAN** (only 9009 answers; the
   console default port 9001 has nothing listening). Console access requires
   a port-forward or enabling `RUSTFS_CONSOLE_ADDRESS` on the NAS; see
   [Console (manual) path](#console-manual-path).
-- Management model is **manual** (admin API), same as the old MinIO. A
-  Terraform route was built and validated, then backed out: the AWS provider
-  cannot manage users, and the rustfs-native provider stores user secrets in
-  state. See `docs/plans/minio-to-rustfs-migration.md` for the decision.
+- Management model is **manual** (admin API), same as the old MinIO. Terraform
+  is not used: the AWS provider cannot manage users, and the rustfs-native
+  provider stores user secrets in state. See
+  `docs/plans/minio-to-rustfs-migration.md` for the decision.
 
 ## Preferred path: admin API (agent-driven)
 
@@ -112,7 +112,7 @@ fields `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (plus any app-specific
 field like `KOPIA_PASSWORD`; that one is client-side encryption, RustFS
 never sees it).
 
-Convention from the 2026-10-10 `tenzir` run: prefix the access key with the
+Convention: prefix the access key with the
 consumer name uppercased (`TENZIR…`) so access keys are self-identifying in
 logs; alnum-only secret (40 chars) avoids any signing edge cases.
 
@@ -142,18 +142,15 @@ await call("PUT", path, ROOT_AK, ROOT_SK)
 # bucket creation:   403
 ```
 
-Passing the same battery the existing consumers were verified with (2026-09-11):
+Passing the same battery as the existing consumers:
 HEAD/PUT/GET/DELETE roundtrip in-bucket, reads of other buckets 403, bucket
 creation 403.
 
 ### Known wart
 
-Non-root `ListBuckets` (GET `/`) used to return **500** on this build
-(`errBucketMetadataNotInitialized`, beta.12). No longer reproduces; verified
-live 2026-10-17 (clickhouse consumer onboarding): a new user's GET `/`
-returns a **scoped 200** listing only the user's own bucket. Cosmetic either
-way; apps address buckets by name. Expect the scoped listing during
-verification, not a 500.
+Non-root `ListBuckets` (GET `/`) returns a **scoped 200** listing only the
+user's own bucket. Apps address buckets by name, so the scoped listing is
+cosmetic; expect the scoped listing during verification, not a 500.
 
 ## Console (manual) path
 
@@ -183,12 +180,12 @@ permissions); the flow is always bucket → policy → user + attach.
 ## Operational notes
 
 - **Data-root relocation wipes ALL state**: buckets, IAM users, policies
-  (2026-09-11 incident). If the root must move: stop writes, rclone data
+  If the root must move: stop writes, rclone data
   out, move the root, recreate all buckets/users/policies via this runbook,
   rclone data back. The rustfs agent session holds the full stored recipe.
 - No quotas are set on any bucket. The admin API supports them; ask the
   operator before adding one.
-- Existing consumers (census 2026-10-17): `loki`, `mimir-blocks`,
+- Existing consumers: `loki`, `mimir-blocks`,
   `mimir-ruler`, `mimir-alertmanager`, `tempo`, `kopia` (kopiur backup
   pilot), `tenzir`, `clickhouse`. All use the same per-app policy shape
   as step 2.

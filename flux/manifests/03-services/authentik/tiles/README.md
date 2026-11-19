@@ -10,11 +10,10 @@ by its `kustomization.yaml`, plus the app icon.
 
 ## Adopted, not created
 
-Every tile's live objects (application + policy bindings) were minted by
-the retired `blueprints/` ConfigMaps. Each workspace ADOPTS them via
-gated import blocks (see each `authentik.tf`): the application imports
-ungated by slug; binding uuids ride the merge-gate varmap (recipe §8);
-witness ids never appear in git.
+Every workspace ADOPTS its tile's live objects (application + policy
+bindings) via gated import blocks (see each `authentik.tf`): the
+application imports ungated by slug; binding uuids ride the merge-gate
+varmap; witness ids never appear in git.
 
 ## What is deliberately NOT here
 
@@ -22,9 +21,9 @@ witness ids never appear in git.
   they stay blueprint-orphaned (live, unmanaged); the tiles only link
   the apps to them by name (`authentik_provider_oauth2_config`)
 - The `AMP_Super Admins` group (AMP role mapping): same orphan class
-- The retired `blueprints/icons/` URLs in `meta_icon`: live-verbatim;
-  repointing them to the new `tiles/<app>/icon.*` paths is a separate
-  deliberate follow-up
+- The `meta_icon` URLs are live-verbatim (they still point at the old
+  `blueprints/icons/` path); repointing them to the new `tiles/<app>/icon.*`
+  paths is a separate deliberate follow-up
 
 ## Remaining blueprints
 

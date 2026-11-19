@@ -11,7 +11,7 @@
 # and takes ownership. Keep in sync with
 # flux/manifests/03-services/crossplane/provider-opentofu.yaml when bumping
 # the xpkg. Precedent class: bootstrap CRs must have their CRDs in the same
-# root build (ClickHouse MR-1 apply-order incident).
+# root build.
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:

@@ -1,26 +1,20 @@
-// sigma detect over the unified OCSF bus, CH-direct (phase 2, stateless):
-// the detect+stamp pipeline runs exactly as before, but instead of
-// `import` (writing findings to the lake for the archive rule to pick
-// up), it now writes DIRECT to ClickHouse with in-stream attestation.
+// sigma detect over the unified OCSF bus, CH-direct, stateless:
+// writes findings DIRECT to ClickHouse with in-stream attestation.
 // The sigma pass subscribes to the ocsf bus (every core OCSF pipeline
 // publish leg feeds it live), stamps the discovering pipeline's uid,
-// and the attest + INSERT leg is the sole output — findings do
-// NOT publish back onto the bus. A publish here is a self-feedback
-// loop: sigma re-evaluates its own Detection Findings, drowns, stops
-// consuming the bus, and every core publisher blocks on publish while
-// its fork branch starves mid-INSERT — the 2026-11-02 post-wipe
-// write-stall cascade (chi's 30s read timeout, runs in the hundreds,
-// core dark while tetragon/netflow — no bus subscriber — flowed).
+// and the attest + INSERT leg is the sole output: findings do NOT
+// publish back onto the bus. A publish here is a self-feedback loop:
+// sigma re-evaluates its own Detection Findings, drowns, stops consuming
+// the bus, and every core publisher blocks on publish while its fork
+// branch starves mid-INSERT.
 // Grafana reads ClickHouse, not the bus; the finding's durable home is
 // ocsf.Detection_Finding via the INSERT.
 // Shape: v6.20.1 validates at boot that the top-level pipeline ends in
-// a sink, and a trailing `fork` is not one — its forwarded copy lost
-// its only consumer when the publish went away (the 2026-11-05
-// crashloop exit-1'd on exactly that). So the attest window feeds the
+// a sink, and a trailing `fork` is not one. So the attest window feeds the
 // INSERT directly and to_clickhouse is the terminal operator; the only
 // fork left is the window body's context_update leg, whose copy sinks
 // into detection-chains while its forwarded attested events flow out
-// of the window into the INSERT — the same attest shape the four
+// of the window into the INSERT; the same attest shape the four
 // source pipelines ride on their fork branches.
 subscribe "ocsf"
 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"],

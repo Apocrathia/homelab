@@ -6,7 +6,7 @@ Declarative AI agents orchestrated by kagent.
 
 ## Overview
 
-Custom agents usually run in a dedicated `agent-*` namespace (for example `agent-git`, `agent-media`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace. **`homelab-agent`** is an exception: it lives in `kagent` so it can use system agents as tools without cross-namespace restrictions; only the Discord bridge runs in `agent-homelab`. **`investigator-agent`** also lives in `kagent` — the investigations node's NetworkPolicy admits ingress from `kagent`/`hermes-agent` only (the investigations design's in-cluster callers).
+Custom agents usually run in a dedicated `agent-*` namespace (for example `agent-git`, `agent-media`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace. **`homelab-agent`** is an exception: it lives in `kagent` so it can use system agents as tools without cross-namespace restrictions; only the Discord bridge runs in `agent-homelab`. **`investigator-agent`** also lives in `kagent`, the investigations node's NetworkPolicy admits ingress from `kagent`/`hermes-agent` only (the investigations design's in-cluster callers).
 
 **Custom Agents:**
 

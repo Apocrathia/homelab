@@ -5,7 +5,7 @@ metadata:
   name: authentik-terraform-token
   namespace: crossplane-system
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret:
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
@@ -34,7 +34,7 @@ spec:
     # consumes (valuesFrom -> crossview-secrets/oidc-client-id) materializes as the
     # oidc-client-id file in the tofu workdir, so authentik.tf's
     # client_id = trimspace(file("oidc-client-id")) reads the live
-    # blueprint-minted client_id — the value NEVER appears in git, and tofu
+    # blueprint-minted client_id: the value NEVER appears in git, and tofu
     # and the app stay in lockstep on it.
     - filename: oidc-client-id
       source: Secret
@@ -45,7 +45,7 @@ spec:
   # Per-app state args for the PARTIAL kubernetes backend in authentik.tf:
   # the provider writes this as crossplane.remote.tfbackend and passes it
   # via -backend-config at tofu init. The state Secret is
-  # tfstate-crossview-authentik-crossview in this namespace — deliberately
+  # tfstate-crossview-authentik-crossview in this namespace: deliberately
   # separate from the CI tofu stack (terraform/, GitLab HTTP backend).
   # Two stacks, two states.
   backendFile: |
@@ -59,11 +59,11 @@ metadata:
   name: crossview-authentik
   namespace: crossplane-system
 spec:
-  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # Prune guard: crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,
   # so a GitOps prune of this object can NEVER destroy the live authentik
   # stack (v2-native Orphan). Deliberate decommission therefore requires
-  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # temporarily restoring ["*"] (or a manual tofu destroy): the guard is
   # intentional.
   managementPolicies:
     - Observe
@@ -75,18 +75,18 @@ spec:
   forProvider:
     # Inline module, stitched at kustomize build time: kustomization.yaml's
     # configMapGenerator packages authentik.tf and the replacements rule
-    # copies its bytes into this module field — crossplane.yaml +
+    # copies its bytes into this module field: crossplane.yaml +
     # authentik.tf are the canonical file pair, and the HCL file is the
     # single source of truth (never render this directory outside
     # kustomize). No varmap in git: the app values live in the HCL, and
     # the ADOPTION witness ids (provider pk, binding uuids) ride GATED
     # import blocks in authentik.tf that stay inert while their variables
-    # hold the defaults — plan reads No changes forever. The merge gate
-    # (MR body, recipe §8) injects the witness varmap once at merge,
+    # hold the defaults: plan reads No changes forever. The merge gate
+    # injects the witness varmap once at merge,
     # confirms "3 to import, 0 to add", then clears it; steady state
     # resumes with no varmap and no provider restart (fresh workspaces
-    # born Inline). NO cleanup companion: every live object ADOPTS — the
-    # retired blueprint ConfigMap prunes away and the live objects
+    # born Inline). NO cleanup companion: every live object ADOPTS: the
+    # blueprint CM prunes away and the live objects
     # survive for this workspace to take over.
     source: Inline
     module: ""

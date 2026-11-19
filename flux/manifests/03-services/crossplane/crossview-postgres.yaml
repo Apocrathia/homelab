@@ -65,7 +65,7 @@ spec:
     podAntiAffinityType: "preferred"
     topologyKey: "kubernetes.io/hostname"
 
-  # Bootstrap configuration — username + password keys come from the
+  # Bootstrap configuration: username + password keys come from the
   # 1Password-backed secret (same pattern as romm and the other DB apps)
   bootstrap:
     initdb:

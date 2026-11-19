@@ -2,7 +2,7 @@
 
 A single-binary file server with resumable browser uploads (up2k): uploads
 survive dropped connections, reboots, and corrupted chunks re-send
-automatically. Deployed as the friends' contribution drop box — media and
+automatically. Deployed as the friends' contribution drop box, media and
 files land as plain files on the NAS, ready for manual triage or import into
 the media stack.
 
@@ -15,7 +15,7 @@ This deployment includes:
 - copyparty (`ac` edition: ffmpeg thumbnails, audio transcoding) on port 3923
 - Authentik proxy provider for SSO; identity headers drive copyparty's
   per-user volume ACLs
-- SMB-backed `/w` (the `Uploads` share) — uploads appear as regular files on
+- SMB-backed `/w` (the `Uploads` share), uploads appear as regular files on
   the NAS under `u/<username>/`
 - Longhorn `/state` for the sqlite databases, thumbnails, and the IdP
   user/group cache (kept off SMB)
@@ -27,7 +27,7 @@ This deployment includes:
 
 - **URL**: `https://copyparty.gateway.services.apocrathia.com`
 - **Friends (tailnet)**: same hostname via the tailnet-gateway parentRef;
-  friends land at `/u/<username>/` (book a bookmark there — the webroot is
+  friends land at `/u/<username>/` (book a bookmark there, the webroot is
   admins-only)
 - **On the NAS**: `//storage.services.apocrathia.com/Uploads/u/<username>/`
 
@@ -36,13 +36,13 @@ This deployment includes:
 All tunables live in `copyparty-conf.yaml` (ConfigMap mounted at `/cfg`);
 copyparty loads every `*.conf` it finds there. Volume ACLs:
 
-- `/` (webroot) — admins only
-- `/u/<username>/` — read/write/move/delete/admin for that user and admins
+- `/` (webroot), admins only
+- `/u/<username>/`, read/write/move/delete/admin for that user and admins
 
 Auth: the Authentik outpost injects `X-Authentik-Username` /
 `X-Authentik-Groups`; copyparty trusts these from cluster-internal sources
 only (`xff-src: lan`). Groups arrive pipe-separated, which the default
-`idp-gsep` already parses. WebDAV/SFTP clients cannot inject these headers —
+`idp-gsep` already parses. WebDAV/SFTP clients cannot inject these headers,
 browser uploads are the supported path for friends.
 
 ## Prerequisite
@@ -64,4 +64,4 @@ kubectl -n copyparty get pods,pvc
 - Uploads fail on mkdir: verify the SMB mount is read-write and the NAS-side
   user can create `u/` directories.
 - Connection refused from inside the cluster: the NetworkPolicy only admits
-  the outpost, gatus, and the node — by design.
+  the outpost, gatus, and the node, by design.

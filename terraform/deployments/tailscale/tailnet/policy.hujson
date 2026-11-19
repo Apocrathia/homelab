@@ -5,8 +5,8 @@
 	// },
 
 	// Invited tailnet users (friends): a friends list of emails never
-	// enters this file (operator rule). The friends grant (slice 3 of the
-	// tailnet split DNS plan) must use an email-free src — e.g.
+	// enters this file (operator rule). The friends grant (tailnet split DNS
+	// plan) must use an email-free src, e.g.
 	// autogroup:member on this invite-only tailnet, where every member
 	// other than the owner IS a friend. No groups exist yet.
 
@@ -21,10 +21,8 @@
 		"tag:game":         ["autogroup:admin"],
 		// Dedicated tag for the PeerRelay device (the operator assigns it via
 		// spec.tags on the PeerRelay CR; the operator must own any tag it
-		// assigns). Grant dst uses this tag, not the device hostname — the
-		// ACL grammar has no hostname dst form (bare "peer-relay-0" was
-		// rejected with "invalid address"; learned in the tofu-apply behind
-		// !4643).
+		// assigns). Grant dst uses this tag, not the device hostname: the ACL
+		// grammar has no hostname dst form.
 		"tag:peer-relay":   ["tag:k8s-operator"],
 	},
 
@@ -68,8 +66,8 @@
 
 		// Tailnet admins keep the same access to the front door
 		// so the operator can reach and verify the service friends are
-		// invited to. Port 53 was added with the split-DNS resolver: admin
-		// devices resolve gateway.services.apocrathia.com through it too,
+		// invited to. Port 53: admin devices resolve gateway.services.apocrathia.com
+		// through the split-DNS resolver too,
 		// and the grants-exemption for split-DNS servers is unverified.
 		// Remove this grant if no human access is wanted. Ports
 		// 8088/8089/8443/8446 are the OpenTAKServer CoT listeners (same
@@ -83,7 +81,7 @@
 		// Game host (game.apocrathia.com, bare node, tag:game). The AMP web
 		// UI is 443-only behind nginx + Authentik OIDC: admins only. Game
 		// instance ports are everyone (friends connect to play). Port list
-		// is deliberately explicit — extend per game instance, never "*".
+		// is deliberately explicit; extend per game instance, never "*".
 		{
 			"src": ["autogroup:admin"],
 			"dst": ["tag:game"],
@@ -97,17 +95,16 @@
 
 		// Peer relay: tailnet members and admins may relay client-to-client
 		// traffic through the cluster's PeerRelay device (deployed by the
-		// tailscale operator —
+		// tailscale operator (see
 		// flux/manifests/03-services/tailscale/config/peer-relay.yaml,
 		// tagged tag:peer-relay) when a direct connection isn't possible.
 		// The tailscale.com/cap/relay app capability gates who can allocate
 		// relay bindings on the device; no separate network grant to the
-		// relay is needed. dst is the tag, not the device hostname — the
-		// ACL grammar has no hostname dst form (bare "peer-relay-0" was
-		// rejected with "invalid address"). Friends (autogroup:member) are
+		// relay is needed. dst is the tag, not the device hostname: the ACL
+		// grammar has no hostname dst form. Friends (autogroup:member) are
 		// included: the relay forwards only the WireGuard-encrypted
-		// underlay between peers — same trust model as Tailscale's DERP
-		// servers, self-hosted — unlike exit nodes below, which stay
+		// underlay between peers; same trust model as Tailscale's DERP
+		// servers, self-hosted, unlike exit nodes below, which stay
 		// admin-only because they egress to the internet.
 		{
 			"src": ["autogroup:member", "autogroup:admin"],
@@ -119,7 +116,7 @@
 
 		// Exit nodes: only devices with autogroup:internet access can use an
 		// exit node (policy-file syntax rule), and this tailnet is deny-by-
-		// default — without this grant no device can use the exit-nodes
+		// default; without this grant no device can use the exit-nodes
 		// Connector even though it is auto-approved. Scoped to admins only;
 		// invited friends (when group:friends exists) must not route
 		// internet traffic through the cluster.
@@ -132,7 +129,7 @@
 		// LAN VLANs through the exit nodes: services (10.100.1.0/24) and access
 		// (10.100.0.0/24) only. autogroup:internet covers public destinations
 		// only, so private ranges need an explicit grant; without it exit-node
-		// clients stall on any 10.100.x traffic. Admins only — friends keep
+		// clients stall on any 10.100.x traffic. Admins only; friends keep
 		// zero LAN access (tailnet split DNS plan) and every other subnet
 		// stays unreachable.
 		{
@@ -184,10 +181,8 @@
 		}]}},
 	],
 
-	// Tailscale SSH is intentionally not configured. The previous
-	// autogroup:member -> autogroup:self check-mode rule was removed with the
-	// move to deny-by-default; nothing on the tailnet uses SSH. Re-add an
-	// explicit "ssh" block here if that ever changes.
+	// Tailscale SSH is intentionally not configured; nothing on the tailnet
+	// uses SSH. Re-add an explicit "ssh" block here if that ever changes.
 
 	// Test access rules every time they're saved.
 	"tests": [
@@ -206,7 +201,7 @@
 			"accept": ["10.100.1.50:443", "10.100.1.50:445", "10.100.0.1:443"],
 			"deny":   ["10.100.2.1:443"],
 		},
-		// Game host: web UI is admins-only; friends (not asserted here —
+		// Game host: web UI is admins-only; friends (not asserted here:
 		// autogroup:member is not a valid test src) structurally lack a
 		// tag:game:443 grant and keep only tcp:25565.
 		{
@@ -214,8 +209,7 @@
 			"deny":   ["tag:game:22"],
 		},
 		// autogroup:internet is rejected as a test dst, so exit-node access
-		// cannot be asserted here (apply failed with "test(s) failed (400)"
-		// when tried in !4387).
+		// cannot be asserted here.
 		//
 		// autogroup:member cannot be a test src (API rejects autogroups),
 		// so the slice-3 friends grant (autogroup:member -> tag:k8s

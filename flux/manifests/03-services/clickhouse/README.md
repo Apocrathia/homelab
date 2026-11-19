@@ -23,7 +23,7 @@ clickhouse consumer reuses it).
 | `kustomization.yaml`      | kustomize assembly for the two resources above                              |
 
 The operator watches `clickhouse` and `tenzir` (`watchNamespaces`):
-`tenzir` holds the relocated CHI/CKI store (2026-10-27), `clickhouse` is
+`tenzir` holds the CHI/CKI store, `clickhouse` is
 the operator's own namespace and the finalizer path for the old CRs
 pruned out of it by that relocation.
 

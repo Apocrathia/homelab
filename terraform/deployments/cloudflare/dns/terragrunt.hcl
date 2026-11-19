@@ -3,10 +3,10 @@
 # -----------------------------------------------------------------------------
 # Public DNS RRsets live here (they're public once published).
 #
-# Auth (1Password Connect — no CLOUDFLARE_API_TOKEN in env):
-#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
-#   OP_CONNECT_TOKEN — Connect API token with read on the vault
-#   TF_HTTP_*        — state backend
+# Auth (1Password Connect, no CLOUDFLARE_API_TOKEN in env):
+#   OP_CONNECT_HOST  - http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN - Connect API token with read on the vault
+#   TF_HTTP_*       ; state backend
 #
 # Do NOT export CLOUDFLARE_API_TOKEN. Do NOT commit vault UUIDs.
 #

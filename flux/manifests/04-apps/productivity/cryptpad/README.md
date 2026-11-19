@@ -15,7 +15,7 @@ Guest pads are reachable without an account on both doors.
 
 ## Overview
 
-2026.10.0 splits the server into http/front/core/storage node processes under one container, described by `infra.js` (topology and public origins; the infra-level keys moved out of `config.js`). This pod runs a single-node topology: all nodes on loopback, so `app.replicas` must stay at 1, a second replica would start a separate mesh cluster against the same data. Browser websockets hit port 3000 and are proxied to the front node internally; `app.container.extraPorts` documents the sandbox server on 3001 (both gateway hostnames keep routing to 3000, matching upstream's example nginx).
+Current CryptPad splits the server into http/front/core/storage node processes under one container, described by `infra.js` (topology and public origins;
 
 ## Authentication
 
@@ -23,7 +23,7 @@ Native OIDC SSO via the official [cryptpad/sso](https://github.com/cryptpad/sso)
 
 Registration is SSO-only (`enforced: true` in `sso.js`); existing pre-SSO local accounts can still log in until deleted. First SSO login creates a new CryptPad account (SSO identity is separate; there is no account linking). Account names come from the IdP `name` claim (full display name); identity is keyed on `sub`, so claim tweaks never orphan accounts. Config edits in `config.js`/`infra.js`/`sso.js` need a pod restart (no checksum rollouts in the chart).
 
-The SSO plugin version must pair with the CryptPad image tag (currently plugin 1.0.0 ↔ image 2026.10.0); check the plugin releases before bumping either.
+The SSO plugin version must pair with the CryptPad image tag (both pinned in `helmrelease.yaml`); check the plugin releases before bumping either.
 
 ## Configuration
 

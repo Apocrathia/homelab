@@ -104,7 +104,7 @@ for sys_dir in "${ROMS_ROOT}"/*/; do
   fi
 
   if ! grep -Eq "^\s+${sys}(,|\s|$)|\"${sys}\"|\b${sys}\b" <<<"${SUPPORTED}"; then
-    # Soft check — still try; Skyscraper will error if unknown
+    # Soft check: still try; Skyscraper will error if unknown
     echo "--- note: ${sys} may be unknown to this Skyscraper build; attempting anyway ---"
   fi
 

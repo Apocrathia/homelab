@@ -178,7 +178,7 @@ guardrails:
         - pattern_type: "prebuilt"
           pattern_name: "aws_access_key"
           action: "MASK"
-        # Replaced prebuilt aws_secret_key (\b[A-Za-z0-9/+=]{40}\b) — it
+        # Replaced prebuilt aws_secret_key (\b[A-Za-z0-9/+=]{40}\b): it
         # false-positives on folder paths ('/' is in the char class).
         # Two validated custom regexes instead: keyword-context, and standalone
         # that rejects path-adjacent runs and 40-char hex (git SHAs).

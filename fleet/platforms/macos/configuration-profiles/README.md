@@ -1,4 +1,4 @@
-# configuration-profiles — macOS MDM profiles
+# configuration-profiles: macOS MDM profiles
 
 `.mobileconfig` payloads for macOS. Holds `cis-macos-26/`, the vendored CIS
 macOS 26 Tahoe benchmark profiles; nothing applies until a fleet YAML lists

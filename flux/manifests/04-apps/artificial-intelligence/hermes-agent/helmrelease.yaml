@@ -107,7 +107,7 @@ spec:
               secretKeyRef:
                 name: hermes-agent-secrets
                 key: gitlab-token
-          # A2A inbound — lets other agents call Hermes via JSONRPC.
+          # A2A inbound: lets other agents call Hermes via JSONRPC.
           # Bearer token lives in 1Password (hermes-agent-secrets/a2a-bearer-token).
           - name: A2A_HOST
             value: "0.0.0.0"
@@ -126,7 +126,7 @@ spec:
         port: 80
         targetPort: 9119
         portName: http
-      # A2A inbound port — other agents reach Hermes via this port.
+      # A2A inbound port: other agents reach Hermes via this port.
       extraServicePorts:
         - name: a2a
           port: 9900
@@ -260,7 +260,7 @@ spec:
           - "refresh_token"
         clientIdFromSecret:
           enabled: true
-        # Confidential + PKCE — same pattern as other generic-app OIDC apps.
+        # Confidential + PKCE: same pattern as other generic-app OIDC apps.
         # Copy Authentik Client ID / Secret into 1Password after blueprint apply.
         redirectUris:
           - url: "https://hermes-agent.gateway.services.apocrathia.com/auth/callback"

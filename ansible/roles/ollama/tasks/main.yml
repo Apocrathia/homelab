@@ -1,6 +1,6 @@
 ---
-# Deployment strategy (operator decision 2026-09-26): the official
-# ollama.com install.sh owns the install — it creates the ollama
+# Deployment strategy: the official
+# ollama.com install.sh owns the install; it creates the ollama
 # user/groups, wipes and re-extracts /usr/local/lib/ollama, applies the
 # ROCm overlay when lspci detects an AMD GPU, writes
 # /etc/systemd/system/ollama.service, and daemon-reloads + restarts the
@@ -9,7 +9,7 @@
 
 # install.sh prereqs: zstd unpacks the .tar.zst bundles, pciutils (lspci)
 # is how the script detects an AMD GPU and applies the ROCm overlay.
-# Fedora gotcha: NEVER add curl here — full curl conflicts with
+# Fedora gotcha: NEVER add curl here: full curl conflicts with
 # curl-minimal on Fedora 36+ (curl is already present).
 - name: Install ollama prerequisites
   ansible.builtin.package:
@@ -34,7 +34,7 @@
     - ollama
 
 - name: Record installed ollama version
-  # Empty string when the binary is absent or the output unparseable — both
+  # Empty string when the binary is absent or the output unparseable; both
   # make the gate fire and reinstall.
   ansible.builtin.set_fact:
     ollama_installed_version: >-
@@ -59,10 +59,9 @@
   tags:
     - ollama
 
-# RPM consolidation (operator decision 2026-09-26): Fedora ships a
-# community ollama RPM that goes stale (f44 pins 0.12.x vs upstream 0.34.x)
-# and shadows the /usr/local install. Remove every subpackage so exactly one
-# ollama remains. dnf no-ops on absent names — idempotent.
+# Fedora ships a community ollama RPM that goes stale in the distro repo
+# and shadows the /usr/local install. Remove every subpackage so exactly
+# one ollama remains. dnf no-ops on absent names; idempotent.
 - name: Remove stale Fedora ollama RPMs
   ansible.builtin.package:
     name:
@@ -75,9 +74,9 @@
     - ollama
     - packages
 
-# HARD RULE: the role never writes inside /usr/share/ollama, never sets
-# OLLAMA_MODELS, never pulls or deletes models (137 GB store on
-# ians-gaming-pc). The pre/post stat pair below is insurance that no task
+# The role never writes inside /usr/share/ollama, never sets
+# OLLAMA_MODELS, never pulls or deletes models (the models store on
+# ians-gaming-pc is operator-owned). The pre/post stat pair below is insurance that no task
 # in this run made the models directory disappear.
 - name: Check for existing ollama models directory
   ansible.builtin.stat:
@@ -118,8 +117,8 @@
 - name: Ensure ollama service is enabled and started
   # Cheap converge outside the gate: the install script already did this,
   # so this only repairs a stopped/disabled service. In check mode the gate
-  # never ran the script, so there is nothing to converge (kopia
-  # schedule.yml pattern).
+  # never ran the script, so there is nothing to converge (same check-mode
+  # skip as kopia's tasks/schedule.yml).
   ansible.builtin.systemd_service:
     name: ollama
     enabled: true
@@ -141,7 +140,7 @@
     that:
       - ollama_models_dir_post.stat.exists
     fail_msg: >-
-      /usr/share/ollama/.ollama/models disappeared during this run — the
+      /usr/share/ollama/.ollama/models disappeared during this run; the
       models store is off-limits; stop and investigate before the next
       apply.
   when: ollama_models_dir.stat.exists

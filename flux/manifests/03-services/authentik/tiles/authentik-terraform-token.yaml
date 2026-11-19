@@ -5,12 +5,12 @@ metadata:
   name: authentik-terraform-token
   namespace: authentik
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret:
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret. Same
   # item as every other authentik-consumer copy (jetkvm, gatus, misp,
-  # opencti, matrix, …); the namespace differs — and unlike those apps,
+  # opencti, matrix, …); the namespace differs; and unlike those apps,
   # the nine tiles share ONE namespace (authentik) and therefore ONE
   # item/Secret copy, referenced by all nine ProviderConfigs.
   itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"

@@ -53,7 +53,7 @@ INFRA_PACKAGES = (
 VERDICT_LABELS = ("agent-review:pass", "agent-review:hold", "agent-review:block")
 # The sweep fully owns the agent-review:* namespace: every sweep recomputes the
 # whole label set so stale flags (infra, major, phase2-trivy, agent-held) come
-# off the moment they stop applying. No persistent "done" marker — the verdict
+# off the moment they stop applying. No persistent "done" marker: the verdict
 # label IS the state.
 ALL_AGENT_LABELS = VERDICT_LABELS + (
     "agent-review:infra",
@@ -62,7 +62,7 @@ ALL_AGENT_LABELS = VERDICT_LABELS + (
     "agent-review:agent-held",
 )
 # The ONLY flag labels the sweep applies. Anything else the agent returns
-# (source-mismatch, regression, bug-storm, ...) is note text, not a label —
+# (source-mismatch, regression, bug-storm, ...) is note text, not a label,
 # live finding: agents invent vocabulary and free-form labels confuse the
 # operator ("why is it a downgrade?").
 ALLOWED_FLAGS = {
@@ -178,9 +178,7 @@ def protect_prior_agent_hold(v: dict, prior_labels: list[str]) -> dict:
 
 
 # --- Verdict pins ---------------------------------------------------------------
-# Live finding (2026-10-11, MR !5151): the agent blocked a real tenzir data-loss
-# regression, then later sweeps flipped block->pass->hold->pass on the SAME sha —
-# every A2A turn re-judges from scratch, and a successful-but-shallow re-judgment
+# Every A2A turn re-judges from scratch, and a successful-but-shallow re-judgment
 # wipes the prior hold (protect_prior_agent_hold only covers failed turns). A pin
 # persists an agent downgrade, keyed to the sha it was judged on: the note carries
 # an agent-pin line, the MR leaves the judgment sheet, and the pin stands until
@@ -416,7 +414,7 @@ async def collect_fact(http: httpx.AsyncClient, dep: Dep, gh_token: str) -> dict
     if f.get("release_at"):
         f["age_h"] = round((datetime.now(UTC) - _dt(f["release_at"])).total_seconds() / 3600, 1)
 
-    # Issue scan anchored on the release (14d window for majors — rolling tags)
+    # Issue scan anchored on the release (14d window for majors: rolling tags)
     if repo and "/" in repo:
         since = f.get("release_at") or ""
         if dep.update_type == "major":

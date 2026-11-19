@@ -5,7 +5,7 @@ metadata:
   name: romm-esde-media-import
   namespace: romm
 spec:
-  # Thursday 05:00 America/Denver — after esde-media-scraper (Wed 04:00+) has
+  # Thursday 05:00 America/Denver: after esde-media-scraper (Wed 04:00+) has
   # refreshed ES-DE media on the Games share.
   schedule: "0 5 * * 4"
   timeZone: "America/Denver"

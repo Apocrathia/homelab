@@ -1,4 +1,4 @@
-# `autoresearch` — idle-only research laps (skill)
+# `autoresearch`: idle-only research laps (skill)
 
 `SKILL.md` defines the tier-8 idle research lap: bounded, metric-driven
 experiments from an operator-approved contract, with writeups shipped under

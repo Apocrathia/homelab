@@ -121,7 +121,7 @@ configMapGenerator:
     files:
       - map.tql=packages/stix/operators/ocsf/map.tql
   # Vendored library `tenzir` utilities package (packages/tenzir/): this
-  # lane mounts its OSINT pair — update_context (the core node's
+  # lane mounts its OSINT pair; update_context (the core node's
   # opencti-osint-loader) and enrich (unconsumed until a category-4
   # ingress node wires in-stream enrichment). The package's detect/ocsf
   # operators stay repo-side only.
@@ -139,7 +139,7 @@ configMapGenerator:
       - enrich.tql=packages/tenzir/operators/osint/enrich.tql
   # Shared record_integrity attest/verify operators (operators/
   # record_integrity/): the generalized stamping + verification lane
-  # both planes ride — the investigations node's thin scope wrappers
+  # both planes ride; the investigations node's thin scope wrappers
   # (attest.tql/verify.tql under operators/investigations/ocsf/) call
   # them, and the core node's archive rule + verify pipeline call them
   # directly.
@@ -167,8 +167,7 @@ configMapGenerator:
   # so the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (authentik.tf); the replacements
   # fieldPath bracket-escapes it: data.[authentik.tf]. No authentik_blueprint
-  # label lands on this ConfigMap — the tofu lane replaced the blueprint
-  # sidecar pattern.
+  # label lands on this ConfigMap; it is not a blueprint source.
   - name: tenzir-authentik-module
     namespace: tenzir
     files:

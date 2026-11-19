@@ -10,7 +10,7 @@ The demo app is a **baseline template** that demonstrates:
 
 - **Helm Chart Deployment**: Uses the generic-app chart for reusable application patterns
 - **Application Deployment**: Basic application deployment patterns
-- **Authentik Integration**: SSO integration through an Authentik proxy provider owned by a chart-rendered provider-opentofu Workspace with chart-generated inline HCL (the file-pair pattern — no module refs, no varmap in git)
+- **Authentik Integration**: SSO integration through an Authentik proxy provider owned by a chart-rendered provider-opentofu Workspace with chart-generated inline HCL (the file-pair pattern: no module refs, no varmap in git)
 - **Gateway API Routing**: Traffic routing through Gateway API (handled by Authentik)
 - **Storage Integration**: Both persistent (Longhorn) and shared (SMB) storage
 - **Monitoring**: Application monitoring and observability
@@ -28,20 +28,16 @@ The demo app is deployed using **Flux GitOps** with a HelmRelease resource that 
 
 This directory contains:
 
-- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.enabled: true` + `managedBy: terraform` — see [Authentik Ownership](#authentik-ownership))
+- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.enabled: true` + `managedBy: terraform`; see [Authentik Ownership](#authentik-ownership))
 - `kustomization.yaml` - Kustomize configuration for Flux deployment (namespace, HelmRelease, nginx ConfigMap)
 - `README.md` - This documentation
 
-Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is chart-rendered too — the chart's `authentik.managedBy: terraform` mode renders the OnePasswordItem + provider-opentofu ProviderConfig/Workspace docs with chart-generated inline HCL. The app has no HTTPRoute of its own (`httproute.enabled: false`); the `ak-outpost-demo-app-outpost` route (ns `authentik`) is still the only route serving `demo.gateway.services.apocrathia.com`, on both gateways — the per-app outpost is unmanaged tofu-wise (the new proxy shape renders no outpost).
+Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is chart-rendered too; the chart's `authentik.managedBy: terraform` mode renders the OnePasswordItem + provider-opentofu ProviderConfig/Workspace docs with chart-generated inline HCL. The app has no HTTPRoute of its own (`httproute.enabled: false`); the `ak-outpost-demo-app-outpost` route (ns `authentik`) is still the only route serving `demo.gateway.services.apocrathia.com`, on both gateways; the per-app outpost is unmanaged tofu-wise (the new proxy shape renders no outpost).
 
 ## Authentik Ownership
 
-The Authentik stack — proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings — is owned by the provider-opentofu `Workspace` (`demo-app-authentik`). The chart renders it: `authentik.managedBy: terraform` in `helmrelease.yaml` makes the generic-app chart render the OnePasswordItem + ProviderConfig/Workspace docs with CHART-GENERATED inline HCL (the file-pair pattern, same shape as gatus MINUS the outpost resource) — values only, no module refs, no varmap in git, no per-app tofu files. Every value composes from the `authentik` values block; per-app config deltas become values keys, never raw HCL edits.
+The Authentik stack, proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings, is owned by the provider-opentofu `Workspace` (`demo-app-authentik`). The chart renders it: `authentik.managedBy: terraform` in `helmrelease.yaml` makes the generic-app chart render the OnePasswordItem + ProviderConfig/Workspace docs with CHART-GENERATED inline HCL (the file-pair pattern, same shape as gatus MINUS the outpost resource); values only, no module refs, no varmap in git, no per-app tofu files. Every value composes from the `authentik` values block; per-app config deltas become values keys, never raw HCL edits.
 
-- The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the chart-rendered OnePasswordItem — same shared item as headlamp and chaos-mesh.
-- The per-app outpost is NOT tofu-owned anymore: the new proxy shape renders no outpost, so `demo-app-outpost` + its dual-parent route (parentRefs `main-gateway`/`https` for LAN and `tailnet-gateway`/`https-gateway-services` for tailnet — the outpost route owns both doors) stay live but UNMANAGED until the W4 sweep retires them.
-- The W0 flip (from the retired Remote+varmap module lane) DISCARDS the module-era tofu state and re-adopts the live objects through the gated-import runbook: witness ids (provider pk, binding uuids) never enter git — they ride a gate-time varmap on the live Workspace once, then clear. Zero outage: the objects keep their uuids, nobody re-logs in. If an object is ever deleted out-of-band, tofu recreates it (state knows it).
-- No chart-tag race: the inline HCL needs no `generic-app-<version>` tag inside the Workspace spec; the chart's OCI version pin on the HelmRelease is Renovate-managed. The one-time W0 gate sequence lives in the flip MR body.
 
 ## Storage Pattern
 
@@ -177,8 +173,8 @@ secrets:
 authentik:
   # Chart-rendered provider-opentofu stack with chart-generated inline
   # HCL; the chart composes the HCL from these values (no module refs,
-  # no varmap in git). Adoption ids never enter git: the W0 re-adopt
-  # gate carries them as a gate-time varmap on the live Workspace.
+  # no varmap in git). Adoption ids never enter git: the re-adopt
+  # runbook carries them as a gate-time varmap on the live Workspace.
   enabled: true
   managedBy: terraform
   shared: true
@@ -193,11 +189,11 @@ httproute:
 
 ### Key Configuration Values
 
-- **Application**: nginx:alpine with nginx-specific cache and run volumes
+- **Application**: nginx with nginx-specific cache and run volumes (pinned image tag in `helmrelease.yaml`)
 - **Volume Mounts**: All volume mounts defined in `app.volumeMounts` section
 - **Storage**: Multi-volume pattern - Longhorn for app data, SMB for static content
 - **Volume Structure**: Container-specific volumes (emptyDir) and pod-wide volumes (storage)
-- **Authentication**: Authentik SSO — stack owned by the chart-rendered provider-opentofu Workspace with chart-generated inline HCL; the chart's authentik block carries values only
+- **Authentication**: Authentik SSO; stack owned by the chart-rendered provider-opentofu Workspace with chart-generated inline HCL; the chart's authentik block carries values only
 - **Secrets**: 1Password integration for sensitive configuration
 - **Networking**: Uses Authentik outpost (HTTPRoute disabled)
 
@@ -214,7 +210,7 @@ httproute:
 - **URL**: `https://demo.gateway.services.apocrathia.com` (same hostname as the LAN)
 - **Authentication**: SSO through Authentik (routes to the demo-app outpost, same as the LAN route)
 - **TLS**: Wildcard certificate for `*.gateway.services.apocrathia.com` terminated at the tailnet gateway
-- **Routing**: The outpost-generated HTTPRoute `ak-outpost-demo-app-outpost` (ns `authentik`) dual-parents `main-gateway`/`https` and `tailnet-gateway`/`https-gateway-services` — the outpost route owns both doors; the app has no route manifest of its own. Background: [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
+- **Routing**: The outpost-generated HTTPRoute `ak-outpost-demo-app-outpost` (ns `authentik`) dual-parents `main-gateway`/`https` and `tailnet-gateway`/`https-gateway-services`; the outpost route owns both doors; the app has no route manifest of its own. Background: [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
 
 ### Internal Access
 

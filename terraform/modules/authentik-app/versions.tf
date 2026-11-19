@@ -8,10 +8,10 @@ terraform {
 
   # PARTIAL backend: the per-app args (secret_suffix/namespace/
   # in_cluster_config) come from the chart-rendered ProviderConfig
-  # spec.backendFile — the provider writes it to crossplane.remote.tfbackend
+  # spec.backendFile, which the provider writes to crossplane.remote.tfbackend
   # and passes it via -backend-config at tofu init. Without backendFile the
-  # kubernetes backend init fails. [PROVEN: upstream example
+  # kubernetes backend init fails. (upstream: example
   # workspace-opentofu-backend-file.yaml; provider source
-  # internal/controller/cluster/workspace/workspace.go]
+  # internal/controller/cluster/workspace/workspace.go)
   backend "kubernetes" {}
 }

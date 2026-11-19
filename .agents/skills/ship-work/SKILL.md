@@ -30,7 +30,7 @@ Authorization:
 
 **Hybrid ship model:** this skill is the authorized contribute path (commit →
 push → MR → watch). When the lap is **not** ship-authorized, stop at
-[`draft-commit`](../draft-commit/SKILL.md) instead — do not run this skill's
+[`draft-commit`](../draft-commit/SKILL.md) instead; do not run this skill's
 commit/push steps. Soft ship language ("ship it", "LGTM", "looks good", "go
 ahead") or explicit `commit` / `push` / `/ship-work` / `/self-improve` authorizes
 this lap. Never merge or approve the MR unless the operator names that action.
@@ -109,7 +109,7 @@ non-obvious choices). Use a HEREDOC. Do not `--no-verify` unless the operator
 asks.
 
 Hard stops even when authorized: secrets, force-push to `main`, amending
-someone else's or already-pushed commit, staging unrelated WIP — see
+someone else's or already-pushed commit, staging unrelated WIP; see
 [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 
 ### 2. Push and open MR
@@ -117,7 +117,7 @@ someone else's or already-pushed commit, staging unrelated WIP — see
 Run on the local system with network. Prefer **feature-branch + MR** (never
 direct `main` on autonomous / self-improve laps). Attended soft-ship to `main`
 still uses [`draft-commit`](../draft-commit/SKILL.md) attended path when the
-operator wants that — this skill's default contribute path is branch + MR.
+operator wants that; this skill's default contribute path is branch + MR.
 
 ```bash
 cd "$wt_root"
@@ -172,7 +172,7 @@ CI, conflicts, draft status, and reporting. It does **not** merge.
 
 **Hard gate:** do not report ship complete until `watch-mr` exits with
 **merged**, **dismissed**, **hard-blocked**, or **skip:hot-lock**. Merge-ready
-is a milestone — continue watching until a terminal. Opening the MR is not the
+is a milestone; continue watching until a terminal. Opening the MR is not the
 end of the lap.
 
 Do not merge unless the operator explicitly asks.

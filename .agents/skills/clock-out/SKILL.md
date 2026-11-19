@@ -233,7 +233,7 @@ rm -f ".scratch/worktree-leases/$(echo "$session_branch" | tr '/' '_').lock"
 
 Lease names replace `/` with `_` (see
 [`.agents/rules/worktrees.md`](../../rules/worktrees.md#worktree-leases)). A
-missing lease file is fine — delete only, never fail.
+missing lease file is fine; delete only, never fail.
 
 If this session used a `mr/<iid>-review` tracking branch, `"$session_branch"`
 is that name (e.g. `mr/72-review`); delete it once the upstream MR is merged.

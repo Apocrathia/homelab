@@ -38,7 +38,7 @@ Create a 1Password item:
 ### Storage
 
 - **Database Storage**: CloudNativePG PostgreSQL cluster for model configurations
-- **Cache**: Valkey (`litellm-valkey`) — in-memory only, no PVC; LRU eviction
+- **Cache**: Valkey (`litellm-valkey`), in-memory only, no PVC; LRU eviction
 - **Configuration Volume**: Model configuration mounted from ConfigMap (`litellm.yml`)
 
 ### Access

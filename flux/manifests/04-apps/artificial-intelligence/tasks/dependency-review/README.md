@@ -4,32 +4,32 @@
 
 ## Overview
 
-Agent sweep over open Renovate MRs every 6 hours (at :23 of hours 0, 6, 12, 18 UTC). Replaces manual triage:
+Agent sweep over open Renovate MRs (schedule in the CronJob manifest). Replaces manual triage:
 
 - deterministic runner (`src/facts.py`) collects upstream facts: release age
   (GitHub releases → tags → PyPI → Docker Hub/ghcr config dates), superseded
   check, OSV vulnerabilities, upstream issue scan since the release
 - hard gates (`src/invoke.py`): cooldown anchored on the **upstream release
-  date** (not MR age), so same-day patched versions never merge stale —
+  date** (not MR age), so same-day patched versions never merge stale,
   Renovate retargets the MR and the gate restarts on the new version
 - A2A judgment turn via git-agent (`prompts/task.md`): bug storms,
   version-specific regressions, release-note signals, source validation
 - posts a verdict note + `agent-review:pass|hold|block` labels on every MR
-  and approves passes — one note per MR, created once and updated in place
+  and approves passes, one note per MR, created once and updated in place
   each sweep (no reposts). **Merge stays with the operator.**
 
 ## Classes
 
-| Update                                                                                             | Cooldown                  | Notes                                                                                                                                                                                      |
-| -------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| digest refresh                                                                                     | none                      | same tag, rebuilt image (CVE-rebuild class); Trivy pre-merge scan is the phase-2 gap                                                                                                       |
-| patch/minor                                                                                        | 24h from upstream release | superseded → hold; OSV hit → block                                                                                                                                                         |
-| major                                                                                              | 24h + human review        | DB-migration risk, `agent-review:major` label                                                                                                                                              |
-| infra (talos, siderolabs, kubelet, authentik, tailscale, litellm, cnpg, longhorn, rabbitmq, redis) | 72h on majors             | `agent-review:infra` label on every infra bump — operator-only, never auto-merged; matched on package, title, AND branch so `ghcr.io/siderolabs/installer`-style names cannot slip through |
+| Update                                                                                             | Cooldown                  | Notes                                                                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| digest refresh                                                                                     | none                      | same tag, rebuilt image (CVE-rebuild class); Trivy pre-merge scan is the phase-2 gap                                                                                                      |
+| patch/minor                                                                                        | 24h from upstream release | superseded → hold; OSV hit → block                                                                                                                                                        |
+| major                                                                                              | 24h + human review        | DB-migration risk, `agent-review:major` label                                                                                                                                             |
+| infra (talos, siderolabs, kubelet, authentik, tailscale, litellm, cnpg, longhorn, rabbitmq, redis) | 72h on majors             | `agent-review:infra` label on every infra bump, operator-only, never auto-merged; matched on package, title, AND branch so `ghcr.io/siderolabs/installer`-style names cannot slip through |
 
 ## Idempotency
 
-Every open Renovate MR is re-reviewed every sweep — no freshness skip: the
+Every open Renovate MR is re-reviewed every sweep, no freshness skip: the
 sweep's own note/label writes are the MR activity, and cooldown holds must
 flip to pass once the gate clears. The verdict note is created once per MR
 and updated in place; unchanged bodies skip the write entirely. Labels are
@@ -40,10 +40,10 @@ Agent hold/block verdicts pin. When the judgment turn downgrades an MR, the
 note carries an `agent-pin: hold|block@<sha>` marker, and while the branch sha
 is unchanged the MR leaves the judgment sheet and the pin stands: the
 effective verdict is the more severe of (deterministic, pin), and the
-original agent reason stays in the note — an unchanged branch can no longer
+original agent reason stays in the note, an unchanged branch can no longer
 flip block→pass between sweeps. A rebase or retarget changes the sha, clears
 the pin, and the MR is re-judged fresh; a new downgrade stamps a new pin. The
-operator override for a pinned hold is a manual merge — the automated
+operator override for a pinned hold is a manual merge, the automated
 pipeline will not merge it, and there is no label that lifts a pin.
 
 ## Known upstream gotchas (baked in)
@@ -61,9 +61,9 @@ pipeline will not merge it, and there is no label that lifts a pin.
 ## Secrets
 
 Reuses the existing 1Password vault items (no new secrets):
-`vaults/Secrets/items/gitlab-mcp-secrets` (key `gitlab-token` — same token
+`vaults/Secrets/items/gitlab-mcp-secrets` (key `gitlab-token`, same token
 gitlab-mcp uses for MR notes/approvals) and `vaults/Secrets/items/github-mcp-secrets`
-(key `authorization`, may carry a Bearer prefix — normalized by the runner).
+(key `authorization`, may carry a Bearer prefix, normalized by the runner).
 
 ## Local run
 

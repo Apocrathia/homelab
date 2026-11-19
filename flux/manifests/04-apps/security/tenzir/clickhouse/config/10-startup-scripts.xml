@@ -22,17 +22,17 @@
 
              TTL (operator-tunable):
                - 7 DAY TO VOLUME 'cold': move parts to the rustfs tier
-                 (was 90 DAY until 2026-10-27; the relocation wipe
-                 re-created every table with the 7-day window - no
-                 live ALTERs needed for that cutover)
+                  (was 90 DAY; the relocation wipe re-created every
+                  table with the 7-day window - no live ALTERs needed
+                  for that cutover)
                - DELETE horizon cap (change it here, then ALTER
                  per-table server-side for already-created tables):
-                 400 DAY, 90 DAY for ocsf.Network_Activity (operator
-                 decision 2026-10-29).
+                  400 DAY, 90 DAY for ocsf.Network_Activity (operator
+                  decision).
              SETTINGS ttl_only_drop_parts keeps the DELETE cap a cheap
              partition drop. Class tables partition monthly, PARTITION
-             BY toYYYYMM(`time`) - changed from daily toDate(`time`)
-             2026-10-29 for part-count pressure (live convergence plan:
+              BY toYYYYMM(`time`) - changed from daily toDate(`time`)
+              for part-count pressure (live convergence plan:
              docs/plans/ocsf-monthly-partition-cutover.md). -->
         <!--
           ORDERING IS LOAD-BEARING: startup_scripts executes sequentially
@@ -46,8 +46,7 @@
           reorder below the ocsf section until the ocsf DDL/live
           convergence lands. Also: no second config.d startup-scripts
           file - ConfigProcessor merges same-identifier <scripts>
-          pairwise, so a separate file would overwrite ocsf CREATEs
-          (verified 2026-10-18).
+          pairwise, so a separate file would overwrite ocsf CREATEs.
         -->
         <!-- Investigations case/evidence store (tenzir/nodes/
              investigations/): one database, one table - every
@@ -287,8 +286,8 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
              appends the OpenCTI TAXII collection's current
              state on every walk (daily full walk +
              added_after polls; the vendored stix package's
-             fetch operator needs the 6.20 engine line the
-             whole fleet runs since the GA bump), so
+              fetch operator needs the 6.20 engine line the
+              whole fleet runs), so
              the table accumulates per-walk snapshots
              rather than unique rows; the loader reads them
              back sorted by time (the indicator's STIX
@@ -300,30 +299,28 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
              SHAPE CONTRACT: the vendored stix::ocsf::map emits
              `osint` as a ONE-ELEMENT ARRAY, so the dotted
              typed columns this table originally declared
-             (`osint.value` & co) could never bind it — an
-             array does not surface at a dotted scalar path —
+             (`osint.value` & co) could never bind it; an
+             array does not surface at a dotted scalar path;
              and sat NULL on every row while the whole array
-             rode the tenzir:catch_all `event` JSON (verified
-             against live data and offline probes, 2026-10-21;
-             the earlier per-column `osint.*` entries are
-             removed here). No JSON column can hold the array
-             itself either — ClickHouse JSON accepts objects at
-             the top level — so the catch-all is the array's
+              rode the tenzir:catch_all `event` JSON. No
+              JSON column can hold the array
+             itself either; ClickHouse JSON accepts objects at
+             the top level; so the catch-all is the array's
              only store and the shape contract is
              factory-inserted shape == catch-all-round-tripped
              shape. The consumer loaders (core + netflow
              opencti-osint-loader) therefore read via SQL-mode
-             projection — JSONExtractArrayRaw over the
-             catch-all — which is uniform across engines:
+             projection: JSONExtractArrayRaw over the
+             catch-all; which is uniform across engines:
              6.19.1 table mode does not reconstruct catch-alls
              at all, and 6.20 table mode reconstructs but
              re-types IP-shaped indicator values, breaking the
              string keys the vendored update_context/enrich
              pair pins. MIGRATION NOTE: CREATE IF NOT EXISTS
-             does not alter an existing table — the live table
+             does not alter an existing table; the live table
              keeps the four dead typed osint.* columns until a
              one-time operator ALTER TABLE ... DROP COLUMN (see
-             the intel node README; the columns are inert —
+             the intel node README; the columns are inert;
              NULL on old rows, ignored by the loaders). Same
              engine/DDL shape as the event tables above for the
              remaining typed columns; the tenzir user's
@@ -346,8 +343,8 @@ ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
-        <!-- Fleet asset inventory (tenzir/nodes/enrichment/,
-             lap 2): the reference table the enrichment node's
+        <!-- Fleet asset inventory (tenzir/nodes/enrichment/):
+             the reference table the enrichment node's
              fleet-assets-pull factory pipeline writes and the
              core node's fleet-assets-loader reads. Deliberately
              NOT a per-class ocsf.<Class_Name> table - it is

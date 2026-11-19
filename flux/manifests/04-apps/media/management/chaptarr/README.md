@@ -25,9 +25,9 @@ Web UI after deployment. PostgreSQL connection is pre-configured via environment
 
 The app uses three logical databases on the single `chaptarr-postgres` CNPG cluster (`MainDb`, `LogDb`, `CacheDb`):
 
-- `chaptarr` — main data (created by CNPG bootstrap)
-- `chaptarr_logs` — UI logs table (`Logs`)
-- `chaptarr_cache` — HTTP response cache (`HttpResponse`)
+- `chaptarr`, main data (created by CNPG bootstrap)
+- `chaptarr_logs`, UI logs table (`Logs`)
+- `chaptarr_cache`, HTTP response cache (`HttpResponse`)
 
 The two extra databases were created manually on the existing cluster (CNPG cannot add databases to a bootstrapped cluster declaratively):
 
@@ -45,15 +45,15 @@ See `helmrelease.yaml` for deployment configuration.
 
 Create a 1Password item at `vaults/Secrets/items/chaptarr-secrets` with:
 
-- `username` — PostgreSQL database owner username
-- `password` — PostgreSQL database owner password
+- `username`, PostgreSQL database owner username
+- `password`, PostgreSQL database owner password
 
 ## Authentication
 
 Native OIDC against Authentik (`mode: oidc` in `helmrelease.yaml`). Chaptarr stores OIDC settings in `config.xml`; the Helm chart only creates the Authentik OAuth2 provider and HTTPRoute.
 
 - **Redirect URI** (read-only in Chaptarr UI): `https://chaptarr.gateway.services.apocrathia.com/signin-oidc`
-- **Authority** (set in Chaptarr UI): `https://auth.gateway.services.apocrathia.com/application/o/chaptarr/` — not the bare Authentik host
+- **Authority** (set in Chaptarr UI): `https://auth.gateway.services.apocrathia.com/application/o/chaptarr/`, not the bare Authentik host
 - **Email verified**: Authentik blueprint adds a custom email scope mapping with `email_verified: true` for Chaptarr's **Require email verified** option
 
 API-key clients (\*arr stack) authenticate directly; no Authentik proxy.
@@ -69,9 +69,9 @@ API-key clients (\*arr stack) authenticate directly; no Authentik proxy.
    - Scopes: `openid profile email`
    - Enable **Require email verified**
 4. Root folders:
-   - `/audiobooks` — Audiobooks
-   - `/ebooks` — eBooks
-   - `/downloads` — Download client folder
+   - `/audiobooks`, Audiobooks
+   - `/ebooks`, eBooks
+   - `/downloads`, Download client folder
 
 ## Troubleshooting
 
@@ -104,6 +104,6 @@ curl -sS -o /dev/null -w '%{http_code}\n' \
 
 ## References
 
-- **[Chaptarr GitHub](https://github.com/Chaptarr/chaptarr)** — Source, releases, and issues
-- **[Chaptarr Wiki](https://wiki.chaptarr.com)** — Documentation
-- **[Docker Hub](https://hub.docker.com/r/chaptarr/chaptarr)** — Official container image
+- **[Chaptarr GitHub](https://github.com/Chaptarr/chaptarr)**, Source, releases, and issues
+- **[Chaptarr Wiki](https://wiki.chaptarr.com)**, Documentation
+- **[Docker Hub](https://hub.docker.com/r/chaptarr/chaptarr)**, Official container image

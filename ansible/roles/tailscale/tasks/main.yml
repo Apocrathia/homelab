@@ -36,12 +36,11 @@
     state: present
 
 # Check mode: deb822_repository reports changed without writing the repo
-# file, so the tailscale package is not yet visible to apt — skip rather
+# file, so the tailscale package is not yet visible to apt; skip rather
 # than fail ("No package matching 'tailscale' is available").
 # No cache_valid_time: earlier apt tasks in this play refresh the cache,
 # which would make update_cache skip here even when the repo above just
-# changed — the package list would never be fetched (relay diagnosis
-# from the kopia session, confirmed by the 18:39 apply).
+# changed; the package list would never be fetched.
 - name: Install tailscale
   ansible.builtin.apt:
     name: tailscale
@@ -50,7 +49,7 @@
   when: not ansible_check_mode
 
 # Check mode: the apt task above does not install tailscale, so the service
-# does not exist yet on a fresh host — skip rather than fail.
+# does not exist yet on a fresh host; skip rather than fail.
 - name: Enable tailscaled
   ansible.builtin.service:
     name: tailscaled
@@ -80,9 +79,9 @@
 
 - name: Read live preferences (DNS, routes) before the join check
   # CorpDNS is accept-dns: true means the tailnet controls resolv.conf.
-  # A host joined earlier with the old default must re-run tailscale up
-  # to hand DNS back to the LAN resolver (MagicDNS upstream cannot
-  # resolve LAN-only names - broke kopia's storage endpoint).
+  # A host whose live accept-dns drifted from the default is re-joined
+  # below to hand DNS back to the LAN resolver (MagicDNS cannot resolve
+  # LAN-only names).
   ansible.builtin.command:
     cmd: tailscale debug prefs
   register: tailscale_prefs_live
@@ -103,7 +102,7 @@
   # without secrets.
   ansible.builtin.fail:
     msg: >-
-      tailscale_authkey is empty on {{ inventory_hostname }} —
+      tailscale_authkey is empty on {{ inventory_hostname }}:
       CI: is the tailscale-ansible-authkey item present in vault Secrets
       (see docs/plans/game-host-tailnet.md, operator steps)?
       Local: pass -e tailscale_authkey=...
@@ -144,14 +143,14 @@
     tailscale_host_ipv4: "{{ tailscale_ip.stdout_lines[0] | default('') }}"
 
 - name: Fail when routes or exit node are advertised
-  # A-prime architecture: zero LAN routes. Asserted on every run where the
+  # Architecture rule: zero LAN routes. Asserted on every run where the
   # daemon answers (skipped pre-join / in --check on a fresh host).
   # prefs JSON uses explicit nulls for absent values (AdvertiseRoutes: null),
-  # so dict.get defaults never fire — coalesce with `or` before filtering.
+  # so dict.get defaults never fire; coalesce with `or` before filtering.
   ansible.builtin.fail:
     msg: >-
-      {{ inventory_hostname }} advertises routes or an exit node —
-      the tailnet must never carry LAN routes (A-prime decision).
+      {{ inventory_hostname }} advertises routes or an exit node;
+      the tailnet must never carry LAN routes.
   when:
     - tailscale_prefs_live.rc == 0
     - ((tailscale_prefs_live.stdout | from_json).get('AdvertiseRoutes') or []) | length > 0

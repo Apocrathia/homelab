@@ -17,7 +17,7 @@ true and thin. Stale context text is confidently wrong.
 - After any change that moves docs, renames headings, or adds/removes context
   modules, skills, or personas.
 - From the `context-links` pre-commit/pre-push hook for the **link check only**
-  (steps 2–5 need judgment — keep those as an explicit invocation).
+  (steps 2–5 need judgment, keep those as an explicit invocation).
 
 ## Workflow
 
@@ -48,7 +48,7 @@ Pass `--all` to check every tracked markdown file. Fix or drop broken targets.
 (`.prime/agent/APPEND_SYSTEM.md`) drifts from the `rules/_harnesses.json`
 sidecar, or when the sidecar's `always_on` list, rule `alwaysApply: true`
 frontmatter, and AGENTS.md Always-in-force rule links disagree. After an
-intentional always-on rule change, regenerate with `--write` — never hand-edit
+intentional always-on rule change, regenerate with `--write`; never hand-edit
 `.prime/agent/`.
 
 Hook-safe: no side effects, nonzero exit on broken links, discovery drift, or
@@ -75,10 +75,10 @@ Check thin claims against the repo (do not invent new modules):
 
 - [`constraints.md`](../../context/constraints.md) / [`README.md`](../../context/README.md)
   still match GitOps non-negotiables (Gateway API, 1Password Items, manifests as
-  SoT) — if the product model changed, update context in the same lap.
+  SoT); if the product model changed, update context in the same lap.
 - New always-on portable rules or skills on disk missing from `AGENTS.md`
   routing / rules README (step 2 usually catches this).
-- Do **not** replace local `check_*.py` with upstream copies blindly — homelab
+- Do **not** replace local `check_*.py` with upstream copies blindly; homelab
   scripts allow discovery symlinks and untracked ledger paths; upstream may
   regress that. Diff first; keep local when ahead.
 
@@ -90,7 +90,7 @@ grep -rn "<!-- drift:" AGENTS.md .agents/
 
 Act or surface; delete the comment when resolved. The fenced example in
 [`.agents/context/README.md`](../../context/README.md#living-context) is
-the format spec, not a real note — skip it.
+the format spec, not a real note; skip it.
 
 ### 5. Fixes
 

@@ -1,5 +1,5 @@
 ---
-# unifi-os: UniFi OS Server (CK+ replacement; see
+# unifi-os: UniFi OS Server (see
 # docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md). roles/common disables apt
 # Recommends, and podman's UniFi OS prereqs are Recommends-only on trixie,
 # so they must be explicit.
@@ -8,14 +8,14 @@ common_packages_extra:
   - fastfetch # login fetcher (operator shell environment, roles/common)
   - fuse-overlayfs # rootless podman storage
   - passt # pasta networking (UOS Server requirement)
-  - slirp4netns # UOS Server requirement (trixie: 1.2.1)
+  - slirp4netns # UOS Server requirement
   - uidmap # rootless podman subordinate IDs
   - vlan # ifupdown VLAN subinterfaces (network tag)
   - python3-debian # kopia role repo tasks need it in check mode (deb822)
 
 # Static L3: one address per VLAN at .3 (gateway .1, honeypot .2, below
 # every DHCP pool start). Port trunk profile: native VLAN 0 (Legacy,
-# untagged) + tagged 10/42/1000/1001/1002. Legacy gets an address too —
+# untagged) + tagged 10/42/1000/1001/1002. Legacy gets an address too;
 # untagged-port fallback lands devices there with no guarantee of a
 # gateway, and they need an L2-reachable controller to adopt against.
 # Default route via Management only.
@@ -54,9 +54,9 @@ common_nftables_redirects:
     to_port: 11443
 
 # kopia backups (roles/kopia; inventory kopia group = opt-in).
-# UOS Server keeps app data in podman volumes under /home/uosserver —
+# UOS Server keeps app data in podman volumes under /home/uosserver;
 # the /home source carries UniFi's autobackups (.unf, app-consistent);
-# mongod snapshots are crash-consistent only — the .unf tier covers that.
+# mongod snapshots are crash-consistent only; the .unf tier covers that.
 # /var/lib/uosserver is runtime state, recreated by the UOS installer.
 kopia_backup_paths:
   - /etc

@@ -69,5 +69,5 @@ kubectl kustomize flux/manifests/04-apps/management/scripts/unifi
 
 ## References
 
-- **[uv](https://docs.astral.sh/uv/)** — dependency management
-- **[Art-of-WiFi UniFi-API-client](https://github.com/Art-of-WiFi/UniFi-API-client)** — API path and UniFi OS behavior reference
+- **[uv](https://docs.astral.sh/uv/)**, dependency management
+- **[Art-of-WiFi UniFi-API-client](https://github.com/Art-of-WiFi/UniFi-API-client)**, API path and UniFi OS behavior reference

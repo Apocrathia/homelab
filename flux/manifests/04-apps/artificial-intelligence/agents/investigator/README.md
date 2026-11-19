@@ -4,7 +4,7 @@ The homelab's security investigator: a kagent agent that triages alerts and
 detection findings against the Tenzir OCSF lake, works cases in the
 investigations platform, and reports in Discord-ready markdown. Persona:
 the [security-analyst](../../../../../../.agents/agents/security-analyst/agent.md)
-mold — adversarial, evidence-first, homelab-calibrated.
+mold, adversarial, evidence-first, homelab-calibrated.
 
 > **Navigation**: [← Back to Agents README](../README.md)
 
@@ -14,17 +14,17 @@ Investigations are a workflow over two surfaces of the
 [investigations node](../../../security/tenzir/nodes/investigations/README.md)
 (`tenzir-node-investigations`, in-cluster only):
 
-- **Write lane** (`:8080`) — case open/update/close and evidence-pin envelopes
+- **Write lane** (`:8080`), case open/update/close and evidence-pin envelopes
   into ClickHouse `investigations.records` (append-only; the map operator
   validates and stamps the OCSF spine).
-- **Query lane** (`:5160`, `X-Tenzir-Token`) — bounded `from_clickhouse`
+- **Query lane** (`:5160`, `X-Tenzir-Token`), bounded `from_clickhouse`
   pipelines over `investigations.records` and the `ocsf.*` lake tables with the
   SELECT-only `investigations-reader` user. ClickHouse credentials never reach
   the agent; the node resolves `secret(...)` node-side.
 
 The full playbook (endpoints, envelope contract, launch/serve examples, the
 single-JSON read trap, verdict/status IDs, report format) lives in the Agent CR
-system prompt — the prompt is the skill.
+system prompt, the prompt is the skill.
 
 ## Configuration
 
@@ -60,8 +60,8 @@ sequenceDiagram
 ## Why it lives in the `kagent` namespace
 
 The investigations node's NetworkPolicy allows ingress from the `kagent` and
-`hermes-agent` namespaces only (the investigations design's in-cluster callers)
-— the investigator was designed to land in one of those, so it deploys next to
+`hermes-agent` namespaces only (the investigations design's in-cluster callers):
+the investigator was designed to land in one of those, so it deploys next to
 homelab-agent rather than in a dedicated `agent-*` namespace. No cluster
 manifest change was needed on the tenzir side.
 
@@ -71,7 +71,7 @@ kagent declarative agents have no HTTP tool surface, so the agent makes its
 HTTP calls from executed Python code blocks. kagent's code-execution sandbox
 ([`_sanitize_env`](https://github.com/kagent-dev/kagent) in kagent-skills)
 strips secret-named env vars (`*TOKEN*`, `*SECRET*`, `*API_KEY*`,
-`*PASSWORD*`) out of executed code's environment — an env-var token would be
+`*PASSWORD*`) out of executed code's environment, an env-var token would be
 invisible to the code that needs it. So the token rides a secret volume
 instead:
 
@@ -120,9 +120,9 @@ findings alert lane surfaces alert-invocation failures in the bridge logs
   (wired through the kagent controller to the sandboxed local code executor),
   but the kagent 0.10.x CRD notes the field is ignored "for now" over an
   upstream adk-python code-executor bug. If a code block does not execute on
-  the live agent, this is the first suspect — verify with a direct A2A ask
+  the live agent, this is the first suspect, verify with a direct A2A ask
   like "read the token file and GET the node's `/api/v0/ping`" before filing.
-- **Static bearer token, no per-caller identity** — the platform's accepted
+- **Static bearer token, no per-caller identity**, the platform's accepted
   residual risk (investigations design); attribution is record-level via the
   envelope `agent` object.
 - **High-severity case re-trigger**: case opens with `severity_id >= 4` match
@@ -131,6 +131,6 @@ findings alert lane surfaces alert-invocation failures in the bridge logs
 
 ## References
 
-- **[Investigations node README](../../../security/tenzir/nodes/investigations/README.md)** — envelope contract, bootstrap, containment
-- **[Tenzir platform design](../../../../../../.scratch/agent-investigation/design.md)** — P-3 scope
-- **[kagent Agent CRD](https://kagent.dev/docs/kagent/crds)** — Declarative agent schema
+- **[Investigations node README](../../../security/tenzir/nodes/investigations/README.md)**, envelope contract, bootstrap, containment
+- **[Tenzir platform design](../../../../../../.scratch/agent-investigation/design.md)**, P-3 scope
+- **[kagent Agent CRD](https://kagent.dev/docs/kagent/crds)**, Declarative agent schema

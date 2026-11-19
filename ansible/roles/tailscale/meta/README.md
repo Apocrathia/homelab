@@ -1,4 +1,4 @@
-# meta — tailscale role metadata
+# meta: tailscale role metadata
 
 Galaxy metadata for the tailscale role: tailscaled from the upstream apt repo,
 joined to taila8ef8c.ts.net with a static tag, no subnet routes. MIT license,

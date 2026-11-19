@@ -50,7 +50,7 @@ At this point, your nodes will be in `NotReady` state because there's no CNI ins
 
 ### IMPORTANT: PodSecurity Settings
 
-**Critical Step**: Before installing Cilium, you must create the cilium-system namespace with the appropriate PodSecurity admission labels. This is absolutely essential as Cilium requires privileged access to manage networking.
+**Critical Step**: Before installing Cilium, create the cilium-system namespace with privileged PodSecurity admission labels; Cilium requires privileged access to manage networking.
 
 ```bash
 # Create cilium-system namespace with privileged PodSecurity settings

@@ -1,4 +1,4 @@
-# `module-regression/templates` — ledger example
+# `module-regression/templates`: ledger example
 
 `REGRESSION.example.md` is the filled-in `REGRESSION.md` template to copy:
 per-module downstream consumers, dependency evidence, acceptance command,

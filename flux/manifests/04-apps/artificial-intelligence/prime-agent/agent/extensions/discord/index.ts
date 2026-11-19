@@ -1,5 +1,5 @@
 /**
- * prime-agent discord beacon — loads in every prime-agent session.
+ * prime-agent discord beacon, loads in every prime-agent session.
  *
  * The discord bot (server.mjs, same directory) runs as a detached sidecar
  * that owns the Discord gateway connection, the loopback control port
@@ -7,53 +7,53 @@
  *   - serves /send and /healthz for THIS session on an ephemeral loopback
  *     port (no port conflicts, ever),
  *   - registers the session with the bot (15s heartbeat, retries; respawns
- *     the bot when its health probe fails — probe-first, 30s throttle),
+ *     the bot when its health probe fails, probe-first, 30s throttle),
  *   - forwards live assistant stream events to the bot for Discord
  *     streaming (preview edits + finalize),
  *   - relays externally-typed user input (TUI / any non-Discord client)
- *     to the bot so the conversation's Discord surface keeps its context
- *     — the bot posts it there with a provenance tag (never dispatched,
+ *     to the bot so the conversation's Discord surface keeps its context,
+ *     the bot posts it there with a provenance tag (never dispatched,
  *     exactly one transcript copy stays in the session),
  *   - injects Discord context + discord-guidelines.md into tagged
  *     conversation sessions' system prompts (before_agent_start),
  *   - registers the discord_thread tool in discord-tagged sessions
  *     (thread_policy "agent"): the AGENT decides whether a topic deserves a
- *     thread — the tool asks the bot to promote the live channel
+ *     thread, the tool asks the bot to promote the live channel
  *     conversation to a thread (same session, transcript continuity).
  *   - registers the session_topic tool in discord-tagged sessions: the agent
  *     renames the conversation when the topic drifts (the spawn-time surface
- *     name goes stale) — and asserts the session's name on EVERY register
+ *     name goes stale), and asserts the session's name on EVERY register
  *     (heartbeats included): a null-name legacy session self-heals, a named
  *     one is never touched.
  *
  * Scope guard (design D1/D3): only the session the bot's spawn CLAIMED for a
  * conversation (tagged DISCORD_CONV_KEY; claimed by its NEW session file under
- * the spawn's pre-spawn snapshot — beacons register daemon-tree pids, so pid
+ * the spawn's pre-spawn snapshot, beacons register daemon-tree pids, so pid
  * matching can never work) ever receives Discord traffic. The operator's
  * interactive sessions and tag-inheriting subagents register for /status
  * display only.
  *
  * Tokens (D9, two credentials since the 2026-09-24 hardening lap):
  *   - machine token (register bootstrap): env DISCORD_EXT_TOKEN ->
- *     config.json ext_token -> discord-token file (0600 — read fallback +
+ *     config.json ext_token -> discord-token file (0600, read fallback +
  *     one-time migration source, never written again) -> generate +
- *     persist to config. Identical chain to server.mjs — keep both in
+ *     persist to config. Identical chain to server.mjs, keep both in
  *     sync. Never logged (only the source). Authenticates the beacon's OUTBOUND
  *     /internal/* calls (register/event/thread/unregister) and the bot's
- *     register gate — nothing else.
+ *     register gate, nothing else.
  *   - session token (per-session traffic credential): a fresh random value
  *     generated at every session_start, never written to disk, carried in
  *     the register payload, and the ONLY credential /send + /stop accept.
  *     A process that scraped the machine token (env readers, file readers)
- *     can no longer inject turns into any beacon — the any-local-process
+ *     can no longer inject turns into any beacon, the any-local-process
  *     class the 2026-09-23 invisible /send audit chased.
  * Credentials gate: with no bot_token configured the beacon is inert.
  *
  * Audit (send-route-audit lap): one console.error line per inbound control
- * request — route, source socket, own session id, which credential
+ * request, route, source socket, own session id, which credential
  * authenticated, verdict, outcome, payload bytes. Never the token value,
  * never the message text. /healthz stays silent (the probe, not traffic).
- * Only stderr reaches the daemon supervisor log — console.error is the
+ * Only stderr reaches the daemon supervisor log, console.error is the
  * proven channel.
  */
 import * as http from "node:http";
@@ -71,12 +71,12 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BOT_PORT = () => parseInt(process.env.DISCORD_BOT_PORT ?? "8790", 10);
 
 // respawnEnv (production 2026-09-27 triple-delivery incident): the respawned bot
-// ALWAYS targets the canonical lock port (8790 default) — the child env drops
+// ALWAYS targets the canonical lock port (8790 default), the child env drops
 // DISCORD_BOT_PORT so server.mjs resolves its own default. A beacon whose
 // BOT_PORT points at a dead non-canonical port (probe stubs, misconfigured
 // sessions) must never gift that free port to a SECOND live bot: the port lock
 // only guards 8790, so a bot spawned on any other port sails past it and
-// connects a duplicate live gateway — every Discord event then lands N times
+// connects a duplicate live gateway, every Discord event then lands N times
 // (witnessed live: three gateways, one mention, three replies). The lock makes
 // duplicates exit(0); the canonical bot keeps serving. Exported for the smoke.
 export function respawnEnv(): Record<string, string | undefined> {
@@ -85,13 +85,13 @@ export function respawnEnv(): Record<string, string | undefined> {
   return env;
 }
 
-// ---------- internal token chain (D9; identical chain in server.mjs — keep in sync) ----------
+// ---------- internal token chain (D9; identical chain in server.mjs, keep in sync) ----------
 // chain (webui-beacon alignment, 2026-09-28): env DISCORD_EXT_TOKEN ->
-// config.json ext_token -> discord-token file (0600 — read fallback +
+// config.json ext_token -> discord-token file (0600, read fallback +
 // one-time migration source only, never written again) -> generate +
 // persist to config. Never logged (only the source).
 // Exported for the smoke (the respawnEnv precedent): twin paths in, the
-// chain out — the factory's resolveToken delegates with the live paths.
+// chain out, the factory's resolveToken delegates with the live paths.
 // atomic read-modify-write: every other key preserved, the file's formatting
 // discipline (2-space indent + trailing newline), tmp+rename swap, 0600 kept
 // when the file already has it (a fresh file defaults to 0600)
@@ -114,7 +114,7 @@ function writeExtTokenToConfig(token: string, configFile: string): void {
   fs.renameSync(tmp, configFile);
 }
 // one-time migration (pre-reorder installs): the machine token lived in the
-// discord-token file — fold it into config.json ext_token, then delete the
+// discord-token file, fold it into config.json ext_token, then delete the
 // file. Idempotent + atomic: the bot AND the beacon may both run it;
 // last-write-wins carries the same value. A failed config write keeps the
 // file (the token never exists in zero places).
@@ -163,15 +163,15 @@ export function resolveTokenFor(
   try {
     writeExtTokenToConfig(token, configFile);
   } catch (e: any) {
-    // generated: config is the canonical store — the file path is never written again
+    // generated: config is the canonical store, the file path is never written again
     console.error("[discord-beacon] token persist failed:", e?.message ?? e);
   }
   return { token, source: "generated" };
 }
 
-// typebox (the harness's bundled schema package for tool parameters — the a2a and
+// typebox (the harness's bundled schema package for tool parameters, the a2a and
 // name-sessions precedent) resolves under the extension loader but NOT under a
-// plain-node import (the smoke parses this file with one — verified
+// plain-node import (the smoke parses this file with one, verified
 // ERR_MODULE_NOT_FOUND). Resolve it dynamically and fall back to the equivalent
 // hand-built schema, so the discord_thread tool registers a REAL typebox schema in
 // live sessions while the smoke import stays green. The only side effect at module
@@ -249,9 +249,9 @@ export default function (pi: ExtensionAPI) {
     return;
   }
 
-  // ---------- internal token (identical chain to server.mjs — keep in sync; D9) ----------
+  // ---------- internal token (identical chain to server.mjs, keep in sync; D9) ----------
   // the chain lives at module scope (resolveTokenFor, exported for the smoke);
-  // the factory binds the live paths — fresh config read, not the factory-time
+  // the factory binds the live paths, fresh config read, not the factory-time
   // snapshot (the bot may have just migrated the token into config.json)
   const TOKEN_FILE =
     process.env.DISCORD_TOKEN_FILE ?? path.join(HERE, "discord-token");
@@ -270,16 +270,16 @@ export default function (pi: ExtensionAPI) {
   }
   // ---------- per-session traffic token + inbound audit (2026-09-24 hardening lap) ----------
   // sessionToken authenticates /send + /stop ONLY (strict: the machine token
-  // above is rejected there — it stays the register bootstrap). Generated at
+  // above is rejected there, it stays the register bootstrap). Generated at
   // every session_start, never persisted, never logged; carried in every
   // register payload so the bot's beaconSend/beaconStop present it. A beacon
   // that registered WITHOUT one (a pre-hardening instance) makes the bot fall
-  // back to the machine token bot-side — those beacons run the old /send gate
+  // back to the machine token bot-side, those beacons run the old /send gate
   // and accept it, so live conversations survive the lap; new beacons never do.
   let sessionToken = "";
   let legacyWarned = false;
   // TUI relay (discord-visibility lap): every /send's injected text, consumed by
-  // the matching input event — the queue distinguishes discord-sourced turns
+  // the matching input event, the queue distinguishes discord-sourced turns
   // (never relayed: that text is already the user's own message on the surface)
   // from external ones (relayed). TTL-bounded: a parked steer that never
   // delivered must not hold a match forever.
@@ -288,7 +288,7 @@ export default function (pi: ExtensionAPI) {
   // one line per inbound control request (send-route-audit): route, source
   // socket/port, own session id (short), which credential authenticated,
   // verdict, outcome, payload bytes. Never the token value, never the message
-  // text — bytes + timestamp correlate with the receiving transcript when
+  // text, bytes + timestamp correlate with the receiving transcript when
   // needed. 401s log always (the security signal); /healthz never logs.
   const audit = (
     req: http.IncomingMessage,
@@ -349,7 +349,7 @@ export default function (pi: ExtensionAPI) {
     });
   }
   // post() answers with the status code alone; the discord_thread tool needs the
-  // body too (the new thread id) — same transport, JSON-parsed response
+  // body too (the new thread id), same transport, JSON-parsed response
   function postJson(
     pathname: string,
     body: any,
@@ -413,7 +413,7 @@ export default function (pi: ExtensionAPI) {
       });
       return; // any response means the bot owns its port
     } catch {
-      /* down — fall through and spawn */
+      /* down, fall through and spawn */
     }
     G.__primeDiscordSpawnCount = (G.__primeDiscordSpawnCount ?? 0) + 1;
     try {
@@ -437,7 +437,7 @@ export default function (pi: ExtensionAPI) {
   const convTag = process.env.DISCORD_CONV_KEY ?? null; // scope-guard tag: only bot-spawned children carry this
   // session naming (discord-visibility feedback lap): the bot resolves the
   // conversation's SURFACE name (channel name / thread title / DM recipient)
-  // and passes it as DISCORD_CONV_NAME on the spawn env — the machine-garbage
+  // and passes it as DISCORD_CONV_NAME on the spawn env, the machine-garbage
   // "discord channel 9967911148" fallback only covers the first spawn before
   // the bot's fetch lands (and untagged fallbacks like probe stubs).
   function sessionNameFor(convKey: string): string {
@@ -464,10 +464,9 @@ export default function (pi: ExtensionAPI) {
       registered = true;
       console.log("[discord-beacon] registered with the discord bot");
     }
-    // session-name assert on EVERY register, heartbeats included (discord-
-    // visibility round 2): a session spawned before the naming code registers
-    // name=null forever — the old first-register-only naming never ran for it
-    // — so presence fell back to the product name. A falsy name re-asserts
+    // session-name assert on EVERY register, heartbeats included: a session spawned before the naming code registers
+    // name=null forever,
+    // so presence fell back to the product name. A falsy name re-asserts
     // here: a legacy session self-heals on its next heartbeat (<=15s), and a
     // failed attempt retries on the next beat. A session that HAS a name (any
     // name, including an agent topic-rename via the session_topic tool) is
@@ -479,8 +478,8 @@ export default function (pi: ExtensionAPI) {
         // session worker (unhandled-rejection kill: "name already exists").
         // The daemon's name registry can still reject a FRESH name as a
         // duplicate (a separate operator fix session): retry ONCE with a
-        // short unique suffix — "<last2 of session id>" kept inside the
-        // picker limit — then give up silently (the next heartbeat re-asserts).
+        // short unique suffix, "<last2 of session id>" kept inside the
+        // picker limit, then give up silently (the next heartbeat re-asserts).
         const base = sessionNameFor(convTag);
         const sid = safe(() => ctx?.sessionManager.getSessionId()) ?? "";
         const fallback = `${base.slice(0, 23)} ${
@@ -519,7 +518,7 @@ export default function (pi: ExtensionAPI) {
       name: safe(() => sm.getSessionName?.()),
       // the claim inputs (webui beacon shape): prime-agent delegates to the
       // operator's daemon, so pid alone can never prove this session belongs
-      // to the bot's spawn — the bot adopts the first NEW session file on the
+      // to the bot's spawn, the bot adopts the first NEW session file on the
       // spawn's cwd, created after the spawn (file ∉ pre-spawn snapshot)
       file: safe(() => sm.getSessionFile?.()),
       created: safe(() => sm.getHeader?.()?.timestamp), // session-start stamp — strictly after our wrapper spawned
@@ -557,7 +556,7 @@ export default function (pi: ExtensionAPI) {
     }
   };
 
-  // ---------- live event forwarding (assistant text only — the bot streams it to Discord, D6) ----------
+  // ---------- live event forwarding (assistant text only, the bot streams it to Discord, D6) ----------
   const textOf = (c: any): string =>
     typeof c === "string"
       ? c
@@ -577,10 +576,10 @@ export default function (pi: ExtensionAPI) {
   // ---------- discord context injection (conversation sessions learn their surface) ----------
   // Bot-spawned conversations had no idea they run inside Discord. Appends a
   // live "## Discord context" block (surface in words + surface id) plus
-  // discord-guidelines.md to the system prompt — name-sessions precedent:
+  // discord-guidelines.md to the system prompt, name-sessions precedent:
   // before_agent_start may return { systemPrompt }; merge by APPENDING to
   // event.systemPrompt, never replacing.
-  // Gate: DISCORD_CONV_KEY (the scope-guard tag) — operator sessions and
+  // Gate: DISCORD_CONV_KEY (the scope-guard tag), operator sessions and
   // untagged sessions are never touched. Knobs env > config.json, identical
   // chain to server.mjs loadConfig (keep both in sync):
   //   guidelines (default true; env DISCORD_GUIDELINES) and
@@ -631,7 +630,7 @@ export default function (pi: ExtensionAPI) {
   // ---------- webui conversation deeplinks (discord-visibility feedback lap) ----------
   // Mirrors server.mjs's knob chain: DISCORD_WEBUI_BASE_URL (non-empty) >
   // config.json webui_base_url; http(s) required, trailing slashes stripped.
-  // A malformed base yields "" — the agent's turn never throws over a config
+  // A malformed base yields "", the agent's turn never throws over a config
   // mistake (the bot fails loud at its own config load first).
   const webuiLink = (sessionId: string): string => {
     const envRaw = process.env.DISCORD_WEBUI_BASE_URL;
@@ -648,13 +647,13 @@ export default function (pi: ExtensionAPI) {
   };
 
   // ---------- discord_thread tool (thread_policy "agent"): the agent decides ----------
-  // Registered ONLY in discord-tagged sessions (the scope-guard tag) — the
+  // Registered ONLY in discord-tagged sessions (the scope-guard tag), the
   // operator's interactive sessions never see it. Same registerTool surface as the
   // a2a and name-sessions extensions: { name, label, description, promptGuidelines,
   // parameters, async execute(toolCallId, params) }. The tool POSTs the bot's
   // /internal/thread: the bot creates a PUBLIC thread from the conversation's
   // current trigger message, adds the trigger author to its members, re-keys the
-  // conversation (channel:<id> -> thread:<id>, SAME session — no respawn, context
+  // conversation (channel:<id> -> thread:<id>, SAME session, no respawn, context
   // preserved), and answers with the new thread id.
   if (convTag) {
     pi.registerTool({
@@ -726,16 +725,16 @@ export default function (pi: ExtensionAPI) {
 
     // ---------- session_topic tool (discord-visibility round 2): topic renames ----------
     // The spawn-time name (the bot's DISCORD_CONV_NAME surface name) is accurate
-    // at spawn and goes stale as the work evolves — "always initially just
+    // at spawn and goes stale as the work evolves, "always initially just
     // 'discord something'". The agent renames the conversation when the topic
     // clearly changes: the guarded setSessionName below uses the SAME
     // retry-once-suffix-then-silence shape as the register-path naming, so a
     // supervisor rejection can never escape as the unhandled rejection that
     // kills workers (the reason the native name_session is blocked in
-    // discord-tagged sessions — session_topic is the sanctioned rename). The
+    // discord-tagged sessions, session_topic is the sanctioned rename). The
     // next heartbeat (<=15s) carries the new name in the register payload, so
     // presence, /status, and the thread rename (maybeRenameThread) all track
-    // it; a truthy name also pins the register-path assert — the beacon never
+    // it; a truthy name also pins the register-path assert, the beacon never
     // fights the agent's rename.
     pi.registerTool({
       name: "session_topic",
@@ -774,7 +773,7 @@ export default function (pi: ExtensionAPI) {
         }
         const name = raw.slice(0, 26); // the operator picker limit (sessionNameFor's clamp)
         // guarded setSessionName: a rejection (a dead session holds the name) retries
-        // ONCE with the "<last2 of session id>" suffix, then gives up silently — the
+        // ONCE with the "<last2 of session id>" suffix, then gives up silently, the
         // register-path pattern, awaited so the tool can report the outcome
         const tryName = (n: string): Promise<boolean> =>
           new Promise((resolve) => {
@@ -836,14 +835,14 @@ export default function (pi: ExtensionAPI) {
   // ---------- session-name tool guard (production 2026-09-27 worker-death fix) ----------
   // WITNESSED (daemon log 01:15:13Z): the model's name_session call can KILL the
   // session worker mid-turn. The operator's name-sessions extension runs
-  // pi.setSessionName(name) fire-and-forget with no catch — a supervisor
+  // pi.setSessionName(name) fire-and-forget with no catch, a supervisor
   // name-collision rejection ("an agent of that name already exists at depth 0",
   // eviction off = dead saved sessions hold names forever) escapes as an unhandled
   // rejection at setStateSessionNameViaSupervisor and the worker dies; the daemon
   // recovers it without replaying the uncertain turn_start and the conversation
   // cascades into a stuck 👀. The beacon names discord conversations itself
   // (registeredNow -> sessionNameFor, rejection caught there), so the model's call
-  // is redundant — and here it is fatal. Block it benignly in discord-tagged
+  // is redundant, and here it is fatal. Block it benignly in discord-tagged
   // sessions; untagged sessions (the operator's interactive work) keep the tool.
   const NAME_TOOLS = new Set([
     "name_session",
@@ -880,14 +879,14 @@ export default function (pi: ExtensionAPI) {
       if (url.pathname === "/healthz")
         return serve(200, "application/json", JSON.stringify({ ok: true })); // silent by design: the health probe, not traffic
       // strict per-session gate: ONLY this session's token opens /send + /stop.
-      // 401s always audit — a wrong-token probe on the loopback port is the
+      // 401s always audit, a wrong-token probe on the loopback port is the
       // highest-signal event the pre-audit build swallowed whole (the 2026-09-23
       // invisible /send mystery was invisible for exactly this reason).
       const presented = req.headers["x-prime-token"];
       if (!sessionToken || !tokenEq(presented, sessionToken)) {
         audit(req, url.pathname, "none", "fail", "401", declaredBytes(req));
         if (!legacyWarned && TOKEN && tokenEq(presented, TOKEN)) {
-          // the machine token specifically: the caller IS the old bot (or a machine-token scraper) — name the window once
+          // the machine token specifically: the caller IS the old bot (or a machine-token scraper), name the window once
           legacyWarned = true;
           console.error(
             "[discord-beacon] a machine-token caller was rejected on session traffic — the running bot predates per-session tokens (restart server.mjs) or an unhardened local process is probing; session traffic stays session-token-only",
@@ -942,7 +941,7 @@ export default function (pi: ExtensionAPI) {
                 JSON.stringify({ ok: true, delivered: "turn" }),
               );
             } catch {
-              // idle raced a new turn — queue instead
+              // idle raced a new turn, queue instead
               pi.sendUserMessage(text, { deliverAs: "steer" });
               audit(req, "/send", "session", "ok", "steer", total);
               return serve(
@@ -966,7 +965,7 @@ export default function (pi: ExtensionAPI) {
         }
       }
       if (req.method === "POST" && url.pathname === "/stop") {
-        // busy-UX /stop (hermes-catalog #1): the webui POST /abort twin — the per-session gate above already covers this route like /send
+        // busy-UX /stop (hermes-catalog #1): the webui POST /abort twin, the per-session gate above already covers this route like /send
         const p: any = safe(() => ctx?.abort?.()); // abort() = requestAbort (the LLM stream + in-flight turn actions cancel, queue-visible turns PARK — the next message resumes them) + await idle; agent_end still fires on abort, so the busy:false settle resolves the ack on its own
         if (p && typeof p.then === "function") p.catch(() => {}); // fire-and-forget: an abort rejection must never escape as an unhandled rejection (the 2026-09-27 worker-death lesson)
         audit(req, "/stop", "session", "ok", "stop", declaredBytes(req));
@@ -984,17 +983,17 @@ export default function (pi: ExtensionAPI) {
   // ---------- TUI relay (discord-visibility lap): external user input lands on the Discord surface ----------
   // A conversation session is shared: the operator can talk to it through the
   // TUI / any daemon client while the conversation is also live on Discord. The
-  // REPLY to such a turn already lands on the surface (message_end -> finalize)
-  // — but the question itself was invisible there: the surface saw an answer
+  // REPLY to such a turn already lands on the surface (message_end -> finalize),
+  // but the question itself was invisible there: the surface saw an answer
   // to an unseen question. The pi `input` event carries every turn's raw user
   // text + its source ("interactive" | "rpc" | "extension"; agent-injected
-  // prompts — heartbeats, agent messages — skip input handlers entirely, so
+  // prompts, heartbeats, agent messages, skip input handlers entirely, so
   // machine noise never relays). Everything the bot's own /send injected is
-  // consumed by the pending-match (already the user's own Discord message —
+  // consumed by the pending-match (already the user's own Discord message,
   // never relayed); everything else relays to the bot's /internal/relay, which
   // posts it on the surface with a provenance tag. The agent transcript keeps
   // exactly ONE copy (the session's own write): this path never calls
-  // sendUserMessage. Knob (identical chain to server.mjs loadConfig — keep
+  // sendUserMessage. Knob (identical chain to server.mjs loadConfig, keep
   // both in sync): relay_external, default true; env DISCORD_RELAY_EXTERNAL.
   function relayExternalOn(): boolean {
     const env = process.env.DISCORD_RELAY_EXTERNAL;
@@ -1014,7 +1013,7 @@ export default function (pi: ExtensionAPI) {
     const text = String(event?.text ?? "");
     if (!text.trim()) return;
     // suffix-match, not equality: a same-chain input transform may PREPEND a
-    // directive (the webui beacon annotates command-shaped extension texts) —
+    // directive (the webui beacon annotates command-shaped extension texts),
     // the raw /send text stays the suffix, so the match survives any order the
     // extensions load in
     const at = sendTexts.findIndex((p) => text.endsWith(p.text));
@@ -1037,18 +1036,18 @@ export default function (pi: ExtensionAPI) {
     forward("message_end", { text: textOf(m.content) });
   });
   // ---------- turn signals (production 2026-09-27 typing-never-appears fix) ----------
-  // PRODUCTION FACT (spawned-agents.log, 52k events): rpc sessions emit BOTH pairs —
-  // agent_start/agent_end (779/834 witnessed) AND turn_start/turn_end (168/181) — and
-  // the runtime forwards both to extension handlers (0.9.5 compiled _emitExtensionEvent:
-  // every event type has an emit branch). The bot's typing/timer no longer DEPEND on
-  // these (they start at dispatch), so these forwards are the redundant live signal —
+  // PRODUCTION FACT (spawned-agents.log, 52k events): rpc sessions emit BOTH pairs,
+  // agent_start/agent_end (779/834 witnessed) AND turn_start/turn_end (168/181), and
+  // the runtime forwards both to extension handlers (compiled _emitExtensionEvent:
+  // every event type has an emit branch). The bot's typing/timer do not DEPEND on
+  // these (they start at dispatch), so these forwards are the redundant live signal,
   // whichever pair a future runtime delivers, busy:true arrives. turn_start also covers
   // the register-flush race: the FIRST agent_start of a spawned session fires while the
   // register 200 is still in flight (the flush's /send resolves it), before `registered`
-  // flips — forward() drops exactly that one; the next turn_start still lands mid-run.
+  // flips, forward() drops exactly that one; the next turn_start still lands mid-run.
   // turn_end is deliberately NOT forwarded as busy:false: it fires after EVERY tool-call
   // turn mid-run, and a mid-run settle resolves the trigger ⚠️ while the agent keeps
-  // working — the exact 2026-09-26 ⚠️-on-a-delivered-turn shape. agent_end (834
+  // working, the exact 2026-09-26 ⚠️-on-a-delivered-turn shape. agent_end (834
   // witnessed in production) is the true loop-end; a lost agent_end is the turn timer's
   // job, never a mid-run turn_end's.
   let noticedAgentStart = false,

@@ -45,7 +45,7 @@ spec:
     keepHistory: false
   values:
     defaultBackupStore:
-      # NAS rustfs (S3-compatible) — same box that served CIFS, S3 protocol.
+      # NAS rustfs (S3-compatible).
       # Longhorn URL syntax: s3://<bucket>@<region>/ (trailing slash
       # required); the real endpoint rides in AWS_ENDPOINTS on the credential
       # secret. See README.md ("CIFS -> S3 migration") for the tradeoff:
@@ -53,13 +53,10 @@ spec:
       backupTarget: s3://longhorn@us-east-1/
       backupTargetCredentialSecret: longhorn-backup-target-secret
       # BackupVolume sync cadence (seconds). v1.13.0 syncs every BackupVolume
-      # against the target per pass (backup head + listing per volume). Under
-      # CIFS each probe did a full SMB mount/ls/umount subprocess chain and a
-      # pass over the whole CR set could not drain inside 300s, so the gate
-      # re-opened immediately and the sync loop livelocked — the dominant
-      # continuous longhorn-manager process churn (62-88% of node export bytes
-      # during the 2026-10 flood). 1800s gives each pass room to finish even
-      # if the CR set grows back; cron-driven backups are unaffected.
+      # against the target per pass (backup head + listing per volume); if a
+      # pass cannot drain inside the interval, the gate re-opens immediately
+      # and the sync loop livelocks. 1800s gives each pass room to finish
+      # even if the CR set grows back; cron-driven backups are unaffected.
       # See README.md ("Backup store sync livelock").
       pollInterval: 1800
     defaultSettings:
@@ -85,12 +82,12 @@ spec:
       backupExecutionTimeout: "30" # 30 minutes (increased to allow large volume backups to complete)
       backupConcurrentLimit: "10" # Increased to match recurring job concurrency (75 volumes need higher throughput)
 
-      # Storage settings — explicit Longhorn chart defaults (questions.yaml / values.yaml comments)
-      # 2026-10-17: booked (storageScheduled) capacity saturated the replica-scheduling
-      # precheck on all four nodes (~2.6 TiB booked vs ~530 GiB actual data) and blocked
-      # all new replica scheduling, including rebuilds. 200% halves booked-weight (thin
-      # provisioning); the real-space guard is storageMinimalAvailablePercentage below,
-      # and kubelet image-GC (50/40) caps the containerd side.
+      # Storage settings: explicit Longhorn chart defaults (questions.yaml / values.yaml comments)
+      # Booked (storageScheduled) capacity can saturate the replica-scheduling
+      # precheck and block all new scheduling, including rebuilds; 200% halves
+      # booked weight (thin provisioning). The real-space guard is
+      # storageMinimalAvailablePercentage below, and kubelet image-GC (50/40)
+      # caps the containerd side.
       storageOverProvisioningPercentage: "200"
       storageMinimalAvailablePercentage: "25"
       storageReservedPercentageForDefaultDisk: "25"
@@ -178,10 +175,9 @@ spec:
       annotations: {}
 
     # Chart >=1.12 renders internal NetworkPolicies by default
-    # (restrictInternalTraffic: true). That default flipped on with the
-    # 1.12.1 upgrade (2026-08-15) and dropped Prometheus scrapes to
-    # longhorn-manager:9500 (TargetDown since). Narrow peer: prometheus
-    # statefulset pods in prometheus-system only.
+    # (restrictInternalTraffic: true), which drops Prometheus scrapes to
+    # longhorn-manager:9500. Narrow peer: prometheus statefulset pods in
+    # prometheus-system only.
     networkPolicies:
       metricsScrapeSources:
         - namespaceSelector:

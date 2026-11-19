@@ -1,4 +1,4 @@
-# deployments — Terragrunt deployment units
+# deployments: Terragrunt deployment units
 
 One directory per infrastructure domain: `cloudflare`, `gitlab`, `okta`,
 `proxmox`, and `tailscale`. The units compose the shared modules from

@@ -56,7 +56,7 @@ spec:
       # Enable the Flux Status web server on port 9080.
       # https://fluxoperator.dev/web-ui/
       enabled: true
-      # Web Config API — OIDC SSO + K8s impersonation.
+      # Web Config API: OIDC SSO + K8s impersonation.
       # https://fluxoperator.dev/docs/web-ui/web-config-api/
       # clientID / clientSecret injected via valuesFrom from flux-operator-secrets.
       config:

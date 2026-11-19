@@ -7,7 +7,7 @@ between turns (same model as `scheduled-agent-invoke`).
 > **Navigation**: [← Back to run-loop-agent-invoke README](../README.md)
 
 Prompts are scout-only (`find-work` + `run-loop` mode=`scout`). The runner does
-not interpret mode — guardrails live in the prompt text.
+not interpret mode, guardrails live in the prompt text.
 
 ## Endpoint
 
@@ -17,10 +17,10 @@ not interpret mode — guardrails live in the prompt text.
 
 ## Layout
 
-- `../prompts/task.md` — first user message (scout).
-- `../prompts/continuation.md` — turns 2..N (stay on scout path).
-- `pyproject.toml` / `uv.lock` — uv + `a2a-sdk` + `httpx`.
-- `invoke.py` — entrypoint at `/scripts/invoke.py`.
+- `../prompts/task.md`, first user message (scout).
+- `../prompts/continuation.md`, turns 2..N (stay on scout path).
+- `pyproject.toml` / `uv.lock`, uv + `a2a-sdk` + `httpx`.
+- `invoke.py`, entrypoint at `/scripts/invoke.py`.
 
 ## Environment
 

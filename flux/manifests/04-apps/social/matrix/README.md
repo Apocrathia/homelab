@@ -1,6 +1,6 @@
 # Matrix (Synapse + MAS)
 
-Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully delegated to Matrix Authentication Service (MAS, 1.26.0), which upstreams to Authentik OIDC; Element Web (1.12.30) is the web client, a public OIDC client of MAS. Federation is on, scoped by a deny-by-default whitelist to `matrix.ninefoot3.com`; user IDs are `@user:matrix.apocrathia.com`, and the first login JIT-provisions the Matrix account from the Authentik claims.
+Self-hosted Matrix homeserver: Synapse with authentication fully delegated to Matrix Authentication Service (MAS), which upstreams
 
 > **Navigation**: [← Back to Social README](../README.md)
 
@@ -59,9 +59,9 @@ The `matrix` Authentik application (admins-only binding, the Matrix access gate;
 
 1. **1Password item**: create `matrix-secrets` with the fields above. Generate keys once:
    ```bash
-   docker run --rm ghcr.io/element-hq/matrix-authentication-service:1.26.0 config generate
+   docker run --rm ghcr.io/element-hq/matrix-authentication-service:<tag from helmrelease.yaml> config generate
    # → take matrix.secret (shared-secret), secrets.encryption (encryption), keys (rsa-key.pem)
-   docker run --rm ghcr.io/element-hq/synapse:v1.162.0 generate
+   docker run --rm ghcr.io/element-hq/synapse:<tag from helmrelease.yaml> generate
    # → take /data/matrix.apocrathia.com.signing.key (signing-key)
    ```
 2. **DNS**: nothing to add, `matrix.apocrathia.com` deliberately has no public DNS record, and no per-deploy DNS step remains. The name resolves for tailnet members via the tailnet split-DNS zone plus the CoreDNS static record in `03-services/tailnet-dns` (both shipped in the repo by the sibling MR), and `matrix.gateway.services.apocrathia.com` keeps resolving via the existing split DNS.

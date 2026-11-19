@@ -1,5 +1,5 @@
 /**
- * prime-webui beacon — per-agent extension.
+ * prime-webui beacon, per-agent extension.
  *
  * The webui itself runs as a standalone collector process (server.ts, same
  * directory) that owns the public port and survives agents. This beacon:
@@ -27,7 +27,7 @@ let cfg: any = {};
 try { cfg = JSON.parse(fs.readFileSync(path.join(HERE, "config.json"), "utf-8")); } catch {}
 const PUBLIC_PORT = parseInt(process.env.PRIME_WEBUI_PORT ?? String(cfg.port ?? 8788), 10);
 const INTERNAL_PORT = parseInt(process.env.PRIME_WEBUI_INTERNAL_PORT ?? String(PUBLIC_PORT + 1), 10);
-// token resolution (identical chain to server.mjs — keep both in sync):
+// token resolution (identical chain to server.mjs, keep both in sync):
 // env -> config.json -> token file -> generate + persist. Resolving the same
 // file on both sides is what lets beacon and collector share a token in any
 // deployment shape (local, k8s Secret at webui-token, env-injected) with zero
@@ -73,7 +73,7 @@ function mapMessage(msg: any, key: string): Item[] {
         thinking: blocks.filter((b) => b.type === "thinking").map((b) => b.thinking).join("\n") || undefined,
         model: msg.model,
         // R1 (twin-dialect alignment, 40-ponytail-audit): the collector's
-        // mapMessage emits tokens/cost — the only dialect the client
+        // mapMessage emits tokens/cost, the only dialect the client
         // renders; the beacon's bare `usage` hid live usage lines. Emit BOTH:
         // tokens/cost mirror server.mjs's derivation, usage stays for compat.
         tokens: msg.usage?.totalTokens,
@@ -90,7 +90,7 @@ function mapMessage(msg: any, key: string): Item[] {
   }
 }
 
-// available thinking levels per model — the binary's Yb computation (dump @
+// available thinking levels per model, the binary's Yb computation (dump @
 // 749884, q4 @ 750540): q4 levels filtered by the model's thinkingLevelMap
 // (null = unsupported; xhigh/max need an explicit map entry); ["off"] for
 // non-reasoning models; all levels when no model is set (the session's kR
@@ -117,21 +117,21 @@ async function readJsonBody(r: http.IncomingMessage): Promise<any | undefined> {
 // --- cmd-parity v1 (7v/7av): command-shaped send annotation ------------------
 // API VERDICT (0.9.5 binary, dump pos 9766813 + 9737970 + 9742538): the
 // beacon's entire send surface is pi.sendUserMessage, which enters the input
-// pipeline as _prompt(text, {expandPromptTemplates:false, source:"extension"})
-// — and _prompt mirrors that flag into expandSkills AND extensionCommands
+// pipeline as _prompt(text, {expandPromptTemplates:false, source:"extension"}),
+// and _prompt mirrors that flag into expandSkills AND extensionCommands
 // ("ignore"). So on the webui path: /skill:NAME NEVER expands (the TUI's
 // _expandSkillCommand runs only with expandSkills:true), extension commands
-// NEVER dispatch, and /fork is not a session-level command (G1's session set
-// is compact/refine/goal/autonomous — those four execute natively, caught
+// NEVER dispatch, and /fork is not a session-level command (the session set
+// is compact/refine/goal/autonomous, those four execute natively, caught
 // before the input event). Every other command-shaped submission lands as
-// LITERAL text; only the model's interpretation executes it (probe-proven,
-// 7v). The `input` event IS the extension-side normalization hook — it fires
-// for source:"extension" submissions BEFORE the flag-disabled expansion — so
+// LITERAL text; only the model's interpretation executes it. The `input` event IS the
+// extension-side normalization hook, it fires
+// for source:"extension" submissions BEFORE the flag-disabled expansion, so
 // the honest v1 normalizes there: known commands get a directive the model
 // executes by interpretation. v2 upgrade path: inject the SKILL.md content
 // itself (getCommands sourceInfo.path) instead of the directive.
-// /FORK VERDICT (7av): the branch surface EXISTS — ctx.fork(entryId,
-// {position:"before"|"at"}) — but ONLY on ExtensionCommandContext (command
+// /FORK VERDICT (7av): the branch surface EXISTS, ctx.fork(entryId,
+// {position:"before"|"at"}), but ONLY on ExtensionCommandContext (command
 // handlers, dump pos 8216669), and sendUserMessage passes
 // extensionCommands:"ignore", so no registered command can dispatch on this
 // path either; the input event's ctx has no fork. UNREACHABLE from the webui
@@ -166,7 +166,7 @@ export default function (pi: ExtensionAPI) {
   let turnTextChars = 0, turnThinkingChars = 0, lastPromptChars = 0, turnStart: number | null = null;
 
   // constant-time token compare + fail-closed (S1+S3 mirror of the
-  // collector's tokenEq/authed — owed across three index.ts slices): the
+  // collector's tokenEq/authed, owed across three index.ts slices): the
   // length pre-check leaks only the length (standard); timingSafeEqual
   // never sees mismatched lengths (it throws).
   function tokenEq(presented: unknown, expected: string): boolean {
@@ -202,7 +202,7 @@ export default function (pi: ExtensionAPI) {
   // @-reference candidate search (WEBUI-INPUT-SPEC.md): fd scoped to the
   // SESSION cwd, raw output lines back. fd absent -> fdMissing:true so the
   // client can say so; any error -> empty list. pi.exec is not part of the
-  // ExtensionAPI surface in 0.9.5 — node:child_process spawn (already
+  // ExtensionAPI surface in 0.9.5, node:child_process spawn (already
   // imported) is the closest exec equivalent.
   function runFd(query: string): Promise<{ files: string[]; fdMissing?: boolean }> {
     return new Promise((resolve) => {
@@ -251,7 +251,7 @@ export default function (pi: ExtensionAPI) {
 
   // per-field safe accessor: a throwing getter anywhere in the register
   // payload build left beacons alive-but-unregistered FOREVER (observed in
-  // production: 8 live child control servers, zero rows — the 15s heartbeat
+  // production: 8 live child control servers, zero rows, the 15s heartbeat
   // only armed after a first 200). Every field degrades to undefined instead
   // of killing the registration.
   const safe = <T>(fn: () => T | undefined | null): T | undefined => {
@@ -264,9 +264,9 @@ export default function (pi: ExtensionAPI) {
     if (!registered) { registered = true; console.log("[webui-beacon] registered with collector"); }
     armBeat();
   }
-  // the landed session-death teardown (reload-resilience deploy #11): timers,
+  // the session-death teardown: timers,
   // queue, control port, registered flag. Shared by the session_shutdown
-  // handler and POST /shutdown — idempotent, safe to run twice.
+  // handler and POST /shutdown, idempotent, safe to run twice.
   const teardownBeacon = () => {
     registered = false;
     if (beat) clearInterval(beat); beat = undefined;
@@ -290,7 +290,7 @@ export default function (pi: ExtensionAPI) {
       status: safe(() => (ctx?.isIdle() ? "idle" : "working")) ?? "working",
       model: safe(() => (ctx as any)?.model?.id ?? (ctx as any)?.model?.modelId),
       created: safe(() => sm.getHeader?.()?.timestamp),
-      // TUI-footer fields (TUI-META-SPEC.md §3, §7): mode/thinking, tier, live context
+      // TUI-footer fields: mode/thinking, tier, live context
       thinkingLevel: safe(() => (pi as any).getThinkingLevel?.()),
       serviceTier: safe(() => (pi as any).getServiceTier?.() ?? (ctx as any)?.serviceTier),
       contextUsage: safe(() => (ctx as any).getContextUsage?.()),
@@ -298,12 +298,12 @@ export default function (pi: ExtensionAPI) {
     const code = await post("/internal/register", payload);
     if (code === 200) { registeredNow(); return; }
     // ANY failed register (degraded payload, collector down, transient
-    // error) still arms the 15s beat: registration retries forever — a
+    // error) still arms the 15s beat: registration retries forever, a
     // collector restart or a throwing first payload self-heals on the next
     // tick instead of dead-registering this beacon for its whole life
     armBeat();
     // beat + cold path both self-heal a dead collector (spawn guard: one
-    // attempt per 30s per process; the probe POST no-ops when it is up) —
+    // attempt per 30s per process; the probe POST no-ops when it is up),
     // otherwise a collector that dies AFTER registration is never respawned
     await spawnCollectorIfDown();
     if (heartbeat) return; // beat path: the next beat IS the retry
@@ -334,12 +334,12 @@ export default function (pi: ExtensionAPI) {
         const items: Item[] = [];
         for (const e of sm.getEntries()) {
           if (e.type === "message" && (e as any).message) items.push(...mapMessage((e as any).message, `${e.id}`));
-          // G1 (34-entry-census.md §2): custom_message entries compile like
-          // messages — the live path already forwards them (message_end, role
+          // custom_message entries compile like messages
+          // messages, the live path already forwards them (message_end, role
           // custom); without this branch they VANISHED on every snapshot
           // refresh. HARNESS-DIGEST PERSISTENCE (operator 2026-09-22,
-          // overrides the old TUI-parity skip): harness_digest ALSO compiles
-          // — real entries carry display:false, so display must not hide
+          // overrides the old TUI-parity skip): harness_digest ALSO compiles,
+          // real entries carry display:false, so display must not hide
           // THEM (other display:false kinds stay hidden); snapshot+disk+live
           // AGREE (no vanish-on-work). Accent/detail-mode = dashboard rider.
           // compaction stays disk-only v1.
@@ -357,7 +357,7 @@ export default function (pi: ExtensionAPI) {
       if (req.method === "GET" && url.pathname === "/commands") {
         // live palette surface: extension + prompt-template + skill commands
         // with sourceInfo (TUI-local + built-in session commands stay
-        // client-side; getCommands may be async — normalize both)
+        // client-side; getCommands may be async, normalize both)
         let commands: any[] = [];
         try { commands = await Promise.resolve((pi as any).getCommands?.() ?? []); } catch {}
         if (!Array.isArray(commands)) commands = [];
@@ -401,11 +401,11 @@ export default function (pi: ExtensionAPI) {
       // ---------- settings-parity slice (27-settings-parity.md S1) ----------
       // The TUI's /model, /effort, /name, /compact, /usage, /quit surface on
       // the beacon: additive, token-guarded by the authed() check above, every
-      // pi/ctx call safe()-wrapped — a degraded getter answers nulls, never
+      // pi/ctx call safe()-wrapped, a degraded getter answers nulls, never
       // kills the agent. The only outbound call (the /shutdown unregister)
       // rides post() (8s wedged-collector guard).
       if (req.method === "GET" && url.pathname === "/models") {
-        // MUST-1: registry refresh + getAvailable() (auth-filtered — the TUI
+        // MUST-1: registry refresh + getAvailable() (auth-filtered, the TUI
         // picker's list) with per-model thinking levels, plus the current
         // model + thinking-level echo (the picker's current marker)
         const reg: any = safe(() => (ctx as any)?.modelRegistry);
@@ -413,7 +413,7 @@ export default function (pi: ExtensionAPI) {
         if (reg) {
           try {
             // refresh is the data path; a wedged entitlement chain must not
-            // hang the port — race it, degrade to the sync list
+            // hang the port, race it, degrade to the sync list
             models = await Promise.race([
               Promise.resolve(reg.refreshAvailableModels?.()),
               new Promise((r) => setTimeout(() => r(undefined), 5000)),
@@ -429,7 +429,7 @@ export default function (pi: ExtensionAPI) {
         }));
       }
       if (req.method === "GET" && url.pathname === "/context-usage") {
-        // MUST-6: the /usage parity object (tokens/contextWindow/percent —
+        // MUST-6: the /usage parity object (tokens/contextWindow/percent,
         // the same object the register payload carries; nulls before the
         // first metered turn or when the model has no context window)
         const u: any = safe(() => (ctx as any)?.getContextUsage?.());
@@ -460,7 +460,7 @@ export default function (pi: ExtensionAPI) {
         } catch (e: any) { return serve(500, "text/plain", String(e?.message ?? e)); }
       }
       if (req.method === "POST" && url.pathname === "/set-thinking-level") {
-        // MUST-2: model-clamped — reject levels the CURRENT model does not
+        // MUST-2: model-clamped, reject levels the CURRENT model does not
         // support (its registry entry's thinkingLevelMap), instead of the
         // TUI's silent auto-clamp
         const body = await readJsonBody(req);
@@ -502,7 +502,7 @@ export default function (pi: ExtensionAPI) {
       if (req.method === "POST" && url.pathname === "/shutdown") {
         // MUST-4: ctx.shutdown() is the graceful universal stop. TUI runtimes
         // quit on it; headless ones only FLAG shutdown for the next command
-        // boundary — so the beacon lands the same teardown session_shutdown
+        // boundary, so the beacon lands the same teardown session_shutdown
         // does (unregister via post(), timers, control port) right here.
         const sessionId = safe(() => ctx!.sessionManager.getSessionId());
         safe(() => (ctx as any)?.shutdown?.());
@@ -521,7 +521,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   // cmd-parity v1 (7v/7av): the input event is the runtime's own
-  // normalization point — it fires on our sendUserMessage submissions
+  // normalization point, it fires on our sendUserMessage submissions
   // (source "extension") BEFORE the flag-disabled expansion, so the known
   // command-shaped text gets annotated there (annotateCommandText above).
   // The source gate is LOAD-BEARING: "interactive" (TUI) and "rpc"
@@ -529,7 +529,7 @@ export default function (pi: ExtensionAPI) {
   // expandSkills:true / extensionCommands:"execute"); a transform on those
   // would strip the /skill: form the runtime is about to expand and BREAK
   // the TUI. Agent-injected prompts (heartbeats, agent messages) skip
-  // input handlers entirely (skipInputHandlers) — untouched by design.
+  // input handlers entirely (skipInputHandlers), untouched by design.
   pi.on("input", async (event) => {
     if (event?.source !== "extension") return { action: "continue" };
     let names = new Set<string>();
@@ -560,15 +560,15 @@ export default function (pi: ExtensionAPI) {
     const m: any = event.message;
     if (m?.role !== "assistant") return;
     const txt = textOf(m.content);
-    // 7aj: the live delta carries the thinking TEXT (cumulative — the same
+    // 7aj: the live delta carries the thinking TEXT (cumulative, the same
     // joined shape as the snapshot's thinking field) so the client can render
     // the stream live; turnThinkingChars stays the exact block-length sum.
     const thinkingBlocks: any[] = Array.isArray(m.content)
       ? m.content.filter((b: any) => b?.type === "thinking") : [];
     // 7ap throttle verdict (45-stream-granularity.md): the 60ms gate has NO
-    // burst-count sibling — it only capped the wire rate. Text/thinking-bearing
+    // burst-count sibling, it only capped the wire rate. Text/thinking-bearing
     // updates now BYPASS it: the scout captured a text update eaten 14ms behind
-    // a thinking forward (payloads are cumulative, so no text was ever lost —
+    // a thinking forward (payloads are cumulative, so no text was ever lost,
     // but the stream stuttered at ~16 frames/s instead of provider
     // granularity, median 10-char deltas). The gate survives for content-LESS
     // updates only: toolcall-delta bursts repaint an empty body and are worth
@@ -587,12 +587,12 @@ export default function (pi: ExtensionAPI) {
     if (m?.role === "assistant") delete throttle.live;
   });
   // 7ap live tool partials: the harness streams tool output per chunk
-  // (tool_execution_update.partialResult.content carries the LATEST text chunk
-  // — verified in the runtime log; ipython is the only emitter in practice).
+  // (tool_execution_update.partialResult.content carries the LATEST text chunk,
+  // verified in the runtime log; ipython is the only emitter in practice).
   // We accumulate per call and forward the CUMULATIVE partial as the existing
   // "tool" event with partial:true (additive fields): the client renders it
   // live in the running card and tool_execution_end's final replaces it.
-  // A 40ms per-call gate bounds a chatty tool to ~25 partial frames/s —
+  // A 40ms per-call gate bounds a chatty tool to ~25 partial frames/s,
   // skipped frames lose nothing (the next frame carries everything).
   const partialText: Record<string, string> = {};
   pi.on("tool_execution_start", async (event) => {
@@ -631,7 +631,7 @@ export default function (pi: ExtensionAPI) {
     // pending steers at turn end: healthy one-at-a-time delivery starts the
     // next turn within ~0.1ms (message_start cancels this timer via the
     // shift); still queued after 1.5s idle means the runtime dropped them
-    // (abort) — say so, clear the phantom strip
+    // (abort), say so, clear the phantom strip
     if (queue.length) {
       if (dropTimer) clearTimeout(dropTimer);
       dropTimer = setTimeout(() => {
@@ -650,10 +650,10 @@ export default function (pi: ExtensionAPI) {
     // Unregistering here made the collector DELETE the row and end every SSE
     // subscriber mid-blink; the browser's single EventSource auto-reconnect
     // then ate a 404 inside the blink and died PERMANENTLY (WHATWG: non-200 =
-    // no retry) — the dashboard feed froze until a manual refresh. Keep the
+    // no retry), the dashboard feed froze until a manual refresh. Keep the
     // row through the blink (the new instance's register overwrites
     // controlPort via the collector's preserve-merge); every other reason
-    // ("quit", session replacement) is real session death — unregister so
+    // ("quit", session replacement) is real session death, unregister so
     // stale rows prune.
     if (ctx && (event as any)?.reason !== "reload") {
       const sessionId = safe(() => ctx!.sessionManager.getSessionId());
@@ -664,7 +664,7 @@ export default function (pi: ExtensionAPI) {
     ctx = null;
   });
 
-  // G9a: live compaction feedback — the harness emits compaction_start/end
+  // G9a: live compaction feedback, the harness emits compaction_start/end
   // (agent-session.d.ts); forward the phase so the webui can show "compacting…"
   // instead of a silent hang. The disk notice still lands post-hoc (G2).
   pi.on("compaction_start", async () => {

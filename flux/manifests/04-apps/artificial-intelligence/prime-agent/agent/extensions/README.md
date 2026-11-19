@@ -1,4 +1,4 @@
-# extensions — bundled Prime Agent extensions
+# extensions: bundled Prime Agent extensions
 
 The extensions seeded to `/opt/data/.prime/agent/` on first boot: a2a,
 activity-recap, discord, litellm, name-sessions, and webui. The webui

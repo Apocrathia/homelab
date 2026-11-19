@@ -22,11 +22,11 @@ variable "external_host" {
 
 variable "mode" {
   type        = string
-  description = "Provider mode: proxy (provider + outpost), oidc (oauth2 provider), or library (dashboard tile + bindings only — no provider, for apps whose login is handled elsewhere, e.g. headlamp on the kubernetes OIDC issuer). Bookmarks stay chart-blueprint managed."
+  description = "Provider mode: proxy (provider + outpost), oidc (oauth2 provider), or library (dashboard tile + bindings only, no provider, for apps whose login is handled elsewhere, e.g. headlamp on the kubernetes OIDC issuer). Bookmarks stay chart-blueprint managed."
   default     = "proxy"
   validation {
     condition     = contains(["proxy", "oidc", "library"], var.mode)
-    error_message = "mode must be \"proxy\", \"oidc\", or \"library\" — bookmarks are not covered by this module."
+    error_message = "mode must be \"proxy\", \"oidc\", or \"library\"; bookmarks are not covered by this module."
   }
 }
 
@@ -34,7 +34,7 @@ variable "mode" {
 
 variable "shared" {
   type        = bool
-  description = "Add the users group binding (order 20) — the shared tag. Requires the tailnet door at the route level."
+  description = "Add the users group binding (order 20), the shared tag. Requires the tailnet door at the route level."
   default     = false
 }
 
@@ -85,7 +85,7 @@ variable "import_provider_pk" {
 
 variable "import_application_id" {
   type        = string
-  description = "Slug of the application to adopt — applications import by slug, not uuid."
+  description = "Slug of the application to adopt; applications import by slug, not uuid."
   default     = ""
 }
 
@@ -181,7 +181,7 @@ variable "authentication_flow" {
 
 variable "intercept_header_auth" {
   type        = bool
-  description = "Header-based auth for reverse proxy auth. Chart parity default FALSE — the TF resource default is TRUE; an omitted attribute would PATCH live rows to true on the first apply."
+  description = "Header-based auth for reverse proxy auth. Chart parity default FALSE; the TF resource default is TRUE; an omitted attribute would PATCH live rows to true on the first apply."
   default     = false
 }
 
@@ -265,11 +265,11 @@ variable "custom_scope_mappings" {
 
 variable "oidc_client_id" {
   type        = string
-  description = "REQUIRED by the TF oauth2 resource in oidc mode. Adopt: the LIVE client_id — the import preserves it, so a config value that differs plans an update. Blip: a deterministic id (convention: the app name). client_secret is never managed here (sensitive, generated; imports preserve live secrets)."
+  description = "REQUIRED by the TF oauth2 resource in oidc mode. Adopt: the LIVE client_id; the import preserves it, so a config value that differs plans an update. Blip: a deterministic id (convention: the app name). client_secret is never managed here (sensitive, generated; imports preserve live secrets)."
   default     = ""
   validation {
     condition     = var.mode != "oidc" || var.oidc_client_id != ""
-    error_message = "oidc mode requires oidc_client_id (adopt: the live value; blip: a deterministic id, convention the app name) — the TF resource field is required."
+    error_message = "oidc mode requires oidc_client_id (adopt: the live value; blip: a deterministic id, convention the app name); the TF resource field is required."
   }
 }
 

@@ -1,15 +1,14 @@
 ---
-# Tenzir pipeline-metrics freshness plane: closes the detection gap from the
-# investigations arm stall (2026-10-20, 31h+ dead feed, zero alerts — the
+# Tenzir pipeline-metrics freshness plane: closes the detection gap (the
 # dashboard only grays out). The four arm nodes (core, tetragon, netflow,
 # investigations) push tenzir_pipeline_* series to Mimir every 10s; a healthy
 # arm is never absent for 30 minutes. Each absent_over_time arm uses an EXACT
-# node matcher so (a) the node label survives into the alert instance — one
-# alert per dead node — and (b) a single dead node fires even while the other
-# three keep pushing. The fleet-regex shape the RCA sketched
+# node matcher so (a) the node label survives into the alert instance: one
+# alert per dead node; and (b) a single dead node fires even while the other
+# three keep pushing. The fleet-regex shape
 # ({node=~"core|tetragon|netflow|investigations"}) is fleet-aggregate: with any
 # node still pushing, absent_over_time returns nothing and the dead node is
-# missed (live-verified against Mimir 2026-10-21 — regex form empty, per-node
+# missed (regex form empty, per-node form returns
 # form returns {node="investigations"} 1).
 #
 # The healthy steady state is an EMPTY query result (all arms pushing), so
@@ -99,7 +98,7 @@ spec:
                 type: query
       annotations:
         summary: "Tenzir pipeline-metrics arm silent on {{ $labels.node }}"
-        description: "No tenzir_pipeline_ingress_events from the {{ $labels.node }} arm in 30m (cadence 10s). Node down, or its metrics feed died silently — the arm pipeline reads 'running' while pushing nothing (investigations-arm-stall RCA)"
+        description: "No tenzir_pipeline_ingress_events from the {{ $labels.node }} arm in 30m (cadence 10s). Node down, or its metrics feed died silently: the arm pipeline reads 'running' while pushing nothing"
       labels:
         severity: warning
         team: security

@@ -3,7 +3,7 @@
 The custom resources behind the `ocsf` query store and the investigations
 `records` table: the ClickHouseInstallation (CHI) `tenzir`, its Keeper
 ensemble, and the extracted server config (the CHI and its Keeper run in
-the `tenzir` namespace, relocated from `clickhouse` 2026-10-27; the
+the `tenzir` namespace, in the `tenzir` namespace (moved from `clickhouse`); the
 credential renders they consume live one level up in
 [`../secret.yaml`](../secret.yaml)). The
 cluster is nested under the tenzir tree because its dedication is
@@ -53,7 +53,7 @@ endpoint list on its own. Before the template existed, the operator
 rendered the service headless, DNS returned all three pod IPs, native
 drivers latched per-resolution, and the hourly record_integrity walks
 piled onto `chi-tenzir-ocsf-0-0-0` (sustained ~1270m CPU while the
-siblings idled at ~150m; found 2026-10-29 with a live walk query in
+siblings idled at ~150m; found with a live walk query in
 `system.processes`).
 
 The operator's own maintenance contract rides this too: replica pods
@@ -116,14 +116,14 @@ The vendor's own decision rule governs when to promote a typed column:
 
 > "Choose typed columns for fields you filter, sort, or aggregate. Keep
 > the rest in the catch-all until you need a dedicated column."
-> [Tenzir ClickHouse integration](https://tenzir.com/integrations/clickhouse),
+> Source: [Tenzir ClickHouse integration](https://tenzir.com/integrations/clickhouse),
 > [to_clickhouse reference](https://tenzir.com/docs/reference/operators/to_clickhouse)
 
 The case plane currently filters, sorts, and aggregates on nothing
 beyond time, so the shape types nothing beyond time. When a real query
 lane needs `metadata.correlation_uid` (say) as a typed column, promote
 it with an operator-led live `ALTER` in the same lap as the DDL edit
-(the D3/D4 pairing gate below).
+(the pairing gate below).
 
 ### Attestations on every record
 
@@ -158,7 +158,7 @@ identity, `tenzir-node-core`, `tenzir-node-tetragon`,
 archives, in time order) and stamps at archive
 rate, which forced a different shape: the archive rules
 receive whole batches every 5 minutes, and a live probe showed the
-context-read chain mis-linking every record of a fast batch (the reads
+context-read chain mis-links every record of a fast batch (the reads
 run engine-batches ahead of the writes). The detection shape is the
 OCSF two-attestation form: `attestation_list[0]` is the record
 fingerprint (no `prev_event`, so the operator's internal lag carries
@@ -248,9 +248,8 @@ beyond 15 minutes) zigzags the chain at its seam, and the walk flags
 the successor, a triage signal, not a break in the stored content.
 
 **The stamping cost, measured.** The detection plane's volume splits
-across its nodes: k8s-audit alone has 22M+ archived API Activity rows
-(core), and the tetragon flood is the fleet's biggest-volume class
-(the 50,747-partition ENOSPC). Stamping runs on every one of them
+across its nodes: k8s-audit is the core node's biggest-volume class, and
+the tetragon flood is the fleet's biggest-volume class.
 (per archive pass), so the cost is measured per shape, not assumed:
 the homelab package's 100k-record harnesses time each archive leg end
 to end. Core (`detection-throughput`, API Activity): ~3s for 100k
@@ -295,21 +294,18 @@ containment ([nodes/investigations](../nodes/investigations/README.md)).
 
 ## The typed-column trap (the failure class the shape kills)
 
-The shape is not minimalism for its own sake, it is the direct product
-of the 2026-10-18 boot-abort incident (the live DDL convergence and
-monthly-partition cutover have since run; live parity with the
-canonical DDL verified 2026-11-05):
+The shape is not minimalism for its own sake; it kills the typed-column
+boot-abort failure class (live parity with the canonical DDL is tracked in
+[`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../docs/issues/ocsf-live-monthly-cutover.md)):
 
 - `startup_scripts` executes sequentially and aborts at the FIRST
   failing query. Every typed column is a place where the DDL in git and
   the live table structure can diverge; when they do, the whole file
   aborts at boot and NOTHING gets created, including
   `investigations.records`.
-- The ocsf tables hit exactly that: `class_uid` was retyped twice
-  (UInt32 → Int32 across the corpus), a `severity_id` Int8 align touched
-  nine CREATEs at once, and the LowCardinality/Nullable wrappings each
-  needed their own live `ALTER` convergence. Each DDL edit without the
-  paired live `ALTER` was a boot-abort in waiting.
+- The ocsf tables hit exactly that: typed-column retypes and wrapper changes
+  each need their own live `ALTER` convergence; a DDL edit without the paired
+  live `ALTER` is a boot-abort in waiting.
 
 A table whose only typed column is `time` cannot diverge: envelope
 evolution and OCSF schema churn land inside the JSON where ClickHouse's
@@ -322,12 +318,12 @@ DDL/live convergence story is tracked in the issue above.
 ```mermaid
 flowchart LR
     subgraph HOT["hot tier (~7 days)"]
-        PVC0["chi replica 0<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
-        PVC1["chi replica 1<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
-        PVC2["chi replica 2<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
+        PVC0["chi replica 0<br/>Longhorn PVC<br/>/var/lib/clickhouse/hot/"]
+        PVC1["chi replica 1<br/>Longhorn PVC<br/>/var/lib/clickhouse/hot/"]
+        PVC2["chi replica 2<br/>Longhorn PVC<br/>/var/lib/clickhouse/hot/"]
     end
     subgraph KEEP["Keeper quorum"]
-        K["3-node ensemble<br/>Longhorn PVCs, 5Gi"]
+        K["3-node ensemble<br/>Longhorn PVCs"]
     end
     subgraph RUSTFS["rustfs (NAS)"]
         S3["tenzir bucket<br/>clickhouse/ prefix<br/>storage.services.apocrathia.com:9009"]
@@ -353,10 +349,10 @@ flowchart LR
   uploads its own copy of every cold part, the bucket grows ~3x the
   single-node shape.
 - **Retention** (ocsf tables): 7 days → `TO VOLUME 'cold'` (part
-  moves; was 90 days until 2026-10-27, the observed ~9.4 GiB/day per
+  moves; the observed ~9.4 GiB/day per
   replica put the 90-day window at ~850 GiB, past the 100Gi hot PVC;
   7 days ≈ ~66 GiB steady on 100Gi), then per-table `DELETE` horizons
-  (operator decision 2026-10-29; operator-tunable: change the
+  (operator decision; operator-tunable: change the
   `INTERVAL ... DAY DELETE` in `config/10-startup-scripts.xml` for new
   installs, `ALTER TABLE ... MODIFY TTL` server-side for live tables):
   400 days on every class table, 90 days on `ocsf.Network_Activity`
@@ -365,14 +361,13 @@ flowchart LR
   `investigations.records` has NO TTL by design, a case record is a
   durable audit record.
 - **Partition layout** (ocsf class tables): `PARTITION BY
-toYYYYMM(time)`: monthly, changed from daily `toDate(time)` on
-  2026-10-29. Reason: part-count pressure, daily meant up to ~400
-  partitions per table at the 400-day horizon, the tetragon node's
-  50,747-partition ENOSPC (2026-10-12) is the fleet's measured lesson
-  in what partition bloat costs, and the vendor tutorial's guidance is
-  keep partitions in the hundreds
+toYYYYMM(time)`, monthly. Reason: part-count pressure; daily meant up
+  to ~400 partitions per table at the 400-day horizon (the tetragon
+  node's 50,747-partition ENOSPC is the fleet's measured lesson in what
+  partition bloat costs), and the vendor tutorial's guidance is keep
+  partitions in the hundreds
   ([tutorial](../.agents/skills/tenzir/tutorials/build-an-ocsf-lake-with-clickhouse.md));
-  monthly is a handful of partitions per table in steady state. Sort
+  monthly is a handful of partitions per table in steady state.
   keys are unchanged. Two consequences to know: with monthly parts and
   `ttl_only_drop_parts` a `DELETE` horizon lands whole-month late at
   most (rows can wait up to a month past their age for their part to
@@ -392,9 +387,8 @@ toYYYYMM(time)`: monthly, changed from daily `toDate(time)` on
 Canonical definition: `config/10-startup-scripts.xml`. This section
 describes the shipped shape (monthly partitions, per-class `DELETE`
 horizons). Live tables created before the change drifted until the
-cutover ran, the live store now matches this DDL (engine, TTL, and
-column parity verified 2026-11-05); the remaining cutover residue is
-tracked in
+cutover ran, the live store now matches this DDL; the remaining
+cutover residue is tracked in
 [`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../../docs/issues/ocsf-live-monthly-cutover.md).
 
 The diagrams are the structure, every table, every typed
@@ -559,7 +553,7 @@ erDiagram
     }
     investigations_records {
         DateTime64 time PK "partition + sort spine"
-        JSON event "tenzir catch-all — the only data column"
+        JSON event "tenzir catch-all: the only data column"
     }
 ```
 
@@ -631,9 +625,8 @@ query-hot typed columns:
 
 ### The stray
 
-`ocsf.\`null\``is not a lane:`to_clickhouse`created it when
-records reached a write leg with a null`class_name` (the tetragon
-pipeline now guards its table f-string against exactly that). It stays
+`ocsf.`null``is not a lane: records reaching a write leg with a null`class_name` land there (the tetragon pipeline guards its table f-string
+against exactly that). It stays
 in the bootstrap file and on the cluster until its disposition is
 decided; no pipeline writes it today.
 
@@ -649,8 +642,8 @@ re-syncs from its siblings.
 
 - **Ordering is load-bearing**: investigations DDL runs FIRST so a
   failing ocsf CREATE cannot starve `investigations.records` of its
-  bootstrap (the e29638e74 fix; see the ORDERING comment in the XML).
-- **D3/D4 pairing gate**: init scripts never ALTER existing tables.
+  bootstrap (see the ORDERING comment in the XML).
+- **Pairing gate**: init scripts never ALTER existing tables.
   Schema evolution is operator-led: a DDL edit ships its live `ALTER`s
   in the same lap, or the next boot aborts the whole file (the trap
   above).
@@ -667,9 +660,9 @@ kubectl exec -n tenzir chi-tenzir-ocsf-0-0-0 -- \
 
 1. Add a `CREATE TABLE IF NOT EXISTS ocsf.<Class_Name>` block to
    `config/10-startup-scripts.xml`, never to `cluster.yaml`. Use the
-   house shape: `PARTITION BY toYYYYMM(time)` (monthly, since
-   2026-10-29); the `DELETE` horizon is a per-table choice now:
-   400 days by default, 90 on `ocsf.Network_Activity`.
+   house shape: `PARTITION BY toYYYYMM(time)` (monthly); the `DELETE`
+   horizon is a per-table choice: 400 days by default, 90 on
+   `ocsf.Network_Activity`.
 2. `kubectl exec` the `ALTER` on existing replicas if the class is not
    new (CREATE only runs on fresh data dirs otherwise).
 3. Point the Tenzir pipeline at it (per-class table naming:
@@ -739,8 +732,8 @@ helm template altinity-operator altinity/altinity-clickhouse-operator \
   -f <(yq '.spec.values' flux/manifests/03-services/clickhouse/operator.yaml)
 ```
 
-Both CRs were validated against the exact CRD schemas shipped in
-operator chart 0.27.4; the DDL + tiered-policy XML were executed
+The CRs match the operator chart 0.27.4 CRD schemas; the DDL +
+tiered-policy XML run
 end-to-end on `clickhouse-server:25.8.33.6` with a Keeper (tables,
 grants enforcement, dotted-column inserts, TTL move-to-cold, 400d
 delete cap, restart idempotency, see the plan's evidence notes in

@@ -9,17 +9,17 @@ You are the LAST gate before merge. For each candidate decide **merge** or
 **skip**:
 
 1. **Cluster state**: use your cluster tools for a quick health check. If
-   anything is degraded, crashing, or under active incident — skip everything;
+   anything is degraded, crashing, or under active incident, skip everything;
    merging during an incident makes diagnosis worse.
 2. **Package sanity**: `pkg` names the package and `reason` carries the
    review's justification (release age vs gate, superseder, OSV, digest
    class). If the reason is empty or hints at unresolved doubt (odd source
-   mismatch, phase-2 trivy caveat on a security-sensitive image), skip it —
+   mismatch, phase-2 trivy caveat on a security-sensitive image), skip it,
    the operator can merge.
-3. **Volume**: more than ~8 clean merges in one run is fine — Flux applies
+3. **Volume**: more than ~8 clean merges in one run is fine, Flux applies
    them rolling. Do not pace yourself artificially; gates already ran.
 
-Return ONLY one fenced json block — one object per candidate, same order:
+Return ONLY one fenced json block, one object per candidate, same order:
 
 ```json
 [
@@ -32,5 +32,5 @@ Return ONLY one fenced json block — one object per candidate, same order:
 ```
 
 Rules: `action` is exactly `merge` or `skip`. `reason` is one line of
-evidence. Never invent cluster facts — check, or skip with reason
+evidence. Never invent cluster facts, check, or skip with reason
 "cluster state unknown".

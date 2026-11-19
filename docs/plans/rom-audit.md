@@ -113,7 +113,7 @@ systems:
   3do:
     enabled: false # enable after inventory provider ships
     provider: inventory
-    # no dat / dat_name — walk roms/3do/, emit counts only
+    # no dat / dat_name: walk roms/3do/, emit counts only
   psx:
     enabled: false
     provider: redump

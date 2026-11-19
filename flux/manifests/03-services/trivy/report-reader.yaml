@@ -9,7 +9,7 @@
 # below; the two containers exist because trivy writes single-object JSON
 # for vulnerability reports but a JSON array per source for exposed-secret
 # reports, and the two shapes need different read_json options
-# (arrays_of_objects) — the tenzir engine rejects a mixed glob.
+# (arrays_of_objects): the tenzir engine rejects a mixed glob.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -101,7 +101,7 @@ spec:
               memory: 128Mi
             limits:
               cpu: 500m
-              # 512Mi OOMKilled on 370-434Mi report-event spikes over a ~170Mi baseline (2026-10-15, 448 restarts); 1Gi headroom
+              # 512Mi OOMKilled on report-event spikes (370-434Mi over a ~170Mi baseline); 1Gi headroom
               memory: 1Gi
           volumeMounts:
             - name: report-storage

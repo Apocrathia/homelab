@@ -37,7 +37,7 @@ flowchart TD
 
 Overall bitrate thresholds for HEVC skip logic (uses `checkOverallBitrate` since per-stream video bitrate is unavailable on VBR x265 MKV files):
 
-- SD (480p / 576p): skip if under **0.75 Mbps** (re-queues grown low-bitrate HEVC for CRF 28 re-shrink)
+- SD (480p / 576p): skip below the low-bitrate floor (thresholds live in `03-video.json` flow inputs)
 - 720p: skip if under 4 Mbps
 - 1080p: skip if under 10 Mbps
 - 4K: skip if under 25 Mbps
@@ -56,7 +56,7 @@ flowchart TD
     Start["Flow entry"] --> DropImg["Drop mjpeg/png/gif + attached_pic"]
     DropImg --> HasStereoAAC{Stereo AAC track exists?}
     HasStereoAAC -->|yes| Execute["Execute remux"]
-    HasStereoAAC -->|no| CreateAAC["Create stereo AAC 2.0 at 256k"]
+    HasStereoAAC -->|no| CreateAAC["Create stereo AAC track"]
     CreateAAC --> Execute
     Execute --> CleanTitles["Clean stream titles"]
     CleanTitles --> GoToF3["goToFlow: Video"]

@@ -1,22 +1,21 @@
-# MISP's Authentik stack — HCL half of the canonical file pair.
+# MISP's Authentik stack: HCL half of the canonical file pair.
 #
 # Pair contract: crossplane.yaml carries the Crossplane objects
 # (OnePasswordItem + ProviderConfig + Workspace); authentik.tf is the
 # single source of truth for the HCL. kustomization.yaml stitches them at
-# build time — configMapGenerator packages this file and the replacements
+# build time: configMapGenerator packages this file and the replacements
 # rule copies its bytes into spec.forProvider.module (source: Inline,
 # module: "" placeholder), so the rendered module stays byte-identical to
 # this file. Never render this directory outside kustomize.
 #
-# FRESH CREATE (nothing live): the MR is unmerged — the first apply
-# creates every Authentik object fresh, so there are no import blocks and
-# no adoption ids. The first plan after merge MUST read as a clean
-# create-set. If the tfstate Secret is ever lost after that, re-adopt via
-# manual tofu import (ids from the live DB) — never a blip.
+# FRESH CREATE (nothing live): the first apply creates every Authentik object
+# fresh, so there are no import blocks and no adoption ids; the first plan
+# must read as a clean create-set. If the tfstate Secret is ever lost after
+# that, re-adopt via manual tofu import (ids from the live DB), never a blip.
 #
 # OIDC mode: oauth2 provider + custom scope mapping + application + admins
 # binding. NOT shared: no users binding resource (the module's users data
-# source stays declared — module-shape parity).
+# source stays declared; module-shape parity).
 
 terraform {
   required_providers {
@@ -28,7 +27,7 @@ terraform {
 
   # PARTIAL backend (the module's versions.tf shape): the per-app args
   # (secret_suffix/namespace/in_cluster_config) come from the ProviderConfig
-  # spec.backendFile — the provider writes them to crossplane.remote.tfbackend
+  # spec.backendFile; the provider writes them to crossplane.remote.tfbackend
   # and passes them via -backend-config at tofu init. The empty block MUST
   # stay: -backend-config without a backend block falls back to the LOCAL
   # backend (warning only), which reads an EMPTY state and plans a full
@@ -49,7 +48,7 @@ provider "authentik" {
 # Blueprint !Find lookups become data sources. authentik ships these
 # three flows with every install, so they pre-exist any apply. The
 # authentication flow is unused in oidc mode (the module declares it
-# ungated — module-shape parity); unreferenced data sources are fine —
+# ungated; module-shape parity); unreferenced data sources are fine;
 # tofu still reads and stores them.
 data "authentik_flow" "provider-authorization" {
   slug = "default-provider-authorization-implicit-consent"
@@ -71,9 +70,9 @@ data "authentik_group" "admins" {
   include_users = false
 }
 
-# Users-group binding source — module-shape parity: the module declares
+# Users-group binding source; module-shape parity: the module declares
 # this data source ungated. MISP is NOT shared (no users binding
-# resource); unreferenced data sources are fine — tofu still reads and
+# resource); unreferenced data sources are fine; tofu still reads and
 # stores them.
 data "authentik_group" "users" {
   name          = "users"
@@ -85,7 +84,7 @@ data "authentik_certificate_key_pair" "signing" {
   name = "authentik Self-signed Certificate"
 }
 
-# Standard scope mappings, looked up by scope_name (oidc mode) — the
+# Standard scope mappings, looked up by scope_name (oidc mode); the
 # module's for_each form unrolled over MISP's fixed scope list. Custom
 # mappings below shadow same-scope_name lookups; roles is not a standard
 # scope, so nothing collides here.
@@ -101,7 +100,7 @@ data "authentik_property_mapping_provider_scope" "profile" {
   scope_name = "profile"
 }
 
-# The MISP `roles` claim — hand-written resource (the module's for_each
+# The MISP `roles` claim: hand-written resource (the module's for_each
 # form unrolled for MISP's single mapping), ported VERBATIM from the
 # chart-blueprint era varmap it replaces: the authentik `admins` group
 # emits misp-admin, and the HelmRelease oidcRolesMapping maps it to MISP
@@ -121,13 +120,13 @@ return {"roles": roles}
 EOF
 }
 
-# The OIDC provider — MISP's native OidcAuth core plugin client (the
+# The OIDC provider: MISP's native OidcAuth core plugin client (the
 # module's count=1 form unrolled: nothing is live, no module-era state
 # address to preserve).
 resource "authentik_provider_oauth2" "app" {
   name = "misp-oidc-provider"
 
-  # No authentication_flow — the chart blueprint omits it too (Optional,
+  # No authentication_flow; the chart blueprint omits it too (Optional,
   # no TF default: null is never sent).
   authorization_flow = data.authentik_flow.provider-authorization.id
   invalidation_flow  = data.authentik_flow.invalidation.id
@@ -135,7 +134,7 @@ resource "authentik_provider_oauth2" "app" {
   # Short public identifier, pinned inline (the module's variable form
   # flattened): the HelmRelease names it statically (OIDC_CLIENT_ID=misp),
   # so the first-boot handshake needs it deterministic. client_secret is
-  # never set here (Sensitive, generated) — authentik mints it
+  # never set here (Sensitive, generated); authentik mints it
   # server-side and the operator copies it into the vault post-merge.
   client_id = "misp"
 
@@ -156,7 +155,7 @@ resource "authentik_provider_oauth2" "app" {
     [authentik_property_mapping_provider_scope.misp-roles.id]
   )
 
-  # OidcAuth setRedirectURL(MISP.baseurl + '/users/login') — the plugin
+  # OidcAuth setRedirectURL(MISP.baseurl + '/users/login'); the plugin
   # hardcodes the callback on the login route (plugin source, research
   # §1.6).
   allowed_redirect_uris = [
@@ -170,15 +169,12 @@ resource "authentik_provider_oauth2" "app" {
   access_token_validity  = "minutes=5"
   refresh_token_validity = "days=30"
 
-  # grant_types MUST be explicit on fresh creates: the API serializer no
-  # longer backfills it in 2026.8 (tfstate showed []), and authentik
-  # rejects every authorize request with invalid_request when the
-  # provider's grant_types is empty. Adopted providers kept their
-  # blueprint-era values, which is why only fresh tofu creates hit this
-  # (live-state evidence 2026-10-12: misp authorize rejected pre-fix).
+  # grant_types MUST be explicit on fresh creates: the 2026.8 API serializer
+  # does not backfill it, and authentik rejects every authorize request with
+  # invalid_request when the provider's grant_types is empty.
   # Schema-verified against goauthentik provider v2026.8.0: grant_types is
   # Optional+Computed (writable). response_types is NOT in the TF schema
-  # at 2026.8.0 (tofu init rejects the unknown attribute) — and the 2026.8
+  # at 2026.8.0 (tofu init rejects the unknown attribute); and the 2026.8
   # authorize view never checks the provider's response_types, so leaving
   # it unmanaged is correct.
   grant_types = [
@@ -186,11 +182,11 @@ resource "authentik_provider_oauth2" "app" {
     "refresh_token",
   ]
   # token_validity (blueprint days=30) is NOT expressible in provider
-  # 2026.8.0 — unmanaged; the fresh create takes the authentik API
+  # 2026.8.0; unmanaged; the fresh create takes the authentik API
   # default.
 }
 
-# Application tile — chart-blueprint parity. protocol_provider replaces
+# Application tile: chart-blueprint parity; protocol_provider replaces
 # the blueprint's provider FK.
 resource "authentik_application" "app" {
   name            = "MISP"
@@ -199,7 +195,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://misp.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  # Dashboard metadata — the blueprint-era values.
+  # Dashboard metadata: chart-blueprint parity.
   meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/misp/icon.svg"
   meta_description = "MISP threat intelligence sharing platform - IOCs, feeds, and event data"
   meta_publisher   = "CIRCL"

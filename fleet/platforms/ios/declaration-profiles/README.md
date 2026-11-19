@@ -1,4 +1,4 @@
-# iOS declaration profiles — Declarative Device Management `.json`
+# iOS declaration profiles: Declarative Device Management `.json`
 
 Empty slot: only the `.keep` placeholder lives here. Declarations sit next to
 profiles under `controls.apple_settings.configuration_profiles` and take

@@ -32,16 +32,16 @@ Do not fold context work into this skill.
 
 - **Never invent new features** while reconciling. Fix stale prose and ledger
   state only; out-of-scope gaps → [`file-issue`](../file-issue/SKILL.md).
-- **Delete-on-ship** — no `closed/` archives. Git history is the archive.
-- **Acceptance gate** — if acceptance is not met, **do not delete** the issue
+- **Delete-on-ship**: no `closed/` archives. Git history is the archive.
+- **Acceptance gate**: if acceptance is not met, **do not delete** the issue
   or plan; surface what remains.
-- **Protected paths** — never write a path listed in
+- **Protected paths**: never write a path listed in
   [`protected-paths.md`](../../rules/protected-paths.md) without confirmation.
   `docs/` is freely editable except listed paths. Propose a patch and wait; if
   declined, keep the issue/plan and its backlink rather than leave a broken
   link.
 - This skill does not ship (no commit/push). Hand off to
-  [`draft-commit`](../draft-commit/SKILL.md) when authorized — see
+  [`draft-commit`](../draft-commit/SKILL.md) when authorized; see
   [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
   Never cluster-mutate.
 
@@ -77,9 +77,9 @@ protected path: if one is affected, return a proposed patch and wait.
 If a required edit (behavior doc or a backlink before deleting an issue/plan)
 hits a path in [`protected-paths.md`](../../rules/protected-paths.md):
 
-- **Approved** — apply the patch, then complete any deferred deletions.
-- **Declined** — do not apply; keep the issue/plan files and their backlinks.
-- **No patch** — proceed.
+- **Approved**: apply the patch, then complete any deferred deletions.
+- **Declined**: do not apply; keep the issue/plan files and their backlinks.
+- **No patch**: proceed.
 
 Homelab does not currently list `docs/` paths as protected; still honor the
 list if it grows.
@@ -88,7 +88,7 @@ list if it grows.
 
 - Satisfied acceptance → **delete** `docs/issues/<slug>.md` in this change set.
 - Not satisfied → leave the file; report remaining acceptance / feedback-loop
-  gaps. Optional: set `status` / notes if the operator asked — do not fake
+  gaps. Optional: set `status` / notes if the operator asked; do not fake
   closure.
 - Skip `README.md`, `_template.md`.
 
@@ -96,7 +96,7 @@ list if it grows.
 
 - Satisfied plan for this lap → **delete** `docs/plans/<slug>.md` when that
   ledger is in use.
-- Partial plans: do not delete; uncheck nothing retroactively to fake done —
+- Partial plans: do not delete; uncheck nothing retroactively to fake done;
   surface leftover checkboxes.
 
 ### Backlinks
@@ -113,7 +113,7 @@ issue / plan deletes, run repo-wide so backlinks elsewhere do not rot:
 python3 .agents/skills/reconcile-context/scripts/check_links.py --all
 ```
 
-Do not fold full `reconcile-context` into this skill — only the `--all` link
+Do not fold full `reconcile-context` into this skill; only the `--all` link
 pass. Hand agent-tree drift to [`reconcile-context`](../reconcile-context/SKILL.md).
 
 ## Output format
@@ -144,7 +144,7 @@ If nothing needed reconcile, say so in one line and stop.
 ## Homelab constraints
 
 - This skill does not ship (no commit/push). Ship via `draft-commit` when
-  authorized — [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
+  authorized; [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Never cluster-mutate as part of reconcile-docs.
 - No secrets in doc or issue bodies.
 - Protected paths still need confirmation unless the operator already ordered

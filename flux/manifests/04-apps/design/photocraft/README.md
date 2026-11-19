@@ -4,7 +4,7 @@
 
 ## Overview
 
-PhotoCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+PhotoCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://photocraft.gateway.services.apocrathia.com`
 

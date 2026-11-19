@@ -8,7 +8,7 @@ Web scraping and content extraction via self-hosted Firecrawl backend.
 
 - **Backend**: Self-hosted Firecrawl at `http://firecrawl-api.firecrawl.svc.cluster.local:3002`
 - **Access**: Internal only via LiteLLM proxy
-- **Transport**: `transportType: stdio` — agentgateway exposes streamable HTTP on `/mcp` (port 8080)
+- **Transport**: `transportType: stdio`, agentgateway exposes streamable HTTP on `/mcp` (port 8080)
 - **Endpoint**: `http://firecrawl.mcp-firecrawl.svc.cluster.local:8080/mcp`
 
 ## Tools Available

@@ -10,7 +10,7 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
 
 ## What runs here
 
-- `helmrelease.yaml`: chart `tetragon` (1.7.1) from the existing `cilium`
+- `helmrelease.yaml`: chart `tetragon` from the existing `cilium`
   HelmRepository. Agent DaemonSet on every node (hostNetwork + privileged by
   chart design, mounts host `/proc`, no hostPID), operator with 1 replica.
   TracingPolicy CRDs are created by the tetragon-operator
@@ -22,8 +22,7 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
   Talos note) and a trimmed export denylist: the chart default mutes host,
   cilium, and kube-system events, which on Talos hides the host-side signal.
 - `policies/`: detection-only TracingPolicies (see below).
-- `grafana/`: Grafana dashboard (grafana.com id 25789, 27 panels, shipped in
-  [!5275](https://gitlab.com/Apocrathia/homelab/-/merge_requests/5275)); all
+- `grafana/`: Grafana dashboard (grafana.com id 25789); all
   panels query `job="tetragon"`. Provisioned via the per-app GrafanaDashboard
   pattern; folder Security.
 
@@ -70,7 +69,7 @@ alive if the agent dies (persistent enforcement), off for now.
   exec event stream; triage via the ClickHouse OCSF record or the
   `tetragon_events_total` metrics.
 
-## SIEM (lap C)
+## SIEM
 
 - `policies/egress.yaml` adds the upstream tcp_connect visibility policy
   (see above); its `sock`-arg kprobe events map to OCSF Network Activity.
@@ -85,5 +84,5 @@ alive if the agent dies (persistent enforcement), off for now.
   listener. tetragon v1.7.x has no native TCP export (`--export-connection`
   does not exist), and the export file is 0600 root-owned: hence the
   dedicated root alloy in the kube-audit alloy pattern. Raw tetragon
-  events no longer land in Loki (export-stdout sidecar dropped); the
+  events do not land in Loki; the
   OCSF record is the record.

@@ -1,9 +1,9 @@
 ---
 # Retention per source path. The shared repo's GLOBAL policy is owned
-# elsewhere in the lab — hosts never touch --global.
+# elsewhere in the lab; hosts never touch --global.
 - name: Skip policy on unreachable backend (configured host)
   ansible.builtin.debug:
-    msg: repository unreachable — skipping policy update this run
+    msg: repository unreachable; skipping policy update this run
   when:
     - kopia_repo_config_file.stat.exists
     - kopia_repo_status.rc != 0
@@ -15,7 +15,7 @@
       --keep-daily {{ kopia_keep_daily }}
       --keep-weekly {{ kopia_keep_weekly }}
       --keep-monthly {{ kopia_keep_monthly }}
-  # Skip on a configured host whose backend is unreachable this run —
+  # Skip on a configured host whose backend is unreachable this run;
   # policy set opens the repo and would abort the play. Next apply retries.
   when:
     - not ansible_check_mode

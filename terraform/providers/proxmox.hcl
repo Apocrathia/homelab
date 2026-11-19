@@ -1,14 +1,14 @@
 # Proxmox provider for OpenTofu/Terragrunt
 # Include from deployments under terraform/deployments/proxmox/
 #
-# Auth chain (1Password Connect — no `op` CLI):
+# Auth chain (1Password Connect, no `op` CLI):
 #   OP_CONNECT_HOST + OP_CONNECT_TOKEN → provider "onepassword"
 #   data.onepassword_vault by name → vault UUID (not stored in git)
 #   ephemeral onepassword_item → provider "proxmox".api_token
 #
 # Connect (in-cluster): http://onepassword-connect.onepassword-system.svc:8080
 # Do not set PROXMOX_VE_API_TOKEN in the environment for this stack.
-# Do not commit vault UUIDs — only vault name + item title (non-secret).
+# Do not commit vault UUIDs; only vault name + item title (non-secret).
 #
 # Endpoint and insecure are lab identity/config (not secrets) and live here.
 

@@ -57,9 +57,9 @@ CNP blocks that host (and all world egress), so the exporter self-disables.
 
 ## SSO license watch
 
-OIDC is Community Edition in 3.261016.0 (verified in upstream source). OpenCTI
-moved SSO config into the UI behind an Enterprise Edition gate, if OpenAEV
-does the same, expect SSO to need a license. Re-verify on major bumps.
+OIDC is Community Edition in 3.261016.0. OpenCTI moved SSO config into the UI
+behind an Enterprise Edition gate; if OpenAEV does the same, expect SSO to need
+a license. Re-verify on major bumps.
 
 ## Troubleshooting
 

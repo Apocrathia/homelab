@@ -1,4 +1,4 @@
-# acquisitions — download clients and indexers
+# acquisitions: download clients and indexers
 
 The acquisition half of the media stack: indexers (prowlarr), download
 clients (qbittorrent, sabnzbd, slskd), and the specialist pullers

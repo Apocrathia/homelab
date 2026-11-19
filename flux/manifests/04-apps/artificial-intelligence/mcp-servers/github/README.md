@@ -26,7 +26,7 @@ Internal only via LiteLLM gateway - no external HTTPRoute.
 
 ## Transport
 
-`transportType: http` — native `streamable-http` via the image `http` subcommand (stateless MCP sessions).
+`transportType: http`, native `streamable-http` via the image `http` subcommand (stateless MCP sessions).
 
 ## Available Tools
 
@@ -44,16 +44,16 @@ Tools:
 ### Eager Toolsets
 
 Toolsets are passed as `--toolsets` on the `http` command so every tool in
-those sets is registered at startup. No `enable_toolset` runtime indirection —
+those sets is registered at startup. No `enable_toolset` runtime indirection,
 agents see the full surface area immediately.
 
 Currently registered toolsets:
 
-- `context` — auth identity helpers
-- `repos` — tags, releases, commits, file contents, branch listings
-- `pull_requests` — list/read/search PRs
-- `issues` — list/read/search issues
-- `users` — user lookups
+- `context`, auth identity helpers
+- `repos`, tags, releases, commits, file contents, branch listings
+- `pull_requests`, list/read/search PRs
+- `issues`, list/read/search issues
+- `users`, user lookups
 
 Write tools that ship inside these toolsets are still present at the server
 level. Agents must restrict what they actually call via `toolNames` on their
@@ -62,7 +62,7 @@ level. Agents must restrict what they actually call via `toolNames` on their
 ## Auth
 
 This server holds **no** GitHub credentials. Native HTTP mode requires every
-client to send `Authorization: Bearer <token>`; missing or invalid auth is 401. Do not reintroduce a process-level PAT on the MCP pod — that turns
+client to send `Authorization: Bearer <token>`; missing or invalid auth is 401. Do not reintroduce a process-level PAT on the MCP pod, that turns
 ClusterIP reachability into an open GitHub proxy.
 
 Client wiring (kagent `RemoteMCPServer` `headersFrom`, LiteLLM

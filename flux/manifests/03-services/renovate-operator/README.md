@@ -14,8 +14,8 @@ This deployment includes:
 - Web UI exposed via Gateway with Authentik OIDC authentication
 - 1Password-managed platform and OIDC credentials via `renovate-operator-secret`
 
-This operator is the only Renovate bot on the group. Mend Renovate CE (former
-`renovate` namespace) was retired at cutover; never run two bots against the
+This operator is the only Renovate bot on the group; never run two bots
+against the same repositories.
 same repositories.
 
 ## Access

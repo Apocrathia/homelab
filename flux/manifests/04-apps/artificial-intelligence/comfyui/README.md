@@ -1,14 +1,14 @@
 # ComfyUI
 
-[ComfyUI](https://github.com/Comfy-Org/ComfyUI) is a node-graph interface for diffusion model workflows — image, video, and audio generation with a visual editor and HTTP/WebSocket API.
+[ComfyUI](https://github.com/Comfy-Org/ComfyUI) is a node-graph interface for diffusion model workflows, image, video, and audio generation with a visual editor and HTTP/WebSocket API.
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
 ## Overview
 
-This deployment bootstraps ComfyUI from the official GitHub release tarball onto a stock Python image (same pattern as [Promptfoo](../promptfoo/README.md)). An init container installs CPU PyTorch and ComfyUI dependencies into a Longhorn-backed venv at `/data/app`. Runtime data (output, input, user settings, custom nodes) lives under `/data/comfyui` on Longhorn. Models mount from SMB at `/models` (`Library/AI Models/ComfyUI`) via `extra_model_paths.yaml` — not nested under the Longhorn base path, because a nested SMB mount makes `/data/comfyui` root-owned and breaks init.
+This deployment bootstraps ComfyUI from the official GitHub release tarball onto a stock Python image (same pattern as [Promptfoo](../promptfoo/README.md)). An init container installs CPU PyTorch and ComfyUI dependencies into a Longhorn-backed venv at `/data/app`. Runtime data (output, input, user settings, custom nodes) lives under `/data/comfyui` on Longhorn. Models mount from SMB at `/models` (`Library/AI Models/ComfyUI`) via `extra_model_paths.yaml`, not nested under the Longhorn base path, because a nested SMB mount makes `/data/comfyui` root-owned and breaks init.
 
-CPU-only — inference is slow. Useful for workflow editing, API integration testing, and light generation. Add a GPU node and swap the bootstrap to a CUDA/ROCm wheel index when you want real throughput.
+CPU-only, inference is slow. Useful for workflow editing, API integration testing, and light generation. Add a GPU node and swap the bootstrap to a CUDA/ROCm wheel index when you want real throughput.
 
 ## Access
 
@@ -17,14 +17,14 @@ CPU-only — inference is slow. Useful for workflow editing, API integration tes
 
 ## Authentication
 
-ComfyUI has no built-in auth. Authentik proxy provider sits in front of the web UI and API — anyone who reaches the app URL without going through Authentik is trusted by ComfyUI itself, so don't bypass the proxy.
+ComfyUI has no built-in auth. Authentik proxy provider sits in front of the web UI and API, anyone who reaches the app URL without going through Authentik is trusted by ComfyUI itself, so don't bypass the proxy.
 
 ## Configuration
 
 Workflow and model configuration happens through the web UI after deployment. Models can be added two ways:
 
-1. **UI download** — workflow templates can fetch missing models from external hosts (HuggingFace, etc.). Requires `--enable-assets` and no `--disable-api-nodes` (the latter blocks frontend internet access via CSP).
-2. **Manual** — copy files to the NAS under `Library/AI Models/ComfyUI/` in the standard subdirectories (`checkpoints/`, `loras/`, `vae/`, etc.). The init container creates those folders on the share.
+1. **UI download**, workflow templates can fetch missing models from external hosts (HuggingFace, etc.). Requires `--enable-assets` and no `--disable-api-nodes` (the latter blocks frontend internet access via CSP).
+2. **Manual**, copy files to the NAS under `Library/AI Models/ComfyUI/` in the standard subdirectories (`checkpoints/`, `loras/`, `vae/`, etc.). The init container creates those folders on the share.
 
 Downloaded models land on the SMB share via `extra_model_paths.yaml`. The asset seeder indexes `/models`, `/data/comfyui/input`, and `/data/comfyui/output` when `--enable-assets` is set.
 
@@ -34,12 +34,12 @@ The init container pins a ComfyUI release tag via Renovate. Bumping the tag trig
 
 ## Storage layout
 
-| Mount                | Volume                            | Purpose                                                |
-| -------------------- | --------------------------------- | ------------------------------------------------------ |
-| `/data`              | Longhorn                          | App venv, output, input, custom nodes                  |
-| `/data/comfyui/user` | Longhorn                          | Workflows, settings, SQLite database (`comfyui.db`)    |
-| `/models`            | SMB (`Library/AI Models/ComfyUI`) | Checkpoints, LoRAs, VAEs, embeddings                   |
-| `/config`            | ConfigMap                         | `extra_model_paths.yaml` — maps `/models` into ComfyUI |
+| Mount                | Volume                            | Purpose                                               |
+| -------------------- | --------------------------------- | ----------------------------------------------------- |
+| `/data`              | Longhorn                          | App venv, output, input, custom nodes                 |
+| `/data/comfyui/user` | Longhorn                          | Workflows, settings, SQLite database (`comfyui.db`)   |
+| `/models`            | SMB (`Library/AI Models/ComfyUI`) | Checkpoints, LoRAs, VAEs, embeddings                  |
+| `/config`            | ConfigMap                         | `extra_model_paths.yaml`, maps `/models` into ComfyUI |
 
 ## Bootstrap (init container)
 
@@ -53,11 +53,11 @@ On first boot (or after a version bump):
 
 Subsequent pod restarts skip bootstrap when the installed version matches the pin.
 
-Cold start on a fresh PVC: expect 10–20 minutes for PyTorch + deps. Upgrades that change the ComfyUI pin reinstall into the same PVC.
+Cold start on a fresh PVC: expect 10-20 minutes for PyTorch + deps. Upgrades that change the ComfyUI pin reinstall into the same PVC.
 
 ## Privacy and outbound access
 
-ComfyUI sets `HF_HUB_DISABLE_TELEMETRY` and `DO_NOT_TRACK` on startup. The UI can reach external model hosts for template downloads — Authentik proxy auth limits who can trigger that, but anyone with access can pull arbitrary model URLs through the ComfyUI frontend. To lock this down again, add `--disable-api-nodes` (blocks frontend internet and paid cloud inference API nodes).
+ComfyUI sets `HF_HUB_DISABLE_TELEMETRY` and `DO_NOT_TRACK` on startup. The UI can reach external model hosts for template downloads, Authentik proxy auth limits who can trigger that, but anyone with access can pull arbitrary model URLs through the ComfyUI frontend. To lock this down again, add `--disable-api-nodes` (blocks frontend internet and paid cloud inference API nodes).
 
 ## Troubleshooting
 
@@ -70,9 +70,9 @@ kubectl get pvc -n comfyui
 
 If the init container fails mid-bootstrap, delete the pod and check whether `/data/app` on the Longhorn PVC is in a half-finished state. Wiping the PVC and letting it reinstall is the blunt fix.
 
-If the main container crashes with `OSError: No username set in the environment`, the pod is missing `USER`/`HOME` for PyTorch cache resolution — see `helmrelease.yaml` env block.
+If the main container crashes with `OSError: No username set in the environment`, the pod is missing `USER`/`HOME` for PyTorch cache resolution, see `helmrelease.yaml` env block.
 
 ## References
 
-- **[ComfyUI GitHub](https://github.com/Comfy-Org/ComfyUI)** — source and release tags
-- **[ComfyUI docs](https://docs.comfy.org/)** — workflow and model path reference
+- **[ComfyUI GitHub](https://github.com/Comfy-Org/ComfyUI)**, source and release tags
+- **[ComfyUI docs](https://docs.comfy.org/)**, workflow and model path reference

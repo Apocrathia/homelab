@@ -10,7 +10,7 @@
   # so wiring can be validated without secrets.
   ansible.builtin.fail:
     msg: >-
-      acme_sh_cf_token is empty on {{ inventory_hostname }} —
+      acme_sh_cf_token is empty on {{ inventory_hostname }}:
       CI: is the cloudflare-api-token item readable via 1Password Connect?
       Local: pass -e acme_sh_cf_token=...
   when:
@@ -68,7 +68,7 @@
     CF_Token: "{{ acme_sh_cf_token }}"
   register: acme_sh_issue
   # rc 2 + "Skipping" = valid cert already exists, nothing to do (acme.sh
-  # reuses exit code 2 for "no renewal needed" — same code in its cron log).
+  # reuses exit code 2 for "no renewal needed"; same code in its cron log).
   changed_when: "'Cert success' in acme_sh_issue.stdout"
   failed_when: >-
     acme_sh_issue.rc != 0

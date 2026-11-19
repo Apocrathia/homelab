@@ -33,7 +33,7 @@ spec:
     # experimental TQL die on a pod that owns no detection feed, no
     # archive rule, and no credentials beyond the two investigations
     # ClickHouse users plus the tenzir lake writer (INSERT/SELECT on
-    # ocsf.* — the scheduled attest-verify findings leg; a deliberate
+    # ocsf.*; the scheduled attest-verify findings leg; a deliberate
     # blast-radius expansion the record-integrity rails lap made, see
     # extraEnv). The detection plane (core node) is untouched by
     # anything that happens here; the planes share only the ClickHouse
@@ -48,7 +48,7 @@ spec:
     #
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
-    # "tenzir-node" — release tenzir-node-investigations + entry
+    # "tenzir-node": release tenzir-node-investigations + entry
     # investigations would double to
     # tenzir-node-investigations-investigations. The override pins
     # fullname at tenzir-node so the entry renders
@@ -92,7 +92,7 @@ spec:
     # var seeds it, so the manifest cannot wire it: exec into the pod
     # once, generate the token, copy the value into the tenzir-secrets
     # item as investigations-api-token (NEW field), and hand that field
-    # to the investigator agent. Static bearer token — the residual risk
+    # to the investigator agent. Static bearer token; the residual risk
     # the investigations design accepts inside the NetworkPolicy scope.
     # Bootstrap order in the node README.
     nodes:
@@ -112,7 +112,7 @@ spec:
 
     # Stateless: the node never imports a record (no import in the
     # ingest pipeline, no archive rule), so the lake stays empty by
-    # construction. No PVC — the web server's 128-byte signing key
+    # construction. No PVC; the web server's 128-byte signing key
     # (plugins/web/authenticator.svs) is regenerated on pod deletion,
     # and the API token in tenzir-secrets is the durable credential.
     # An emptyDir at /var/lib/tenzir/plugins handles the state path
@@ -139,7 +139,7 @@ spec:
           # nothing to server.log, so pipeline failures that point at
           # the log for their diagnostics surface blind. server.log
           # opens at /var/log/tenzir on every boot, which
-          # readOnlyRootFilesystem makes unwritable — the tenzir-logs
+          # readOnlyRootFilesystem makes unwritable; the tenzir-logs
           # emptyDir (extraVolumes below) backs the path; keep the
           # key/mount pair together on any new node.
           file-verbosity: warning
@@ -157,7 +157,7 @@ spec:
           #             the PVC writable, but the write tool here is
           #             ClickHouse, not a filesystem)
           # Open item (investigations design): decide the egress trio
-          # to_http / to_s3 / to_tcp — denylisting them hard-blocks
+          # to_http / to_s3 / to_tcp; denylisting them hard-blocks
           # pipeline exfiltration; this node legitimately uses none of
           # them (the only sink is to_clickhouse), so the denylist
           # decision is safe either way and only needs the operator's
@@ -178,7 +178,7 @@ spec:
           # Chain state for the record_integrity attestation lane (the
           # attest operator + ingest pipeline below): one lookup-table
           # entry per case (key = metadata.correlation_uid) holding the
-          # case's current chain tail — the previous record's uid,
+          # case's current chain tail; the previous record's uid,
           # type_uid, and fingerprint, which context_enrich turns into the
           # next record's prev_event. Same shape as the siblings' context
           # blocks (core's ocsf-osint; contexts are per-node, shared
@@ -186,22 +186,21 @@ spec:
           # The table is memory: a NODE restart loses it, and every case
           # chain then restarts at its next record with prev_event absent
           # plus a WARNING diagnostic from attest (best-effort per node
-          # lifetime — the verify lane's per-record fingerprint recompute
+          # lifetime; the verify lane's per-record fingerprint recompute
           # still catches post-hoc mutation across restarts; the semantics
           # are documented in the datalake README).
           contexts:
             investigations-chains:
               type: lookup-table
           start:
-            # Start the web server (node REST API) — the guide's
+            # Start the web server (node REST API); the guide's
             # mechanism (start-the-api: options ride the plugins.web
             # block below; the server command reads its options from the
             # plugins.web config group). The API surface:
-            # /api/v0/pipeline/{launch,list,update,delete}, /api/v0/serve
-            # — the agent query lane.
+            # /api/v0/pipeline/{launch,list,update,delete}, /api/v0/serve;
+            # the agent query lane.
             commands:
               - web server
-          # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
           # empty definition fields at build time.
           pipelines:
@@ -216,7 +215,7 @@ spec:
                 Datastore Activity 6005 Query with the ai_operation agent
                 identity); ocsf_derive + ocsf_cast schema-validate; the
                 attest operator stamps the record_integrity attestation
-                over the stored shape — a SHA-256 fingerprint chained per
+                over the stored shape: a SHA-256 fingerprint chained per
                 case via prev_event, chain state in the investigations-
                 chains context (the contexts block above; a node restart
                 restarts the chains with a WARNING, the documented gap in
@@ -227,7 +226,7 @@ spec:
                 http-ingest pipeline (not inside them): malformed POSTs
                 drop with assert-WARNINGS in the node diagnostics while
                 the request still completes with accept_http's default
-                200 — write confirmation is the query-lane read-back, not
+                200; write confirmation is the query-lane read-back, not
                 the POST response. No archive rule and no local import:
                 ClickHouse is the only durable copy, and the node lake
                 stays empty by construction (the PVC carries node state,
@@ -247,7 +246,7 @@ spec:
                 store. Each break's finding rides two legs: stdout
                 (pod-log visibility) and, via ocsf_derive + ocsf_cast, an
                 INSERT into ocsf.Detection_Finding with the tenzir user
-                (INSERT/SELECT on ocsf.* — the same credential the core
+                (INSERT/SELECT on ocsf.*; the same credential the core
                 node's archive legs read, wired below as
                 TENZIR_SECRETS__CLICKHOUSE_PASSWORD), landing inside the
                 Grafana tenzir-findings rule's WHERE clauses (class 2004,
@@ -258,13 +257,12 @@ spec:
                 shape proof both planes' findings share).
               definition: ""
               restart-on-error: 1 minute
-              # Born-dead guard (operator-approved one-liner, design phase 2):
-              # the first roll's walker came up completed-terminal with zero
-              # walks ever (query_log-proven, 2026-10-21 — pipeline state
-              # lies both directions). Unstoppable makes completion a failed
-              # state, and restart-on-error above relaunches it: completion
-              # -> failed -> relaunch, so the hourly walk can never silently
-              # die in a "completed" state.
+              # Born-dead guard: pipeline state can lie both directions
+              # (a walker can come up completed-terminal with zero walks
+              # ever). Unstoppable makes completion a failed state, and
+              # restart-on-error above relaunches it: completion
+              # -> failed -> relaunch, so the hourly walk can never
+              # silently die in a "completed" state.
               unstoppable: true
             pipeline-metrics-to-mimir:
               name: pipeline metrics to mimir
@@ -273,7 +271,7 @@ spec:
                 ingress/egress event counts, emitted every 10s) to the Mimir
                 remote-write endpoint kube-prometheus-stack remote-writes to;
                 the mimir gateway injects the tenant header, so no auth here.
-                Raw shape, not shape="prometheus" — that transform drops all
+                Raw shape, not shape="prometheus"; that transform drops all
                 non-health schemas, pipeline metrics included. Grafana reads
                 the tenzir_pipeline_{ingress,egress}_events series; note this
                 pipeline (and its siblings) also self-report in those series.
@@ -281,8 +279,8 @@ spec:
                 internal flag (ingress.internal / egress.internal), so
                 bus-internal flow (publish, import, subscribe) is separable
                 from external export in the series; the node label pins the
-                pushing node — pipeline_ids are not node-qualified
-                (live-verified 2026-10-17: the vendored docs'
+                pushing node; pipeline_ids are not node-qualified
+                (the vendored docs'
                 demo-node/m57-suricata example applies to platform pipelines,
                 not node-config pipelines), and without it the same-named
                 self-reports from this node and the siblings collide on one
@@ -298,7 +296,7 @@ spec:
                 sample (value 1, pipeline labels, node label = investigations) to Mimir
                 for every live error / warning diagnostic, so the dashboard can
                 count both severities with sum_over_time. They otherwise live
-                only in the diagnostics stream, not in metrics. Restored per-node (B1)
+                only in the diagnostics stream, not in metrics. Restored per-node
                 with the central poller's retirement.
               definition: ""
               restart-on-error: 1 minute
@@ -308,33 +306,32 @@ spec:
                 Ships every live, not-hidden pipeline diagnostic to Loki as
                 job=tenzir-diagnostics entries (node label = investigations).
                 to_fluent_bit resolves $pipeline_name and $severity per event
-                and consumes both out of the shipped body (live-verified
-                2026-10-17 probe); drop discards the ANSI escape-coded
-                rendered field, so the line keeps the rest of the diagnostic
-                record — pipeline_id, hidden, run, timestamp, message, notes,
-                annotations — and the labels carry pipeline + severity. Hidden
+                and consumes both out of the shipped body (probe); drop discards the ANSI
+                escape-coded rendered field, so the line keeps the rest of the diagnostic
+                record: pipeline_id, hidden, run, timestamp, message, notes,
+                annotations; and the labels carry pipeline + severity. Hidden
                 entries (platform-UI pipeline deprecation noise) stay out.
                 Plain HTTP to loki-write, cluster-internal. live=true without
                 retro: no store-backlog replay on start, so restarts never
-                re-ship history (Loki has no dedup) — restored per-node (B1)
+                re-ship history (Loki has no dedup); restored per-node
                 with the central poller's retirement: every node ships its own
                 pair now, so no cross-node consumer can ever blind against it.
               definition: ""
               restart-on-error: 1 minute
 
-        # Web server options. Config-file layout (source-verified
-        # v6.19.1, plugins/web/tenzir.yaml.example + the config loader):
+        # Web server options. Config-file layout (v6.19.1
+        # plugins/web/tenzir.yaml.example + the config loader):
         # plugin keys stay top-level in tenzir.yaml, so in values they
         # ride under tenzir.config.plugins, NOT under
-        # tenzir.config.tenzir — the chart renders this block as the
+        # tenzir.config.tenzir; the chart renders this block as the
         # top-level plugins: key.
         #
         # Query lane exposure (operator decision, investigations
-        # design): IN-CLUSTER ONLY — no Gateway HTTPRoute; agents reach
+        # design): IN-CLUSTER ONLY: no Gateway HTTPRoute; agents reach
         # tenzir-node-investigations.tenzir.svc:5160 directly, and the
         # chart NetworkPolicy scopes who may call. upstream mode is out
-        # (source-verified v6.19.1: refuses non-localhost binds), and dev
-        # mode is out (drops token auth) — server mode binds the pod
+        # (v6.19.1: refuses non-localhost binds), and dev
+        # mode is out (drops token auth); server mode binds the pod
         # interface with TLS + token. Homelab posture: a prod cluster
         # would add mTLS and per-caller identities; here NetworkPolicy +
         # static token + INSERT/SELECT-scoped users is the boundary.
@@ -343,16 +340,16 @@ spec:
             mode: server
             bind: 0.0.0.0
             port: 5160
-            # TLS pair (operator decision 2026-10-17: self-signed
+            # TLS pair (operator decision: self-signed
             # ClusterIssuer): the cert-manager Certificate in
             # certificate.yaml issues Secret
             # tenzir-node-investigations-web-tls (SANs = the Service DNS
             # forms the chart renders), mounted read-only at /etc/tenzir/
             # tls via the web-tls extraVolume/extraVolumeMounts pair
             # below. Server mode sets require_tls and fails validation
-            # without both certfile and keyfile (source-verified v6.19.1,
+            # without both certfile and keyfile (v6.19.1,
             # plugins/web/src/configuration.cpp: "either keyfile or
-            # certfile argument is missing") — with the pair wired, `web
+            # certfile argument is missing"); with the pair wired, `web
             # server` validates and the query lane binds TLS + token.
             # Agent callers skip CA verification: the X-Tenzir-Token is
             # the real auth and NetworkPolicy scopes the callers (homelab
@@ -379,7 +376,7 @@ spec:
     # this namespace by ../secret.yaml): the investigations ClickHouse
     # users' passwords ride it as fields
     # (clickhouse-investigations-writer-password /
-    # clickhouse-investigations-reader-password — the CHI users block in
+    # clickhouse-investigations-reader-password; the CHI users block in
     # clickhouse/cluster.yaml renders the users from them). Env
     # vars map to config keys tenzir.secrets.* (same env-var shape as
     # the siblings' TENZIR_SECRETS__CLICKHOUSE_PASSWORD): the ingest
@@ -388,7 +385,7 @@ spec:
     # from_clickhouse pipelines read
     # secret("investigations-reader-password") node-side, and the
     # scheduled attest-verify pipeline's findings leg reads
-    # secret("clickhouse-password") — the tenzir user (INSERT/SELECT on
+    # secret("clickhouse-password"); the tenzir user (INSERT/SELECT on
     # ocsf.*, the shared lake writer; the findings INSERT into
     # ocsf.Detection_Finding rides the Grafana rails), the same
     # clickhouse-password field the core node's archive legs read,
@@ -439,7 +436,7 @@ spec:
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
       # readOnlyRootFilesystem makes unwritable. This is the app's own
-      # logger, not a pipeline write lane — to_file stays on the
+      # logger, not a pipeline write lane; to_file stays on the
       # denylist. emptyDir, same lifecycle as the tmp mount; the 10 MiB
       # rotation cap bounds the disk cost.
       - name: tenzir-logs
@@ -448,7 +445,7 @@ spec:
       # the web server writes its 128-byte signing key to
       # /var/lib/tenzir/plugins/web/authenticator.svs on bootstrap.
       # emptyDir survives container restarts (OOM, crash) but dies on
-      # pod deletion — the API token in tenzir-secrets is the durable
+      # pod deletion; the API token in tenzir-secrets is the durable
       # credential; the signing key regenerates on the next pod start.
       - name: tenzir-state
         emptyDir: {}
@@ -457,7 +454,7 @@ spec:
       # Same file-level subPath mounts as the sibling nodes (kubelet
       # ..data internals fail Tenzir's operator-path segment check in a
       # walked package tree). subPath does not live-propagate ConfigMap
-      # updates — package changes need a pod roll.
+      # updates; package changes need a pod roll.
       - name: packages-homelab
         mountPath: /etc/tenzir/packages/homelab/package.yaml
         subPath: package.yaml
@@ -494,7 +491,7 @@ spec:
       # Web server TLS pair (plugins.web certfile/keyfile): directory
       # mount of the Certificate's Secret, no subPath. The web server
       # reads the pair only at its start, so renewals land on the next
-      # pod roll — any config change re-checksums tenzir.yaml and rolls
+      # pod roll; any config change re-checksums tenzir.yaml and rolls
       # the pod, well inside the 90d validity window.
       - name: web-tls
         mountPath: /etc/tenzir/tls
@@ -508,12 +505,12 @@ spec:
         mountPath: /var/lib/tenzir/plugins
 
     # Containment stack, part 4: chart NetworkPolicy. Ingress only (the
-    # chart policy has no egress hook — open item: decide whether a
+    # chart policy has no egress hook; open item: decide whether a
     # standalone egress NetworkPolicy locking node egress to ClickHouse
     # + the platform websocket is wanted; as rendered, egress is
     # default-allowed). Same-namespace covers probes and in-cluster debug
     # pods; the two agent lanes open to the known agent namespaces only
-    # (the investigations design's in-cluster callers) — the future
+    # (the investigations design's in-cluster callers); the future
     # investigator agent lands in one of them.
     networkPolicy:
       enabled: true

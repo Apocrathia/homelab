@@ -1,9 +1,9 @@
-# Slack: keep the Fleet-maintained version current — update only, never
+# Slack: keep the Fleet-maintained version current; update only, never
 # install. Requires slack/darwin under software.fleet_maintained_apps on the
 # same fleet.
-# Do not use built-in labels (e.g. macOS) — fleetctl gitops rejects them.
+# Do not use built-in labels (e.g. macOS); fleetctl gitops rejects them.
 #
-# The patch policy only fails when the app is installed and outdated — missing
+# The patch policy only fails when the app is installed and outdated; missing
 # hosts pass, so Fleet never installs it.
 ---
 - name: macOS - Slack up to date

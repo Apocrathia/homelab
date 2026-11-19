@@ -21,11 +21,11 @@ spec:
     app:
       name: openaev-opensearch
       namespace: openaev
-      # Single-node OpenSearch — OpenAEV's mandatory search "engine"
+      # Single-node OpenSearch: OpenAEV's mandatory search "engine"
       # (ENGINE_ENGINE-SELECTOR=opensearch on the platform). Plain HTTP per
       # official OpenAEV compose parity: DISABLE_SECURITY_PLUGIN=true means no
       # TLS/auth on the REST layer, so the openaev-opensearch-ingress CNP
-      # (networkpolicy.yaml) is the compensating control — only the platform
+      # (networkpolicy.yaml) is the compensating control; only the platform
       # pod may reach this service. vm.max_map_count is patched node-level
       # via talos/patches/unified-patch.yaml.
       # renovate: datasource=docker depName=docker.io/opensearchproject/opensearch
@@ -34,7 +34,7 @@ spec:
         name: opensearch
         port: 9200
         env:
-          # Dotted env name is intentional and valid k8s — the stock entrypoint
+          # Dotted env name is intentional and valid k8s; the stock entrypoint
           # converts it to the discovery.type setting.
           - name: discovery.type
             value: single-node
@@ -72,7 +72,7 @@ spec:
         - name: data
           mountPath: /usr/share/opensearch/data
 
-      # GET / returns cluster info without auth (security plugin off) —
+      # GET / returns cluster info without auth (security plugin off);
       # listener-level health; index-level state rides the platform's probes.
       healthChecks:
         livenessProbe:

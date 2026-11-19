@@ -6,7 +6,7 @@ description: >-
   homelab-agent, hermes-agent, or other registered A2A peers — not via MCP.
 ---
 
-# A2A — LiteLLM-brokered agents
+# A2A: LiteLLM-brokered agents
 
 LiteLLM (`flux/manifests/04-apps/artificial-intelligence/litellm/`) registers
 kagent agents under `agents:` and brokers JSON-RPC A2A at
@@ -72,7 +72,7 @@ asyncio.run(main())
 
 Notes:
 
-- All network calls are async — always `await`.
+- All network calls are async; always `await`.
 - `send()` returns `A2aReply(text, task_id, context_id, raw)`; `str(reply)` is
   the text.
 - Default timeout 180s; pass `timeout=` for heavy tasks.

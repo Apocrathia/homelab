@@ -6,7 +6,7 @@ changed-files output from files passed in via env. Writes the rendered
 markdown prompt to PROMPT_OUTPUT_PATH.
 
 Kept separate from the A2A invoke script to keep shell quoting simple in
-the GitLab CI YAML — instead of trying to heredoc a multi-KB prompt with
+the GitLab CI YAML: instead of trying to heredoc a multi-KB prompt with
 a hostile diff payload, the YAML hands us file paths and env vars and
 we build the markdown safely here.
 """
@@ -69,7 +69,7 @@ def _strip_renovate_chrome(desc: str, max_chars: int) -> tuple[str, int, bool]:
         return ("", original_len, False)
 
     text = desc
-    # Cut at the earliest Renovate chrome header — everything below it
+    # Cut at the earliest Renovate chrome header: everything below it
     # (changelog, configuration, automerge schedule, debug trailer) is
     # noise for the agent's purposes.
     cut_idx = len(text)
@@ -178,7 +178,7 @@ def main() -> int:
         "",
         "Renovate's rendered upstream changelog has been removed from this",
         "section on purpose. Do not treat what's below as the source of truth",
-        "for what changed upstream — fetch that yourself with your GitHub /",
+        "for what changed upstream: fetch that yourself with your GitHub /",
         "GitLab tools as the protocol requires.",
         "",
         mr_desc if mr_desc.strip() else "_(empty)_",
@@ -195,7 +195,7 @@ def main() -> int:
         diff_text if diff_text.strip() else "(empty diff)",
         "```",
         "",
-        "## Your task (in order — do not stop early)",
+        "## Your task (in order: do not stop early)",
         "",
         "1. **Research.** Parse the diff for version deltas. For each one,",
         "   fetch real upstream context with your GitHub / GitLab tools",
@@ -204,7 +204,7 @@ def main() -> int:
         "2. **Compose.** Build the comment body in markdown using the",
         "   exact template from your system prompt. The first line MUST",
         "   be `<!-- mr-change-summary -->`. Do not include a trailing",
-        "   `<!-- hash:... -->` line — the CI job appends that.",
+        "   `<!-- hash:... -->` line: the CI job appends that.",
         f"3. **List existing notes.** Call `get_merge_request_notes(project_id={project_id},",
         f"   merge_request_iid={mr_iid})` and look for an existing note whose",
         "   body starts with `<!-- mr-change-summary -->`.",
@@ -217,7 +217,7 @@ def main() -> int:
         "5. **Confirm.** Your final response to the caller must include",
         "   the note ID returned by the create/update tool, e.g.",
         f'   "Posted note <id> on MR !{mr_iid}." If the tool call failed,',
-        "   say so explicitly with the error message — do not claim",
+        "   say so explicitly with the error message: do not claim",
         "   success.",
         "",
         "**You are not done until step 4 has executed and step 5 has",

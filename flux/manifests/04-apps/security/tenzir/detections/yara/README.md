@@ -21,4 +21,4 @@ and none of those pipelines exist yet.
   files as ConfigMaps and the node mounts them at
   `/etc/tenzir/yara/signature-base/<subset>` for a
   `yara path=...` pipeline, the same pattern the sigma directories use.
-  That plumbing rides the consumer MR, not this scaffold.
+  That plumbing is future work, not this scaffold.

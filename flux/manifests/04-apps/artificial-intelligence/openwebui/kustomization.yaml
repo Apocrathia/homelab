@@ -19,7 +19,7 @@ replacements:
   # ConfigMap's authentik.tf data into the Workspace's module field.
   # authentik.tf stays the single source of truth for the HCL; the rendered
   # module must stay byte-identical to it (the Workspace adopts live
-  # authentik objects — a drift here would fight the state).
+  # authentik objects: a drift here would fight the state).
   #
   # The intermediate ConfigMap cannot be dropped from the render: kustomize
   # applies patches and transformers before replacements, so a $patch:

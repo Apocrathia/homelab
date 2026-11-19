@@ -1,4 +1,4 @@
-# `file-issue` — local issue filing (skill)
+# `file-issue`: local issue filing (skill)
 
 `SKILL.md` defines creating or updating issues under `docs/issues/` to record
 a gap out of scope for the current change. Issues define what; plans under

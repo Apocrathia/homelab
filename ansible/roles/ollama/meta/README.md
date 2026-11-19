@@ -1,4 +1,4 @@
-# meta — ollama role metadata
+# meta: ollama role metadata
 
 Galaxy metadata for the ollama role: the official install.sh with a drift-gated
 self-update, models untouched. MIT license, Debian and Fedora, minimum Ansible

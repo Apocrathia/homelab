@@ -12,7 +12,7 @@ disable-model-invocation: true
 # Retrospective
 
 A structured review at work-close or session-end that extracts lessons from the
-work just done — and from changes that landed outside the agent's session. The
+work just done, and from changes that landed outside the agent's session. The
 retrospective **classifies** observations and **routes** them: local context
 edits, rule or skill improvements, enforcement promotion, or upstream
 contributions back to the shared core.
@@ -23,26 +23,26 @@ normal confirmation.
 
 ## When to run
 
-- **After a shipping lap** — after [`ship-work`](../ship-work/SKILL.md) (or
+- **After a shipping lap**: after [`ship-work`](../ship-work/SKILL.md) (or
   [`draft-commit`](../draft-commit/SKILL.md) handoff) and before
   [`clock-out`](../clock-out/SKILL.md) when an MR merged. Runs while the
   worktree still exists so the retrospective can inspect the diff.
-- **At session-end** — operator asks "what did we learn?"
-- **After merges outside the session** — catch up on context-relevant changes.
-- **Standalone** — `/retrospective` or "do a retro."
+- **At session-end**: operator asks "what did we learn?"
+- **After merges outside the session**: catch up on context-relevant changes.
+- **Standalone**: `/retrospective` or "do a retro."
 
 Run the retrospective while the lap worktree still exists when there is one.
 Session-end / read-only capture may use the workspace root. `clock-out` tears
-down the session worktree after merge — retro first.
+down the session worktree after merge; retro first.
 
 ## What it produces
 
-1. **Outcome summary** — what happened, one or two lines.
-2. **Git history findings** — significant changes that touched context surfaces,
+1. **Outcome summary**: what happened, one or two lines.
+2. **Git history findings**: significant changes that touched context surfaces,
    with rationale from commit messages and MR descriptions.
-3. **Observations** — classified lessons, each with a route.
-4. **Upstream candidates** — generic enough for the shared core.
-5. **No-op declaration** — if nothing to capture, say so.
+3. **Observations**: classified lessons, each with a route.
+4. **Upstream candidates**: generic enough for the shared core.
+5. **No-op declaration**: if nothing to capture, say so.
 
 ## Workflow
 
@@ -84,11 +84,11 @@ Standard outcome review from
 - Did any context module lead you astray or leave you without what you needed?
 
 If nothing happened (discover-only session, or work was abandoned), say so and
-move to step 3 — the git history pass may still surface lessons.
+move to step 3; the git history pass may still surface lessons.
 
 ### 3. Mine git history for external changes
 
-Changes land in `main` without this agent's involvement — human commits, other
+Changes land in `main` without this agent's involvement: human commits, other
 agents' MRs, hotfixes. These can shift the context landscape without a
 corresponding context update.
 
@@ -104,7 +104,7 @@ git fetch origin main
 git log --oneline origin/main --since="<last session date or tag>" -- \
   AGENTS.md CLAUDE.md .agents/ docs/
 
-# Recent merged MRs (GitLab) — adapt to glab / GitLab MCP filters available
+# Recent merged MRs (GitLab): adapt to glab / GitLab MCP filters available
 glab mr list --merged --limit 20
 # Then inspect each candidate with glab mr view <iid> / GitLab MCP for files
 # and description when the title or path set looks context-relevant.
@@ -116,10 +116,10 @@ git log --oneline --merges origin/main --since="<last session date>" -- \
 
 For each significant change found:
 
-- **What changed** — file(s) and nature of the change.
-- **Why** — extract from commit message body, MR description, or linked issue
+- **What changed**: file(s) and nature of the change.
+- **Why**: extract from commit message body, MR description, or linked issue
   (`git show <sha>`, `glab mr view <iid>`, or GitLab MCP).
-- **Context impact** — does the current `.agents/` context still accurately
+- **Context impact**: does the current `.agents/` context still accurately
   describe the post-change state? Flag any drift.
 
 **What counts as significant:**
@@ -148,7 +148,7 @@ For each significant change found:
 
 Classification criteria:
 
-- **One failure is sufficient** for anti-patterns — no frequency threshold.
+- **One failure is sufficient** for anti-patterns: no frequency threshold.
 - **2+ similar successes** (or human judgment) for patterns.
 - **Structural enforcement** is the promotion path for rules that fail
   repeatedly (see
@@ -188,9 +188,9 @@ Contribute via issue/MR on the core repo; pull later with
 
 **Upstream contribution path:**
 
-1. **File an issue** on the core repo (default) — improvement, evidence, proposed change.
+1. **File an issue** on the core repo (default): improvement, evidence, proposed change.
 2. **Open a PR/MR** on the core repo when the change is small and well-defined.
-3. **Record locally** even if upstream is deferred — write a memory so it is not lost.
+3. **Record locally** even if upstream is deferred; write a memory so it is not lost.
 
 The retrospective is the **push** side (to the core). The **pull** side is
 [`integrate-upstream`](../integrate-upstream/SKILL.md).
@@ -201,7 +201,7 @@ Propose writes to [`.agents/memories/`](../../memories/README.md):
 
 - File convention: `.agents/memories/<topic>.md`
 - Sections: **Context**, **Lesson**, **References**
-- Keep it short — one page max per topic
+- Keep it short: one page max per topic
 - Commit memory files to a follow-up commit or MR on `main` before `clock-out`
   removes the worktree; untracked worktree files are lost on cleanup
 
@@ -255,7 +255,7 @@ If nothing to capture: "no lessons; no pattern."
 
 In attended / self-improve loops, retrospective runs after ship (or
 draft-commit handoff) and before [`clock-out`](../clock-out/SKILL.md). Optional
-in [`run-loop`](../run-loop/SKILL.md) — informational, not a gate. Does not
+in [`run-loop`](../run-loop/SKILL.md): informational, not a gate. Does not
 block the next lap.
 
 ## Subagents
@@ -267,9 +267,9 @@ block the next lap.
 
 ## Do not
 
-- Edit protected paths without confirmation — propose, don't write
+- Edit protected paths without confirmation; propose, don't write
 - Skip the git history pass
 - Record trivia
 - File upstream contributions without evidence (prefer 2+ consumer projects)
-- Run the retrospective as a gate — it informs, it doesn't block
-- Expand into implementation — route to the right skill instead
+- Run the retrospective as a gate; it informs, it doesn't block
+- Expand into implementation; route to the right skill instead

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mirror ES-DE themes-list into Emulation/themes/<reponame>/.
-# Full clones only — ES-DE rejects shallow theme repos.
+# Full clones only: ES-DE rejects shallow theme repos.
 set -euo pipefail
 
 THEMES_ROOT="${THEMES_ROOT:-/emulation/themes}"

@@ -69,10 +69,10 @@ Queries filter `logtype >= 2000`, so only attacker events count (3000-3003 HTTP,
 ## Troubleshooting
 
 ```bash
-# Pod status (should be Running, 1 replica)
+# Pod status (should be Running)
 kubectl -n opencanary get pods
 
-# Startup logs — config load, module start, then silence until someone knocks
+# Startup logs: config load, module start, then silence until someone knocks
 kubectl -n opencanary logs deployment/opencanary --tail=50
 
 # LoadBalancer IP announcement

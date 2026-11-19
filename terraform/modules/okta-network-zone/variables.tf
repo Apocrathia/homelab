@@ -3,7 +3,7 @@ variable "network_zones" {
     Network zones to manage in this org. Keys are stable Terraform addresses.
     Zones are inert until a sign-in or password policy references them. Set
     include_egress_ip = true to append the plan-time public egress IP (/32)
-    to gateways — home egress is dynamic, so never hardcode it.
+    to gateways; home egress is dynamic, so never hardcode it.
   EOT
   type = map(object({
     name               = string

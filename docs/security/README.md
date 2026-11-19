@@ -1,4 +1,4 @@
-# `docs/security/` — Security triage notes
+# `docs/security/`: Security triage notes
 
 Working records for security cleanup: the automountServiceAccountToken
 mitigation, the `default` namespace cleanup handoff, and the Trivy

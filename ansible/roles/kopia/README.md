@@ -3,7 +3,7 @@
 Kopia backups for managed hosts: package install from the official kopia
 repos, per-path retention policy, and a systemd-timer snapshot schedule.
 Hosts connect to the **shared repository** the rest of the lab backs up to
-(bucket `kopia` on NAS RustFS), so every backup is visible in the one kopia
+(backend in `roles/kopia/defaults/main.yml`), so every backup is visible in the one kopia
 web UI at `kopia.gateway.services.apocrathia.com`.
 
 The role:
@@ -12,8 +12,8 @@ The role:
    version pinned by `kopia_package_version` (must not exceed the repo's
    format version; a newer client would auto-upgrade the shared repo
    format and break older clients).
-2. **Repository**: connects to the shared repo on
-   `storage.services.apocrathia.com:9009` (plain HTTP on the LAN), config in
+2. **Repository**: connects to the shared repo (endpoint/bucket in
+   `defaults/main.yml`; plain HTTP on the LAN), config in
    `/root/.config/kopia`, hosts' own bucket-scoped RustFS user (from
    `kopia-secrets`). Credentials pass via environment, never argv.
 3. **Policy**: retention per backup path (GFS defaults in
@@ -22,13 +22,13 @@ The role:
    it is owned elsewhere in the lab.
 4. **Schedule**: `kopia-snapshot.timer` runs a one-shot service with the
    explicit path list (bootstrap-safe; `--all` only finds sources that
-   already have snapshots) nightly at 02:00 + 30m randomized delay,
+   already have snapshots) nightly (timer values in `defaults/main.yml`),
    Persistent. Maintenance is owned elsewhere in the lab; hosts never run
    maintenance.
 
 Snapshot sources are scoped by kopia's user@host identity; each host
-snapshots only its own paths (verified against kopia source:
-`shouldSnapshotSource` filters on hostname + username).
+snapshots only its own paths (kopia's `shouldSnapshotSource` filters on
+hostname + username).
 
 ## Variables
 
@@ -62,7 +62,7 @@ journalctl -u kopia-snapshot.service
 
 ## Notes
 
-- Shared-repo trade-off (operator decision 2026-09-13): any connected client
+- Shared-repo trade-off: any connected client
   can read and delete the whole repository. Confidentiality rides on the repo
   password; blast-radius separation would require separate buckets and users
   per trust domain.
@@ -70,8 +70,8 @@ journalctl -u kopia-snapshot.service
   runs; newer formats would break older clients. Renovate manages the pin
   (github-releases datasource); read the live value in `defaults/main.yml`,
   not here.
-- unifi-os is a Debian 13 NUC running UniFi OS Server in podman; it is an
-  active kopia target; `/etc`, `/home` (UOS app data in podman volumes under
-  `/home/uosserver`), `/opt`, `/var/backups` (`host_vars/unifi-os.yml`).
+- unifi-os (Debian NUC running UniFi OS Server in podman; app data in podman
+  volumes under `/home/uosserver`) is a kopia target; backup paths in
+  `host_vars/unifi-os.yml`.
 - KopiaUI (desktop tray app) manages its own per-user repository config and
   is out of scope; this role's repository is the root/system one.

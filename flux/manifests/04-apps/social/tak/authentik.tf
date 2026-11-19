@@ -1,19 +1,19 @@
-# OpenTAKServer LDAP stack — HCL half of the canonical file pair.
+# OpenTAKServer LDAP stack: HCL half of the canonical file pair.
 #
 # Pair contract: crossplane.yaml carries the Crossplane objects
 # (ProviderConfig + Workspace, ns tak); authentik.tf is the single source
-# of truth for the HCL. kustomization.yaml stitches them at build time —
+# of truth for the HCL. kustomization.yaml stitches them at build time,
 # configMapGenerator packages this file and the replacements rule copies
 # its bytes into spec.forProvider.module (source: Inline, module: ""
 # placeholder), so the rendered module stays byte-identical to this file.
 # Never render this directory outside kustomize.
 #
 # UNIT (retired authentik-blueprint.yaml, ConfigMap authentik-blueprint-tak-ldap):
-# the LDAP auth path OTS's WebUI logins and ATAK enrollment bind against —
+# the LDAP auth path OTS's WebUI logins and ATAK enrollment bind against,
 # the authentik objects the generic-app chart cannot render. The chart's
 # own tofu workspace (tak-authentik, chart-rendered) owns the WebUI proxy
 # stack; this pair owns the LDAP provider, the dedicated LDAP outpost
-# pinned to ns tak (operator decision — the tak CNPs lock 3389/6636 to
+# pinned to ns tak (operator decision: the tak CNPs lock 3389/6636 to
 # tak-namespace pods), the tak_admin group, and the group bindings that
 # gate LDAP bind/search access (the LDAP provider has no search_group
 # field in authentik 2026.8; the outpost checks application access
@@ -21,7 +21,7 @@
 # friends-tier restriction).
 #
 # ADOPTION (blueprint-created objects, live and NOT in tofu state): every
-# object here is LIVE — this workspace ADOPTS the full set via gated
+# object here is LIVE: this workspace ADOPTS the full set via gated
 # imports, no cleanup companion (the retired authentik-blueprint-tak-ldap
 # ConfigMap prunes away and the live objects survive for this workspace to
 # take over). Adopt-only, never fresh-create: deleting/recreating the
@@ -34,14 +34,12 @@
 # mode, stage case_insensitive_matching, binding evaluate_on_plan /
 # re_evaluate_policies, outpost config) or provably equal to the provider
 # default (omitted, commented inline). The bind flow must stay MFA-less:
-# mfa_support=false + no MFA stage in the flow — the outpost's flow
+# mfa_support=false + no MFA stage in the flow: the outpost's flow
 # executor cannot answer interactive MFA, and would submit the bind
 # secret as a TOTP code.
 #
-# GATE (recipe §8): the merge-gate varmap carries adoption:true + the
-# generated ids ONCE. Witness ids are GATE-TIME ONLY — NEVER in git; if
-# the state Secret is ever lost, re-run the gate with fresh ids from the
-# live DB. Ungated imports are static literals only: the flow imports by
+# GATE: the merge-gate varmap carries adoption:true + the generated ids ONCE. Witness ids are GATE-TIME ONLY, never in git.
+# Ungated imports are static literals only: the flow imports by
 # slug, the application by slug.
 
 terraform {
@@ -54,11 +52,11 @@ terraform {
 
   # PARTIAL backend (the module's versions.tf shape): the per-app args
   # (secret_suffix/namespace/in_cluster_config) come from the ProviderConfig
-  # spec.backendFile — the provider writes them to crossplane.remote.tfbackend
+  # spec.backendFile: the provider writes them to crossplane.remote.tfbackend
   # and passes them via -backend-config at tofu init. The empty block MUST
   # stay: -backend-config without a backend block falls back to the LOCAL
   # backend (warning only), which reads an EMPTY state and plans a full
-  # duplicate create set — the adopt-only bar dies right there.
+  # duplicate create set: the adopt-only bar dies right there.
   backend "kubernetes" {}
 }
 
@@ -110,13 +108,13 @@ data "authentik_group" "users" {
   include_users = false
 }
 
-# Bind flow: an authentication-designation flow WITHOUT an MFA stage —
+# Bind flow: an authentication-designation flow WITHOUT an MFA stage,
 # the outpost's flow executor cannot answer interactive MFA challenges,
 # and with mfa_support disabled it would submit the bind secret as a
 # TOTP code. Reuses the stock credential and login stages (data sources
 # above). background="" and compatibility_mode=false are live-verbatim
 # (live row values; the TF schema defaults are the stock background image
-# URL and true — omitted they would plan a rewrite). authentication
+# URL and true: omitted they would plan a rewrite). authentication
 # (none), denied_action (message_continue), layout (stacked) and
 # policy_engine_mode (any) are omitted: live == TF defaults.
 resource "authentik_flow" "bind" {
@@ -131,7 +129,7 @@ resource "authentik_flow" "bind" {
 
 # Bind identification stage: username-only, case-insensitive, with the
 # stock password stage. case_insensitive_matching is live-verbatim (live
-# true; the TF field has NO default — omitting plans a wipe to false).
+# true; the TF field has NO default: omitting plans a wipe to false).
 # Omitted fields match live == TF defaults: show_matched_user (t),
 # pretend_user_exists (t), show_source_labels (f), enable_remember_me
 # (f); webauthn_stage, captcha_stage, sources, enrollment/recovery/
@@ -151,7 +149,7 @@ resource "authentik_stage_identification" "bind_id" {
 # Flow wiring: identification first, stock login last. Both bindings are
 # live-verbatim where the TF defaults DIFFER from the live rows:
 # evaluate_on_plan=false (TF default true) and re_evaluate_policies=true
-# (TF default false) — omitted they would plan a rewrite on the first
+# (TF default false): omitted they would plan a rewrite on the first
 # diff. invalid_response_action (retry) and policy_engine_mode (any) are
 # omitted: live == TF defaults.
 resource "authentik_flow_stage_binding" "identification" {
@@ -175,7 +173,7 @@ resource "authentik_flow_stage_binding" "login" {
 # LDAP provider for OpenTAKServer. Cached modes: each bind/search
 # otherwise re-executes the full authentik flow (the outpost flow executor
 # measures ~600ms per round trip on this install, so a direct-mode login
-# costs 2-4s). mfa_support=false — friends may not have TOTP devices, and
+# costs 2-4s). mfa_support=false: friends may not have TOTP devices, and
 # the outpost would misparse semicolons in credentials as TOTP codes.
 # Omitted fields match live == TF defaults: certificate/tls_server_name
 # (live NULL), uid_start_number (2000), gid_start_number (4000).
@@ -209,11 +207,11 @@ resource "authentik_application" "app" {
 }
 
 # Dedicated LDAP outpost, pinned to the tak namespace (operator decision:
-# the tak CiliumNetworkPolicies lock 3389/6636 to tak-namespace pods —
+# the tak CiliumNetworkPolicies lock 3389/6636 to tak-namespace pods,
 # never re-render this into the authentik-ns outpost pattern). config is
 # live-verbatim: the JSON matches the live _config column key-for-key
 # (jsonencode + the provider's JSON diff-suppressor compare parsed
-# values, so key order does not matter — keys and values do).
+# values, so key order does not matter: keys and values do).
 resource "authentik_outpost" "outpost" {
   name = "tak-ldap-outpost"
   type = "ldap"
@@ -246,7 +244,7 @@ resource "authentik_outpost" "outpost" {
 # runtime group lookups would only ever see the bind user's own groups.
 # This is the documented "Search full LDAP directory" permission; global
 # (role-wide) assignment equals object scope here since this is the
-# cluster's only LDAP provider. Visibility is confined to this outpost —
+# cluster's only LDAP provider. Visibility is confined to this outpost,
 # the OTS webui only surfaces tak_* groups.
 resource "authentik_rbac_role" "search" {
   name = "tak-ldap-search"
@@ -254,7 +252,7 @@ resource "authentik_rbac_role" "search" {
 
 # Bind service user for OTS's runtime group lookups (flask-ldap3-login's
 # get_user_groups() opens its own connection bound with these
-# credentials — direct bind covers only login). Member of `users` so the
+# credentials: direct bind covers only login). Member of `users` so the
 # outpost's app access check passes; carries the search role above. The
 # password never rides tofu (operator sets it in the UI from the 1P
 # ldap-bind value; the provider only sends a password on create).
@@ -271,7 +269,7 @@ resource "authentik_user" "bind" {
   roles  = [authentik_rbac_role.search.id]
 }
 
-# OTS administrator group — membership grants the OTS administrator role
+# OTS administrator group: membership grants the OTS administrator role
 # via OTS_LDAP_ADMIN_GROUP in config.yml, which maps the group NAME via
 # LDAP: never rename. Name-only resource (is_superuser/attributes stay at
 # provider defaults, matching live); membership is UI-managed.
@@ -279,7 +277,7 @@ resource "authentik_group" "tak_admin" {
   name = "tak_admin"
 }
 
-# Group bindings on the application — the friends-tier LDAP bind/search
+# Group bindings on the application: the friends-tier LDAP bind/search
 # restriction (the provider has no search_group field in 2026.8; the
 # outpost checks application access). Omitted fields match live == TF
 # defaults: enabled (t), negate (f), failure_result (f), timeout (30).
@@ -296,20 +294,19 @@ resource "authentik_policy_binding" "users" {
 }
 
 # ---------------------------------------------------------------------------
-# ADOPTION VARIABLES — the generated-id import gate. Defaults (adoption
+# ADOPTION VARIABLES: the generated-id import gate. Defaults (adoption
 # false, ids empty) validate clean and leave the import blocks below
-# inert. The ONLY setter is the merge-gate varmap (MR body, recipe §8):
-# injected into the Workspace once, cleared after the adoption apply.
-# The ids themselves NEVER appear in git.
+# inert. The ONLY setter is the merge-gate varmap (injected into the Workspace once, then cleared):
+# ids never appear in git.
 # ---------------------------------------------------------------------------
 variable "adoption" {
   description = "Merge-gate switch: adopt the live blueprint-created LDAP stack into tofu state (MR recipe §8; default off)."
   type        = bool
   default     = false
 
-  # Gate 1: adoption=true with any id empty is a miswire — abort loudly.
+  # Gate 1: adoption=true with any id empty is a miswire: abort loudly.
   # An empty id means tofu silently skips that import and plans a
-  # duplicate create — the jetkvm blink.
+  # duplicate create: the jetkvm blink.
   validation {
     condition = !var.adoption || (
       var.import_stage_bind_id_uuid != "" &&
@@ -326,7 +323,7 @@ variable "adoption" {
     error_message = "ADOPTION GATE: adoption=true requires every generated import id (stages/bindings/outpost by uuid, provider/user/permission by pk — witness ids from the gate varmap, gate-time only, never in git). An empty id means tofu silently skips the import and plans a duplicate create."
   }
 
-  # Gate 2: witness ids set without adoption=true is a miswire — abort
+  # Gate 2: witness ids set without adoption=true is a miswire: abort
   # loudly (a stray varmap must never half-arm the imports).
   validation {
     condition = var.adoption || (
@@ -407,9 +404,9 @@ variable "import_binding_users_uuid" {
 
 # ---------------------------------------------------------------------------
 # ADOPTION IMPORTS. The flow imports UNGATED by slug and the application
-# UNGATED by slug — both static literals (authentik_flow imports by slug,
+# UNGATED by slug: both static literals (authentik_flow imports by slug,
 # authentik_application imports by slug). Every GENERATED id rides the
-# adoption variables above: for_each-gated (the jetkvm rule — plain
+# adoption variables above: for_each-gated (the jetkvm rule: plain
 # variable-id imports blink: tofu silently skips an empty-id import and
 # plans a duplicate create; count is rejected on import blocks). Default
 # off (toset([])), armed once at the merge gate by the witness varmap and

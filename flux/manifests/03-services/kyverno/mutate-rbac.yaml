@@ -2,7 +2,7 @@
 # RBAC for the kyverno background controller to stamp the reload annotation
 # on Deployments for mutate-existing rules (reload-crossview-on-configmap-change).
 # Kyverno's policy admission check does not honor resourceNames, so verbs stay
-# unscoped — same intentional tradeoff as generate-rbac.yaml.
+# unscoped: same intentional tradeoff as generate-rbac.yaml.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

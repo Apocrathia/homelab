@@ -30,10 +30,9 @@ spec:
   values:
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
-    # "tenzir-node" — release tenzir-node-intel + entry intel would
+    # "tenzir-node": release tenzir-node-intel + entry intel would
     # double to tenzir-node-intel-intel. The override pins fullname at
-    # tenzir-node so the entry renders tenzir-node-intel (pod, Service;
-    # verified by helm template against chart 0.1.0).
+    # tenzir-node so the entry renders tenzir-node-intel (pod, Service).
     fullnameOverride: tenzir-node
     # No Kubernetes API access from the node: its entire surface is
     # user-space I/O (OTLP/UDP/HTTP ingest, outbound dials to
@@ -65,9 +64,9 @@ spec:
     # added by the operator; the platform node is already registered).
     # Platform tokens are per-node, never shared.
     #
-    # Pure puller: no extraPorts (no ingest surface — the chart-rendered
+    # Pure puller: no extraPorts (no ingest surface; the chart-rendered
     # main Service on :5158 carries node RPC only), no web server (no
-    # certificate.yaml) — all factory work is outbound: the OpenCTI
+    # certificate.yaml); all factory work is outbound: the OpenCTI
     # TAXII pull plus ClickHouse writes via extraEnv below.
     nodes:
       - name: intel
@@ -76,7 +75,7 @@ spec:
           key: intel-node-token
 
     # Stateless: the intel node's factory pipelines write directly to
-    # ClickHouse with no lake import — the factory's output is the
+    # ClickHouse with no lake import; the factory's output is the
     # ocsf.OSINT_Inventory_Info table, not a local lake. No archive
     # rule. No PVC.
     persistence:
@@ -101,13 +100,13 @@ spec:
           # nothing to server.log, so factory-pipeline failures that
           # point at the log for their diagnostics surface blind.
           # server.log opens at /var/log/tenzir on every boot, which
-          # readOnlyRootFilesystem makes unwritable — the tenzir-logs
+          # readOnlyRootFilesystem makes unwritable; the tenzir-logs
           # emptyDir (extraVolumes below) backs the path; keep the
           # key/mount pair together on any new node.
           file-verbosity: warning
           # The factory pipeline block: the first row lands with its
           # stix/tenzir package mounts (extraVolumes below) and the
-          # stitch in ../kustomization.yaml — pipeline definitions live
+          # stitch in ../kustomization.yaml; pipeline definitions live
           # in pipelines/<id>.tql, and the replacements copy them into
           # these empty definition fields at kustomize build time.
           pipelines:
@@ -115,7 +114,7 @@ spec:
               name: opencti taxii factory walk
               description: |
                 The intel factory's first row: pulls OpenCTI's TAXII 2.1
-                indicator collection (single-pane — all CTI reaches
+                indicator collection (single-pane: all CTI reaches
                 tenzir via OpenCTI) through the vendored library `stix`
                 package and appends OCSF 1.9 OSINT Inventory Info rows
                 into the ClickHouse ocsf.OSINT_Inventory_Info lookup
@@ -127,7 +126,7 @@ spec:
                 from aging active indicators out). The objects endpoint
                 is pinned in the pipeline (the /taxii2/ discovery
                 document advertises the platform's localhost:4000
-                base_url default — a discovery walk would fetch garbage);
+                base_url default; a discovery walk would fetch garbage);
                 the bearer token rides the opencti-taxii-token managed
                 secret, and the indicators-only filter drops the
                 non-indicator STIX objects the collection carries. Role
@@ -143,10 +142,10 @@ spec:
                 The poll half of the intel factory's first row: per the
                 upstream isMalicious doctrine, added_after polls at
                 01/13/19 pick up new and revoked indicators between
-                walks — each poll looks back a day, so a few failed
+                walks; each poll looks back a day, so a few failed
                 polls lose nothing. The objects endpoint is pinned in
                 the pipeline (the /taxii2/ discovery document advertises
-                the platform's localhost:4000 base_url default — a
+                the platform's localhost:4000 base_url default; a
                 discovery walk would fetch garbage); the bearer token
                 rides the opencti-taxii-token managed secret, and the
                 indicators-only filter drops the non-indicator STIX
@@ -164,7 +163,7 @@ spec:
                 sample (value 1, pipeline labels, node label = intel) to Mimir
                 for every live error / warning diagnostic, so the dashboard can
                 count both severities with sum_over_time. They otherwise live
-                only in the diagnostics stream, not in metrics. The per-node B1 shape
+                only in the diagnostics stream, not in metrics. The per-node shape
                 every node ships since the central poller's retirement; the
                 samples run on this node's own engine, regardless of the
                 fleet's image line.
@@ -174,22 +173,21 @@ spec:
               name: diagnostics to loki
               description: |
                 Ships every live, not-hidden pipeline diagnostic to Loki as
-                job=tenzir-diagnostics entries (node label = intel) — the
+                job=tenzir-diagnostics entries (node label = intel); the
                 factory row's own diagnostics (a failed TAXII walk or a failed
                 ClickHouse write) become filterable log lines.
                 to_fluent_bit resolves $pipeline_name and $severity per event
-                and consumes both out of the shipped body (live-verified
-                2026-10-17 probe); drop discards the ANSI escape-coded
-                rendered field, so the line keeps the rest of the diagnostic
-                record — pipeline_id, hidden, run, timestamp, message, notes,
-                annotations — and the labels carry pipeline + severity. Hidden
+                and consumes both out of the shipped body (probe); drop discards the ANSI
+                escape-coded rendered field, so the line keeps the rest of the diagnostic
+                record: pipeline_id, hidden, run, timestamp, message, notes,
+                annotations; and the labels carry pipeline + severity. Hidden
                 entries (platform-UI pipeline deprecation noise) stay out.
                 Plain HTTP to loki-write, cluster-internal. live=true without
                 retro: no store-backlog replay on start, so restarts never
-                re-ship history (Loki has no dedup) — the per-node
-                B1 shape every node ships since the central poller's
+                re-ship history (Loki has no dedup); restored per-node
+                shape every node ships since the central poller's
                 retirement. The lane runs on this node's own engine, so its
-                diagnostics ship regardless of the fleet's image line — the
+                diagnostics ship regardless of the fleet's image line; the
                 poller's cross-version export gap on this node dies with the
                 poller.
               definition: ""
@@ -220,7 +218,7 @@ spec:
     # the same tenzir-secrets item (this namespace materializes
     # its OnePasswordItem in ../secret.yaml): the env var maps to
     # config key tenzir.secrets.clickhouse-password, so the factory's
-    # to_clickhouse leg reads it as secret("clickhouse-password") — kebab
+    # to_clickhouse leg reads it as secret("clickhouse-password"); kebab
     # name, the same env-var shape as the sibling writers. No other
     # secret rides this node: it runs no listener, no sigma pass, no
     # authentik pull, no archive S3 leg.
@@ -265,8 +263,7 @@ spec:
           name: tenzir-packages-tenzir-osint-enrich
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
-      # readOnlyRootFilesystem makes unwritable — the 2026-10-17
-      # crashloop on the warning-level siblings. emptyDir, same
+      # readOnlyRootFilesystem makes unwritable. emptyDir, same
       # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
       # disk cost.
       - name: tenzir-logs
@@ -276,10 +273,10 @@ spec:
       # Package files mount file-level: kubelet's atomic ConfigMap writer
       # keeps ..data/..2026_* internals at every directory-mount root, and
       # inside the walked package tree they fail Tenzir's operator-path
-      # segment check (SRE-20261010-001 crashloop). subPath binds the
+      # segment check (crashloop). subPath binds the
       # single projected file; kubelet auto-creates parent dirs, and the
       # walked tree contains only the package files. subPath does not
-      # live-propagate ConfigMap updates — package changes need a pod
+      # live-propagate ConfigMap updates; package changes need a pod
       # roll. Generator entries stay at the root kustomization: the
       # source files never move, only the mounts live here.
       - name: packages-stix

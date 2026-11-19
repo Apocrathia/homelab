@@ -40,7 +40,7 @@ Jellyfin uses the [SSO-Auth plugin](https://github.com/9p4/jellyfin-plugin-sso) 
 1. Go to **Admin → Plugins → SSO-Auth → Settings**
 2. In the "Name of OpenID Provider" field, enter: `Authentik`
 3. Fill in:
-   - **OpenID Endpoint**: `https://auth.gateway.services.apocrathia.com/application/o/jellyfin/`
+   - OIDC endpoint / scheme-override values: configured in `helmrelease.yaml`; copy the client id/secret from Authentik
    - **OpenID Client ID**: Copy from Authentik → Applications → Providers → `jellyfin-oidc-provider`
    - **OpenID Client Secret**: Same location in Authentik
    - **Scheme Override**: `https` (required when behind a reverse proxy)

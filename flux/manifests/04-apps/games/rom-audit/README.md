@@ -16,7 +16,7 @@ renames, deletes, or otherwise modifies anything on the share.
 - Emits one NDJSON line per file plus per-system and run summaries to stdout,
   picked up by Alloy → Loki
 - Redump and MAME systems are skipped with a warning even if `enabled: true`
-  — out of scope for this auditor
+  , out of scope for this auditor
 
 ## Share layout
 
@@ -32,7 +32,7 @@ Emulation/
 ## `systems.yaml`
 
 The operator maintains this file directly on the share at
-`Emulation/tools/rom-audit/systems.yaml` — it is not part of this Git repo.
+`Emulation/tools/rom-audit/systems.yaml`, it is not part of this Git repo.
 Copy the example below as a starting point and adjust `dat` filenames to
 match whatever DATs are actually on the share.
 
@@ -112,7 +112,7 @@ systems:
     dat: n3ds.dat
     dat_name: "Nintendo - Nintendo 3DS (Decrypted)"
   # psx:
-  #   enabled: false # redump — out of scope, auditor skips this provider
+  #   enabled: false # redump: out of scope, auditor skips this provider
   #   provider: redump
   #   dat: psx.dat
 ```
@@ -138,7 +138,7 @@ each run's output archived on the share.
 {namespace="rom-audit", container="rom-audit", container_runtime="containerd"} | json | event="run_summary"
 ```
 
-Prefer `container_runtime="containerd"` — Alloy can double-ship the same lines
+Prefer `container_runtime="containerd"`, Alloy can double-ship the same lines
 without it. Dashboard panels also use `max by (pod)` on `run_summary` metrics.
 
 ## Grafana

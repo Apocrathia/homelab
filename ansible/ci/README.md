@@ -1,4 +1,4 @@
-# ci — Ansible CI helpers
+# ci: Ansible CI helpers
 
 Two 1Password Connect fetchers: `fetch_op_secrets.py` materializes playbook
 secrets (tailscale auth key, Cloudflare token) as extra-vars JSON, and

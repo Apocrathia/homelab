@@ -1,4 +1,4 @@
-# templates — generic-app chart renders
+# templates: generic-app chart renders
 
 The render surface behind the shared app chart: Deployment, Services, Gateway
 API routes (http/tcp/udp), the CNPG cluster with backup and monitoring, Longhorn

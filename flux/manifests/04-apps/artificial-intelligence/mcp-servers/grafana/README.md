@@ -19,7 +19,7 @@ It exposes:
 ## Architecture
 
 - **Namespace**: `mcp-grafana` for isolation
-- **Transport**: `transportType: http` — native streamable HTTP on port 8080
+- **Transport**: `transportType: http`, native streamable HTTP on port 8080
 - **Access**: Internal only via LiteLLM proxy
 - **Security**: Non-root containers, network policy restricted
 - **Endpoint**: `http://grafana.mcp-grafana.svc.cluster.local:8080/mcp`
@@ -39,7 +39,7 @@ The server has a **default identity** and a **per-request override**:
   A request header always wins over the default token.
 
 The operator CR stays in `prometheus-system` because grafana-operator only
-resolves `instanceName` within the CR's own namespace — hence the External
+resolves `instanceName` within the CR's own namespace, hence the External
 Secrets mirror instead of a direct mount.
 
 ## kagent Grafana MCP inventory

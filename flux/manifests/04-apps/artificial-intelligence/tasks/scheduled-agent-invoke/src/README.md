@@ -29,10 +29,10 @@ Multi-turn kagent A2A using `a2a-sdk` streaming: reads `prompts/task.md` for tur
 
 ## Layout
 
-- `../prompts/task.md` — first user message (markdown).
-- `../prompts/continuation.md` — user message for turns 2..N (markdown).
-- `pyproject.toml` / `uv.lock` — uv + `a2a-sdk` + `httpx`.
-- `invoke.py` — entrypoint at `/scripts/invoke.py`.
+- `../prompts/task.md`, first user message (markdown).
+- `../prompts/continuation.md`, user message for turns 2..N (markdown).
+- `pyproject.toml` / `uv.lock`, uv + `a2a-sdk` + `httpx`.
+- `invoke.py`, entrypoint at `/scripts/invoke.py`.
 
 ## Environment
 

@@ -26,8 +26,8 @@ from pathlib import Path
 # var name -> (item title, field label)
 SECRETS: dict[str, tuple[str, str]] = {
     "tailscale_authkey": ("tailscale-ansible-authkey", "credential"),
-    # cloudflare-api-token is an older item: the token sits in a custom
-    # "api-token" field (the default "credential" field is empty).
+    # cloudflare-api-token: the token sits in a custom "api-token" field
+    # (the default "credential" field is empty).
     "acme_sh_cf_token": ("cloudflare-api-token", "api-token"),
 }
 
@@ -52,7 +52,7 @@ def main() -> int:
     client = Client(url=host, token=token)
     try:
         vault = client.get_vault_by_title(vault_name)
-    except Exception as exc:  # noqa: BLE001 — surface Connect ACL/name mistakes
+    except Exception as exc:  # noqa: BLE001 (surface Connect ACL/name mistakes)
         print(f"vault {vault_name!r} not readable via Connect: {exc}", file=sys.stderr)
         return 1
 
@@ -61,7 +61,7 @@ def main() -> int:
     for var, (item_title, field_label) in SECRETS.items():
         try:
             item = client.get_item_by_title(item_title, vault.id)
-        except Exception:  # noqa: BLE001 — absent item is expected pre-setup
+        except Exception:  # noqa: BLE001 (absent item is expected pre-setup)
             missing.append(f"item {item_title!r} (var {var})")
             continue
         value = ""

@@ -1,11 +1,11 @@
-# CIS Apple macOS 26 Tahoe Benchmark v1.0.0 — Level 1 only.
+# CIS Apple macOS 26 Tahoe Benchmark v1.0.0, Level 1 only.
 #
 # Source (Fleet Premium / restricted license path):
 #   https://github.com/fleetdm/fleet/blob/main/ee/cis/macos-26/cis-policy-queries.yml
 # Guide: https://fleetdm.com/guides/cis-benchmarks
 #
-# Converted to fleetctl gitops "separate file" array format.
-# Assessment only — many checks require MDM profiles to pass.
+# fleetctl gitops "separate file" array format; upstream source is a single queries file.
+# Assessment only; many checks require MDM profiles to pass.
 # FileVault: pair with controls.enable_disk_encryption on the Home team.
 #
 # Upstream CIS text/SQL keeps long lines; don't wrap and risk query drift.

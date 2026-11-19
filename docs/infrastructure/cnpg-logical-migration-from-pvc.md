@@ -62,7 +62,7 @@ spec:
     fsGroup: 26
   containers:
     - name: postgres
-      image: ghcr.io/cloudnative-pg/postgresql:16
+      image: ghcr.io/cloudnative-pg/postgresql:16 # match the major of the CNPG Cluster imageName
       securityContext:
         runAsUser: 26
         runAsNonRoot: true

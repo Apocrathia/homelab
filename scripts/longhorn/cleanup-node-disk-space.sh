@@ -49,7 +49,7 @@ spec:
         done
         if ! command -v ctr >/dev/null 2>&1; then
           echo "ERROR: ctr not found on host (/usr/bin or /usr/local/bin)." >&2
-          echo "Skipping ALL containerd store changes. Do not rm under /var/lib/containerd manually — it corrupts the snapshotter." >&2
+          echo "Skipping ALL containerd store changes. Do not rm under /var/lib/containerd manually: it corrupts the snapshotter." >&2
         fi
       fi
 
@@ -64,7 +64,7 @@ spec:
       elif command -v crictl >/dev/null 2>&1; then
         crictl rmi --prune 2>&1 || echo "Note: Some images may be in use"
       else
-        echo "Neither ctr nor crictl available — skipping containerd image/snapshot cleanup (safe default)."
+        echo "Neither ctr nor crictl available: skipping containerd image/snapshot cleanup (safe default)."
       fi
 
       echo ""

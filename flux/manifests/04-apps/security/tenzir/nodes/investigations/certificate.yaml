@@ -1,11 +1,11 @@
 ---
 # TLS pair for the investigations node's web server (the query lane).
-# Server mode requires the certfile/keyfile pair (source-verified v6.19.1:
+# Server mode requires the certfile/keyfile pair (v6.19.1:
 # "either keyfile or certfile argument is missing"), so without this the
 # `web server` start command fails its config validation and /api/v0 stays
-# down while the node keeps running. Operator decision 2026-10-17: the
-# existing self-signed ClusterIssuer issues it — fine for an in-mesh
-# service, and cert-manager rotates it automatically. Agent callers
+# down while the node keeps running. Operator decision: the existing
+# self-signed ClusterIssuer issues it (fine for an in-mesh service, and
+# cert-manager rotates it automatically). Agent callers
 # skip CA verification (the X-Tenzir-Token is the real auth; homelab
 # posture). SANs cover the Service DNS forms of the pod/Service names
 # the chart renders for this node (helm template, fullnameOverride

@@ -1,4 +1,4 @@
-# `find-work` — backlog ranking (skill)
+# `find-work`: backlog ranking (skill)
 
 `SKILL.md` defines the read-only ranking of candidate work from the local
 backlog and live signals, emitting a ranked report plus pasteable Launch

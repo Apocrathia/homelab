@@ -27,13 +27,13 @@ APIs through OpenTofu workspaces. Adding another provider is still a single
 
 ## Architecture
 
-| Component     | Implementation                                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Control plane | `crossplane` chart from the official `crossplane-stable` repo                                                       |
-| RBAC manager  | Enabled (chart default), 1 replica                                                                                  |
-| Webhooks      | Enabled (chart default), served in-cluster on 9443                                                                  |
-| Secrets       | None required; providers bring their own `ProviderConfig`                                                           |
-| Dashboard     | [Crossview](https://github.com/crossplane-contrib/crossview) chart 4.6.0, `crossview-*` manifests in this directory |
+| Component     | Implementation                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Control plane | `crossplane` chart from the official `crossplane-stable` repo                                                                                          |
+| RBAC manager  | Enabled (chart default), 1 replica                                                                                                                     |
+| Webhooks      | Enabled (chart default), served in-cluster on 9443                                                                                                     |
+| Secrets       | None required; providers bring their own `ProviderConfig`                                                                                              |
+| Dashboard     | [Crossview](https://github.com/crossplane-contrib/crossview) chart (pinned in `crossview-helmrelease.yaml`), `crossview-*` manifests in this directory |
 
 ## Adding a provider
 
@@ -61,7 +61,7 @@ First consumers: headlamp's Authentik entry
 chaos-mesh's (`flux/manifests/03-services/chaos-mesh/crossplane.yaml`):
 the chaos-mesh workspace owns a full proxy stack in one module, outpost
 included (the `authentik_outpost` resource carries `protocol_providers`, so
-the separate `authentik_outpost_provider_attachment` resource is retired).
+the separate `authentik_outpost_provider_attachment` resource is not needed).
 
 - **CRDs**: 7 (Workspace, ProviderConfig, ProviderConfigUsage in both scopes
   plus namespaced ClusterProviderConfig): small enough that no

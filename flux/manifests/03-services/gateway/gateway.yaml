@@ -23,7 +23,7 @@ spec:
     matchLabels:
       io.cilium.gateway/owning-gateway: main-gateway
   # Hybrid LB mode (envoyproxy.yaml) classifies the service IP as
-  # ExternalIPs-type — loadBalancerIPs alone never matches it, so nothing
+  # ExternalIPs-type: loadBalancerIPs alone never matches it, so nothing
   # announces 10.100.1.99 (external clients ride stale ARP; in-cluster
   # dials time out). externalIPs is what makes the policy match.
   loadBalancerIPs: true

@@ -14,10 +14,10 @@ inputs = {
   sockets  = 4
   cpu_type = "host"
 
-  # Memory (64GB, no ballooning for k8s)
+  # Memory (no ballooning for k8s)
   memory = 65536
 
-  # Storage (1TB disk)
+  # Storage
   disk_size    = 1024
   storage_pool = "zfs"
 

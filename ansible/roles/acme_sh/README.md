@@ -1,4 +1,4 @@
-# acme_sh — ACME certificates via acme.sh
+# acme_sh: ACME certificates via acme.sh
 
 Clones and installs acme.sh, then issues a per-host Let's Encrypt certificate
 for `acme_sh_domain` over DNS-01 with a Cloudflare token (1Password Connect

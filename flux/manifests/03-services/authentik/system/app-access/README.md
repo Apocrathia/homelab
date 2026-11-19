@@ -13,6 +13,3 @@ Group membership is UI-managed and deliberately outside tofu scope: the
 provider never pulls members into state, and the plan staying at No
 changes keeps it that way (see the membership landmine note in
 `authentik.tf` before touching any field on these resources).
-
-Retired the `blueprints/app-access.yaml` ConfigMap: the blueprint CM
-prunes and the live groups survive for this workspace to adopt.

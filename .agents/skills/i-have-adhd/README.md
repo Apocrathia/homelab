@@ -1,4 +1,4 @@
-# `i-have-adhd` — output shaping (skill)
+# `i-have-adhd`: output shaping (skill)
 
 `SKILL.md` defines the output contract for a reader with ADHD: lead with the
 next action, number multi-step work, restate state across turns, suppress

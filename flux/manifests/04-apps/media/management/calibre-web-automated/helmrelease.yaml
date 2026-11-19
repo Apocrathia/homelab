@@ -51,7 +51,7 @@ spec:
         # rewrite /etc/ImageMagick-6 policy + apply s6 uid/gid transitions)
         # and poisons the config dir for later boots. Boot-verified in podman.
         # SETUID/SETGID: s6-applyuidgid needs setuid/setgroups to drop to
-        # PUID — dropping ALL caps makes every s6 service fatal-loop and the
+        # PUID: dropping ALL caps makes every s6 service fatal-loop and the
         # app never listens (cluster-verified). CHOWN: init scripts chown
         # the config/calibre dirs to the PUID.
         runAsUser: 0

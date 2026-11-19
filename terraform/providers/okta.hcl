@@ -1,14 +1,14 @@
 # Okta provider for OpenTofu/Terragrunt
 # Include from deployments under terraform/deployments/okta/
 #
-# Auth chain (1Password Connect — no `op` CLI):
+# Auth chain (1Password Connect, no `op` CLI):
 #   OP_CONNECT_HOST + OP_CONNECT_TOKEN → provider "onepassword"
 #   data.onepassword_vault by name → vault UUID (not stored in git)
 #   ephemeral onepassword_item → provider "okta".api_token
 #
 # Connect (in-cluster): http://onepassword-connect.onepassword-system.svc:8080
 # Do not set OKTA_API_TOKEN in the environment for this stack.
-# Do not commit vault UUIDs — only vault name + item title (non-secret).
+# Do not commit vault UUIDs; only vault name + item title (non-secret).
 #
 # Org identity is public (also in Cloudflare DNS) and lives in this file.
 

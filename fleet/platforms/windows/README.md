@@ -1,4 +1,4 @@
-# windows — Windows Fleet assets
+# windows: Windows Fleet assets
 
 Windows `configuration-profiles/`, `policies/`, `reports/`, `scripts/`, and
 `software/` for fleet YAML files to reference by path. All are `.keep`

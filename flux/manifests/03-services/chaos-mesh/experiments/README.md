@@ -26,7 +26,7 @@ directory. The Chaos Mesh install lives one level up
   with its own experiment would wedge the tooling.
 - **No volume/IO chaos.** IOChaos stays out of this set entirely; volume and IO
   chaos are off-limits against any PVC-backed data: CNPG database namespaces
-  (never annotated) as well as `openwebui`'s 20Gi Longhorn PVC (user chat
+  chaos are off-limits against any PVC-backed data. CNPG database namespaces
   data) and `demo-app`'s data volumes.
 - **Tight scope.** Every selector names one namespace plus the target app's
   labels; durations stay at 60s (never above 120s); `historyLimit: 1` keeps one
@@ -97,11 +97,11 @@ applied Schedules**: they keep firing daily. To actually stop chaos:
   `concurrencyPolicy: Forbid` then blocks all future spawns of that schedule),
   clear it with `kubectl patch httpchaos -n <ns> <spawn-name> --type=json -p
 '[{"op":"remove","path":"/metadata/finalizers"}]'` and confirm the deletion
-  completes. Live-verified on `excalidraw-http-abort-c5wwr`.
+  completes.
 
 ## Post-ship validation loop
 
-After this merges, watch one full day of the window:
+After a change, watch one full day of the window:
 
 1. **Spawn + injection:** `kubectl get schedules -A` shows each schedule, and
    `kubectl get podchaos,stresschaos,dnschaos,networkchaos,httpchaos -A` lists

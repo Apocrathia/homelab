@@ -96,7 +96,7 @@ own the secret.
 
 ### [Discord MCP Server](./discord/README.md)
 
-- **Purpose**: Discord API via bot token—channels, messages, moderation (tool surface depends on agent allowlist)
+- **Purpose**: Discord API via bot token-channels, messages, moderation (tool surface depends on agent allowlist)
 - **Auth**: Same bot token as the homelab Discord bridge (`homelab-agent-secrets` → `discord-token`)
 - **LiteLLM**: `mcp_servers.discord` (alias `discord`)
 - **Source**: [SaseQ/discord-mcp](https://github.com/SaseQ/discord-mcp)

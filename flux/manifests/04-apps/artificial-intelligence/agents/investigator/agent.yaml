@@ -30,7 +30,7 @@ spec:
     # Python code blocks in responses execute in the srt sandbox (read
     # filesystem unrestricted, writes limited to the session dir, egress per
     # spec.sandbox above). NOTE: the kagent 0.10.x CRD marks this field
-    # "ignored for now" over an upstream adk-python code-executor bug —
+    # "ignored for now" over an upstream adk-python code-executor bug,
     # verify a code block actually executes on the live agent before relying
     # on it (README "Known limitations").
     executeCodeBlocks: true
@@ -82,7 +82,7 @@ spec:
     # No MCP tools: the investigations node IS the tool. The token rides the
     # secret volume below (the items filter projects only the
     # investigations-api-token key into the pod); env vars are deliberately
-    # NOT used — kagent's code-exec sandbox sanitizes secret-named env vars
+    # NOT used: kagent's code-exec sandbox sanitizes secret-named env vars
     # (anything matching TOKEN|SECRET|API_KEY|PASSWORD) out of executed
     # code's environment, while sandbox filesystem reads are unrestricted, so
     # the mounted file is the channel executed code can actually read.
@@ -92,10 +92,10 @@ spec:
       # cluster-wide baseline PodSecurity rejects. An explicit
       # allowPrivilegeEscalation:false trips the controller's
       # allowPrivilegeEscalationExplicitlyFalse guard, so the rendered
-      # securityContext is exactly this — dropping the in-pod code-exec
+      # securityContext is exactly this: dropping the in-pod code-exec
       # sandbox, which likely never ran anyway (adk-python #3921 marks
       # executeCodeBlocks "ignored for now"). 0.10.x-only: deployment-backed
-      # agents were removed upstream (0.10 went straight to v1.0.0-rc1) —
+      # agents were removed upstream (0.10 went straight to v1.0.0-rc1),
       # revisit on any bump past 0.10.x.
       securityContext:
         allowPrivilegeEscalation: false

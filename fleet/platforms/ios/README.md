@@ -1,4 +1,4 @@
-# ios — iOS Fleet assets
+# ios: iOS Fleet assets
 
 iOS profiles for fleet YAML files to reference by path:
 `configuration-profiles/` (`.mobileconfig` payloads) and

@@ -7,7 +7,7 @@ metadata:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
 entries:
-  # The generic-app HelmRelease retired; the bookmark tile's SSO rides the
+  # the bookmark tile's SSO rides the
   # kagent proxy provider. Blueprints never garbage-collect, so removal is
   # explicit state: absent entries (cryptpad-cleanup pattern). One-shot:
   # the file hash gates re-import. Provider first, outpost second:

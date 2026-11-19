@@ -8,7 +8,7 @@ STABILIZE_SECS="${STABILIZE_SECS:-30}"
 # GitLab Runner (and similar) often leave pods with no controller; drain refuses without --force.
 DRAIN_FORCE="${DRAIN_FORCE:-1}"
 # PDBs (CloudNativePG, Tempo, Longhorn instance-manager, etc.) block eviction API forever with minAvailable=1.
-# --disable-eviction uses pod delete and skips PDB checks — appropriate for voluntary node maintenance, not for routine deploys.
+# --disable-eviction uses pod delete and skips PDB checks: appropriate for voluntary node maintenance, not for routine deploys.
 DRAIN_DISABLE_EVICTION="${DRAIN_DISABLE_EVICTION:-1}"
 
 echo "Starting rolling reboot of all cluster nodes..."
@@ -41,7 +41,7 @@ for i in "${!NODES[@]}"; do
     exit 1
   fi
 
-  echo "==> ${NODE} (${NODE_IP}) — $((i + 1))/${TOTAL}"
+  echo "==> ${NODE} (${NODE_IP}): $((i + 1))/${TOTAL}"
 
   echo "  - Draining (cordon + evict workloads)..."
   DRAIN_OPTS=(--ignore-daemonsets --delete-emptydir-data)

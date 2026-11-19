@@ -28,7 +28,7 @@ spec:
   create:
     enabled: true
   # Tenancy gate: namespaces carrying this label may reference the repository.
-  # Apps opt in from their own namespace.yaml — this file does not change per app.
+  # Apps opt in from their own namespace.yaml: this file does not change per app.
   allowedNamespaces:
     selector:
       matchLabels:

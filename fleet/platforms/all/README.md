@@ -1,4 +1,4 @@
-# all — cross-platform Fleet assets
+# all: cross-platform Fleet assets
 
 Assets every fleet can load regardless of OS: `icons/`, `policies/`,
 `reports/`, and `scripts/`. Most content so far is the Fleet-DM-was-here

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Delete pods in terminal phases after cluster disruption (Succeeded / Failed / Evicted).
-# Prereq: kubectl, jq. Default is dry-run — set DRY_RUN=0 to delete.
+# Prereq: kubectl, jq. Default is dry-run: set DRY_RUN=0 to delete.
 #
 # Examples:
 #   DRY_RUN=0 ./scripts/k8s/delete-terminal-pods.sh
 #   ONLY_JOB_OWNED_FAILED=1 DRY_RUN=0 ./scripts/k8s/delete-terminal-pods.sh   # Failed pods owned by Job only
 #
-# Optional — delete finished Job objects (removes their pods too); keeps failed jobs unless DELETE_FAILED_JOBS=1:
+# Optional: delete finished Job objects (removes their pods too); keeps failed jobs unless DELETE_FAILED_JOBS=1:
 #   DELETE_JOBS=1 DELETE_FAILED_JOBS=0 DRY_RUN=0 ./scripts/k8s/delete-terminal-pods.sh
 set -euo pipefail
 

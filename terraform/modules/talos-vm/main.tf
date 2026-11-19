@@ -2,7 +2,7 @@
 # Talos VM Module
 # -----------------------------------------------------------------------------
 # Creates a Proxmox VM configured for Talos Linux.
-# Designed for importing existing VMs - matches current production config.
+# Designed for importing existing VMs.
 
 resource "proxmox_virtual_environment_vm" "this" {
   vm_id     = var.vm_id

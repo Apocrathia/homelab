@@ -4,14 +4,14 @@
 # OIDC web apps + OIN (Okta Integration Network) SAML apps + Everyone
 # assignment.
 #
-# Auth (1Password Connect — no OKTA_API_TOKEN in env):
-#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
-#   OP_CONNECT_TOKEN — Connect API token with read on the vault
-#   TF_HTTP_*        — state backend
+# Auth (1Password Connect, no OKTA_API_TOKEN in env):
+#   OP_CONNECT_HOST  - http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN - Connect API token with read on the vault
+#   TF_HTTP_*       ; state backend
 #
 # Do NOT export OKTA_API_TOKEN. Do NOT commit vault UUIDs.
 #
-# Client secrets are omit_secret=true — read once from Okta Admin UI into
+# Client secrets are omit_secret=true; read once from Okta Admin UI into
 # 1Password (not TF outputs).
 
 include "root" {

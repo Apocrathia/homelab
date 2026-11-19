@@ -9,11 +9,9 @@ flood and the netflow ingest to OCSF, publishes onto the unified
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time; the
 manifest stays the source of truth for tunables (sizes, limits,
-retention values, ports). The NetFlow
-collector moved to the dedicated
-[netflow node](../netflow/README.md), and the `tenzir-ingest-lb`
-LoadBalancer (pool IP `10.100.1.96`) moved with it, this node owns no
-LB service anymore.
+retention values, ports). The NetFlow collector runs on the dedicated
+[netflow node](../netflow/README.md), which owns the `tenzir-ingest-lb`
+LoadBalancer (pool IP `10.100.1.96`); this node owns no LB service.
 
 - k8s-audit-ingest-http / k8s-audit-ingest-grpc: OTLP listeners for the
   kube-audit alloy and the shared alloy OTLP log fan-out (the :4318
@@ -48,7 +46,7 @@ LB service anymore.
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir: the node's own
   operational metrics. The diagnostics-to-loki /
   error-diagnostics-to-mimir pair ships from this node again,
-  restored per-node with the B1 lap after the central poller's
+  restored per-node after the central poller's
   retirement, so the poller-era double-ship concern is moot
 - detection-attest-verify: the record_integrity verification walk;
   reads the last 90 minutes of every ocsf class back from the
@@ -57,7 +55,7 @@ LB service anymore.
   break, hourly (the `every` wrapper): the finding lands on the pod
   logs and INSERTs into `ocsf.Detection_Finding`, inside the Grafana
   tenzir-findings rule's WHERE clauses, tamper evidence pages through
-  the agent_invoke bridge (landed;
+  the agent_invoke bridge (
   docs/issues/tenzir-record-integrity-attestations.md). The stamping
   half rides each source pipeline's in-stream attest + INSERT leg.
 
@@ -145,12 +143,10 @@ RAM = max(2,
 ) = max(2, 1.6) = 2 GB
 ```
 
-The memory limit is 8Gi: the formula's 2 GB floor plus the boot
-catalog load, which pulled 76k partition synopses into RAM and
-OOMKilled the node at ~94% of load under the old 4Gi on every start
-(the tetragon sibling: 4.7k synopses under 12Gi). The CPU limit
-matches the formula. Re-measure both after recovery and adjust in the
-manifest, not here. The :4318 listener counts
+The memory limit is 8Gi: the formula's 2 GB floor plus the boot catalog
+load (boot pulls tens of thousands of partition synopses into RAM; 4Gi was
+not enough). The CPU limit matches the formula. Re-measure both after
+recovery and adjust in the manifest, not here. The :4318 listener counts
 two stream types (kube-audit alloy plus the shared alloy fan-out); both
 are low-volume and the formula's source term already carries them.
 
@@ -158,12 +154,10 @@ are low-volume and the formula's source term already carries them.
 
 No node-local retention: every source pipeline attests in-stream and
 INSERTs directly to the per-class `ocsf.<Class_Name>` tables on the
-ClickHouse OCSF store, no lake, no compaction rule, no PVC (the
-stateless completion; the lake-era rules and their 15-minute horizon
-died with it, history in the plan doc). ClickHouse is the record and
-the queryable history. The retired `s3://tenzir/ocsf/` parquet archive
-stays untouched in the rustfs bucket as frozen history; deleting it is
-a separate operator call.
+ClickHouse OCSF store, no lake, no compaction rule, no PVC. ClickHouse is
+the record and the queryable history. The `s3://tenzir/ocsf/` parquet
+archive stays untouched in the rustfs bucket as frozen history; deleting
+it is a separate operator call.
 
 The Base Event fallback for fleet rows and authentik's non-IAM arm
 INSERTs with the mappable classes (`ocsf.Base_Event`); unknown classes

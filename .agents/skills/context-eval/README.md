@@ -1,4 +1,4 @@
-# `context-eval` — context outcome benchmark (skill)
+# `context-eval`: context outcome benchmark (skill)
 
 `SKILL.md` defines the benchmark that measures whether `.agents/` context
 changes agent outcomes: a corpus of fixture tasks with hidden deterministic

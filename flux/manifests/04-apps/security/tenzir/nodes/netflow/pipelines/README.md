@@ -21,4 +21,4 @@ these files into a `tenzir-netflow-pipelines` ConfigMap and its
 `replacements` copy them back into the `definition: ""` fields of
 `../helmrelease.yaml` at `kustomize build` time. Edit the `.tql` files,
 never the HelmRelease placeholders. Rendered node config is byte-identical
-to the old inline form.
+to the `.tql` files.

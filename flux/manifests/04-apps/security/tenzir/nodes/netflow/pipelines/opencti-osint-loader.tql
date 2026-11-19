@@ -12,7 +12,7 @@
 // SHAPE CONTRACT (see the intel node README and the DDL comment in
 // ../../../clickhouse/config/10-startup-scripts.xml): the vendored
 // stix::ocsf::map emits `osint` as a one-element ARRAY, so the table's
-// original dotted typed columns could never bind it — all osint.* typed
+// original dotted typed columns could never bind it; all osint.* typed
 // columns sat NULL on every row while the whole array rode the
 // tenzir:catch_all `event` JSON. The DDL now stores exactly that shape,
 // and this loader reads via SQL-mode projection instead of table mode:
@@ -29,8 +29,8 @@ every 24h {
     tls=false
   // The projection hands back the array elements as JSON text; re-type
   // them to the map's original record shape. parse_json's inference
-  // reproduces the map's time-typed fields; its one over-inference — IP-
-  // and subnet-shaped indicator values — is coerced back to the string
+  // reproduces the map's time-typed fields; its one over-inference (IP-
+  // and subnet-shaped indicator values) is coerced back to the string
   // keys the vendored operators pin.
   osint = osint.map(x => parse_json(x)).map(x => merge(x, {value: string(x.value?)}))
   // Compound or non-comparison patterns yield no indicator value: such

@@ -52,7 +52,7 @@ spec:
       replicas: 1
       podAntiAffinity:
         enabled: false
-      # Official SSO plugin (github.com/cryptpad/sso) — version must pair with
+      # Official SSO plugin (github.com/cryptpad/sso): version must pair with
       # the CryptPad image tag (1.0.0 <-> 2026.10.0 scalable server); fetched
       # into an emptyDir the entrypoint's npm build picks up on every start.
       initContainers:

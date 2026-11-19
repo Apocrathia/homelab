@@ -4,7 +4,7 @@
 
 ## Overview
 
-FilmCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+FilmCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://filmcraft.gateway.services.apocrathia.com`
 

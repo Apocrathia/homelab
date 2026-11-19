@@ -1,4 +1,4 @@
-# AGENTS.md — Renovate
+# AGENTS.md. Renovate
 
 Folder-scoped router for the Renovate dependency-automation module. This tree
 **hosts** the renovate-operator; the Renovate **consumer** contract (the
@@ -12,11 +12,11 @@ routing starts at the root [AGENTS.md](../../../../AGENTS.md); module context:
 
 Two hats, one module:
 
-- **Host** — the mogenius `renovate-operator` (CRD-driven, job-per-repo) that
+- **Host**: the mogenius `renovate-operator` (CRD-driven, job-per-repo) that
   runs Renovate against every `Apocrathia/*` repo on a `0 */4 * * *` schedule.
   Manifests: [`config/renovatejob.yaml`](./config/renovatejob.yaml),
   [`helmrelease.yaml`](./helmrelease.yaml).
-- **Consumer** — the repo-root `renovate.json` contract (presets,
+- **Consumer**: the repo-root `renovate.json` contract (presets,
   `packageRules`, `customManagers` regex managers, the dependency dashboard)
   that any repo under the operator uses. The homelab's own reference config:
   [`renovate.json`](../../../../renovate.json); the standing rule for that
@@ -50,7 +50,7 @@ task needs:
 
 ## Upstream
 
-Canonical Renovate docs: `github.com/renovatebot/renovate` —
+Canonical Renovate docs: `github.com/renovatebot/renovate`:
 [`AGENTS.md`](https://github.com/renovatebot/renovate/blob/main/AGENTS.md),
 [`docs/usage/`](https://github.com/renovatebot/renovate/tree/main/docs/usage),
 and the live [docs site](https://docs.renovatebot.com/). This module distills

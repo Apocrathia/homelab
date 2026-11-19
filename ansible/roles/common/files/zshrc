@@ -1,9 +1,8 @@
 # Managed by Ansible (roles/common, user tag). Direct edits are overwritten
-# on the next apply — personal overrides belong in ~/.zshrc.local, which is
+# on the next apply; personal overrides belong in ~/.zshrc.local, which is
 # sourced at the end and never touched.
 
-# Login fetcher: fastfetch where the distro packages it, neofetch fallback
-# (bookworm-era hosts keep their fetcher until the distro upgrade).
+# Login fetcher: fastfetch where the distro packages it, neofetch fallback.
 if command -v fastfetch >/dev/null; then
   fastfetch
 elif command -v neofetch >/dev/null; then

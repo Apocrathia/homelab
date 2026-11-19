@@ -2,7 +2,7 @@
 # Tenzir findings trigger plane (investigations platform P-3): the FIRST alert
 # rule over the OCSF lake. Findings = Detection Finding (2004) in the
 # ocsf.Detection_Finding table + high-severity case opens (class 2005,
-# activity Create) in investigations.records — the severity gate is >= 4
+# activity Create) in investigations.records: the severity gate is >= 4
 # (High). The agent_invoke label routes through the existing
 # alert-agent-invoke bridge (tasks/alert-agent-invoke) to homelab-agent,
 # which delegates security alerts to the investigator agent
@@ -11,7 +11,7 @@
 # Alert shape per Grafana's tabular-data contract: ONE numeric column (hits)
 # is the evaluated value; every other column becomes an alert-instance label,
 # so one instance fires per distinct (finding, subject) group and the bridge
-# prompt carries the labels as alert context. GROUP BY dedupes label sets —
+# prompt carries the labels as alert context. GROUP BY dedupes label sets:
 # Grafana fails a rule whose rows are not uniquely labeled. The case-open
 # branch re-triggers the agent on its own high-severity cases; the
 # investigator playbook's dedupe step (continue, never re-open) is the loop

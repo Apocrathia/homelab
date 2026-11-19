@@ -11,7 +11,7 @@ spec:
     spec:
       chart: substrate-crds
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate-crds
-      # Held with substrate chart — see docs/issues/substrate-kagent-version-skew.md.
+      # Held with substrate chart: see docs/issues/substrate-kagent-version-skew.md.
       version: "0.0.6"
       sourceRef:
         kind: HelmRepository

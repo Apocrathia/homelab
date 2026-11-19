@@ -37,7 +37,7 @@ DIGEST_HOUR_UTC = 13  # 13:50Z == 07:50 America/Denver (MDT)
 
 NO_MERGE_FLAGS = ("agent-review:major", "agent-review:infra")
 # Label-independent hard blocklist: infra-class deps (Talos and friends) can
-# take the cluster — and the agents themselves — offline if merged by an agent.
+# take the cluster, and the agents themselves, offline if merged by an agent.
 # Checked against branch + title BEFORE any label logic; a mislabeled MR
 # still cannot slip through.
 INFRA_KEYWORDS = (

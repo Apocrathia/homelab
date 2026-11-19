@@ -98,7 +98,7 @@ color:var(--grey-6);margin:10px 0;} /* 7ak: container pre-wrap dropped — the m
 .item.custom{color:var(--grey-4);}
 .item.custom b{color:var(--grey-5);font-weight:500;}
 /* 7ag refinement boxes (TUI special-box parity): hairline frame + lime
-   label/edge ONLY — the body stays grey (the accent law: no lime flood) */
+   label/edge ONLY, the body stays grey (the accent law: no lime flood) */
 .item.refine{display:flow-root;border:1px solid var(--hairline);border-left:2px solid var(--accent);margin:8px 0;padding:8px 12px;}
 .item.refine b{display:block;color:var(--accent);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;}
 .item.refine div{color:var(--grey-4);white-space:pre-wrap;padding-top:2px;}
@@ -158,14 +158,14 @@ background:var(--grey-1);border:1px solid var(--hairline);}
 .toolcard .tpart{color:var(--grey-5);white-space:pre-wrap;font-size:12px;padding:6px 8px;margin-top:4px;
 background:var(--grey-1);border:1px dashed var(--grey-3);} /* live partial: dimmer text, dashed frame — reads as in-flight, replaced at completion */
 /* 7ab JSON tokens (agentmsg bodies): keys grey-3, strings a green-grey,
-   numbers/bools/null each distinct — muted, no bright hues, PI-congruent */
+   numbers/bools/null each distinct, muted, no bright hues, PI-congruent */
 .j-key{color:var(--grey-3);}
 .j-str{color:#9FB29A;}
 .j-num{color:#C8A96E;}
 .j-bool{color:#8FB0C8;}
 .j-null{color:var(--grey-4);}
 /* 7ab-b/cell-kind CODE tokens (fenced ```python + the toolcard code cells): the
-   j-family's dialect for python/bash spans — keywords the blue, def names white,
+   j-family's dialect for python/bash spans, keywords the blue, def names white,
    strings green-grey, numbers gold, comments/vars dim, operators grey-4 */
 .c-kw{color:#8FB0C8;}
 .c-def{color:var(--grey-6);}
@@ -192,7 +192,7 @@ background:var(--grey-1);border:1px dashed var(--grey-3);} /* live partial: dimm
 /* 7ad follow-up: marked's RAW elements — the md-* classes above are the
    in-house fallback's; these style the library path. Grey family, lime
    nowhere here. The container's old pre-wrap double-spaced the literal
-   newlines marked emits between blocks — paragraphs own their rhythm now
+   newlines marked emits between blocks, paragraphs own their rhythm now
    (sibling margins collapse). */
 .md-body p{margin:6px 0;white-space:pre-wrap;} /* the .md-p rhythm; soft breaks stay hard breaks (fallback parity) */
 .md-body h1,.md-body h2,.md-body h3,.md-body h4,.md-body h5,.md-body h6{color:var(--grey-6);
@@ -311,7 +311,7 @@ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;}
 .new-note.hidden{display:none;}
 
 /* session menu (27-settings parity, sparse by directive (af)): panel pinned
-   under the head's right edge; grey palette, hairline, square, system mono —
+   under the head's right edge; grey palette, hairline, square, system mono,
    accent ONLY on the active/hover row + the live usage bar; the picker rows
    reuse the pop-row language; the hint/none classes ride through as-is */
 .menu{position:absolute;top:48px;right:20px;width:min(340px,calc(100% - 40px));
@@ -381,9 +381,9 @@ text-overflow:ellipsis;flex:1;min-width:0;}
 .item.digest > summary::before{content:'';display:inline-block;width:8px;} /* 7az rider: the digest marker breathes too */
 
 /* 7bc heartbeats section: the daemon's scheduled-jobs registry surfaced in
-   the sidebar — grey, collapsible, under the sessions; no accent here (7bc-3
+   the sidebar, grey, collapsible, under the sessions; no accent here (7bc-3
    S2: the write affordances live in the rows' context menu + the schedule
-   form — see the cmenu block; the section itself stays a plain list) */
+   form, see the cmenu block; the section itself stays a plain list) */
 #hb{border-top:1px solid var(--hairline);}
 #hb.hidden{display:none;}
 #hb .hb-head{display:flex;align-items:center;gap:8px;padding:8px 20px 6px;cursor:pointer;user-select:none;}
@@ -410,7 +410,7 @@ text-overflow:ellipsis;flex:1;min-width:0;}
 
 /* 7bc-2: the per-session heartbeat indicator — the lime pulse glyph
    (a heartbeat IS live activity: the accent law holds), the status-dot
-   dialect at the subs-glyph scale (10px, square, static — no animations
+   dialect at the subs-glyph scale (10px, square, static, no animations
    by design); rides the sidebar row beside the title + the pane's dedicated
    status chip (glyph + grey label). */
 .hbglyph{color:var(--accent);font-size:10px;flex:none;line-height:1;user-select:none;} /* ♥ beside the row title + in the pane chip */
@@ -420,7 +420,7 @@ text-overflow:ellipsis;flex:1;min-width:0;}
 /* 54-cmdk: the search palette — Cmd-K's centered modal over a fixed
    backdrop. The pop-picker's chrome (grey-2 panel, hairline, square, system
    mono); lime ONLY on the selected row + the match highlight (the working
-   law — the searching text stays grey). */
+   law, the searching text stays grey). */
 .cmdk{position:fixed;inset:0;z-index:40;background:rgba(17,17,17,.78);
 display:flex;align-items:flex-start;justify-content:center;padding:10vh 16px 0;}
 .cmdk-panel{width:min(680px,100%);max-height:76vh;display:flex;flex-direction:column;

@@ -1,4 +1,4 @@
-# `retrospective` — post-work learning (skill)
+# `retrospective`: post-work learning (skill)
 
 `SKILL.md` defines the structured review at work-close or session-end:
 review outcomes, mine git history for changes outside the session, extract

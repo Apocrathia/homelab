@@ -7,7 +7,7 @@ metadata:
   annotations:
     ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in rbac.yaml"
 spec:
-  # 0300 America/Denver — after built-in maintenance tasks finish
+  # 0300 America/Denver: after built-in maintenance tasks finish
   schedule: "0 3 * * *"
   timeZone: "America/Denver"
   concurrencyPolicy: Forbid
@@ -48,7 +48,7 @@ spec:
                   # roms/<platform>/gamelist.xml by skyscraper's scrape.sh)
                   # identify roms the external providers miss.
                   value: "igdb,ss,ra,launchbox,gamelist,hasheous,playmatch,sgdb"
-                # Rotation: one job per platform, platforms id%7==weekday —
+                # Rotation: one job per platform, platforms id%7==weekday,
                 # the whole 36k-rom library can never finish in one 4h job.
                 # ~58 jobs/night drain on the serial SCAN_WORKERS=1 queue;
                 # SKIP_PENDING skips a night while the backlog is that deep.

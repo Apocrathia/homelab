@@ -7,7 +7,7 @@
 # matchActions, so there is nothing to graduate and no policy-mode option
 # applies (the other policies carry policy-mode because they author Sigkill
 # actions). Emits process_kprobe events with the sock argument the SIEM
-# lap C tetragon mapping maps to OCSF Network Activity (4001).
+# events with the sock argument the SIEM tetragon mapping maps to
 apiVersion: cilium.io/v1alpha1
 kind: TracingPolicy
 metadata:

@@ -3,7 +3,7 @@
 // record_integrity fingerprint chain, and to_clickhouse INSERTs. The
 // chain state rides the investigations-chains context (declared in the
 // HelmRelease values; contexts are per-node, in-memory, and survive
-// pipeline restarts but not node restarts — a node restart restarts the
+// pipeline restarts but not node restarts; a node restart restarts the
 // chains with a WARNING diagnostic at the first non-open record, the
 // documented gap in the datalake README). context_enrich fetches the
 // case's current chain tail (keyed by correlation_uid) into prev_tail;

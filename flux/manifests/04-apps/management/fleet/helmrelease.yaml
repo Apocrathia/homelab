@@ -142,9 +142,9 @@ spec:
       FLEET_OSQUERY_POLICY_UPDATE_INTERVAL: "30m"
       FLEET_WEBHOOK_RESULT_URL: "http://tenzir-node-core.tenzir.svc.cluster.local:8080/fleet"
 
-    # MDM needs FLEET_SERVER_PRIVATE_KEY — injected via postRenderers above
+    # MDM needs FLEET_SERVER_PRIVATE_KEY: injected via postRenderers above
     # (openssl rand -base64 32). Global enroll secret seeds/overwrites the DB
-    # secret on pod start — keep it identical to GitOps
+    # secret on pod start: keep it identical to GitOps
     # $FLEET_GLOBAL_ENROLL_SECRET / default.yml.
     # Fields on OnePasswordItem fleetdm-secrets: private-key,
     # global-enroll-secret.

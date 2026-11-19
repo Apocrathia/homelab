@@ -1,8 +1,8 @@
-# Rectangle: keep the Fleet-maintained version current — update only, never
+# Rectangle: keep the Fleet-maintained version current; update only, never
 # install. Requires rectangle/darwin under software.fleet_maintained_apps on the
 # same fleet.
 #
-# The patch policy only fails when the app is installed and outdated — missing
+# The patch policy only fails when the app is installed and outdated; missing
 # hosts pass, so Fleet never installs it.
 ---
 - name: macOS - Rectangle up to date

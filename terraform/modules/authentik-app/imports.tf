@@ -1,10 +1,10 @@
 # ---------------------------------------------------------------------------
-# Adoption imports — adopt the live blueprint-era objects IN PLACE: no
+# Adoption imports: adopt the live blueprint-era objects IN PLACE (no
 # companion deletes, no deletion window, uuids intact, no re-login. After
 # the first apply the import blocks go INERT (tofu then treats the objects
 # as plain managed state) and are safe to keep forever.
 #
-# Gating recipe (proven on tofu 1.10.8, module-as-root):
+# Gating recipe (module-as-root):
 #   - count on an import block is REJECTED ("Unsupported argument").
 #   - an ungated import targeting a count=0 resource FAILS plan
 #     ("Configuration for import target does not exist") even with an

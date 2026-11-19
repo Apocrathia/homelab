@@ -22,10 +22,3 @@ every apply untouched (tofu updates send only schema fields). The SCIM
 token stays UI-held: authentik's serializer keeps it write-only, so it
 never enters tofu state and no apply can wipe it
 (`authentik.tf` header note).
-
-Retired the `fleet/authentik-blueprint.yaml` ConfigMap: the blueprint
-CM prunes and the live objects survive for this Workspace to adopt.
-
-Health flag (2026-10-25): the Fleet SCIM sync threw `ResultTimeout` 5x
-on 2026-10-19; today's full syncs run info-clean with one synced user.
-The sync path is untouched by this migration.

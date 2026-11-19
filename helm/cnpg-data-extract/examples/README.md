@@ -1,4 +1,4 @@
-# examples — extract-job values files
+# examples: extract-job values files
 
 Three worked values files: a plain Authentik CNPG extract, the same with a
 durable SMB dump target, and a static-Longhorn variant for a PVC whose Cluster

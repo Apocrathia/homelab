@@ -1,10 +1,10 @@
 ---
-# The site. Set nginx_site_domain on the host; no default — an unset domain
+# The site. Set nginx_site_domain on the host; no default; an unset domain
 # must fail loudly, not proxy some placeholder.
 nginx_site_domain: ""
 
 # Extra server_names (aliases) served by this vhost alongside the primary
-# domain — e.g. a legacy name kept alive behind the same cert (SAN).
+# domain; e.g. a legacy name kept alive behind the same cert (SAN).
 nginx_site_aliases: []
 
 # Upstream the vhost proxies to (host:port).

@@ -10,16 +10,16 @@ image:
   tag: "18@sha256:899d3ed526b659d77935dde0e6bf2d69dbbf17d3d8c6486ca8cfd04bd3c18533"
   pullPolicy: IfNotPresent
 
-# Existing CNPG instance PVC (RWO — nothing else may mount it).
+# Existing CNPG instance PVC (RWO - nothing else may mount it).
 pvc:
   claimName: ""
   # After `kubectl delete cluster`, the operator often deletes the instance PVC while the
   # Longhorn volume still exists (restored data). Enable this to create a static PV + PVC in
   # the same Helm release, same shape as helm/generic-app `storage-longhorn.yaml` (without
-  # the Longhorn Volume CR — your volume should already exist in longhorn-system).
+  # the Longhorn Volume CR - your volume should already exist in longhorn-system).
   staticLonghorn:
     enabled: false
-    # Longhorn volume name: PV spec.csi.volumeHandle — `kubectl get volumes.longhorn.io -n longhorn-system`
+    # Longhorn volume name: PV spec.csi.volumeHandle - `kubectl get volumes.longhorn.io -n longhorn-system`
     volumeHandle: ""
     # Must match the CNPG Cluster spec.storage (see helm template on the app HelmRelease).
     capacity: 10Gi
@@ -38,11 +38,11 @@ postgres:
   port: 5432
   # Loopback only; the Job runs pg_dump against this address after postgres is ready.
   listenAddress: "127.0.0.1"
-  # CNPG-managed PGDATA often sets logging_collector and log_directory under /controller — paths
+  # CNPG-managed PGDATA often sets logging_collector and log_directory under /controller - paths
   # that do not exist outside the operator. Disable log shipping so postgres can start in this pod.
-  # CNPG also points ssl_cert_file at /controller/certificates — disable TLS for local extract-only use.
-  # CNPG may set unix_socket_directories to /controller/run — use the chart's /var/run/postgresql mount.
-  # archive_command invokes /controller/manager wal-archive — absent outside the operator; disable archiving.
+  # CNPG also points ssl_cert_file at /controller/certificates - disable TLS for local extract-only use.
+  # CNPG may set unix_socket_directories to /controller/run - use the chart's /var/run/postgresql mount.
+  # archive_command invokes /controller/manager wal-archive - absent outside the operator; disable archiving.
   extraArgs:
     - "-c"
     - "logging_collector=off"
@@ -87,7 +87,7 @@ containerSecurityContext:
 
 dump:
   mountPath: /dump
-  # Database to pg_dump — override for every real workload (e.g. authentik, cannery).
+  # Database to pg_dump - override for every real workload (e.g. authentik, cannery).
   database: postgres
   # Output path inside the dump volume unless outputFile is set.
   fileName: dump.dump
@@ -101,7 +101,7 @@ job:
   backoffLimit: 0
 
 # Optional SMB/CIFS volume for durable dumps (same CSI + 1Password pattern as generic-app `storage.smb`).
-# When enabled, the dump volume uses this PVC instead of emptyDir — set dump.mountPath if you want a
+# When enabled, the dump volume uses this PVC instead of emptyDir - set dump.mountPath if you want a
 # different mount point (e.g. /backup). Share permissions must allow the Postgres UID or writes may fail.
 backupSmb:
   enabled: false

@@ -1,4 +1,4 @@
-# defaults — ollama role variables
+# defaults: ollama role variables
 
 `main.yml` holds two variables: `ollama_version` ("latest" tracks GitHub
 releases via the nightly drift job; a bare version pins or rolls back) and the

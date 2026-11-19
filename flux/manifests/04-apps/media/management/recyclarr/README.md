@@ -33,7 +33,7 @@ Recyclarr configuration is managed via GitOps:
 
 ### Key Features
 
-- **Automated Synchronization**: Runs daily via cron to sync TRaSH Guides settings
+- **Automated Synchronization**: cron-scheduled TRaSH Guides sync (schedule in the CronJob)
 - **Multiple Services**: Supports both Sonarr and Radarr instances
 - **Custom Formats**: Synchronizes custom format definitions and scores
 - **Quality Profiles**: Updates quality profiles with recommended settings

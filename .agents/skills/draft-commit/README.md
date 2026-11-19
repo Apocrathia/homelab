@@ -1,4 +1,4 @@
-# `draft-commit` — commit handoff drafting (skill)
+# `draft-commit`: commit handoff drafting (skill)
 
 `SKILL.md` defines the last pre-ship step for an unauthorized lap: confirm
 review evidence, read the worktree status/diff, and draft a Conventional

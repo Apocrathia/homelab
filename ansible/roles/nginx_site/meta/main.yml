@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: nginx_site
   author: apocrathia
-  description: Generic reverse-proxy site — nginx vhost referencing a caller-provisioned TLS cert (acme_sh mints one into nginx_site_tls_dir).
+  description: "Generic reverse-proxy site: nginx vhost referencing a caller-provisioned TLS cert (acme_sh mints one into nginx_site_tls_dir)."
   license: MIT
   min_ansible_version: "2.15"
   platforms:

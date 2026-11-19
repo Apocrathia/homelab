@@ -16,7 +16,7 @@ app:
     port: 80
     # Optional: keep stdin open / allocate a TTY for the main container.
     # Useful for "CLI-as-server" workloads that read from stdin and exit on
-    # EOF (e.g., DuckDB CLI with -cmd "CALL start_ui_server();" — without
+    # EOF (e.g., DuckDB CLI with -cmd "CALL start_ui_server();" - without
     # stdin: true the process exits as soon as the SQL completes).
     # stdin: true
     # tty: false
@@ -499,38 +499,32 @@ secrets:
 authentik:
   enabled: true
   # Provider mode: "proxy", "oidc", or "bookmark"
-  # - proxy: Proxy provider + per-app outpost — both lanes render the
-  #   outpost (the tofu lane restored blueprint parity at 0.0.90)
+  # - proxy: Proxy provider + per-app outpost
   # - oidc: Creates OAuth2 provider, app handles auth via OAuth flow (requires app OIDC support)
   # - bookmark: Creates a dashboard-only entry in Authentik (no auth provider or outpost)
   mode: "proxy"
 
-  # Stack owner: "blueprint" (default/legacy) or "terraform" (the tofu lane).
-  # - blueprint: chart renders the authentik blueprint ConfigMaps (mode
-  #   proxy/oidc/bookmark) — unchanged behavior for every un-flipped app.
-  # - terraform: chart renders the provider-opentofu docs (OnePasswordItem +
-  #   ProviderConfig + Workspace, source: Inline) with CHART-GENERATED
-  #   per-app HCL composed from the values below — all three modes
-  #   (bookmark = the tile shape: application + bindings, no provider).
-  #   Inline HCL only: NO module refs, NO chart-tag pins, NO varmap.
-  #   THE DEFAULT: new apps deploy tofu-first; the blueprint lane is retired.
+  # Stack owner: "terraform" (default) or "blueprint" (retired lane;
+  # renders nothing). terraform: chart renders the provider-opentofu
+  # docs (OnePasswordItem + ProviderConfig + Workspace, source: Inline)
+  # with chart-generated per-app HCL composed from the values below
+  # (bookmark = the tile shape: application + bindings, no provider).
+  # Inline HCL only: no module refs, no chart-tag pins, no varmap.
+  # New apps deploy tofu-first.
   managedBy: "terraform"
 
-  # The tofu lane composes from the same values the blueprint templates
-  # read — every value lands INLINE in the generated HCL. There is no
-  # values-side varmap: the Workspace spec.forProvider.varmap is the
-  # GATE-TIME-ONLY adoption carrier (recipe §8 born-with-varmap: the
-  # witness ids — provider pk, binding uuids, custom-mapping pm_uuids —
-  # are patched onto the LIVE Workspace object once at the flip gate and
-  # cleared after; they NEVER enter git). Per-app config deltas become
-  # values keys here, never raw HCL edits.
+  # The tofu lane composes from the `authentik` values block: every
+  # value lands inline in the generated HCL. There is no values-side
+  # varmap; the Workspace spec.forProvider.varmap is the gate-time-only
+  # adoption carrier (witness ids are patched onto the live Workspace
+  # object once and cleared after; they never enter git). Per-app
+  # config deltas become values keys here, never raw HCL edits.
   #
-  # Dead keys on the tofu path: oidc.clientSecret (Sensitive — generated
+  # Dead keys on the tofu path: oidc.clientSecret (Sensitive, generated
   # server-side, tofu must not manage it), oidc.tokenValidity (dead attr
   # in authentik 2026.8). The outpost keys (authentikHostInsecure,
   # serviceConnection, replicas, namespace, logLevel, gateway.*) are
-  # ALIVE on the tofu path since 0.0.90 — the per-app outpost consumes
-  # them (blueprint parity restored).
+  # alive on the tofu path: the per-app outpost consumes them.
 
   # Share this app with the users tier / friends; adds the users group binding.
   # Requires tailnet.enabled - friends reach apps over the tailnet, so a users
@@ -579,7 +573,7 @@ authentik:
   #   - "^/api/"
   skipPathRegex: []
 
-  # Proxy provider token validity — ALWAYS sent in the tofu HCL (the TF
+  # Proxy provider token validity - ALWAYS sent in the tofu HCL (the TF
   # resource default minutes=10 would PATCH live rows sitting at the
   # authentik model default hours=1)
   accessTokenValidity: "hours=1"
@@ -587,15 +581,12 @@ authentik:
   # Authentication flow (proxy mode only)
   authenticationFlow: "default-authentication-flow"
 
-  # Transient adoption wave key (proxy mode only). true renders the tofu
-  # module's outpost import ARMED so the next crossplane apply imports
-  # the app's live blueprint-era outpost into tofu state instead of
-  # colliding with it; false (steady state) renders the import inert and
-  # the outpost resource plans a plain CREATE. Set true only in the W3
-  # wave MR for the flipped apps; the cleanup MR flips it back to false
-  # once the imports land (an armed import whose target is already in
-  # state is inert). Born-tofu apps NEVER set it — they have no live
-  # outpost to adopt. Deliberately separate from the varmap-era
+  # Outpost adoption key (proxy mode only). true renders the tofu
+  # module's outpost import armed so the next crossplane apply imports
+  # the app's live outpost into tofu state instead of colliding with it;
+  # false (steady state) renders the import inert and the outpost
+  # resource plans a plain CREATE. Born-tofu apps never set it: they have
+  # no live outpost to adopt. Deliberately separate from the varmap-era
   # adoption machinery: no varmap key, no uuid in git.
   outpostAdopt: false
 
@@ -607,13 +598,13 @@ authentik:
   authentikHostInsecure: true
   serviceConnection: "Local Kubernetes Cluster"
 
-  # Outpost configuration (both lanes — the tofu outpost jsonencodes
+  # Outpost configuration (both lanes - the tofu outpost jsonencodes
   # replicas/namespace/logLevel; blueprint parity)
   replicas: 1
   namespace: authentik
   logLevel: info
 
-  # Gateway configuration (both lanes — the outpost's
+  # Gateway configuration (both lanes - the outpost's
   # kubernetes_httproute_parent_refs; the outpost provisions its own
   # HTTPRoute and ExternalDNS reads the route hostname for DNS)
   gateway:
@@ -672,34 +663,33 @@ authentik:
     # Signing key for JWT tokens
     signingKey: "authentik Self-signed Certificate"
 
-    # Token validity periods — all three are ALWAYS sent in the tofu HCL
+    # Token validity periods - all three are ALWAYS sent in the tofu HCL
     # (a TF resource default must never silently PATCH a live row)
     accessCodeValidity: "minutes=1"
     accessTokenValidity: "minutes=5"
     refreshTokenValidity: "days=30"
     # tokenValidity is DEAD in authentik 2026.8 (no column, not in the
-    # goauthentik 2026.8.0 TF schema) — the tofu lane never writes it
+    # goauthentik 2026.8.0 TF schema) - the tofu lane never writes it
 
     # Grant types, pinned live-verbatim (the MISP lesson): the tofu HCL
-    # ALWAYS sends grant_types explicitly — the authentik 2026.8 API no
-    # longer backfills it and an empty set rejects every authorize
-    # request. Default = the blueprint-era 2-value shape; a flip MR pins
-    # the app's LIVE row (a default-set row reproduces the full seven
-    # explicitly).
+    # Grant types, pinned live-verbatim: the tofu HCL always sends
+    # grant_types explicitly (the authentik 2026.8 API does not backfill
+    # it and an empty set rejects every authorize request). Default =
+    # the 2-value shape; set the app's live row explicitly.
     grantTypes:
       - "authorization_code"
       - "refresh_token"
 
-    # client_id lane 2 — static literal for fresh creates (misp/opencti
+    # client_id lane 2 - static literal for fresh creates (misp/opencti
     # style). Mutually exclusive with clientIdFromSecret.enabled:
     # clientId: ""
     # clientSecret: never on the tofu path (Sensitive, generated
-    # server-side — tofu must not manage it)
+    # server-side - tofu must not manage it)
 
-    # client_id lane 1 — the 1Password Secret file lane: the ProviderConfig
+    # client_id lane 1 - the 1Password Secret file lane: the ProviderConfig
     # materializes the SAME Secret key the app consumes as the
     # oidc-client-id file, and the tofu HCL reads
-    # client_id = trimspace(file("oidc-client-id")) — the value never
+    # client_id = trimspace(file("oidc-client-id")) - the value never
     # enters git. The render fails loudly on both lanes set or neither.
     clientIdFromSecret:
       enabled: false
@@ -772,7 +762,7 @@ loadbalancer:
     namespace: cilium-system
 
 # Gatus in-cluster uptime probe (gatus-sidecar Service annotations)
-# Default on — stamps ClusterIP Service annotations. Opt out with enabled: false
+# Default on - stamps ClusterIP Service annotations. Opt out with enabled: false
 # (Jobs-ish / no-HTTP / noisy apps). Set path: when / is not a valid health check.
 gatus:
   enabled: true
@@ -833,7 +823,7 @@ postgres:
   # Database owner (defaults to app.name if not specified)
   owner: ""
 
-  # Barman object-store backups — matches the manual pattern from
+  # Barman object-store backups - matches the manual pattern from
   # 03-services/authentik/postgres.yaml. Disabled by default; enabling adds
   # continuous WAL archiving plus a ScheduledBackup for nightly base backups.
   backup:

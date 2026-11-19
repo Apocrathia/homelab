@@ -5,7 +5,7 @@
 # Home enroll secret: CI FLEET_HOME_ENROLL_SECRET (same value as 1Password
 # fleetdm-secrets → home-enroll-secret).
 #
-# macOS CIS Level 1 (Tahoe / macOS 26) from Fleet ee/cis — assessment policies.
+# macOS CIS Level 1 (Tahoe / macOS 26) from Fleet ee/cis: assessment policies.
 # Disk encryption + scripts are inlined under controls below.
 name: Home
 policies:
@@ -14,7 +14,7 @@ reports:
 agent_options:
 controls:
   enable_disk_encryption: true
-  # Require IdP (Authentik) authentication when a device is first set up —
+  # Require IdP (Authentik) authentication at first device setup;
   # populates the local account username + full name from SAML/SCIM.
   # IdP settings live in default.yml → org_settings.mdm.end_user_authentication.
   setup_experience:
@@ -32,7 +32,7 @@ software:
       self_service: true
     - slug: homebrew-app/darwin
       self_service: true
-    # Patch via policies — auto-update when installed; never auto-install.
+    # Patch via policies: auto-update when installed; never auto-install.
     - slug: 1password/darwin
       self_service: true
     - slug: claude/darwin

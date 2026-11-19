@@ -42,7 +42,7 @@ spec:
       # renovate: datasource=docker depName=ghcr.io/crossplane-contrib/crossview
       tag: "v4.7.0"
       pullPolicy: IfNotPresent
-    # Gateway API only — chart-rendered HTTPRoute on the main gateway
+    # Gateway API only: chart-rendered HTTPRoute on the main gateway
     gatewayAPI:
       enabled: true
       httpRoute:
@@ -62,7 +62,7 @@ spec:
         ssl:
           mode: disable
       # Post-SSO-login redirect destination (chart reads it from
-      # config.server.cors.origin — the localhost:5173 default redirected
+      # config.server.cors.origin: the localhost:5173 default redirected
       # users to a dead dev URL after Authentik login)
       server:
         cors:
@@ -77,13 +77,13 @@ spec:
           scope: "openid profile email"
           usernameAttribute: preferred_username
           emailAttribute: email
-    # Bundled postgres disabled — the database is the CNPG cluster in
+    # Bundled postgres disabled: the database is the CNPG cluster in
     # crossview-postgres.yaml (same pattern as every other DB-backed app).
     # The chart's bundled single-replica postgres on a RWO PVC cannot roll
     # in place: the surge pod can land on another node and block forever.
     database:
       enabled: false
-    # All credentials from the 1Password-backed secret — no plaintext values;
+    # All credentials from the 1Password-backed secret: no plaintext values;
     # secretKeyRef slots keep the chart from rendering its own Secret
     secrets:
       adminUsername:

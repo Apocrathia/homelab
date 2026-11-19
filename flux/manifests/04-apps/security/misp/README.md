@@ -39,23 +39,22 @@ HelmRelease `chart.spec.version` for GitRepository sources, so the **git tag
 is the chart version pin**; Renovate tracks it via the `git-tags` datasource
 annotation on that file.
 
-Subchart dependencies (bitnami mariadb 19.0.5, valkey 0.9.4, ntppool smtp
-2.4.0) are resolved by the source controller from the Chart.yaml repositories
-when it packages the chart from the git tree.
+Subchart dependencies are resolved by the source controller from the Chart.yaml
+repositories when it packages the chart from the git tree (versions ride the
+pinned chart tree).
 
 ### Images and update strategy
 
-Chart defaults misp-core and misp-modules to `latest`, both are pinned here
-with tag + digest and Renovate annotations:
+Chart defaults misp-core and misp-modules to `latest`. Image pins (tag + digest,
+Renovate annotations) live in `helmrelease.yaml`. Pairing facts:
 
-- `ghcr.io/misp/misp-docker/misp-core:v2.5.44`: matches chart appVersion
-  (2.5.44)
-- `ghcr.io/misp/misp-docker/misp-modules:v3.0.9`: the upstream
-  `misp-docker` pairing for core v2.5.44 (`template.env` history)
-- `docker.io/bitnamilegacy/mariadb:10.11.9-debian-12-r3`: the chart default
-  is `latest`; pinned to the MariaDB 10.11 line that misp-docker's compose
-  uses. volumePermissions `bitnamilegacy/os-shell` and valkey 9.0.2 ride
-  their subchart defaults (deterministic per subchart version)
+- `ghcr.io/misp/misp-docker/misp-core`: matches the chart appVersion
+- `ghcr.io/misp/misp-docker/misp-modules`: the upstream `misp-docker` pairing
+  for the core version
+- `docker.io/bitnamilegacy/mariadb`: the chart default is `latest`; pinned to
+  the MariaDB 10.11 line that misp-docker's compose uses. volumePermissions
+  `bitnamilegacy/os-shell` and valkey ride their subchart defaults
+  (deterministic per subchart version)
 
 Updates are deliberate: chart tag + the core/modules image pair bump together
 (MISP follows the chart appVersion; appVersion lags MISP upstream by a few
@@ -70,13 +69,11 @@ core container running nginx + PHP-FPM + workers under supervisord and
 serving HTTP on :80, the port the chart's startup probe and HTTPRoute
 expect.
 
-misp-core `>= v2.5.50` is upstream's distributed architecture: nginx was
-extracted into its own container, leaving the core image PHP-FPM-only
-(FastCGI on :9002, no HTTP listener). The chart renders no nginx container
-and still probes `:80 /users/heartbeat`, so a bumped pod boots cleanly:
-MISP logs it is live, binds nothing on :80, and the startup probe
-kill-loops it (~15 min per cycle). Renovate did exactly this on 2026-10-19;
-MR !5478 reverts to the pinned pair.
+misp-core `>= v2.5.50` is upstream's distributed architecture: nginx runs in
+its own container, leaving the core image PHP-FPM-only (FastCGI on :9002, no
+HTTP listener). The chart renders no nginx container and still probes `:80
+/users/heartbeat`, so a bumped pod boots cleanly: MISP logs it is live, binds
+nothing on :80, and the startup probe kill-loops it (~15 min per cycle).
 
 **Directive: do not bump `misp-core` or `misp-modules`, Renovate or manual
 until a chart release supporting the distributed architecture has been
@@ -85,7 +82,7 @@ together in one MR (pairing comment in `helmrelease.yaml`).
 
 ### Secrets
 
-1Password item `vaults/Secrets/items/misp-secrets` (slice 1). Fields and
+1Password item `vaults/Secrets/items/misp-secrets`. Fields and
 consumers:
 
 | Field                   | Consumer                                                                                                                                                                                                     |
@@ -105,14 +102,13 @@ How the chart expects credentials:
   template reads `MYSQL_USER`/`MYSQL_PASSWORD` from this shape.
 - `misp-secrets` (secret.yaml, OnePasswordItem): carries the app fields plus
   `username` / `password` (OIDC client_id `misp` + the authentik-generated
-  secret, operator-copied post-merge). The former ESO remap
-  (`misp-oidc-credentials`) is retired.
+  secret, operator-copied post-merge).
 - The chart writes the Redis password into ConfigMaps by design; the
   HelmRelease postRenderers strip those keys and inject `REDIS_PASSWORD` /
   `REDIS_PW` from the Secret instead, so the value only lives in Secret
   objects in-cluster.
 
-### MISP auth key for OpenCTI (slice 6: `setAPIKey` stays off)
+### MISP auth key for OpenCTI (`setAPIKey` stays off)
 
 The MISP → OpenCTI connector authenticates with a regular MISP auth key
 (read permission). The chart's `setAPIKey` value does **not** mint one: it
@@ -122,8 +118,8 @@ secret flowing through HelmRelease values, the exact pattern this deployment
 avoids (1Password is the SSOT; ExternalSecrets own credential
 materialization here). It also mounts a `customize_misp.sh` ConfigMap that
 runs `cake user change_authkey admin@admin.test "$MISP_API_KEY"` on every
-container start, resetting a **hardcoded** user's authkey (chart v5.0.1,
-not our vault-managed `ADMIN_EMAIL`). Both `setk8sSecrets` and `setAPIKey`
+container start, resetting the hardcoded user's authkey (not our
+vault-managed `ADMIN_EMAIL`). Both `setk8sSecrets` and `setAPIKey`
 are therefore off (the HelmRelease `setAPIKey: false` is the deliberate
 record of this decision).
 
@@ -132,7 +128,7 @@ user (org `Apocrathia`, org-only distribution events are visible only to
 same-org users) → Auth Keys → Add key. The key is copied into the
 `opencti-misp-connector` 1Password item (`MISP_KEY` field), and the
 connector consumes it from the **opencti** namespace (OnePasswordItem in
-`opencti/secret.yaml`; wiring in the OpenCTI README slice-6 section).
+`opencti/secret.yaml`; wiring in the OpenCTI README connector section).
 MISP keeps auto-generating its own admin authkey untouched.
 
 ### SSO (Authentik OIDC)
@@ -152,9 +148,9 @@ Native MISP `OidcAuth` core plugin via the misp-docker env surface
   redirect `https://misp.gateway.services.apocrathia.com/users/login` (the
   plugin hardcodes `MISP.baseurl + /users/login` as the callback, plugin
   source), dashboard tile in the "Security" group, `admins` binding order
-  10, no user binding. Fresh create (MR unmerged, no import blocks, no
-  adoption ids; the first plan after merge MUST read as a clean create-set:
-  a read-only plan against live authentik is the authorized post-merge
+  10, no user binding. Fresh create: no import blocks, no adoption ids; the
+  first plan after merge must read as a clean create-set (a read-only plan
+  against live authentik is the authorized post-merge check); the scoped
   check, not run now); the scoped authentik API token rides the
   `authentik-terraform-token` Secret (1Password item
   `crossplane-terraform-secrets` via a namespace-local OnePasswordItem),
@@ -164,7 +160,7 @@ Native MISP `OidcAuth` core plugin via the misp-docker env surface
   stack without destroying the live authentik objects. If the state
   Secret is ever lost, re-adopt via manual `tofu import`, never a blip.
 - **Roles claim**: the "MISP Roles" custom scope mapping in `authentik.tf`
-  (a hand-written resource, ported verbatim from the original blueprint)
+  (a hand-written resource)
   emits `{"roles": ["misp-admin"]}` for the authentik `admins` group; the
   HelmRelease `oidcRolesMapping` maps `misp-admin` → MISP role id 1
   (site admin). `oidcScopes` requests the custom `roles` scope.
@@ -181,8 +177,8 @@ Native MISP `OidcAuth` core plugin via the misp-docker env surface
   first SSO login with the same email as local user id 1 is refused
   ("Refusing to link OIDC identity…", plugin source). Email-verified is
   disabled because authentik's stock email scope emits
-  `email_verified: false` (it does no email verification; verified against
-  authentik 2026.8.2 `blueprints/system/providers-oauth2.yaml`). Email
+  `email_verified: false` (it does no email verification;
+  `blueprints/system/providers-oauth2.yaml`). Email
   ownership is operator-asserted in this single-operator IdP, and only the
   `admins` group can reach the authorization flow.
 
@@ -209,13 +205,13 @@ auth keys stop working.
 | mariadb data     | longhorn | bitnami StatefulSet volumeClaimTemplate      |
 | valkey data      | -        | emptyDir (cache/queue only; no persistence)  |
 
-rustfs bucket `misp-mariadb-backups` (slice 1 keypair) receives the nightly
+rustfs bucket `misp-mariadb-backups` receives the nightly
 MariaDB dump CronJob, see [Backups](#backups). `misp-files` stays reserved
 for future S3 attachment storage.
 
 ## Backups
 
-Two independent mechanisms (research doc §5 slice 8):
+Two independent mechanisms:
 
 1. **Logical DB dump**, `backup-cronjob.yaml`: CronJob `misp-mariadb-backup`
    fires daily at 22:30 America/Denver (04:30 UTC, after the kopia 02:00 UTC
@@ -246,7 +242,7 @@ Two independent mechanisms (research doc §5 slice 8):
 RPO: database up to ~24 h (last nightly dump), attachments up to ~24 h (last
 nightly kopia snapshot).
 
-### Restore procedure (operator-led drill; slice-8 live acceptance)
+### Restore procedure (operator-led drill)
 
 Restore = dump from the bucket → MariaDB → MISP login works. For a real
 recovery (empty or corrupted DB) scale the app down first; on a fresh
@@ -256,7 +252,7 @@ needed to smoke-test.
 ```bash
 # 1. List the dumps and fetch the latest one
 aws --endpoint-url http://storage.services.apocrathia.com:9009 s3 ls s3://misp-mariadb-backups/
-aws --endpoint-url http://storage.services.apocrathia.com:9009 s3 cp s3://misp-mariadb-backups/misp-mariadb-2026-10-10.sql.gz - | gunzip > misp-restore.sql
+aws --endpoint-url http://storage.services.apocrathia.com:9009 s3 cp s3://misp-mariadb-backups/misp-mariadb-YYYY-MM-DD.sql.gz - | gunzip > misp-restore.sql
 
 # (real recovery only) stop the app while the DB is being rewritten
 kubectl -n misp scale deploy/misp deploy/misp-modules --replicas=0
@@ -281,7 +277,7 @@ web UI is read-only, restores go through kopiur `Restore` CRs.
 ## Data retention
 
 MISP is the retention authority of the 90-day threat-intel window
-(operator doctrine, 2026-11-01): only ~90 days of threat intel lives
+(operator doctrine): only ~90 days of threat intel lives
 anywhere, and MISP prunes at source. Two prunes keep it bounded:
 
 **Events (90 days, `misp-event-prune`)**: CronJob
@@ -292,8 +288,8 @@ days. The `date` field is the event's content date and the semantic
 deliberately not the prune key: the abuse.ch backfill events carry
 historical dates with recent timestamps, so a timestamp-based prune would
 keep the 2022-era junk forever. MISP has no native age-based event
-expiry, so the REST API is the mechanism (verified against the MISP
-2.5.44 EventsController source): `POST /events/index` with a `dateuntil`
+expiry, so the REST API is the mechanism (MISP EventsController source):
+`POST /events/index` with a `dateuntil`
 filter returns the expired set, then one `DELETE /events/<id>` per event.
 The key (`prune-key` on `misp-secrets`) belongs to a dedicated
 delete-capable user, not the OpenCTI connector's read-only key.
@@ -338,7 +334,7 @@ weekly Sunday run also OPTIMIZEs both tables so the freed pages return to
 the volume instead of lingering as InnoDB free space. The prune exists
 because the audit rows are overwhelmingly feed-pull machine noise
 (`add`/`tag` entries from scheduled pulls, ~99% of the table, 16.8M
-rows in 8 days), and they filled the DB volume on 2026-10-20.
+rows in 8 days).
 
 The 14-day rustfs backup bucket ([Backups](#backups)) stays the deeper
 archive for both prunes: pruned rows/events remain recoverable from the
@@ -346,7 +342,7 @@ nightly dumps for up to two weeks after the prune (the 23:30 event prune
 runs a full hour after the 22:30 dump starts, so each night's dump
 captures the pre-prune state).
 
-## Known chart quirks (verified against the chart + misp-docker)
+## Known chart quirks (chart + misp-docker)
 
 - The chart's configmap emits env names the current misp-docker image does
   not read (`MISP_UUID` vs `UUID`, `SECURITY_SALT` vs `SALT`,
@@ -355,8 +351,8 @@ captures the pre-prune state).
 - Same class of dead env in the OIDC block: `OIDC_OFFLINE_ACCESS`,
   `OIDC_CHECK_USER_VALIDITY`, `OIDC_CLIENT_CRYPTO_PASS`, and
   `OIDC_PASSWORD_RESET` render from chart values but nothing in misp-docker
-  v2.5.44 consumes them (the real OidcAuth offline/validity config is
-  written by nothing on this image, see the blocked-user caveat above).
+  consumes them (the real OidcAuth offline/validity config is written by
+  nothing on this image; see the blocked-user caveat above).
 - The core container runs as root (image runs supervisord + drops to
   www-data per service); the chart drops NET_RAW/SYS_CHROOT/MKNOD/SETFCAP
   capabilities with RuntimeDefault seccomp. This is the upstream shape.
@@ -401,16 +397,16 @@ captures the pre-prune state).
 8. SMTP gate: mail is unconfigured (`smtp.enabled: false`), the relay
    target is an operator call on the issue checklist; enable the ntppool
    smtp subchart with `SMARTHOST_*` config when decided.
-9. **MISP auth key for OpenCTI** (slice 6): dedicated read-only user → Auth
+9. **MISP auth key for OpenCTI**: dedicated read-only user → Auth
    Keys → Add key; copy the key into the `opencti-misp-connector` 1Password
    item (`MISP_KEY` field). See the secrets section above for the
    `setAPIKey` decision and the OpenCTI README for the connector wiring.
-10. **Backups** (slice 8): `kubectl -n misp get cronjob misp-mariadb-backup`
+10. **Backups**: `kubectl -n misp get cronjob misp-mariadb-backup`
     shows the schedule; trigger a manual run
     (`kubectl -n misp create job --from=cronjob/misp-mariadb-backup
 misp-mariadb-backup-drill`), confirm the object lands in the
     `misp-mariadb-backups` bucket, then run the [restore
-    drill](#restore-procedure-operator-led-drill-slice-8-live-acceptance):
+    drill](#restore-procedure-operator-led-drill):
     a restored dump must reproduce a working MISP login. Kopia: `kubectl -n
 misp get snapshotpolicy,snapshotschedule` and the first `Snapshot` after
     the 02:00 UTC window (mover UID caveats per policy comments).

@@ -18,9 +18,8 @@ component.
   these CRDs installs at layer 03 (`services-crossplane`); without the
   pre-stage, a fresh cluster deadlocks: the root build fails on the missing
   kinds, so every `dependsOn` chain below it never unblocks. The provider's
-  later apply upgrades these CRDs in place. Same rule as the ClickHouse MR-1
-  apply-order incident: bootstrap-layer CRs need their CRDs in the same root
-  build.
+  later apply upgrades these CRDs in place. Bootstrap-layer CRs need their
+  CRDs in the same root build.
 - Versions and manifest URLs are in `kustomization.yaml`; Renovate tracks them
 
 ## Configuration

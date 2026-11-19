@@ -1,4 +1,4 @@
-# inventory — Ansible hosts and groups
+# inventory: Ansible hosts and groups
 
 `hosts.yml` defines the desktops and servers plus the purpose-group opt-ins
 (kopia, ollama) that the playbooks target. Non-secret vars live in `group_vars/`

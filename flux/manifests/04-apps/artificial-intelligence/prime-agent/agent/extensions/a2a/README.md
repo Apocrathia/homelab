@@ -1,15 +1,15 @@
-# a2a — kagent A2A client tools + inbound webhook
+# a2a: kagent A2A client tools + inbound webhook
 
 `index.ts` registers the native `a2a_agents` / `a2a_send` / `a2a_task`
 tools for the kagent agents brokered by the in-cluster LiteLLM gateway.
-Slow agent runs return early with a `task_id` to poll — the harness
+Slow agent runs return early with a `task_id` to poll, the harness
 aborts tool calls at ~240s.
 
 > **Navigation**: [← Back to Prime Agent README](../../../README.md)
 
 `server.mjs` is the inbound side of the same wire: a standalone A2A
 server (message/send + tasks/get, bearer-auth fail-closed). It only runs
-where `A2A_WEBHOOK_TOKEN` is set — the cluster box, never the Mac.
+where `A2A_WEBHOOK_TOKEN` is set, the cluster box, never the Mac.
 
 ## Configuration
 

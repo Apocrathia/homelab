@@ -1,4 +1,4 @@
-# platforms — per-platform Fleet assets
+# platforms: per-platform Fleet assets
 
 Reusable GitOps assets grouped by platform: `all/` for cross-platform
 content, then `ios/`, `ipados/`, `linux/`, `macos/`, and `windows/`. Fleet

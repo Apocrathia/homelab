@@ -80,9 +80,9 @@ OpenTelemetry Operator Helm chart:
 Usage: annotate pods with
 `instrumentation.opentelemetry.io/inject-<language>: "otel-system/<language>"`
 
-### 7. **NetFlow → Tenzir** (removed: goflow2)
+### 7. **NetFlow → Tenzir**
 
-- **goflow2 is gone** (SIEM lap C): flow records went to `/dev/null` and
+- The dedicated Tenzir netflow node owns NetFlow natively via its
   the dedicated Tenzir netflow node owns NetFlow natively via its
   `read_netflow` operator behind
   [`tenzir-ingest-lb`](../../04-apps/security/tenzir/nodes/netflow/service-ingest.yaml)

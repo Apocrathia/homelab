@@ -1,8 +1,8 @@
-// authentik events → OCSF, CH-direct (phase 2, stateless):
+// authentik events → OCSF, CH-direct, stateless:
 // the fork { import } lake leg is gone. In-stream attestation stamps
 // records inside a 60s window, upstream of direct to_clickhouse INSERT.
 // The fork_merge enrichment gate (Authentication / Account Change vs
-// Base Event) is unchanged — it splits the enrichment path, then both
+// Base Event) is unchanged; it splits the enrichment path, then both
 // legs rejoin into the same bus+CH split.
 subscribe "authentik.raw"
 homelab::authentik::ocsf::map

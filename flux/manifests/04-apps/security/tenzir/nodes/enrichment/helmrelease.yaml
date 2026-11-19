@@ -30,11 +30,10 @@ spec:
   values:
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
-    # "tenzir-node" — release tenzir-node-enrichment + entry enrichment
+    # "tenzir-node": release tenzir-node-enrichment + entry enrichment
     # would double to tenzir-node-enrichment-enrichment. The override pins
     # fullname at tenzir-node so the entry renders
-    # tenzir-node-enrichment (pod, Service; verified by helm template
-    # against chart 0.1.0).
+    # tenzir-node-enrichment (pod, Service).
     fullnameOverride: tenzir-node
     # No Kubernetes API access from the node: its entire surface is
     # user-space I/O (OTLP/UDP/HTTP ingest, outbound dials to
@@ -66,7 +65,7 @@ spec:
     # field added by the operator; the platform node is already
     # registered). Platform tokens are per-node, never shared.
     #
-    # Still no listeners: the node is a pure outbound puller — no
+    # Still no listeners: the node is a pure outbound puller; no
     # extraPorts (the chart-rendered main Service on :5158 carries node
     # RPC only), no web server (no certificate.yaml). Lap 2 (the
     # fleet-assets-pull factory pipeline) added the first
@@ -77,7 +76,7 @@ spec:
           existingSecret: tenzir-secrets
           key: enrichment-node-token
 
-    # Stateless: the enrichment node is a pure outbound puller — every
+    # Stateless: the enrichment node is a pure outbound puller; every
     # pipeline writes directly to ClickHouse, no local lake, no archive
     # rule. The fleet-assets-pull factory pipeline's only
     # sink is to_clickhouse (ocsf.fleet_assets); the node lake stays
@@ -101,7 +100,7 @@ spec:
           # nothing to server.log, so future factory-pipeline failures
           # that point at the log for their diagnostics would surface
           # blind. server.log opens at /var/log/tenzir on every boot,
-          # which readOnlyRootFilesystem makes unwritable — the
+          # which readOnlyRootFilesystem makes unwritable; the
           # tenzir-logs emptyDir (extraVolumes below) backs the path;
           # keep the key/mount pair together on any new node.
           file-verbosity: warning
@@ -112,24 +111,24 @@ spec:
             fleet-assets-pull:
               name: fleet assets pull
               description: |
-                Lap-2 factory pipeline: pulls the Fleet host inventory
+                Factory pipeline: pulls the Fleet host inventory
                 (GET /api/v1/fleet/hosts, no pagination params = full
                 host list per Fleet's ListOptions per_page=0-means-
-                unlimited) every 1h — the first run fires at pipeline
-                start — with the fleetdm-token Bearer header, projects
+                unlimited) every 1h; the first run fires at pipeline
+                start; with the fleetdm-token Bearer header, projects
                 each host to a stable asset row (uuid identity,
                 primary_ip, hostname, os, hardware, last_seen), and
                 appends into ocsf.fleet_assets on the ClickHouse query
                 store. Never-checked-in hosts (Fleet's Go zero-time
                 seen_time, e.g. MDM-only placeholders) drop before the
-                write — their timestamp would fall outside the
+                write; their timestamp would fall outside the
                 DateTime64(9) range. to_clickhouse mode="append" fails
                 loudly while the CHI startup-script DDL is missing (the
                 second net for the Keeper first-boot race); the
                 enrichment node is the SINGLE WRITER of that table (the
                 core node only reads it via its own
                 fleet-assets-loader). The pull pipeline writes nothing
-                to this node's lake — ClickHouse is the only sink.
+                to this node's lake; ClickHouse is the only sink.
               definition: ""
               restart-on-error: 1 minute
             error-diagnostics-to-mimir:
@@ -139,7 +138,7 @@ spec:
                 sample (value 1, pipeline labels, node label = enrichment) to Mimir
                 for every live error / warning diagnostic, so the dashboard can
                 count both severities with sum_over_time. They otherwise live
-                only in the diagnostics stream, not in metrics. The per-node B1 shape
+                only in the diagnostics stream, not in metrics. The per-node shape
                 every node ships since the central poller's retirement; this
                 node never had a native pair.
               definition: ""
@@ -148,32 +147,29 @@ spec:
               name: diagnostics to loki
               description: |
                 Ships every live, not-hidden pipeline diagnostic to Loki as
-                job=tenzir-diagnostics entries (node label = enrichment) — the
+                job=tenzir-diagnostics entries (node label = enrichment); the
                 factory lane's own diagnostics (a failed Fleet pull or a failed
                 ClickHouse write) become filterable log lines.
                 to_fluent_bit resolves $pipeline_name and $severity per event
-                and consumes both out of the shipped body (live-verified
-                2026-10-17 probe); drop discards the ANSI escape-coded
-                rendered field, so the line keeps the rest of the diagnostic
-                record — pipeline_id, hidden, run, timestamp, message, notes,
-                annotations — and the labels carry pipeline + severity. Hidden
+                and consumes both out of the shipped body (probe); drop discards the ANSI
+                escape-coded rendered field, so the line keeps the rest of the diagnostic
+                record: pipeline_id, hidden, run, timestamp, message, notes,
+                annotations; and the labels carry pipeline + severity. Hidden
                 entries (platform-UI pipeline deprecation noise) stay out.
                 Plain HTTP to loki-write, cluster-internal. live=true without
                 retro: no store-backlog replay on start, so restarts never
-                re-ship history (Loki has no dedup) — the per-node
-                B1 shape every node ships since the central poller's
+                re-ship history (Loki has no dedup); restored per-node
+                shape every node ships since the central poller's
                 retirement; this node never had a native pair (the poller
                 shipped its diagnostics until now).
               definition: ""
               restart-on-error: 1 minute
 
-    # Sized with the docs' size-a-node formula. Lap 2 re-sized it with
-    # the factory pipeline live: one batch source (hourly from_http of a
-    # 5-host inventory) and one ClickHouse destination is far below the
-    # formula's max(2, ·) floor, so 2 cores / 2 Gi stand (the lap-1
-    # zero-volume shape unchanged; the lake still stays empty — the
-    # pull's only sink is ClickHouse). Requests stay small: limits are
-    # caps, not reservations.
+    # Sized with the docs' size-a-node formula: one batch source (hourly
+    # from_http of a 5-host inventory) and one ClickHouse destination is
+    # far below the formula's max(2, ·) floor, so 2 cores / 2 Gi (the
+    # lake stays empty; the pull's only sink is ClickHouse). Requests
+    # stay small: limits are caps, not reservations.
     resources:
       requests:
         cpu: 100m
@@ -187,12 +183,9 @@ spec:
     # to kebab config key, same convention as the siblings):
     #   TENZIR_SECRETS__FLEETDM_TOKEN        -> secret("fleetdm-token")
     #     The FleetDM API bearer token (fleet-assets-pull's Authorization
-    #     header). Operator action item: mint an API-only Fleet user
-    #     token and stage it as the fleetdm-token field on the
-    #     tenzir-secrets 1Password item — the field does NOT exist in
-    #     the vault yet (verified read-only via op, field-label list
-    #     only, 2026-10-19; neither fleet-token nor fleetdm-token was
-    #     present); git only names the field, same lap-1 pattern as the
+    #     header). Operator action item: mint an API-only Fleet user token
+    #     and stage it as the fleetdm-token field on the tenzir-secrets
+    #     1Password item; git only names the field, same pattern as the
     #     node tokens.
     #   TENZIR_SECRETS__CLICKHOUSE_PASSWORD  -> secret("clickhouse-password")
     #     The `tenzir` ClickHouse writer user's password
@@ -213,8 +206,7 @@ spec:
     extraVolumes:
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
-      # readOnlyRootFilesystem makes unwritable — the 2026-10-17
-      # crashloop on the warning-level siblings. emptyDir, same
+      # readOnlyRootFilesystem makes unwritable. emptyDir, same
       # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
       # disk cost.
       - name: tenzir-logs

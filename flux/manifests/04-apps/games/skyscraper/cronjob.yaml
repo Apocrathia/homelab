@@ -16,9 +16,9 @@ spec:
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
-      # Don't retry full-library scrapes — ScreenScraper quota + multi-hour burn.
+      # Don't retry full-library scrapes: ScreenScraper quota + multi-hour burn.
       backoffLimit: 0
-      # Gamelist/metadata only — still rate-limited by ScreenScraper
+      # Gamelist/metadata only: still rate-limited by ScreenScraper
       activeDeadlineSeconds: 172800
       template:
         spec:

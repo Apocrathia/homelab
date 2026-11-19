@@ -1,23 +1,23 @@
-# WebAuthn MFA for the default authentication flow — HCL half of the
+# WebAuthn MFA for the default authentication flow. HCL half of the
 # canonical file pair.
 #
 # Pair contract: crossplane.yaml carries the Crossplane objects
 # (ProviderConfig + Workspace); authentik.tf is the single source of truth
-# for the HCL. kustomization.yaml stitches them at build time —
+# for the HCL. kustomization.yaml stitches them at build time:
 # configMapGenerator packages this file and the replacements rule copies
 # its bytes into spec.forProvider.module (source: Inline, module: ""
 # placeholder), so the rendered module stays byte-identical to this file.
 # Never render this directory outside kustomize.
 #
-# UNIT (retired blueprints/webauthn-mfa.yaml): partial updates of the three
-# UPSTREAM-SHIPPED default stages that gate every login — the WebAuthn
+# UNIT: partial updates of the three
+# UPSTREAM-SHIPPED default stages that gate every login: the WebAuthn
 # setup stage (roaming + platform + passkey-manager authenticators), the
 # MFA validation stage (WebAuthn primary, static recovery codes fallback),
 # and the login identification stage (passkey autofill from the username
 # field). All three are LIVE upstream stages, never tofu-created: this
 # workspace ADOPTS them via gated imports, no cleanup companion (the
-# retired blueprint ConfigMap prunes away and the live stages survive for
-# this workspace to take over). Never fresh-create — a create would fork
+# blueprint CM prunes away and the live stages survive for
+# this workspace to take over). Never fresh-create: a create would fork
 # the default login flow's stage set and break every login.
 #
 # TF MODELS FULL ATTRIBUTES: blueprint updates were PARTIAL (unlisted
@@ -25,20 +25,19 @@
 # provider's Read writes into state is either declared here
 # live-verbatim (friendly_name, configure_flow, case_insensitive_matching)
 # or provably equal to the provider default (omitted, commented inline).
-# Any field where live != TF default MUST stay declared — an omitted
+# Any field where live != TF default MUST stay declared: an omitted
 # non-default value plans a wipe on the first diff, and a bad apply here
 # locks every user out of the login flow.
 #
-# THE DENY-SWITCH IS UNSAFE (witnessed 2026-10-20, live DB): active users
-# with NO authenticator — cylentknight, insouciance, ninefoot3 — would be
-# locked out the moment not_configured_action flips to "deny". Enrolled:
-# ianyoung (2), jackalopette (1), fallingkin (1). not_configured_action
-# stays "configure" (live-verbatim) until every active human is enrolled.
+# THE DENY-SWITCH IS UNSAFE: active users with no authenticator would be
+# locked out the moment not_configured_action flips to "deny".
+# not_configured_action stays "configure" (live-verbatim) until every
+# active human is enrolled.
 #
-# GATE (recipe §8): the merge-gate varmap carries adoption:true + the three
-# stage uuids ONCE. Witness ids are GATE-TIME ONLY — NEVER in git; if the
+# GATE: the merge-gate varmap carries adoption:true + the three
+# stage uuids ONCE. Witness ids are GATE-TIME ONLY; NEVER in git; if the
 # state Secret is ever lost, re-run the gate with fresh ids from the live
-# DB. Stages import by stage_uuid (authentik_flows_stage pk — the uuid
+# DB. Stages import by stage_uuid (authentik_flows_stage pk: the uuid
 # column IS the primary key; tofu provider 2026.8.0 SetId(res.Pk)).
 
 terraform {
@@ -51,11 +50,11 @@ terraform {
 
   # PARTIAL backend (the module's versions.tf shape): the per-app args
   # (secret_suffix/namespace/in_cluster_config) come from the ProviderConfig
-  # spec.backendFile — the provider writes them to crossplane.remote.tfbackend
+  # spec.backendFile: the provider writes them to crossplane.remote.tfbackend
   # and passes them via -backend-config at tofu init. The empty block MUST
   # stay: -backend-config without a backend block falls back to the LOCAL
   # backend (warning only), which reads an EMPTY state and plans a full
-  # duplicate create set — the adopt-only bar dies right there.
+  # duplicate create set: the adopt-only bar dies right there.
   backend "kubernetes" {}
 }
 
@@ -76,7 +75,7 @@ data "authentik_flow" "webauthn-setup-configure-flow" {
 }
 
 # Static recovery-code setup stage (upstream-shipped): the validate stage's
-# fallback configuration target. Looked up by name — never created here.
+# fallback configuration target. Looked up by name; never created here.
 data "authentik_stage" "static_setup" {
   name = "default-authenticator-static-setup"
 }
@@ -84,7 +83,7 @@ data "authentik_stage" "static_setup" {
 # Upstream WebAuthn setup stage, tuned for discoverable credentials
 # (passkeys storable in 1Password, autofill-primary) and both roaming and
 # platform authenticators. friendly_name + configure_flow are
-# live-verbatim (live row values that differ from the TF schema defaults —
+# live-verbatim (live row values that differ from the TF schema defaults:
 # omitted they would plan a wipe). max_attempts (live 0),
 # authenticator_attachment (live NULL) and device_type_restrictions (live
 # []) are omitted: state matches the config zero values, live == omitted.
@@ -92,7 +91,7 @@ resource "authentik_stage_authenticator_webauthn" "setup" {
   name = "default-authenticator-webauthn-setup"
 
   # Live-verbatim: the live row carries the upstream default display name,
-  # the TF schema default is "" — omitting plans a wipe.
+  # the TF schema default is "": omitting plans a wipe.
   friendly_name = "WebAuthn device"
 
   # Live-verbatim: the live row points at the upstream setup flow; the TF
@@ -113,7 +112,7 @@ resource "authentik_stage_authenticator_webauthn" "setup" {
 # Upstream MFA validation stage, bound to default-authentication-flow at
 # order 30. Gate login on WebAuthn, static recovery codes as fallback;
 # users without any authenticator are prompted to enroll on first login
-# (configure — the deny-switch stays unsafe, header note). Omitted fields
+# (configure: the deny-switch stays unsafe, header note). Omitted fields
 # all match the TF schema defaults field-for-field: last_auth_threshold
 # (live seconds=0 == default), the four otp throttling factors (live 1 ==
 # default 1), webauthn_hints (live []).
@@ -136,11 +135,11 @@ resource "authentik_stage_authenticator_validate" "mfa_validation" {
 }
 
 # Upstream login identification stage: passkey autofill offered directly
-# from the username field. user_fields restates the live value — the API
+# from the username field. user_fields restates the live value: the API
 # rejects partial updates that omit it ("at least one source must be
 # selected"), so the field is load-bearing in both worlds.
 # case_insensitive_matching is live-verbatim (live true, TF field has NO
-# default — omitting plans a wipe to false). Omitted fields match live ==
+# default: omitting plans a wipe to false). Omitted fields match live ==
 # TF defaults: show_matched_user (t), pretend_user_exists (t),
 # show_source_labels (f), enable_remember_me (f); password_stage,
 # captcha_stage, sources, enrollment/recovery/passwordless flows are all
@@ -159,30 +158,30 @@ resource "authentik_stage_identification" "login" {
 }
 
 # ---------------------------------------------------------------------------
-# ADOPTION VARIABLES — the generated-id import gate. Defaults (adoption
+# ADOPTION VARIABLES: the generated-id import gate. Defaults (adoption
 # false, ids empty) validate clean and leave the import blocks below
-# inert. The ONLY setter is the merge-gate varmap (MR body, recipe §8):
+# inert. The ONLY setter is the merge-gate varmap:
 # injected into the Workspace once, cleared after the adoption apply.
 # The ids themselves NEVER appear in git.
 # ---------------------------------------------------------------------------
 variable "adoption" {
-  description = "Merge-gate switch: adopt the live upstream default stages into tofu state (MR recipe §8; default off)."
+  description = "Merge-gate switch: adopt the live upstream default stages into tofu state (default off)."
   type        = bool
   default     = false
 
-  # Gate 1: adoption=true with any id empty is a miswire — abort loudly.
+  # Gate 1: adoption=true with any id empty is a miswire: abort loudly.
   # An empty id means tofu silently skips that import and plans a
-  # duplicate create — the jetkvm blink.
+  # duplicate create: the jetkvm blink.
   validation {
     condition = !var.adoption || (
       var.import_stage_webauthn_setup_uuid != "" &&
       var.import_stage_mfa_validation_uuid != "" &&
       var.import_stage_identification_uuid != ""
     )
-    error_message = "ADOPTION GATE: adoption=true requires import_stage_webauthn_setup_uuid, import_stage_mfa_validation_uuid and import_stage_identification_uuid (witness ids from the gate varmap — gate-time only, never in git). An empty id means tofu silently skips the import and plans a duplicate create."
+    error_message = "ADOPTION GATE: adoption=true requires import_stage_webauthn_setup_uuid, import_stage_mfa_validation_uuid and import_stage_identification_uuid (witness ids from the gate varmap: gate-time only, never in git). An empty id means tofu silently skips the import and plans a duplicate create."
   }
 
-  # Gate 2: witness ids set without adoption=true is a miswire — abort
+  # Gate 2: witness ids set without adoption=true is a miswire: abort
   # loudly (a stray varmap must never half-arm the imports).
   validation {
     condition = var.adoption || (
@@ -190,7 +189,7 @@ variable "adoption" {
       var.import_stage_mfa_validation_uuid == "" &&
       var.import_stage_identification_uuid == ""
     )
-    error_message = "ADOPTION GATE: import ids set with adoption=false is a miswire — clear the ids or set adoption=true."
+    error_message = "ADOPTION GATE: import ids set with adoption=false is a miswire: clear the ids or set adoption=true."
   }
 }
 
@@ -214,7 +213,7 @@ variable "import_stage_identification_uuid" {
 
 # ---------------------------------------------------------------------------
 # ADOPTION IMPORTS. All three stage uuids are GENERATED, so they ride the
-# adoption variables above: for_each-gated (the jetkvm rule — plain
+# adoption variables above: for_each-gated (the jetkvm rule: plain
 # variable-id imports blink: tofu silently skips an empty-id import and
 # plans a duplicate create; count is rejected on import blocks). Default
 # off (toset([])), armed once at the merge gate by the witness varmap and

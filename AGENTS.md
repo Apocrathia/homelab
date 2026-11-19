@@ -91,6 +91,10 @@ terse, humor OK, **profanity encouraged**).
   entry classes and validation rules R1–R6
   ([`ontology-framework.md`](./.agents/rules/ontology-framework.md))
 
+- De-slop all prose: humanizer + ADHD output shape, always on
+  ([`humanizer.md`](./.agents/rules/humanizer.md),
+  [`i-have-adhd.md`](./.agents/rules/i-have-adhd.md))
+
 ## Routing
 
 Start at [`.agents/context/README.md`](./.agents/context/README.md). Skip detail:

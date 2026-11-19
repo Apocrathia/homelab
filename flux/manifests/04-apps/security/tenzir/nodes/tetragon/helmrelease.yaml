@@ -30,7 +30,7 @@ spec:
   values:
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
-    # "tenzir-node" — release tenzir-node-tetragon + entry tetragon would
+    # "tenzir-node": release tenzir-node-tetragon + entry tetragon would
     # double to tenzir-node-tetragon-tetragon. The override pins fullname
     # at tenzir-node so the entry renders tenzir-node-tetragon.
     fullnameOverride: tenzir-node
@@ -71,7 +71,7 @@ spec:
           - name: otlp-http
             containerPort: 4318
 
-    # Stateless (lap 2a-2): the write path is the direct leg, so the
+    # Stateless: the write path is the direct leg, so the
     # lake is gone with the compaction rule; nothing worth a volume
     # remains on the node. enabled false is load-bearing (the chart
     # default is a 10Gi PVC); the state volume renders as an emptyDir
@@ -96,11 +96,11 @@ spec:
           # accept_otlp listener stays in-process by design.
           pipeline-subprocesses: true
           # Partition mint-rate control, same 60s as the core: this node
-          # owns the flood that minted ~10-event partitions (50,747
-          # process_activity partitions = 6.25GiB = 80% of the volume at
-          # the 2026-10-12 ENOSPC); 60s cuts the mint rate 6x, and the
-          # async background merge consolidates undersized partitions once
-          # the node stays up. max-partition-size stays default.
+          # owns the flood class that mints ~10-event partitions (the
+          # 50,747-partition ENOSPC came from here); 60s cuts the mint rate
+          # 6x, and the async background merge consolidates undersized
+          # partitions once the node stays up. max-partition-size stays
+          # default.
           active-partition-timeout: 60s
           # Catalog load knobs, same shape as the core node: lazy-sketches
           # defers Bloom-filter sketches to query time in a memory-bounded
@@ -111,12 +111,12 @@ spec:
             lazy-sketches: true
             load-concurrency: 4
           # Lap 2a-2: the start disk-budget corridor and the compaction
-          # space budgets died with the lake — an emptyDir state volume
+          # space budgets died with the lake; an emptyDir state volume
           # with no imports keeps the catalog empty by construction.
           # Node-resident enrichment state (contexts are per-node, shared
           # across this node's pipelines, and survive pipeline restarts;
           # creation arguments apply only at creation, so this block never
-          # reconfigures an existing context — the geo-open-loader pipeline
+          # reconfigures an existing context; the geo-open-loader pipeline
           # is the refresh path). The geoip context is created empty at
           # boot and filled by context_load of CIRCL's free Geo Open
           # country+ASN MMDB (~80 MiB in node memory, trivial against the
@@ -129,11 +129,11 @@ spec:
             # tetragon-ocsf direct leg's windowed attest + the
             # tetragon-attest-verify pipeline): one lookup-table entry
             # (key = the node identity constant tenzir-node-tetragon)
-            # holding the per-node chain's cross-window tail — the
+            # holding the per-node chain's cross-window tail; the
             # previous 60s window's last record uid, type_uid, and
             # fingerprint, which the next window's first record links
             # to as prev_event (the batch seam; the intra-window links
-            # ride the attest operator's internal lag — probed: context
+            # ride the attest operator's internal lag: context
             # reads run engine-batches ahead of the writes at batch
             # rate, so the context is the seam channel only, never the
             # intra-batch channel; the archive rule used compaction
@@ -144,7 +144,7 @@ spec:
             # restart loses it, and the next window's first record
             # restarts the chain with prev_event absent plus one
             # WARNING diagnostic from attest (the epoch marker;
-            # best-effort per node lifetime — the verify lane's
+            # best-effort per node lifetime; the verify lane's
             # per-record fingerprint recompute still catches post-hoc
             # mutation across restarts, only the linkage gap around a
             # restart is lost, documented in the datalake README).
@@ -167,21 +167,18 @@ spec:
               description: |
                 tetragon export events -> OCSF (Process/File/Network
                 Activity per event kind), then derive + schema-validate and
-                write to ClickHouse directly (phase 2, lap 2a-1: the
-                lake-mediated fork { import } leg is gone; the
-                record_integrity attestation that lived in the archive
-                rule now stamps in-stream inside a bounded 60s
-                event-time window, upstream of the INSERT — the
-                compaction rule died with the lake (lap 2a-2), the
-                direct leg is the only write path and it is
-                production-proven: 20h zero-restart at flood rate, 100%
-                attest coverage, zero tamper findings).
+                write to ClickHouse directly (the lake-mediated
+                fork { import } leg is gone; the record_integrity
+                attestation that lived in the archive rule now stamps
+                in-stream inside a bounded 60s event-time window,
+                upstream of the INSERT; the compaction rule died with
+                the lake, the direct leg is the only write path.
                 Enrichment runs after the cast and before the
                 direct/publish legs, so ClickHouse and the node-local
                 ocsf bus both see the enriched record:
-                Network Activity — the only class whose events carry IP
+                Network Activity, the only class whose events carry IP
                 endpoints (the process/file arms map process identity and
-                file paths, no IPs; grounded in the tetragon map) — gains
+                file paths, no IPs; grounded in the tetragon map), gains
                 geo country + ASN from the node-resident geo-open context
                 (filled by geo-open-loader) and a reverse-DNS hostname
                 from dns_lookup's TTL cache, mapped into OCSF endpoint
@@ -192,7 +189,7 @@ spec:
                 the operators unconditionally, because a null-key
                 context_enrich still writes its into-field and would grow
                 src_endpoint shells on process/file events (probed on
-                v6.19.1). Private addresses stay bare — Geo Open marks them
+                v6.19.1). Private addresses stay bare; Geo Open marks them
                 not routed and the gated assignments filter those markers.
                 The unmapped residue is a selected projection (pod
                 identity + policy name), not the full raw record. No raw
@@ -206,7 +203,7 @@ spec:
                 Builder pipeline for the geo-open geoip context (declared
                 in the contexts block above): fetches CIRCL's free Geo
                 Open country+ASN MMDB and atomically replaces the context
-                state — the two-pipeline builder/consumer shape from the
+                state: the two-pipeline builder/consumer shape from the
                 vendored add-enrichment-contexts tutorial. Geo Open over
                 GeoLite2 on purpose: MaxMind needs a license account plus
                 out-of-band download plumbing (tar.gz extract,
@@ -218,7 +215,7 @@ spec:
                 parser, so read_all wraps the ~80 MiB download into one
                 event and write_all unwraps it to the byte stream
                 context_load consumes. context_load replaces the whole
-                state, so a failed fetch never half-updates — the context
+                state, so a failed fetch never half-updates; the context
                 keeps serving the last good database and restart-on-error
                 retries in a minute. every 24h fires its first run at
                 pipeline start (fresh node: context filled seconds after
@@ -238,7 +235,7 @@ spec:
                 ingress/egress event counts, emitted every 10s) to the Mimir
                 remote-write endpoint kube-prometheus-stack remote-writes to;
                 the mimir gateway injects the tenant header, so no auth here.
-                Raw shape, not shape="prometheus" — that transform drops all
+                Raw shape, not shape="prometheus"; that transform drops all
                 non-health schemas, pipeline metrics included. Grafana reads
                 the tenzir_pipeline_{ingress,egress}_events series; note this
                 pipeline (and its siblings) also self-report in those series.
@@ -246,8 +243,8 @@ spec:
                 internal flag (ingress.internal / egress.internal), so
                 bus-internal flow (publish, import, subscribe) is separable
                 from external export in the series; the node label pins the
-                pushing node — pipeline_ids are not node-qualified
-                (live-verified 2026-10-17: the vendored docs'
+                pushing node; pipeline_ids are not node-qualified
+                (the vendored docs'
                 demo-node/m57-suricata example applies to platform pipelines,
                 not node-config pipelines), and without it the same-named
                 self-reports from this node and the siblings collide on one
@@ -262,25 +259,25 @@ spec:
                 Verification half of this node's record_integrity lane:
                 reads the last 90 minutes of every tetragon ocsf class
                 back (Process Activity, File System Activity, Network
-                Activity via table-mode from_clickhouse — the vendor
-                catch-all reconstruction — merged into one stream,
+                Activity via table-mode from_clickhouse; the vendor
+                catch-all reconstruction; merged into one stream,
                 because the per-node chain crosses classes),
                 recomputes each attestation's fingerprint over the
                 canonical serialization, and walks the per-node
                 prev_event chain (chain_uid = tenzir-node-tetragon); a
-                Detection Finding (2004) drops for every break —
+                Detection Finding (2004) drops for every break:
                 content tamper (fingerprint_mismatch), deletion
-                (chain_link_mismatch), or splice — while the windowed
+                (chain_link_mismatch), or splice; while the windowed
                 walk tolerates its own edge (the first record's
                 predecessor lives outside the 90m read). The 24h ->
-                90m shrink (lap 2a-1): the walk sorts in memory, the
+                90m shrink: the walk sorts in memory, the
                 GA-bump live rate is ~770 ev/s (the 24h window was
                 sized at ~74), and 24h at 770 ev/s is ~66.5M rows of
-                ~1KB/row catch-all round-trip — 5.5x over the 12Gi
+                ~1KB/row catch-all round-trip: 5.5x over the 12Gi
                 limit, the walker's exit-137 OOM churn; 90m is ~4.2M
                 rows ~ 4.2GB, ~3x headroom, and overlaps the 1h walk
                 cadence by 30m so every record gets 1-2 covering
-                walks — an exact-cadence 60m window would tile with
+                walks; an exact-cadence 60m window would tile with
                 zero overlap and permanently strand the ~90s of
                 post-snapshot late writes at each boundary. The
                 walk is SCHEDULED hourly (the every wrapper, the
@@ -289,7 +286,7 @@ spec:
                 window. Each break's finding rides two legs: stdout
                 (pod-log visibility) and, via ocsf_derive + ocsf_cast,
                 an INSERT into ocsf.Detection_Finding with the tenzir
-                user — landing inside the Grafana tenzir-findings
+                user; landing inside the Grafana tenzir-findings
                 rule's WHERE clauses (class 2004, severity 4), so
                 tamper evidence pages through the agent_invoke bridge
                 instead of waiting for a human to read pod logs. The
@@ -308,7 +305,7 @@ spec:
                 sample (value 1, pipeline labels, node label = tetragon) to Mimir
                 for every live error / warning diagnostic, so the dashboard can
                 count both severities with sum_over_time. They otherwise live
-                only in the diagnostics stream, not in metrics. Restored per-node (B1)
+                only in the diagnostics stream, not in metrics. Restored per-node
                 with the central poller's retirement.
               definition: ""
               restart-on-error: 1 minute
@@ -316,33 +313,32 @@ spec:
               name: diagnostics to loki
               description: |
                 Ships every live, not-hidden pipeline diagnostic to Loki as
-                job=tenzir-diagnostics entries (node label = tetragon) — the
+                job=tenzir-diagnostics entries (node label = tetragon); the
                 flood isolate's parse warnings (UNCLOSED_STRING and friends)
                 become filterable log lines.
                 to_fluent_bit resolves $pipeline_name and $severity per event
-                and consumes both out of the shipped body (live-verified
-                2026-10-17 probe); drop discards the ANSI escape-coded
-                rendered field, so the line keeps the rest of the diagnostic
-                record — pipeline_id, hidden, run, timestamp, message, notes,
-                annotations — and the labels carry pipeline + severity. Hidden
+                and consumes both out of the shipped body (probe); drop discards the ANSI
+                escape-coded rendered field, so the line keeps the rest of the diagnostic
+                record: pipeline_id, hidden, run, timestamp, message, notes,
+                annotations; and the labels carry pipeline + severity. Hidden
                 entries (platform-UI pipeline deprecation noise) stay out.
                 Plain HTTP to loki-write, cluster-internal. live=true without
                 retro: no store-backlog replay on start, so restarts never
-                re-ship history (Loki has no dedup) — restored per-node (B1)
+                re-ship history (Loki has no dedup); restored per-node
                 with the central poller's retirement: every node ships its own
                 pair now, so no cross-node consumer can ever blind against it.
               definition: ""
               restart-on-error: 1 minute
 
-    # Lap 2a-2: the compaction plugin is gone with the lake — the
-    # direct leg (tetragon-ocsf) is the only write path, and unmapped
-    # export kinds drop at its class gate upstream, so nothing remains
-    # for a compaction rule to archive or expire.
+    # The compaction plugin is off: the direct leg (tetragon-ocsf) is the
+    # only write path, and unmapped export kinds drop at its class gate
+    # upstream, so nothing remains for a compaction rule to archive or
+    # expire.
 
-    # OOM armor: 12Gi is the live-verified working set of the flood
-    # (12.1Gi at the ceiling on the combined node); 4 cores = 4x the
-    # throttled drain rate that caused backpressure memory growth at the
-    # 1-core limit. Requests small: talos-04 CPU requests are 92% committed.
+    # OOM armor: 12Gi is the measured working set of the flood (12.1Gi at
+    # the ceiling on the combined node); 4 cores = 4x the 1-core drain
+    # rate that turns flood backpressure into memory growth. Requests
+    # small: talos-04 CPU requests are 92% committed.
     resources:
       requests:
         cpu: 200m
@@ -356,11 +352,9 @@ spec:
     # namespace materializes its OnePasswordItem in ../secret.yaml):
     # the env var maps to config key tenzir.secrets.clickhouse-password,
     # so the to_clickhouse archive leg reads it as
-    # secret("clickhouse-password") — kebab name, same env-var shape as
-    # the core node's authentik token. The retired to_s3 tail's rustfs
-    # AWS_* env entries are gone with the MR-5 teardown; the aws-* fields
-    # stay on the tenzir-secrets item, unused, for the operator to
-    # delete.
+    # secret("clickhouse-password"): kebab name, same env-var shape as
+    # the core node's authentik token. The aws-* fields stay on the
+    # tenzir-secrets item, unused, for the operator to delete.
     extraEnv:
       - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
         valueFrom:
@@ -399,16 +393,16 @@ spec:
           name: tenzir-packages-homelab-record-integrity-verify
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
-      # readOnlyRootFilesystem made unwritable — the 2026-10-17
-      # crashloop. emptyDir, same lifecycle as the tmp mount; the 10 MiB
-      # rotation cap bounds the disk cost.
+      # readOnlyRootFilesystem made unwritable. emptyDir, same
+      # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
+      # disk cost.
       - name: tenzir-logs
         emptyDir: {}
 
     extraVolumeMounts:
       # Same file-level subPath mounts as the core node (kubelet ..data
       # internals fail Tenzir's operator-path segment check in a walked package
-      # tree). subPath does not live-propagate ConfigMap updates — package
+      # tree). subPath does not live-propagate ConfigMap updates; package
       # changes need a pod roll.
       - name: packages-homelab
         mountPath: /etc/tenzir/packages/homelab/package.yaml

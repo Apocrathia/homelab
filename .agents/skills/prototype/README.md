@@ -1,4 +1,4 @@
-# `prototype` — throwaway design probes (skill)
+# `prototype`: throwaway design probes (skill)
 
 `SKILL.md` defines building a throwaway prototype to answer one design
 question, then branching: `LOGIC.md` for a tiny interactive terminal app that

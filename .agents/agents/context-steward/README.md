@@ -1,4 +1,4 @@
-# `context-steward` — context drift detector (persona)
+# `context-steward`: context drift detector (persona)
 
 `agent.md` charters a read-only sub-agent that detects agent-context drift
 after renames, doc moves, or new modules. It runs the detect steps of the

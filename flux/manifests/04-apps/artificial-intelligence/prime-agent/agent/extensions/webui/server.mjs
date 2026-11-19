@@ -1,14 +1,14 @@
 /**
- * prime-webui collector server — standalone process, owns the public port.
+ * prime-webui collector server, standalone process, owns the public port.
  * Spawned/adopted by agent beacons; survives agents. Run: node server.mjs
- * (plain ESM — portable to any node runtime, incl. the cluster box).
+ * (plain ESM, portable to any node runtime, incl. the cluster box).
  *
  * Public (config host/port): dashboard, conversation index, SSE per live
  * session, send/abort proxied to that agent's beacon.
  * Internal (127.0.0.1, internalPort = port+1 unless overridden): beacon
  * register/heartbeat/event/unregister. Loopback only; token-guarded.
  *
- * Design: dark minimal terminal — #111 canvas, greys, hairlines, one lime
+ * Design: dark minimal terminal, #111 canvas, greys, hairlines, one lime
  * accent for the live role, system mono, square corners, no shadows.
  */
 import * as http from "node:http";
@@ -27,13 +27,13 @@ try { cfg = JSON.parse(fs.readFileSync(path.join(HERE, "config.json"), "utf-8"))
 const HOST = process.env.PRIME_WEBUI_HOST ?? cfg.host ?? "127.0.0.1";
 const PORT = parseInt(process.env.PRIME_WEBUI_PORT ?? String(cfg.port ?? 8788), 10);
 const IPORT = parseInt(process.env.PRIME_WEBUI_INTERNAL_PORT ?? String(PORT + 1), 10);
-// token resolution (identical chain to the beacon index.ts — keep both in
+// token resolution (identical chain to the beacon index.ts, keep both in
 // sync): env -> config.json -> token file -> generate + persist. Resolving
 // the same config + file on both sides is what lets beacon and collector
 // share a token in any deployment shape (local, k8s Secret at webui-token,
 // env-injected) with zero hand-maintenance. Config-before-file is the
 // operator's discord-parity directive (2026-09-24: "both token source, both
-// config") — a token pinned in config.json outranks a stale Secret-mount
+// config"), a token pinned in config.json outranks a stale Secret-mount
 // file. Never logged (only the source is).
 const TOKEN_FILE = process.env.PRIME_WEBUI_TOKEN_FILE ?? path.join(HERE, "webui-token");
 function resolveToken() {
@@ -63,7 +63,7 @@ const ARTIFACTS_DIR = (process.env.PRIME_WEBUI_ARTIFACTS
 const TRUSTED_CIDRS = cfg.trustedCidrs ?? ["127.0.0.0/8"];
 const PRUNE_SECS = parseInt(process.env.PRIME_WEBUI_PRUNE_SECS ?? "30", 10);
 // row-state slice: staleness threshold for a "running"/"idle" ledger row whose
-// beacon is absent — display truth only (38-corpus/39-forensics: 13/18
+// beacon is absent, display truth only (38-corpus/39-forensics: 13/18
 // "running" children were 46-64h crash-era corpses). Env-tunable for tests.
 const STALE_MS = (parseFloat(process.env.PRIME_WEBUI_STALE_HOURS ?? "") || 24) * 3600000;
 
@@ -71,17 +71,17 @@ const STALE_MS = (parseFloat(process.env.PRIME_WEBUI_STALE_HOURS ?? "") || 24) *
 const beacons = new Map();
 const sseBySession = new Map();
 // gapfix4 (rv4 wedge): session ids whose register was REFUSED by the census
-// (2+ causally-eligible pending spawns — the contested pair) -> the Set of
+// (2+ causally-eligible pending spawns, the contested pair) -> the Set of
 // CONTESTED spawn pids (the eligible set recorded at the refusal). A refused
 // session never links ANY spawn from its own contested set at the census link
-// site — the marking sees PRE-REGISTER rivals (pending spawns), which the
+// site, the marking sees PRE-REGISTER rivals (pending spawns), which the
 // gapfix3 beacons-only scan could not. Never pruned, only grown: a stale entry
 // can only over-refuse into the same safe leak.
 const refusedClaims = new Map();
 
 // the only event names a beacon legitimately forwards (index.ts forward() +
 // the compaction handlers; the dashboard's addEventListener set matches).
-// /internal/event interpolates the name straight into an SSE frame — a name
+// /internal/event interpolates the name straight into an SSE frame, a name
 // outside this set is a forged frame (pentest MED: forged SSE frames proven)
 // and never reaches a subscriber wire.
 const EVENT_NAMES = new Set(["item", "live", "tool", "busy", "queue", "comp"]);
@@ -100,7 +100,7 @@ setInterval(() => {
 // ---------- session file parsing (disk conversations) ----------
 const textOf = (c) =>
   typeof c === "string" ? c : Array.isArray(c) ? c.filter((b) => b?.type === "text").map((b) => b.text).join("\n") : "";
-// G1+G2 (34-entry-census.md §2): the disk compile — custom_message and
+// G1+G2 (34-entry-census.md §2): the disk compile, custom_message and
 // compaction entries carry real conversational content AND chain membership
 // (id/parentId verified on real files), but the type==="message" filter
 // dropped them: agent messages rendered live then VANISHED on refresh
@@ -108,12 +108,12 @@ const textOf = (c) =>
 // with zero feedback. custom_message -> the same "custom" item kind the
 // live path forwards (message_end, role custom). HARNESS-DIGEST
 // PERSISTENCE (operator 2026-09-22, overrides the old TUI-parity skip):
-// harness_digest entries ALSO compile — real ones carry display:false, but
-// they "should not disappear — that is good information to have in the
+// harness_digest entries ALSO compile, real ones carry display:false, but
+// they "should not disappear, that is good information to have in the
 // conversation log", so display must not hide THEM (other display:false
 // kinds stay hidden); disk+snapshot+live must AGREE (no vanish-on-work).
 // Accent/detail-mode respect = the dashboard slice rider. compaction -> the
-// boundary notice ("Compacted — N tokens before" + the Goal-recap summary).
+// boundary notice ("Compacted, N tokens before" + the Goal-recap summary).
 function mapEntry(e) {
   if (e.type === "message" && e.message) return mapMessage(e.message, `${e.id}`);
   if (e.type === "custom_message" && (e.customType === "harness_digest" || e.display !== false))
@@ -150,7 +150,7 @@ function mapMessage(msg, key) {
   }
 }
 // bounded positional reads (ponytail R3, 2026-09-21): the >cap paths read
-// ONLY the needed bytes — the old readFileSync-then-slice loaded the WHOLE
+// ONLY the needed bytes, the old readFileSync-then-slice loaded the WHOLE
 // file first (a 500MB transcript = a 500MB transient string per refresh;
 // the comment named a ceiling the code didn't deliver). New true ceiling:
 // transient memory caps at the chunk (128KB head / 24MB tail) + one open
@@ -192,7 +192,7 @@ function parseSessionFile(p) {
   for (const e of chain) items.push(...mapEntry(e));
   // empty-views fallback (20-probe-edge.md §6): an activity-recap agent_status
   // can end the file with a parentId that is a STATE-NAME string, not an entry
-  // id — the walk from the LAST entry dead-ends with zero message items while
+  // id, the walk from the LAST entry dead-ends with zero message items while
   // the file holds real messages (13/276 real sessions rendered empty). Walk
   // tail candidates whose parentId resolves to a real entry id; keep the
   // deepest viable chain.
@@ -213,7 +213,7 @@ function parseSessionFile(p) {
 // ---------- session metadata cache (TUI-style list info) ----------
 // name, first user message, date, cwd, message count per session file.
 // Full-read enrich once per file, invalidated by mtime+size. ponytail:
-// files > 32MB get head-read only (count omitted) — the transient is capped
+// files > 32MB get head-read only (count omitted), the transient is capped
 // at the 128KB head chunk (readHead), not whole-file memory; upgrade path
 // is a persistent sidecar index.
 const metaCache = new Map();
@@ -332,21 +332,21 @@ function diskSessions() {
 // children of session P: <artifacts-root>/<P>/sub-<childId>/ holding
 // rlm-subagent.json + <child-session-uuid>.jsonl (a regular session file).
 // Depth-2+ children nest the same way INSIDE their parent's own sub dir
-// (<root-uuid>/sub-<id1>/sub-<id2>/... — live-verified 2026-09-20 via the
+// (<root-uuid>/sub-<id1>/sub-<id2>/..., live-verified 2026-09-20 via the
 // 5-layer test chain), and the child kernel-artifacts dirs
 // (<dir>/session-artifacts/<child-uuid>/) are walked too, so every nesting
 // shape is covered at any depth. Symlinked dirs are skipped at the dirent
-// level (never followed — no loops) plus a depth cap as the second guard.
+// level (never followed, no loops) plus a depth cap as the second guard.
 // ponytail: the walk result is CACHED behind a dir-mtime signature
 // (47-performance-bench.md P0#1): the recursive walk cost ~52ms at 500
 // artifact roots and ran on EVERY /api/sessions AND every session view.
 // The sig is one statSync per directory the walk read, checked per
 // request; every walked dir is in the sig (not just the root), so deep
-// changes ARE caught — mtime bubbles one level, the sig covers every
+// changes ARE caught, mtime bubbles one level, the sig covers every
 // level. rlm-subagent.json parsing rides the subCache below (mtimeMs+size
 // keyed, the metaFor precedent). Ceiling: the sig pass is ~1 stat per dir
 // per request (measured ~10ms at 500 roots / ~1400 dirs on the bench Mac
-// vs the ~57ms walk it replaces; still linear in dir count — on network
+// vs the ~57ms walk it replaces; still linear in dir count, on network
 // storage the persistent index sidecar is the real fix) and FILE mtimes
 // are not sigged, so content-only changes (child jsonl append, rlm json
 // status flip) keep the cached rows until the next structural change; live
@@ -381,7 +381,7 @@ function subInfo(p) {
   if (c && c.mtimeMs === st.mtimeMs && c.size === st.size) return c.info;
   let info = {};
   try {
-    // semgrep mass-assignment fix: allow-list, not a blanket assign — the
+    // semgrep mass-assignment fix: allow-list, not a blanket assign, the
     // runtime-written rlm-subagent.json may grow keys; only fields the row
     // consumer reads pass through. New field needed? add it here AND in scanSubs.
     const j = JSON.parse(fs.readFileSync(p, "utf-8"));
@@ -463,7 +463,7 @@ function hierarchy() {
   childIndex.clear();
   // id-cycle guard (20-probe-edge.md §2.8/2.9): a child jsonl named as an
   // ancestor uuid made attach() recurse into itself forever (RangeError ->
-  // 500 on /api/sessions AND every /api/session view — the view path refreshes
+  // 500 on /api/sessions AND every /api/session view, the view path refreshes
   // hierarchy() per request). path = the current walk's ancestors; cycle edges
   // are dropped, so the loop-breaking row renders without the self/ancestor
   // edge and never hangs. path.delete backtracks so shared subtrees (duplicate
@@ -487,10 +487,10 @@ function hierarchy() {
     const row = childIndex.get(id);
     if (row) { row.live = true; if (b.status) row.status = b.status; }
   }
-  // row-state slice: crash-corpse staleness — a "running"/"idle" ledger row with
+  // row-state slice: crash-corpse staleness, a "running"/"idle" ledger row with
   // NO beacon for >STALE_MS renders stale (dimmed + tagged client-side). Live
   // rows are never stale (the beacon IS the liveness proof); deletion stays
-  // manual (the context menu) — this is display truth, not a registry sweep.
+  // manual (the context menu), this is display truth, not a registry sweep.
   const staleNow = Date.now();
   for (const row of childIndex.values()) {
     if (row.live || (row.status !== "running" && row.status !== "idle")) continue;
@@ -515,9 +515,9 @@ function countSubs(children) {
 }
 // 47-bench P0#3 payload diet: children[].file is 22% of every /api/sessions
 // response at 500 artifact roots with ZERO client readers (the client renders
-// name/status/model only — verified by grep). Server-side consumers (view
+// name/status/model only, verified by grep). Server-side consumers (view
 // totals, the stale-beacon ts shim, disk fallback) keep `file` on the
-// childIndex rows — this strips the RESPONSE tree only.
+// childIndex rows, this strips the RESPONSE tree only.
 function childDiet(rows) {
   return (rows ?? []).map((c) => {
     const { file, ledger, updatedAt, size, ...rest } = c; // row-state: ledger + the staleness clock stay server-side (the delete route reads them); search's byte accounting rides with file; stale rides through to the client
@@ -546,7 +546,7 @@ async function beaconFetch(sessionId, subpath, init) {
 // prime-agent rpc children this collector spawned for new webui
 // conversations. stdin is a held-open PIPE (rpc mode reads it; the child
 // dies with the pipe), so handles must stay referenced: Map pid -> child.
-// ponytail: collector death SIGTERMs its spawned agents — webui agents do
+// ponytail: collector death SIGTERMs its spawned agents, webui agents do
 // NOT survive a collector restart; the ceiling is kill-on-shutdown, no
 // adoption/re-attach of orphans; upgrade path is a supervisor step that
 // re-adopts live agents instead of killing them.
@@ -556,7 +556,7 @@ function spawnLog() {
   if (spawnLogFd === null) {
     const p = path.join(HERE, "spawned-agents.log");
     try {
-      // 49-macos-memory spec (a): size rotation — >10MB at open -> .1, ONE
+      // 49-macos-memory spec (a): size rotation, >10MB at open -> .1, ONE
       // generation kept (the deployed log was 427MB). The fd caches for the
       // process lifetime, so the check fires per collector start. ponytail:
       // no mid-run rotation; ceiling ~10MB live + one 10MB .1 per boot.
@@ -568,7 +568,7 @@ function spawnLog() {
 }
 // cwd resolution for POST /api/new: body.cwd ?? cfg.defaultCwd ?? home;
 // ""/whitespace = absent; "~" | "~/" expand to home; relative paths are
-// rejected — the operator picks where conversations live, the collector
+// rejected, the operator picks where conversations live, the collector
 // never leaks its own dir into spawned agents.
 function resolveNewCwd(raw) {
   const pick = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
@@ -581,7 +581,7 @@ function resolveNewCwd(raw) {
   if (!st?.isDirectory()) return { error: `invalid cwd: ${abs}: not a directory` };
   return { cwd: abs };
 }
-// 7aq in-flight resume cap: one resume spawn per id at a time — a rapid
+// 7aq in-flight resume cap: one resume spawn per id at a time, a rapid
 // double-click must never spawn two rpc agents onto the same session.
 // Entries clear at register (the row goes live -> the 409 becomes "already
 // live"), at child exit (crash before registering), and by the TTL below.
@@ -617,23 +617,23 @@ process.on("SIGINT", () => { killSpawned(); process.exit(0); });
 
 // ---------- row-state slice: idle-relay reaper (49-macos-memory.md spec b) ----------
 // The collector reaps ITS OWN spawned rpc children (/api/new + /api/resume)
-// once they sit idle too long — each idle hosted session costs ~300MB (an
+// once they sit idle too long, each idle hosted session costs ~300MB (an
 // rpc launcher relay + the agent process: double a TUI session). SCOPE: the
-// sweep iterates spawnedAgents ONLY, a map populated by spawnAgent() alone —
+// sweep iterates spawnedAgents ONLY, a map populated by spawnAgent() alone,
 // the daemon's sessions never enter it, so they are structurally unreachable
 // here. idle = linked + beacon idle with no busy turn for IDLE_REAP_MS
 // (idleSince, stamped at the busy-false turn end / first idle register), or
 // unregistered since spawn (a wedged boot / a dead relay's husk). On reap:
 // log + explicit unregister (the row goes not-live at once; /api/resume
 // covers recovery) + SIGTERM the launcher (the stdin pipe chain takes the
-// agent down with it — the same killSpawned pattern). ponytail: 30min idle +
+// agent down with it, the same killSpawned pattern). ponytail: 30min idle +
 // 5min sweep are env-overridable; a tighter default would reap a slow
 // operator's parked chat. Upgrade: the real /api/new spawn->sessionId
 // handshake replaces the elimination link; a /proc PPid scan keys it on k8s.
 const IDLE_REAP_MS = parseInt(process.env.PRIME_WEBUI_IDLE_REAP_MS ?? "1800000", 10);
 const REAP_SWEEP_MS = parseInt(process.env.PRIME_WEBUI_REAP_SWEEP_MS ?? "300000", 10);
 // A reaped spawn can beat ONE more heartbeat in the SIGTERM-to-death window
-// (the stdin pipe chain takes a moment) — that beat must not re-animate the
+// (the stdin pipe chain takes a moment), that beat must not re-animate the
 // row. The mark suppresses re-registers until the resume route clears it (an
 // explicit operator revive) or the sweep TTL prunes it (the agent is long
 // dead by then).
@@ -646,12 +646,12 @@ function reapIdleSpawned() {
     let b = sp.sessionId ? beacons.get(sp.sessionId) : null;
     // gapfix crossed-link: the REAL chain registers its beacon from a
     // daemon-tree pid (verified live: the collector's child is the rpc
-    // LAUNCHER; the beacon pid is the daemon-hosted agent — never equal),
+    // LAUNCHER; the beacon pid is the daemon-hosted agent, never equal),
     // so a bare pid-equality check would mis-flag every real spawn and stop
     // the reaper cold. The PROVABLE mis-attribution is narrower: a linked
     // beacon whose pid is ANOTHER spawn's child pid belongs to THAT spawn
     // (the two-rapid-spawns crossed-link class; gapfix2's contested-refusal
-    // keeps the two-spawn class from ever forming — this belt stays for the
+    // keeps the two-spawn class from ever forming, this belt stays for the
     // daemon-steal residual class, defense in depth). Real-chain
     // and daemon beacons (pids outside spawnedAgents) reap per the link as
     // before; proven misattribution degrades kill→leak, the safe direction.
@@ -661,11 +661,11 @@ function reapIdleSpawned() {
       if (crossed) b = null;
     }
     // busy NEVER reaped; linked idleness rides the beacon's idle clock.
-    // Unlinked (never registered — a wedged boot, a dead relay's husk — or
+    // Unlinked (never registered, a wedged boot, a dead relay's husk, or
     // a crossed/failed link): gate DIRECTLY on the spawn clock, floored at a
     // full minute so a real boot (seconds, measured 0.6-3s live) always
     // wins the race even when IDLE_REAP_MS is env-shrunk for tests. The
-    // old idleFor arithmetic computed now-Infinity and never fired — dead
+    // old idleFor arithmetic computed now-Infinity and never fired, dead
     // code, husks leaked forever (review GAP-1).
     if (b) {
       if (b.status === "working") continue;
@@ -675,10 +675,10 @@ function reapIdleSpawned() {
       // gapfix husk guards: a process that registered somewhere is NOT a
       // husk. The pid scan covers in-process beacons; the REAL chain's
       // beacon pid lives in the daemon tree, so the cwd scan covers it by
-      // path identity — the symlink-cwd link break (the beacon registers
+      // path identity, the symlink-cwd link break (the beacon registers
       // the PHYSICAL cwd, the spawn holds the lexical one) must degrade
       // kill→leak too, never a floor kill of a live registered agent
-      // (review GAP-2's careful note — the guards ride with GAP-1's floor).
+      // (review GAP-2's careful note, the guards ride with GAP-1's floor).
       let registered = false;
       for (const rb of beacons.values()) {
         if (rb.pid === sp.child.pid) { registered = true; break; }
@@ -704,7 +704,7 @@ setInterval(reapIdleSpawned, Math.max(50, REAP_SWEEP_MS));
 const SYS_CACHE_MS = 2000;
 const SYS_MIN_DELTA_MS = 250; // a cpu% delta needs this much window to mean anything
 const PROC_OK = (() => { try { fs.accessSync("/proc/stat", fs.constants.R_OK); return true; } catch { return false; } })(); // Linux: /proc; elsewhere (the mac dev host) the os fallback runs
-// 7aa-c: the macOS path parses vm_stat instead of os.freemem() — freemem
+// 7aa-c: the macOS path parses vm_stat instead of os.freemem(), freemem
 // counts instantly-purgeable file cache as USED (macOS holds most RAM as
 // evictable cache), so the bar read ~98% while Activity Monitor showed ~70%
 // (the ponytail comment below predicted exactly this).
@@ -728,7 +728,7 @@ function vmStatUsed(sample) { // bytes, or null when the dump is unparseable —
     comp = n(/Pages occupied by compressor:\s+(\d+)/), purge = n(/Pages purgeable:\s+(\d+)/);
   if (active == null || wired == null || comp == null) return null;
   // ponytail: App+Wired+Compressed approximation (active includes purgeable
-  // file cache, so it is subtracted); swap/other classes are out of scope —
+  // file cache, so it is subtracted); swap/other classes are out of scope,
   // Activity-Monitor parity, not accounting truth.
   return (active + wired + comp - (purge ?? 0)) * pg;
 }
@@ -776,7 +776,7 @@ sysCpu = { ...readCpu(), t: Date.now() }; // boot pre-sample: the FIRST /api/sys
 // rlm_heartbeat|cron,deliveryMode steer|follow_up,label?,prompt,schedule
 // {kind once|cron|interval,expression,intervalMs},sessionId,runCount,
 // lastRunAt?,nextRunAt?}],dispatches:[...]}). The honest v1 = the READ: parse
-// + map, NO write surface — management stays conversational (the operator
+// + map, NO write surface, management stays conversational (the operator
 // asks in the target session; the agent runs rlm_heartbeat).
 function heartbeatsBody() {
   const rows = [];
@@ -815,7 +815,7 @@ function heartbeatsBody() {
 // protocol v7 JSONL (binary-extracted + probe-proven, .scratch/webui-audit/
 // hbcfg-probe*.mjs), same-user fs perms as the only auth. The collector NEVER
 // launches a daemon (a second supervisor on a stray socket is worse than a
-// degraded write surface) and NEVER writes scheduled-jobs.json itself — every
+// degraded write surface) and NEVER writes scheduled-jobs.json itself, every
 // write rides the daemon, which stays the single writer (55-hbcfg-design.md
 // §2). Daemon-down degrades honestly: every method rejects, the routes map
 // it to 503, and the v1 file-parse read above keeps serving rows.
@@ -925,12 +925,12 @@ function daemonRouteError(e, serve) { // DaemonError -> the honest HTTP answer (
 // The collector used to read dashboard.css/js/mark.svg at MODULE LOAD: every
 // UI edit forced a collector restart, killing each SSE stream and SIGTERMing
 // every live conversation (the deploy restart tax). Now each serve STATS the
-// file and re-reads ONLY on mtime change — one stat per page serve (the perf
+// file and re-reads ONLY on mtime change, one stat per page serve (the perf
 // report's discipline), so a static-tier deploy needs NO collector restart
 // (server.mjs itself still does). A missing/unreadable file serves the
 // last-known bytes (the mid-deploy window); the boot reads below keep the
 // fail-fast-on-missing-file contract. Never evicted: three known files plus
-// the /static allow-list names, each { mtimeMs, body } — negligible.
+// the /static allow-list names, each { mtimeMs, body }, negligible.
 const assetCache = new Map(); // abs path -> { mtimeMs, body }
 function readAsset(p) {
   let st;
@@ -1007,10 +1007,10 @@ function dashboardHtml() {
 // ---------- 7ac: file viewer (GET /api/file?path=) ----------
 // The feed linkifies file paths (session jsonl, briefs/reports under
 // .scratch/.worktrees); this route serves the click. SECURITY (the /static
-// suite's lessons, hardened): allow-listed REAL roots ONLY — the agent
+// suite's lessons, hardened): allow-listed REAL roots ONLY, the agent
 // session dirs (SESSIONS_DIR/ARTIFACTS_DIR, env/config-aware), the GitOps
 // repo root (.scratch + .worktrees live under it), the extensions dir.
-// resolve() then fs.realpathSync on BOTH target and root — a symlink planted
+// resolve() then fs.realpathSync on BOTH target and root, a symlink planted
 // inside a root that points outside resolves outside and dies at the
 // containment check BEFORE any read (the L1 residual fix). No /proc, no
 // /etc, no home root: nothing outside the list is reachable at all.
@@ -1023,15 +1023,15 @@ const FILE_ROOTS = [SESSIONS_DIR, ARTIFACTS_DIR, FILE_REPO_ROOT,
   path.join(os.homedir(), ".prime", "agent", "extensions")];
 // G1-slice deny-list (pathlink-review belt-and-braces on the config.json
 // same-secret verdict): secret-bearing basenames NEVER serve, even inside
-// allowed roots — config.json (the beacon token), *token*, auth*, settings*,
+// allowed roots, config.json (the beacon token), *token*, auth*, settings*,
 // *secret*. Matched on the resolved basename, deliberately not the full path
 // (innocent files under a matching parent dir stay servable; known collateral:
-// authentik-*.md research docs now 403 under auth* — accepted, the reviewer
+// authentik-*.md research docs now 403 under auth*, accepted, the reviewer
 // pinned the pattern set). Runs BEFORE the extension allow-list could serve
 // one of these names.
 function deniedName(p) {
   const b = path.basename(p).toLowerCase();
-  // pentest L1 (finding #30): the report's credential stems — cred*, *key*,
+  // pentest L1 (finding #30): the report's credential stems, cred*, *key*,
   // *.pem, *.env (the planted credentials.json/creds.json/apikey.json all
   // served pre-fix). Coverage-only: the containment held, these are name
   // tiers. Collateral is the same over-refuse direction the auth* stem
@@ -1068,7 +1068,7 @@ function fileView(p) { // -> {path,size,text} | [status, {error}]
 }
 
 // ---------- cmd-k content search (54-cmdk-design.md §4) ----------
-// GET /api/search?q=<terms> — query-time in-process scan, NO persistent
+// GET /api/search?q=<terms>, query-time in-process scan, NO persistent
 // index in lap 1 (measured warm scan on the real 632MB corpus: 37-105ms
 // tier 1, 360-842ms tier 2; the FTS5 sidecar is the documented upgrade,
 // gated on a measured in-cluster warm p95 > 2s, not a feeling). Shape:
@@ -1076,28 +1076,28 @@ function fileView(p) { // -> {path,size,text} | [status, {error}]
 //     when tier 1 yields zero results, and never after a wall-cap trip) =
 //     whole-chunk toLowerCase + indexOf rescan. The byte budget resets
 //     per tier (a pooled budget would starve tier 2 on every budget-sized
-//     corpus — the case-insensitive fallback would never run there); the
+//     corpus, the case-insensitive fallback would never run there); the
 //     wall cap bounds the PAIR. 20 results max, score desc then mtime desc.
 //   - newest-first file order: the budget truncates the OLDEST bytes and
 //     says so honestly (partial: true).
 //   - bounded reads (the readTail/R3 discipline): files stream in 8MB
-//     chunks with a (max-term-len - 1)-byte carry across boundaries — a
+//     chunks with a (max-term-len - 1)-byte carry across boundaries, a
 //     monster file never loads whole, and the event loop yields between
 //     chunks so SSE fanout keeps flowing mid-scan (25-cluster §4: the
 //     single-threaded collector is the real hazard).
 //   - entry-type-weighted scoring (the litellm-in-every-header lesson:
 //     every session file matches "litellm" in model_change): user 5 /
 //     assistant 3 / toolResult+other 1 / header-meta 0. Header-only
-//     matches score 0 and are NOT results — content is the vocabulary.
+//     matches score 0 and are NOT results, content is the vocabulary.
 //   - snippets: the first hit per term, ±120 chars around the match, the
-//     term wrapped in <b></b> (the client MUST escape-then-emphasize —
+//     term wrapped in <b></b> (the client MUST escape-then-emphasize,
 //     this string carries raw transcript text, not safe HTML).
 //   - one scan at a time (singleton): identical q dedupes onto the
-//     running scan; a different q queues behind it (queue of 1 — an older
+//     running scan; a different q queues behind it (queue of 1, an older
 //     queued request is superseded by a newer one and answered
 //     honestly-empty: the palette only wants the latest keystroke).
 // NaN-proof env parses (a malformed values.yaml typo must not fail the caps
-// OPEN — an unbounded scan on the pod is the exact hazard the caps exist for)
+// OPEN, an unbounded scan on the pod is the exact hazard the caps exist for)
 const _sbm = parseInt(process.env.PRIME_WEBUI_SEARCH_BUDGET_MB ?? "256", 10);
 const _swm = parseInt(process.env.PRIME_WEBUI_SEARCH_WALL_MS ?? "4000", 10);
 const SEARCH_BUDGET_MB = Number.isFinite(_sbm) ? _sbm : 256;   // <= 0 = unlimited (documented)
@@ -1121,7 +1121,7 @@ function searchClassify(e) {
   if (searchHeaderTypes.has(e?.type)) return { w: 0, role: "tool" };
   return { w: 1, role: "tool" }; // custom_message/compaction/unparseable-line hits: "other"
 }
-// the entry's displayable text (thinking included — recall-valuable, the bench probe's own call)
+// the entry's displayable text (thinking included, recall-valuable, the bench probe's own call)
 function searchText(e) {
   if (e?.type === "message" && e.message) {
     let t = textOf(e.message.content);
@@ -1201,10 +1201,10 @@ function searchFiles() {
 // tier 2 chunk pass: whole-chunk decode + toLowerCase + indexOf (the
 // measured 360-842ms full-corpus path). Char hits map to byte anchors with
 // ONE linear pass per chunk (an incremental byteLength cursor over the
-// chunk string — never a per-hit full-prefix walk). Ceiling (ponytail,
+// chunk string, never a per-hit full-prefix walk). Ceiling (ponytail,
 // named): toLowerCase can CHANGE string length for a few chars (U+0130
 // class); when it does, only each term's FIRST hit gets a byte anchor
-// (regex re-search on the original-case chunk) — deeper anchors are
+// (regex re-search on the original-case chunk), deeper anchors are
 // skipped and score slightly low in that ultrarare file. Counting dedupe
 // uses a char-space carry floor that is off by at most one char per 8MB
 // boundary in non-ASCII edge cases; upgrade path: byte-precise tier-2
@@ -1232,7 +1232,7 @@ function searchChunkTier2(chunk, carryStrLen, lowTerms, perFile, perTermCap, buf
   if (!sameLen) { // length-diverging lowercasing: first hit per term only, via regex on the original case
     for (const p of pending) if (!perFile.anchors[p.ti].length) {
       // semgrep CI (the #36-resync pipeline): the dynamic RegExp is an
-      // escaped literal — searchEscapeRe covers all 12 metacharacters, the
+      // escaped literal, searchEscapeRe covers all 12 metacharacters, the
       // pattern is linear (no alternation-backtracking ReDoS vector).
       const m = new RegExp(searchEscapeRe(lowTerms[p.ti]), "i").exec(str); // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
       if (m) perFile.anchors[p.ti].push(bufStart + Buffer.byteLength(str.slice(0, m.index), "utf-8"));
@@ -1315,11 +1315,11 @@ async function searchScanTier(terms, ci, files, deadline) {
   return res;
 }
 // post-scan per-file assembly: classify the anchor lines (JSON.parse ONLY
-// those lines — parse-fails cost nothing but the raw-slice fallback),
+// those lines, parse-fails cost nothing but the raw-slice fallback),
 // score = Σ entry weights over the classified hits (capped 99), snippet =
 // first hit per term. Header-only matches (score 0) are NOT results.
 // Ceiling (ponytail, named): only the FIRST perTermCap hits per term get
-// line-classified — a weighted hit buried under a long weight-0 run (a
+// line-classified, a weighted hit buried under a long weight-0 run (a
 // thousand model_change lines before one user line) can be missed;
 // upgrade path: a full-line classification pass on qualifying files.
 function searchQualify(f, st, fd, perFile, terms, ci) {
@@ -1440,15 +1440,15 @@ function tokenEq(presented, expected) {
 // responses. Trusted-CIDR peers skip it entirely. Env overrides for the test.
 const RL_WINDOW_SECS = Math.max(1, parseInt(process.env.PRIME_WEBUI_RL_WINDOW_SECS ?? "60", 10));
 const RL_MAX = Math.max(1, parseInt(process.env.PRIME_WEBUI_RL_MAX ?? "30", 10));
-// XFF keying (the operator's recorded cluster decision — the header is
+// XFF keying (the operator's recorded cluster decision, the header is
 // effective for the intended deployment): behind the gateway proxy every
 // client shares the gateway's socket IP, so one 401-spammer would 429 the
 // shared bucket for everyone. With PRIME_WEBUI_TRUST_PROXY (env or config
 // trustProxy) set, the limiter keys on the gateway's X-Forwarded-For LEFTMOST
-// entry (the gateway appends the client chain) — validated as an IPv4/IPv6
+// entry (the gateway appends the client chain), validated as an IPv4/IPv6
 // literal (net.isIP); anything else falls back to the socket key, so a
 // spoofed garbage header never partitions buckets. Unset: the socket IP (the
-// local posture, unchanged). Only the limiter's KEY moves — the token and
+// local posture, unchanged). Only the limiter's KEY moves, the token and
 // trusted-CIDR gates stay socket-based.
 const TRUST_PROXY = /^(1|true|yes)$/i.test(String(process.env.PRIME_WEBUI_TRUST_PROXY ?? cfg.trustProxy ?? "").trim());
 function limiterKey(req, ip) {
@@ -1494,7 +1494,7 @@ const internal = http.createServer(async (req, res) => {
     const body = await readJson(req);
     if (body === BODY_TOO_LARGE) return reply(413, "payload too large"); // pentest #28
     // pentest HIGH (56-pentest-report.md): controlPort is interpolated into
-    // the beaconFetch URL template (`http://127.0.0.1:${port}${subpath}`) —
+    // the beaconFetch URL template (`http://127.0.0.1:${port}${subpath}`),
     // a STRING port ("8799/x/…" etc.) is loopback SSRF + token-forward.
     // Integer 1-65535 ONLY; anything else is a forged register.
     if (!body?.sessionId || !Number.isInteger(body.controlPort)
@@ -1520,60 +1520,60 @@ const internal = http.createServer(async (req, res) => {
       contextUsage: body.contextUsage ?? prev?.contextUsage,
     });
     resumeInflight.delete(body.sessionId); // 7aq: the resumed row went live — its in-flight lock clears
-    // row-state: pending /api/new spawn adopts the first register that fits —
+    // row-state: pending /api/new spawn adopts the first register that fits,
     // a NEW session file under SESSIONS_DIR (absent from the spawn's pre-
     // snapshot), on the spawn's cwd, created after the spawn. The /api/new
     // spawn->sessionId handshake is the known ceiling (ponytail-named above);
     // a same-window daemon session on the same cwd is the residual race.
     if (typeof body.file === "string" && body.file.startsWith(SESSIONS_DIR + path.sep)) {
-      // created is the session HEADER timestamp — epoch ms on mock registers, an
-      // ISO string from real beacons (verified live) — accept both shapes.
+      // created is the session HEADER timestamp, epoch ms on mock registers, an
+      // ISO string from real beacons (verified live), accept both shapes.
       const createdMs = typeof body.created === "number" ? body.created : Date.parse(body.created);
       // gapfix causal link: first-fit-by-insertion crossed under a
-      // two-rapid-spawns same-cwd race — the SECOND spawn's fast boot
+      // two-rapid-spawns same-cwd race, the SECOND spawn's fast boot
       // registered first and the FIRST entry adopted ITS session (the
       // reviewer's boot-inversion proof: the reaper then killed the first
       // spawn's BUSY process on the second session's idle clock). The
-      // header is stamped when the agent's session starts — strictly AFTER
+      // header is stamped when the agent's session starts, strictly AFTER
       // its launcher spawn (same machine clock), so the true owner of a new
       // file is a spawn that was already alive when the file was created:
       // match causally, never by iteration order. gapfix2 (rv2): the
-      // contested window is REAL and common — an agent's session header
+      // contested window is REAL and common, an agent's session header
       // stamps 0.6-3s after its spawn (measured live), so on a rapid
       // same-cwd double-click (<0.6s gap) the FIRST spawn's header can
       // stamp after the SECOND launched; the first register then sees TWO
       // pending causally-eligible spawns and NO timestamp rule (latest,
-      // first-fit, any) can tell them apart — latest-pending PAIRED them
+      // first-fit, any) can tell them apart, latest-pending PAIRED them
       // as a swap (session_1 adopted spawn_2, session_2 spawn_1) and the
       // reaper killed the WORKING process on the idle twin's clock (rv2
       // probe, fake-pid geometry; the belt cannot bound it in the real
-      // chain — real beacons register daemon-tree pids, never the
+      // chain, real beacons register daemon-tree pids, never the
       // launcher's). HONEST CEILING (handshake-named): contested ->
       // REFUSE the link. Both spawns stay unlinked; the husk guards
       // (beacon pid scan + realpath-cwd scan) keep both alive-but-unreaped
-      // while their beacons live — kill degrades to leak, never a crossed
+      // while their beacons live, kill degrades to leak, never a crossed
       // kill; the single-eligible case still links + reaps. gapfix3 (rv3
       // dying-claim) guarded the post-contest RE-LINK by scanning live
       // beacons; gapfix4 (rv4 wedge) REPLACES that scan with the
       // CONTESTED-SPAWN MARKING: the refusal records the eligible set's
       // spawn pids, and a REFUSED session never links ANY spawn from its
       // own contested set. The beacons-only scan was blind to the wedge
-      // arm — a rival whose SPAWN is pending but whose BEACON has not
+      // arm, a rival whose SPAWN is pending but whose BEACON has not
       // landed yet (a slow/wedged boot, the 60s-floor class) is invisible
       // to it, so the refused session's dying beat crossed onto the
       // rival's pending spawn and the reaper SIGTERMed the rival's WORKING
       // launcher on the dead session's idle clock (probe-proven both pid
       // geometries; the census counts spawns, the scan counted beacons).
-      // HONEST BOUNDS: every contested arm — the refused pair, the
+      // HONEST BOUNDS: every contested arm, the refused pair, the
       // dying-claim (a twin's LAUNCHER died while its agent keeps
-      // beating), the wedge (the rival's beacon still in flight) —
+      // beating), the wedge (the rival's beacon still in flight),
       // LEAKS FOR LIFE: unlinked + husk-guarded while any beacon lives,
       // never a crossed kill. ACCEPTED COST: the separable re-link (the
-      // rival's file pre-known — its created-bound once let the re-claim
-      // through) now leaks too — safety over the true-pairing nicety.
-      // RESIDUAL (KILL, honestly named — the same accepted-ceiling class
+      // rival's file pre-known, its created-bound once let the re-claim
+      // through) now leaks too, safety over the true-pairing nicety.
+      // RESIDUAL (KILL, honestly named, the same accepted-ceiling class
       // as daemon-steal): a session whose FIRST register lands after its
-      // own launcher died was NEVER refused, so no marking exists for it —
+      // own launcher died was NEVER refused, so no marking exists for it,
       // its own spawn entry is gone (the exit handler), its register
       // claims the rival's lone pending spawn unguarded, and the reaper
       // SIGTERMs the rival's WORKING launcher on the DEAD session's idle
@@ -1597,11 +1597,11 @@ const internal = http.createServer(async (req, res) => {
       if (eligible.length === 1) {
         const sp = eligible[0];
         // gapfix4 (rv4 wedge): a refused session's re-claim may never link
-        // a spawn from its OWN contested set — the pids recorded at its
+        // a spawn from its OWN contested set, the pids recorded at its
         // refusal (its own spawn included: the census could not tell its
         // own entry from the rival's). Covers strictly more than the
         // removed beacons scan: the rival's beacon need not be live yet,
-        // because the rival's SPAWN — the thing being claimed — is itself
+        // because the rival's SPAWN, the thing being claimed, is itself
         // marked. The wedge, dying-claim and refused arms all leak for
         // life (safe); lone spawns and never-refused first-registers still
         // link + reap.
@@ -1614,7 +1614,7 @@ const internal = http.createServer(async (req, res) => {
     if (!isJsonRequest(req)) return reply(415, "unsupported media type"); // pentest #29
     const body = await readJson(req);
     if (body === BODY_TOO_LARGE) return reply(413, "payload too large"); // pentest #28
-    // pentest MED: the event name is allow-listed — an unknown or missing
+    // pentest MED: the event name is allow-listed, an unknown or missing
     // name can never be interpolated into an SSE frame.
     if (!EVENT_NAMES.has(body?.event)) return reply(400, "bad event");
     if (body?.sessionId && body.event) {
@@ -1641,10 +1641,10 @@ const internal = http.createServer(async (req, res) => {
   return reply(404, "not found");
 });
 
-// pentest M3 (finding #28): the body cap — 1MB is generous against every
+// pentest M3 (finding #28): the body cap, 1MB is generous against every
 // legit payload (beacon frames, the 200-char search cap, composer texts;
 // the guards-review transient: a huge controlPort string JSON.stringify'd
-// in full pre-slice — the cap kills that class too). Past-cap bytes never
+// in full pre-slice, the cap kills that class too). Past-cap bytes never
 // buffer (the RSS amplification dies at read time) and the body never
 // parses: 413 + the loud log. BODY_TOO_LARGE is the sentinel every caller
 // must turn into its own 413 reply.
@@ -1670,7 +1670,7 @@ function readJson(req) {
 // pentest #29: the frame-forwarding POST tier (/internal/register,
 // /internal/event, /send) parses JSON only when DECLARED application/json
 // (charset tolerated). Same-trust lax parsing (a text/plain JSON body) is
-// probe surface, not a beacon — 415, never parsed.
+// probe surface, not a beacon, 415, never parsed.
 const isJsonRequest = (req) =>
   String(req.headers["content-type"] ?? "").split(";")[0].trim().toLowerCase() === "application/json";
 
@@ -1682,29 +1682,29 @@ const S_ROUTES = {
   "rename": "POST", "compact": "POST", "shutdown": "POST", "context-usage": "GET",
 };
 
-// S2 CSP (24-security-slice-specs.md): the dashboard is ONE HTML surface —
+// S2 CSP (24-security-slice-specs.md): the dashboard is ONE HTML surface,
 // the / route serves every view (list + session, the hash router is
 // client-side) with INLINE <script>/<style> (dashboardHtml embeds
 // dashboard.js/dashboard.css at module load), so script-src/style-src
 // 'unsafe-inline' is REQUIRED until the assets move to /static files (the
 // upgrade: serve them as files, then drop 'unsafe-inline'). The vendored
-// marked/DOMPurify pair rides /static — 'self' covers them. Header goes on
-// the HTML + /static responses ONLY — NO CSP on the API/SSE routes (no
+// marked/DOMPurify pair rides /static, 'self' covers them. Header goes on
+// the HTML + /static responses ONLY, NO CSP on the API/SSE routes (no
 // document context; the hot JSON/event paths stay lean).
 const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
   + "img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
 // S2 hardening (the pentest re-verified gap): nosniff + no-referrer on EVERY
-// public response, not just the document surfaces — the API/healthz/404/429
+// public response, not just the document surfaces, the API/healthz/404/429
 // tiers and both SSE handshakes included. nosniff: a browser must not sniff a
 // text/JSON answer into script; no-referrer: the webui is an operator-only
-// tool — nothing needs the origin, the honest minimal. serve() stamps both;
+// tool, nothing needs the origin, the honest minimal. serve() stamps both;
 // the SSE handshakes bypass serve(), so they spread the same object.
 const S2_HEADERS = { "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" };
 const public_ = http.createServer(async (req, res) => {
   const serve = (code, type, body, extra) => {
     res.writeHead(code, { "content-type": type, ...S2_HEADERS, ...extra }); res.end(body);
   };
-  // pentest M2: an over-cap connection gets exactly one answer — the 503 —
+  // pentest M2: an over-cap connection gets exactly one answer, the 503,
   // and the connection tier (MAX_CONNS, module scope) destroys it at its
   // deadline; the count itself bounds every held fd, half-open floods included.
   if (overCap.has(req.socket)) return serve(503, "text/plain", "too many connections", { "connection": "close" });
@@ -1718,9 +1718,9 @@ const public_ = http.createServer(async (req, res) => {
     return serve(200, "image/svg+xml", readAsset(MARK_PATH), { "cache-control": "max-age=86400" });
   // /static assets (7ad vendored md libs; the page inlines its own JS/CSS):
   // pre-auth for the same subresource reason (<script src> cannot send
-  // headers — F4/S1). Allow-list, not a listing: extension-mapped known
+  // headers, F4/S1). Allow-list, not a listing: extension-mapped known
   // files (.js/.css/.svg), traversal-proof name (charset + no ".."
-  // post-decode + resolved path stays under HERE — the session-id guard's
+  // post-decode + resolved path stays under HERE, the session-id guard's
   // pattern); anything else 404s before fs is touched.
   if (req.method === "GET" && url.pathname.startsWith("/static/")) {
     const STATIC_MIME = { js: "text/javascript", css: "text/css", svg: "image/svg+xml" };
@@ -1767,7 +1767,7 @@ const public_ = http.createServer(async (req, res) => {
           ? b.file.slice(artRoot.length).split(path.sep) : null;
         if (rel && rel.length >= 2 && rel[1].startsWith("sub-")) {
           // live artifacts child missing from the index (spawn race): attach
-          // under the DEEPEST known ancestor in its own path — a depth-2+ live
+          // under the DEEPEST known ancestor in its own path, a depth-2+ live
           // row must never surface as the root session's direct child
           let p = rel[0];
           for (let i = rel.length - 3; i >= 1; i--) {
@@ -1839,7 +1839,7 @@ const public_ = http.createServer(async (req, res) => {
     // All header-authed by the gate above (the query token stays SSE-only,
     // like /api/system); every write rides the daemon's public socket.
     // Daemon-down = honest 503s (55-hbcfg-design §2): reads stay the v1 file
-    // parse, the UI degrades to read-only — NEVER a file-fallback write (that
+    // parse, the UI degrades to read-only, NEVER a file-fallback write (that
     // would re-create the race the design exists to avoid).
     if (req.method === "POST" && url.pathname === "/api/heartbeats") { // create -> cron_add (a LIVE worker session only)
       if (!isJsonRequest(req)) return serve(415, "text/plain", "unsupported media type"); // pentest #29
@@ -1854,13 +1854,13 @@ const public_ = http.createServer(async (req, res) => {
       if (prompt.length > 2000) return serve(400, "application/json", j(0, { error: "prompt too long (max 2000)" }));
       if (body.label !== undefined && (typeof body.label !== "string" || !body.label.trim() || body.label.length > 200)) return serve(400, "application/json", j(0, { error: "bad label" }));
       // cron_add routes to a LIVE worker (the daemon owns session truth;
-      // passive sessions have no worker) — the registry IS the live set
+      // passive sessions have no worker), the registry IS the live set
       if (!beacons.has(sessionId)) return serve(409, "application/json", j(0, { error: "session not live" }));
       let r;
       try {
         // the daemon's parser accepts "every N minutes" for any N >= 10s
         // (binary-extracted). label: the daemon's cron_add payload has NO
-        // label field (createCronJobForState reads schedule+prompt only) —
+        // label field (createCronJobForState reads schedule+prompt only),
         // accepted for the UX, never forwarded; the row label derives from
         // the prompt on the read path.
         r = await daemon.request({ type: "cron_add", activeSessionId: sessionId, schedule: `every ${ivm} minutes`, prompt });
@@ -1913,11 +1913,11 @@ const public_ = http.createServer(async (req, res) => {
     // control port); the browser reaches them ONLY through the collector.
     // /api/s/<id>/<endpoint> forwards method+body to the session's beacon
     // port from the registry, header-authed with the SAME token the beacon's
-    // authed() re-checks (belt and braces — the route already sits behind
+    // authed() re-checks (belt and braces, the route already sits behind
     // the public authed() gate). Settings need the session RUNNING: an id
     // with no registry row answers 404 {"error":"not live"}. Must stay BELOW
     // the /commands + /files handlers (it would otherwise shadow their
-    // /api/session/... paths — "ession" matches the id charset).
+    // /api/session/... paths, "ession" matches the id charset).
     if (/^\/api\/s\/[A-Za-z0-9_-]+\/[a-z-]+$/.test(url.pathname)) {
       const seg = url.pathname.split("/"); // ["", "api", "s", id, endpoint]
       const id = seg[3]; // charset pinned by the route regex — no decode surprises
@@ -1950,7 +1950,7 @@ const public_ = http.createServer(async (req, res) => {
           // stale-beacon ts shim (gapfix2 review spec): a beacon still on
           // pre-#19 index.ts emits snapshot items WITHOUT ts (live workers
           // keep old code for hours after a deploy). Stamp missing ts by
-          // item id from the disk parse — only stamp, never reorder; entry
+          // item id from the disk parse, only stamp, never reorder; entry
           // ids match because both mapMessages key items by e.id. No-op
           // once beacons carry ts. ponytail: one extra disk parse per live
           // view while a stale beacon is open; upgrade path is the
@@ -2008,7 +2008,7 @@ const public_ = http.createServer(async (req, res) => {
         // a manual refresh. Serve a 200 SSE stream with a short retry hint
         // + a not_live event, then close cleanly: the EventSource
         // auto-reconnects every retry interval until the row is back. The
-        // dashboard ignores unknown events (not_live) — no client change.
+        // dashboard ignores unknown events (not_live), no client change.
         res.writeHead(200, {
           "content-type": "text/event-stream",
           "cache-control": "no-cache",
@@ -2030,11 +2030,11 @@ const public_ = http.createServer(async (req, res) => {
         ...S2_HEADERS,
       });
       res.flushHeaders();
-      // subscribe FIRST, snapshot after (STATE.md:77 — the documented
+      // subscribe FIRST, snapshot after (STATE.md:77, the documented
       // protocol; the old snapshot-first order lost every delta that landed
       // during the snapshot fetch). A buffer target holds the fanout frames
       // until the snapshot lands, then forwards them in arrival order AFTER
-      // it — no delta lost, and the stream still opens with the snapshot
+      // it, no delta lost, and the stream still opens with the snapshot
       // (the client's snapshot handler wipes + replays, so a superseded
       // frame is a harmless re-render). The buffer->res swap is synchronous:
       // nothing slips between delete and add.
@@ -2128,16 +2128,16 @@ const public_ = http.createServer(async (req, res) => {
 
 // ---------- pentest M2 hardening (finding #27): scoped error handler + bounded sockets ----------
 // The exit-on-error class is BIND-time failure only (EADDRINUSE etc.): the
-// port is unusable by this process. EVERY runtime error — accept-time EMFILE
-// (what the slowloris fd-exhaustion chain fed), transient resets — logs and
+// port is unusable by this process. EVERY runtime error, accept-time EMFILE
+// (what the slowloris fd-exhaustion chain fed), transient resets, logs and
 // CONTINUES: the collector is the SPOF for every spawned conversation, and one
 // error must not SIGTERM them all (the M2 death chain).
 const FATAL_BIND_CODES = new Set(["EADDRINUSE", "EACCES", "EADDRNOTAVAIL", "EAFNOSUPPORT", "EINVAL"]);
-// Bounded socket count: openConns counts accepted sockets — a half-open
+// Bounded socket count: openConns counts accepted sockets, a half-open
 // request counts the same as a live SSE view, so the slowloris pile can
 // never outgrow the cap. Past MAX_CONNS the socket is marked over-cap: a
 // request that completes gets ONE answer (the 503 at the handler guard),
-// a silent half-open is destroyed at the deadline — at most N held fds at
+// a silent half-open is destroyed at the deadline, at most N held fds at
 // any instant (the fd-exhaustion class closes).
 const MAX_CONNS = 256;
 let openConns = 0;

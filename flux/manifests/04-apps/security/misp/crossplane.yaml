@@ -5,7 +5,7 @@ metadata:
   name: authentik-terraform-token
   namespace: misp
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret;
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
@@ -32,7 +32,7 @@ spec:
   # Per-app state args for the PARTIAL kubernetes backend in authentik.tf:
   # the provider writes this as crossplane.remote.tfbackend and passes it
   # via -backend-config at tofu init. The state Secret is
-  # tfstate-misp-authentik-misp in this namespace — deliberately separate
+  # tfstate-misp-authentik-misp in this namespace; deliberately separate
   # from the CI tofu stack (terraform/, GitLab HTTP backend). Two stacks,
   # two states.
   backendFile: |
@@ -46,11 +46,11 @@ metadata:
   name: misp-authentik
   namespace: misp
 spec:
-  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # Prune guard: crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,
   # so a GitOps prune of this object can NEVER destroy the live authentik
   # stack (v2-native Orphan). Deliberate decommission therefore requires
-  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # temporarily restoring ["*"] (or a manual tofu destroy); the guard is
   # intentional.
   managementPolicies:
     - Observe
@@ -62,14 +62,14 @@ spec:
   forProvider:
     # Inline module, stitched at kustomize build time: kustomization.yaml's
     # configMapGenerator packages authentik.tf and the replacements rule
-    # copies its bytes into this module field — crossplane.yaml +
+    # copies its bytes into this module field; crossplane.yaml +
     # authentik.tf are the canonical file pair, and the HCL file is the
     # single source of truth (never render this directory outside
-    # kustomize). No varmap: the app values live in the HCL now.
-    # FRESH CREATE: nothing is live (MR unmerged — the first apply creates
-    # every Authentik object fresh), so there are no import blocks and no
-    # adoption ids. The first plan after merge MUST read as a clean
-    # create-set. If the tfstate Secret is ever lost after that, re-adopt
-    # via manual tofu import (ids from the live DB) — never a blip.
+    # kustomize). No varmap: the app values live in the HCL.
+    # FRESH CREATE: the first apply creates every Authentik object fresh,
+    # so there are no import blocks and no adoption ids; the first plan
+    # must read as a clean create-set. If the tfstate Secret is ever lost
+    # after that, re-adopt via manual tofu import (ids from the live DB),
+    # never a blip.
     source: Inline
     module: ""

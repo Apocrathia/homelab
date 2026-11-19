@@ -1,4 +1,4 @@
-# `self-improve` — blank start to contribution (skill)
+# `self-improve`: blank start to contribution (skill)
 
 `SKILL.md` defines the full work graph in one orchestrated lap: read the
 development loop, run `find-work`, execute one Launch brief through

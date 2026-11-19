@@ -9,10 +9,10 @@
 # return the field, so the provider fails apply with "Provider produced
 # inconsistent result" (wrote true, read back null). Org default applies.
 #
-# Auth (1Password Connect — no OKTA_API_TOKEN in env):
-#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
-#   OP_CONNECT_TOKEN — Connect API token with read on the vault
-#   TF_HTTP_*        — state backend
+# Auth (1Password Connect, no OKTA_API_TOKEN in env):
+#   OP_CONNECT_HOST  - http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN - Connect API token with read on the vault
+#   TF_HTTP_*       ; state backend
 #
 # Do NOT export OKTA_API_TOKEN. Do NOT commit vault UUIDs.
 

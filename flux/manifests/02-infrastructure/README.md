@@ -33,54 +33,12 @@ The infrastructure layer provides:
 - [**Kube Prometheus Stack**](kube-prometheus-stack/README.md) - Prometheus, Grafana, and Alertmanager
 - [**Metrics Server**](metrics-server/README.md) - Resource metrics collection for autoscaling
 
-## Architecture
-
-- Cilium CNI with eBPF-based networking
-- Distributed storage with backup and disaster recovery
-- Metrics collection, visualization, and alerting
-- Policy enforcement and compliance monitoring
-
 ## Dependencies
 
 - **Bootstrap Layer**: Flux system, CRDs, and Helm repositories
 - **Kubernetes Cluster**: Running cluster with proper RBAC
 - **Network Access**: Outbound access to container registries and Helm repositories
 - **Storage**: Local storage for persistent volumes
-
-## Integration Points
-
-### With the bootstrap layer
-
-- CRDs come from the bootstrap layer
-- Chart sources come from the bootstrap Helm repositories
-- Secrets come from 1Password Connect
-
-### With the services layer
-
-- Storage classes for services
-- Network policies for services
-- Monitoring infrastructure for services
-- Policy enforcement for services
-
-## Security Considerations
-
-### Network security
-
-- Cilium policies enforce network isolation
-- Gateway API fronts external access with TLS termination
-- LoadBalancer access and IP assignment stay controlled
-
-### Storage security
-
-- Longhorn encrypts data at rest and in transit
-- RBAC gates access to storage resources
-- Backup credentials and data stay secure
-
-### Monitoring security
-
-- Metrics collection and storage are secured
-- Dashboard access is controlled
-- Alerting and notification channels are secured
 
 ## Troubleshooting
 

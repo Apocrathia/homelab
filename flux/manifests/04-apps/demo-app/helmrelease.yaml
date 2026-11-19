@@ -9,9 +9,6 @@ spec:
   chart:
     spec:
       chart: generic-app
-      # The inline tofu lane (chart-generated HCL, no module refs, no chart-tag
-      # pin) shipped in 0.0.87 - the W0 flip bump; the W0 gate ran and the
-      # release is long unsuspended (plan §Waves).
       # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
       version: "0.0.91"
       sourceRef:
@@ -66,16 +63,16 @@ spec:
       itemPath: "vaults/Secrets/items/demo-app-secrets"
 
     # Authentik stack: chart-rendered provider-opentofu docs (OnePasswordItem
-    # + ProviderConfig + Workspace) with CHART-GENERATED inline HCL — the
+    # + ProviderConfig + Workspace) with CHART-GENERATED inline HCL; the
     # file-pair pattern, same shape as gatus MINUS the outpost: the new
     # proxy shape renders NO outpost, so demo-app's per-app outpost
     # (ak-outpost-demo-app-outpost + its dual-parent route) becomes
-    # UNMANAGED — it stays live and serving until the W4 sweep retires it.
-    # Values only; no varmap in git (adoption ids ride the gate-time W0
+    # UNMANAGED; it stays live and serving until a cleanup lap retires
+    # it. Values only; no varmap in git (adoption ids ride the re-adopt
     # runbook, witness sheet under .scratch). Live provider attrs match
     # the composed surface: internal_host = the composed default (unset
     # internalHost), no skip paths, access_token_validity hours=1 (chart
-    # default) — no per-app overrides needed.
+    # default); no per-app overrides needed.
     authentik:
       enabled: true
       managedBy: terraform

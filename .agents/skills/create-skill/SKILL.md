@@ -47,26 +47,26 @@ principles** section below. Related modules that _do_ exist:
 
 ## Authoring principles
 
-- **Conciseness** — write only what the agent needs. Prefer bullets and short
+- **Conciseness**: write only what the agent needs. Prefer bullets and short
   steps over long paragraphs.
-- **Invocation choice** — set `disable-model-invocation: true` when only the
+- **Invocation choice**: set `disable-model-invocation: true` when only the
   operator should invoke the skill by name. Omit it when the agent should
   discover the skill autonomously, or when another skill needs to call it.
   Each model-invoked description sits in the context window every turn.
-- **Progressive disclosure** — keep `SKILL.md` lean; move long catalogs to
+- **Progressive disclosure**: keep `SKILL.md` lean; move long catalogs to
   `references/` and load only when the step needs them.
-- **Information hierarchy** — (1) ordered steps with completion criteria,
+- **Information hierarchy**: (1) ordered steps with completion criteria,
   (2) in-skill reference tables, (3) external `references/` files.
-- **Description as the only trigger** — put trigger phrases in frontmatter
+- **Description as the only trigger**: put trigger phrases in frontmatter
   `description`; do not duplicate a "When to Use" section in the body.
-- **Imperative voice** — "Read the file and extract…", not "This skill reads…".
-- **Consistent terminology** — align with `AGENTS.md` and existing skills.
+- **Imperative voice**: "Read the file and extract…", not "This skill reads…".
+- **Consistent terminology**: align with `AGENTS.md` and existing skills.
 
 ## Procedure
 
 1. **Name the skill.** Use a verb phrase or noun describing the workflow:
    `find-work`, `review-loop`, `ship-work`. Check `.agents/skills/` **and**
-   `.agents/agents/` for collisions — both surface as `/<name>`.
+   `.agents/agents/` for collisions; both surface as `/<name>`.
 
 2. **Create the directory:**
 
@@ -91,13 +91,13 @@ principles** section below. Related modules that _do_ exist:
 
 4. **Write the body.** Structure:
 
-   - **Opening** — one or two sentences: what the skill does and its boundary
+   - **Opening**: one or two sentences: what the skill does and its boundary
      (read-only, creates worktree, etc.).
-   - **Steps** — ordered, numbered. Each step ends on a completion criterion the
+   - **Steps**: ordered, numbered. Each step ends on a completion criterion the
      agent can check (done vs not-done).
-   - **Reference** — non-ordered material (tables, pattern catalogs) consulted
+   - **Reference**: non-ordered material (tables, pattern catalogs) consulted
      during a step. Keep in the skill or move to `references/` if long.
-   - **Return** — what the skill hands back to the parent or operator.
+   - **Return**: what the skill hands back to the parent or operator.
 
 5. **Update routing.** If the skill should be discoverable via `AGENTS.md`,
    add a routing table row pointing at the skill.
@@ -114,7 +114,7 @@ principles** section below. Related modules that _do_ exist:
    python3 .agents/skills/reconcile-context/scripts/check_discovery.py
    ```
 
-`.agents/**` and adapter paths are protected — summarize the change set and
+`.agents/**` and adapter paths are protected; summarize the change set and
 get confirmation before writing
 ([`protected-paths`](../../rules/protected-paths.md)). Edit in a worktree
 ([`worktrees.md`](../../rules/worktrees.md)).
@@ -123,7 +123,7 @@ get confirmation before writing
 
 Lead with the skill name and one-sentence description. Then:
 
-- **File** — path created
-- **Routing** — whether `AGENTS.md` was updated (and the row added)
-- **Discovery** — Claude discovery status
-- **Next** — suggest a first invocation to test the skill
+- **File**: path created
+- **Routing**: whether `AGENTS.md` was updated (and the row added)
+- **Discovery**: Claude discovery status
+- **Next**: suggest a first invocation to test the skill

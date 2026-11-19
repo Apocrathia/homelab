@@ -7,7 +7,7 @@ diff to this script and we decide whether to spend GPU on inference at all.
 High-level flow:
 
 1. Compute a stable hash over the agent's input (the diff). This is the
-   energy gate — if the hash matches an existing comment's trailer, the
+   energy gate: if the hash matches an existing comment's trailer, the
    agent input hasn't meaningfully changed and we skip inference entirely.
 2. Otherwise invoke the A2A multi-turn loop. The agent posts or updates
    an MR note via the gitlab-mcp MCP server.
@@ -81,7 +81,7 @@ def _normalize_state(state: str | None) -> str:
 def _compute_input_hash(diff_path: Path, changed_files_path: Path) -> str:
     """Hash the agent's input. Diff bytes + changed-files bytes, concatenated.
 
-    Renovate's MR description is intentionally NOT included — Renovate
+    Renovate's MR description is intentionally NOT included: Renovate
     rewrites it on every rebase with rotating debug tokens, which would
     make the hash useless for skip-detection. The diff is the source of
     truth for what semantically changed.
@@ -170,7 +170,7 @@ async def _update_note_body(
         )
         if resp.status_code < 400:
             return True
-        # Avoid credential terminology in the format string — Semgrep flags it
+        # Avoid credential terminology in the format string: Semgrep flags it
         # as a credential-leak false positive.
         LOG.error(
             "MR note %s update failed: %s %s",
@@ -232,7 +232,7 @@ async def run_agent(
                 consecutive_failures,
             )
 
-            # Always send the full prompt — never a generic continuation.
+            # Always send the full prompt: never a generic continuation.
             # See the docstring above for why.
             msg = Message(
                 message_id=str(uuid4()),
@@ -294,7 +294,7 @@ async def run_agent(
                 if consecutive_failures >= max_consecutive_failures:
                     LOG.error(
                         "Aborting after %s consecutive hard failures (transport/failed). "
-                        "Likely gitlab-mcp or kagent saturation — not worth burning more turns.",
+                        "Likely gitlab-mcp or kagent saturation: not worth burning more turns.",
                         consecutive_failures,
                     )
                     return False
@@ -324,7 +324,7 @@ async def run_agent(
                 if consecutive_failures >= max_consecutive_failures:
                     LOG.error(
                         "Aborting after %s consecutive hard failures (transport/failed). "
-                        "Likely gitlab-mcp or kagent saturation — not worth burning more turns.",
+                        "Likely gitlab-mcp or kagent saturation: not worth burning more turns.",
                         consecutive_failures,
                     )
                     return False
@@ -332,7 +332,7 @@ async def run_agent(
                     return False
                 continue
 
-            # Soft miss (completed stub / no terminal state) — keep trying, do not
+            # Soft miss (completed stub / no terminal state): keep trying, do not
             # count toward the hard-failure budget.
             consecutive_failures = 0
             context_id = next_context_id

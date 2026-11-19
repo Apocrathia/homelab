@@ -39,7 +39,7 @@ machine:
       enabled: true
 ```
 
-If you've regenerated your Talos configurations after this patch was added, the API access is already configured. If not, regenerate and apply your Talos configs:
+If you've regenerated your Talos configurations from the unified patch, the API access is already configured. If not, regenerate and apply your Talos configs:
 
 ```bash
 # Regenerate configs with the updated patch
@@ -67,7 +67,7 @@ The resources are managed by GitOps through Flux and include health checks for s
 
 ### Talos node upgrades
 
-The `TalosUpgrade` resource is defined in `talosupgrade.yaml`. Currently pinned to the deployed version; health checks keep the cluster stable during upgrades.
+The `TalosUpgrade` resource is defined in `talosupgrade.yaml`.
 
 To upgrade Talos:
 
@@ -78,7 +78,7 @@ To upgrade Talos:
 
 ### Kubernetes upgrades
 
-The `KubernetesUpgrade` resource is defined in `kubernetesupgrade.yaml`. Currently pinned to the deployed version with health checks.
+The `KubernetesUpgrade` resource is defined in `kubernetesupgrade.yaml`.
 
 To upgrade Kubernetes:
 
