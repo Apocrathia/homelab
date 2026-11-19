@@ -1,28 +1,35 @@
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: block-default-namespace
 spec:
-  validationFailureAction: Enforce
-  rules:
-    - name: block-default-namespace
-      match:
-        any:
-          - resources:
-              kinds:
-                - Deployment
-                - StatefulSet
-                - ReplicaSet
-                - DaemonSet
-                - Job
-                - CronJob
-              namespaces:
-                - default
-      validate:
-        message: "Deployments to the default namespace are not allowed. Please use a dedicated namespace."
-        deny:
-          conditions:
-            - key: "{{ request.namespace }}"
-              operator: Equals
-              value: "default"
+  validationActions:
+    - Deny
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - apps
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - deployments
+          - statefulsets
+          - replicasets
+          - daemonsets
+      - apiGroups:
+          - batch
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - jobs
+          - cronjobs
+  validations:
+    - expression: 'object.metadata.namespace != "default"'
+      message: "Deployments to the default namespace are not allowed. Please use a dedicated namespace."

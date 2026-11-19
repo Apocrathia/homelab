@@ -8,7 +8,8 @@ resources:
   - block-default-namespace.yaml
   - mcpserver-deployment-recreate-strategy.yaml
   - reload-crossview-on-configmap-change.yaml
-  - sync-docker-io-imagepullsecret.yaml
+  - clone-docker-io-imagepullsecret.yaml
+  - add-docker-io-imagepullsecret-to-pods.yaml
   # - cleanup-replicasets.yaml
   # - cleanup-pods.yaml
   # - cleanup-jobs.yaml

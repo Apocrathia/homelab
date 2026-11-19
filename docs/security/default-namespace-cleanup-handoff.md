@@ -11,9 +11,9 @@ Operational brief for auditing and removing namespaced objects that should not l
 
 ## Kyverno: `audit-automount-sa-token`
 
-The policy `audit-automount-sa-token` is a **`ClusterPolicy`** (`kyverno.io/v1`, cluster-scoped). It is defined in `flux/manifests/03-services/kyverno/policies/audit-automount-sa-token.yaml` and is not a namespaced object. Policy violation **events** may reference `clusterpolicy/audit-automount-sa-token` while the event object itself is stored in `default` (Events are namespaced); that does not mean the policy lives in `default`.
+The policy `audit-automount-sa-token` is a **`ValidatingPolicy`** (`policies.kyverno.io/v1`, cluster-scoped; migrated from the legacy `ClusterPolicy` kind in Nov 2026). It is defined in `flux/manifests/03-services/kyverno/policies/audit-automount-sa-token.yaml` and is not a namespaced object. Policy violation **events** may reference `validatingpolicy/audit-automount-sa-token` while the event object itself is stored in `default` (Events are namespaced); that does not mean the policy lives in `default`.
 
-Do not try to "move" a `ClusterPolicy` into `kyverno` by adding `metadata.namespace`; that would change the API kind or fail validation. If namespaced policies are required, that is a separate design change (`Policy` in `kyverno` namespace with explicit match rules).
+Do not try to "move" a `ValidatingPolicy` into `kyverno` by adding `metadata.namespace`; that would change the API kind or fail validation. If namespaced policies are required, that is a separate design change (`namespaced` policy kinds in `kyverno` namespace with explicit match rules).
 
 ### Getting policy Events out of `default`
 
@@ -124,7 +124,7 @@ Kubernetes Dashboard is deprecated in this environment in favor of `headlamp`. T
 
 | Path                                                                        | Relevance                                                                 |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `flux/manifests/03-services/kyverno/policies/audit-automount-sa-token.yaml` | ClusterPolicy definition                                                  |
+| `flux/manifests/03-services/kyverno/policies/audit-automount-sa-token.yaml` | ValidatingPolicy definition                                               |
 | `flux/manifests/03-services/headlamp/`                                      | Active Kubernetes web UI (replaces deprecated Kubernetes Dashboard)       |
 | `flux/manifests/03-services/kyverno/test-violation.yaml`                    | Test resource using `namespace: default`; review whether it should remain |
 

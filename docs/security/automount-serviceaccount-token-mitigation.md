@@ -36,28 +36,29 @@ by the default.
 2. **Kyverno Mutation Policy**: Create a mutating policy to inject the setting:
 
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
   name: mutate-authentik-outposts-disable-sa-token
 spec:
-  rules:
-    - name: disable-sa-token-for-outposts
-      match:
-        any:
-          - resources:
-              kinds:
-                - Deployment
-              namespaces:
-                - authentik
-              names:
-                - "ak-outpost-*"
-      mutate:
-        patchStrategicMerge:
-          spec:
-            template:
-              spec:
-                automountServiceAccountToken: false
+  failurePolicy: Fail
+  matchConditions:
+    # CEL matchConditions replace legacy name wildcards and namespace matches
+    - name: authentik-outposts-only
+      expression: >-
+        object.metadata.namespace == "authentik"
+        && object.metadata.name.startsWith("ak-outpost-")
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments]
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          [JSONPatch{op: "add", path: "/spec/template/spec/automountServiceAccountToken", value: false}]
 ```
 
 3. **Accept Risk**: Authentik outposts run in a dedicated namespace with limited blast radius. Document the exception and exclude from policy scope.
@@ -191,8 +192,8 @@ Qdrant StatefulSet doesn't need API access.
 For workloads that can't be fixed at the source, a cluster-wide mutation policy can inject the setting:
 
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
   name: mutate-disable-sa-token-mounting
   annotations:
@@ -200,44 +201,31 @@ metadata:
     policies.kyverno.io/category: Security
     policies.kyverno.io/severity: medium
 spec:
-  rules:
-    - name: disable-sa-token
-      match:
-        any:
-          - resources:
-              kinds:
-                - Pod
-      exclude:
-        any:
-          # Exclude namespaces that legitimately need API access
-          - resources:
-              namespaces:
-                - kube-system
-                - kube-public
-                - kube-node-lease
-                - cilium-system
-                - flux-system
-                - kyverno
-                - cert-manager
-                - external-secrets-system
-                - longhorn-system
-                - prometheus-system
-                - postgres-system
-                - otel-system
-                - trivy-system
-                - policy-reporter
-                - grafana-system
-                - onepassword-system
-                - lws-system
-                - pasture-system
-                - system-upgrade
-                - renovate
-                - gitlab-runner
-                - kagent
-      mutate:
-        patchStrategicMerge:
-          spec:
-            automountServiceAccountToken: false
+  failurePolicy: Fail
+  matchConditions:
+    # Exclude namespaces that legitimately need API access (CEL replaces the
+    # legacy exclude block; matchConstraints.resourceRules cannot express it)
+    - name: not-system-namespace
+      expression: >-
+        !(object.metadata.namespace in [
+          "kube-system", "kube-public", "kube-node-lease", "cilium-system",
+          "flux-system", "kyverno", "cert-manager", "external-secrets-system",
+          "longhorn-system", "prometheus-system", "postgres-system",
+          "otel-system", "trivy-system", "policy-reporter", "grafana-system",
+          "onepassword-system", "lws-system", "pasture-system", "system-upgrade",
+          "renovate", "gitlab-runner", "kagent"
+        ])
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          [JSONPatch{op: "add", path: "/spec/automountServiceAccountToken", value: false}]
 ```
 
 **Warning**: Mutation policies can cause unexpected behavior. Test thoroughly in a staging environment first.
