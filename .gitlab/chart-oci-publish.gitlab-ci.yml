@@ -22,33 +22,38 @@ publish-generic-app-chart:
   script:
     - |
       set -eu
-      if [ ! -f "helm/generic-app/Chart.yaml" ]; then
-        echo "ERROR: helm/generic-app/Chart.yaml not found"
+
+      # String components — define once, compose per scenario:
+      #   pull/check + log messages use the full artifact path (CHART_OCI_REF);
+      #   helm push wants the registry root (REGISTRY_OCI) and appends the
+      #   chart name itself; the packaged tgz path follows helm's
+      #   <name>-<version>.tgz naming.
+      CHART_NAME="generic-app"
+      CHART_DIR="helm/${CHART_NAME}"
+
+      if [ ! -f "${CHART_DIR}/Chart.yaml" ]; then
+        echo "ERROR: ${CHART_DIR}/Chart.yaml not found"
         exit 1
       fi
 
-      CHART_VERSION=$(grep '^version:' helm/generic-app/Chart.yaml | awk '{print $2}' | tr -d '"')
+      CHART_VERSION=$(grep '^version:' "${CHART_DIR}/Chart.yaml" | awk '{print $2}' | tr -d '"')
       if [[ ! $CHART_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo "ERROR: Invalid version format: ${CHART_VERSION} (expected x.y.z)"
         exit 1
       fi
 
-      # Full artifact path for pull/check: helm pull uses the ref as-is.
-      CHART_REF="oci://${CI_REGISTRY_IMAGE}/generic-app"
-      # helm push APPENDS the chart name to the oci:// target, so the push
-      # target is the project registry root — pushing to ${CHART_REF} would
-      # land the chart at generic-app/generic-app (the first !6046 landing
-      # did exactly that; the stray repository is harmless).
-      CHART_PUSH_REF="oci://${CI_REGISTRY_IMAGE}"
+      CHART_TGZ="/tmp/${CHART_NAME}-${CHART_VERSION}.tgz"
+      REGISTRY_OCI="oci://${CI_REGISTRY_IMAGE}"
+      CHART_OCI_REF="${REGISTRY_OCI}/${CHART_NAME}"
       echo "Chart version: ${CHART_VERSION}"
 
-      if helm pull "${CHART_REF}" --version "${CHART_VERSION}" --destination /tmp > /dev/null 2>&1; then
-        echo "SKIP: ${CHART_REF}:${CHART_VERSION} already published"
+      if helm pull "${CHART_OCI_REF}" --version "${CHART_VERSION}" --destination /tmp > /dev/null 2>&1; then
+        echo "SKIP: ${CHART_OCI_REF}:${CHART_VERSION} already published"
         exit 0
       fi
 
-      echo "Publishing ${CHART_REF}:${CHART_VERSION}"
-      helm package helm/generic-app --destination /tmp
+      echo "Publishing ${CHART_OCI_REF}:${CHART_VERSION}"
+      helm package "${CHART_DIR}" --destination /tmp
 
       # Registry-readiness retries: needs orders this job after tofu-apply on
       # the landing pipeline, but GitLab-side enablement can lag the apply, and
@@ -56,13 +61,13 @@ publish-generic-app-chart:
       # every default-branch pipeline. Bounded retry, then fail loudly with the
       # likely cause instead of a bare push error.
       for attempt in 1 2 3 4 5; do
-        if helm push "/tmp/generic-app-${CHART_VERSION}.tgz" "${CHART_PUSH_REF}"; then
+        if helm push "${CHART_TGZ}" "${REGISTRY_OCI}"; then
           exit 0
         fi
         echo "push failed (attempt ${attempt}/5) — registry may still be enabling; retrying in 30s"
         [ "${attempt}" -lt 5 ] && sleep 30
       done
-      echo "ERROR: could not push ${CHART_REF}:${CHART_VERSION}."
+      echo "ERROR: could not push ${CHART_OCI_REF}:${CHART_VERSION}."
       echo "Is the container registry enabled? Check tofu-apply for the"
       echo "gitlab/homelab stack (container_registry_access_level = private)"
       echo "— a failed apply leaves the registry off until it succeeds."
