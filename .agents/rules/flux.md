@@ -109,9 +109,13 @@ flux/
      # renovate: datasource=docker depName=ghcr.io/org/image
      tag: v1.2.3
 
-     # Helm charts
+     # Helm charts (HTTP repository)
      # renovate: datasource=helm registryUrl=https://charts.example.com depName=my-chart
      version: 1.2.3
+
+     # Helm charts (OCI registry — e.g. the generic-app chart)
+     # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
+     version: 0.0.91
      ```
 
 3. Implement progressive delivery

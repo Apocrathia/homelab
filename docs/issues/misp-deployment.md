@@ -90,7 +90,7 @@ Slice 8 — backups + ops docs:
 Research doc sections 1.2 (chart choice), 1.3 (MariaDB verdict), 1.4
 (components), 1.5 (sizing), 1.6 (OIDC), 5 (slice plan). The chart has no
 published helm index — consume via GitRepository (git-tags Renovate
-datasource), same pattern as generic-app.
+datasource).
 
 ## Notes
 

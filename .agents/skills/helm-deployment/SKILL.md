@@ -327,6 +327,19 @@ The generic-app chart supports both proxy and OIDC authentication modes via `aut
 
 - Add to `flux/manifests/01-bootstrap/helm/repositories/[chart-name].yaml`
 - Follow existing pattern with `interval: 1h`, `url`, and `timeout: 3m`
+- **generic-app is the exception**: it comes from the project's own OCI registry via the shared `homelab` HelmRepository (`flux-system`) — never add a new repository for it. Pin the chart's current version (from `helm/generic-app/Chart.yaml`) and let Renovate track it:
+
+  ```yaml
+  chart:
+    spec:
+      chart: generic-app
+      # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
+      version: "0.0.91"
+      sourceRef:
+        kind: HelmRepository
+        name: homelab
+        namespace: flux-system
+  ```
 
 ## Service Discovery
 

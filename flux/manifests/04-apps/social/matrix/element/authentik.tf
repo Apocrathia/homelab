@@ -47,11 +47,6 @@ data "authentik_group" "admins" {
   include_users = false
 }
 
-data "authentik_group" "users" {
-  name          = "users"
-  include_users = false
-}
-
 data "authentik_certificate_key_pair" "signing" {
   name = "authentik Self-signed Certificate"
 }
@@ -118,7 +113,7 @@ resource "authentik_application" "app" {
   slug            = "element"
   group           = "Social"
   meta_launch_url = "https://element.gateway.services.apocrathia.com/"
-  open_in_new_tab = true
+  open_in_new_tab = false
 
   meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/social/matrix/element/icon.svg"
   meta_description = "Element Web — Matrix client (OIDC via MAS)"
@@ -131,13 +126,4 @@ resource "authentik_policy_binding" "admins" {
   target = authentik_application.app.uuid
   group  = data.authentik_group.admins.id
   order  = 10
-}
-
-# Users-group binding (order-20 house pattern): friends on the tailnet
-# log in through these tiles — the whole point of the homeserver. MAS
-# JIT-provisions @<username>:matrix.apocrathia.com on first login.
-resource "authentik_policy_binding" "users" {
-  target = authentik_application.app.uuid
-  group  = data.authentik_group.users.id
-  order  = 20
 }

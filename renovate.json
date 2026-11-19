@@ -51,9 +51,9 @@
       "pinDigests": false
     },
     {
-      "description": "One MR for all generic-app chart version pins — each new generic-app-* tag touches ~88 HelmReleases",
-      "matchDatasources": ["git-tags"],
-      "matchDepNames": ["https://gitlab.com/Apocrathia/homelab.git"],
+      "description": "One MR for all generic-app chart version pins — each new OCI chart tag touches ~122 HelmReleases",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["registry.gitlab.com/apocrathia/homelab/generic-app"],
       "groupName": "generic-app chart"
     },
     {
@@ -124,17 +124,6 @@
       "matchStrings": [
         "# renovate: datasource=github-releases depName=(?<depName>siderolabs/talos)\\s*\\n\\s*image: .*:(?<currentValue>v\\d+\\.\\d+\\.\\d+)"
       ]
-    },
-    {
-      "customType": "regex",
-      "description": "generic-app Chart versions from Git tags",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
-      "datasourceTemplate": "git-tags",
-      "depNameTemplate": "https://gitlab.com/Apocrathia/homelab.git",
-      "matchStrings": [
-        "# renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ],
-      "extractVersionTemplate": "^generic-app-(?<version>.*)$"
     },
     {
       "customType": "regex",

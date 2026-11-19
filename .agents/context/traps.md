@@ -20,7 +20,7 @@ non-trivial work.
 
 ## Charts and apps
 
-- `helm/generic-app` is shared. A silent change breaks many workloads.
+- `helm/generic-app` is shared. Chart edits reach the cluster only through a `Chart.yaml` version bump (CI publishes the matching OCI tag; Renovate then bumps every consumer pin) — an edit without a bump silently never deploys.
 - New apps usually follow [`helm-deployment`](../skills/helm-deployment/SKILL.md).
 - MCP servers under AI apps follow [`mcp-deployment`](../skills/mcp-deployment/SKILL.md).
 

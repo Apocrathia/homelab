@@ -17,7 +17,7 @@ This prompt is for **operators and other AI agents**. It does not replace readin
   - **SMB and other non-Longhorn** PVCs in the same namespace (often `*-pvc` with RWX). Do not delete or re-render those when working on Longhorn.
   - Non-Helm workloads.
 
-**HelmRelease chart reference (this repo):** `spec.chart.spec.chart` is **`./helm/generic-app`** (path into the GitRepository), not the string `generic-app` alone. When listing `HelmRelease`s that use this chart, filter with something like: chart path **contains** `generic-app`.
+**HelmRelease chart reference (this repo):** `spec.chart.spec.chart` is **`generic-app`**, pulled from the OCI `HelmRepository` named `homelab` (`sourceRef.kind: HelmRepository`, namespace `flux-system`) at a pinned `version`. When listing `HelmRelease`s that use this chart, filter with: chart **equals** `generic-app`.
 
 # Inputs (collect before acting)
 
@@ -67,6 +67,8 @@ Confirm from Git:
 8. **Scale up** (Git and/or `kubectl scale` per your drift strategy). **Verify** pod running, PVC `Bound`, app healthy.
 
 # Render command (reference)
+
+> **Version guard:** `helm template … helm/generic-app` renders the chart at HEAD. The deployed release is the pinned OCI tag — before trusting a render during a restore, confirm the HelmRelease `spec.chart.spec.version` matches `helm/generic-app/Chart.yaml` (post-divergence, render from the `generic-app-<version>` git tag instead).
 
 From the repo root, using the **Git** HelmRelease file as the source of values (adjust paths):
 

@@ -12,10 +12,14 @@ The documentation for the configuration can be found at https://docs.renovatebot
 
 We are using a regex manager to manage the versions of helm releases. This is a vital part of the configuration and you must strive to get every helm release in the repository to use the regex manager.
 
-To leverage the regex manager, you must use the following format:
+To leverage the regex manager, use the format matching the chart's source (comment sits directly above the `version:` line it tracks):
 
 ```
+# HTTP chart repository
 # renovate: datasource=helm registryUrl=https://my-registry.com depName=my-release
+
+# OCI chart registry (e.g. the project's own generic-app chart)
+# renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
 ```
 
 Your goal is to update the configuration to fix the issues and improve the configuration.
