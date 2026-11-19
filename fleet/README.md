@@ -11,10 +11,10 @@ Applied with `fleetctl gitops` by the CI job in
 This tree follows the layout from `fleetctl new` (see also
 [Fleet YAML files](https://fleetdm.com/docs/configuration/yaml-files)):
 
-- `default.yml` — global / org-wide settings
-- `fleets/*.yml` — one file per fleet (optional; omit until you need fleets)
-- `platforms/` — reusable snippets referenced by path from those YAML files
-- `gitops.sh` — thin wrapper around `fleetctl gitops` (dry-run then apply)
+- `default.yml`: global / org-wide settings
+- `fleets/*.yml`: one file per fleet (optional; omit until you need fleets)
+- `platforms/`: reusable snippets referenced by path from those YAML files
+- `gitops.sh`: thin wrapper around `fleetctl gitops` (dry-run then apply)
 
 `gitops.sh` defaults to `--delete-other-fleets`: any fleet in Fleet that is not
 defined under `fleets/` is removed on apply. Keep that in mind when adding or
@@ -73,27 +73,27 @@ Drop `.keep` when you add real content.
   no auto-install): Blender, ChatGPT, Discord, GitHub Desktop, HandBrake, OBS,
   Obsidian, Podman Desktop, Rectangle, Spotify, Steam, Syncthing, Tailscale,
   VLC, Zoom. Home loads every platform policy tree via
-  `paths: ../platforms/**/policies/**/*.yml` — drop a new `.yml` under any
+  `paths: ../platforms/**/policies/**/*.yml`; drop a new `.yml` under any
   `platforms/*/policies/` and GitOps picks it up. Overlapping globs that match
   the same file will fail GitOps (ambiguous).
 - **macOS CIS Level 1 (macOS 26 Tahoe)** →
   `platforms/macos/policies/cis-macos-26-l1.yml` (from Fleet
   [`ee/cis/macos-26`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26);
   see [CIS Benchmarks](https://fleetdm.com/guides/cis-benchmarks)). Assessment
-  only — many checks need MDM profiles to pass. FileVault enforcement:
+  only; many checks need MDM profiles to pass. FileVault enforcement:
   `enable_disk_encryption` in `fleets/home.yml` controls.
 - **macOS CIS MDM profiles (macOS 26)** →
   `platforms/macos/configuration-profiles/cis-macos-26/` (from Fleet
   [`ee/cis/macos-26/test/profiles`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26/test/profiles)).
-  Vendored only — add under `apple_settings.configuration_profiles` in Home
+  Vendored only; add under `apple_settings.configuration_profiles` in Home
   controls when ready to enforce.
 
 Secrets and tokens are never committed. Enroll secrets live in 1Password
 `fleetdm-secrets` and matching GitLab CI variables:
 
-- `global-enroll-secret` / `FLEET_GLOBAL_ENROLL_SECRET` — Fleet pod
+- `global-enroll-secret` / `FLEET_GLOBAL_ENROLL_SECRET`: Fleet pod
   `FLEET_PACKAGING_GLOBAL_ENROLL_SECRET` and `default.yml`
-- `home-enroll-secret` / `FLEET_HOME_ENROLL_SECRET` — `fleets/home.yml`
+- `home-enroll-secret` / `FLEET_HOME_ENROLL_SECRET`: `fleets/home.yml`
 
 Other CI variables: `FLEET_URL`, `FLEET_API_TOKEN`. See the
 [Fleet deployment README](../flux/manifests/04-apps/management/fleet/README.md#ci-apply) for schedule setup.
