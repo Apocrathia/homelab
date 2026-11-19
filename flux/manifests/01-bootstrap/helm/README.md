@@ -23,7 +23,7 @@ Helm repositories provide access to packaged applications and services. This set
 - **Purpose**: The project's own chart registry — hosts the `generic-app` chart, published by the `chart-oci-publish` CI job (OCI tag = `Chart.yaml` version)
 - **Update Interval**: 5 minutes
 - **Usage**: Source for every `generic-app` HelmRelease (version-pinned, Renovate-managed)
-- **Authentication**: `gitlab-registry-deploy-token` 1Password item (read_registry deploy token) via `secretRef`
+- **Authentication**: `gitlab-registry-secrets` 1Password item (read_registry deploy token, fields `username`/`password`) via `secretRef`
 
 ### Core Infrastructure Repositories
 

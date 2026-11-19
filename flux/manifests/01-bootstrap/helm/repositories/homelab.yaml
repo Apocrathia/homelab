@@ -3,7 +3,7 @@
 # The project's own chart registry (generic-app). Published by the
 # chart-oci-publish CI job; private — source-controller authenticates with
 # the gitlab-registry-deploy-token OnePasswordItem (secret.yaml in this
-# kustomization). OCI tag = chart version, so HelmRelease version pins are
+# kustomization), fed by the gitlab-registry-secrets 1Password item. OCI tag = chart version, so HelmRelease version pins are
 # honored (the old GitRepository path always rendered main).
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
