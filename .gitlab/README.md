@@ -11,7 +11,7 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 ### Pipeline Components
 
 | File                              | Stage         | Trigger                          | Purpose                                                |
-|-----------------------------------|---------------|----------------------------------|--------------------------------------------------------|
+| --------------------------------- | ------------- | -------------------------------- | ------------------------------------------------------ |
 | `chart-tag.gitlab-ci.yml`         | deploy        | `Chart.yaml` changes             | Creates Git tags for Helm chart releases               |
 | `chart-oci-publish.gitlab-ci.yml` | deploy        | main (idempotent)                | Publishes generic-app chart to the GitLab OCI registry |
 | `kustomize-diff.gitlab-ci.yml`    | verify        | MR (manifest changes)            | Posts rendered manifest diffs to MR comments           |
