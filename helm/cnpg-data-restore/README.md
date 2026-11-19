@@ -1,6 +1,6 @@
 # cnpg-data-restore
 
-Helm chart for a **one-off Job** that runs **`pg_restore`** against a dump file on an **SMB/CIFS volume**, using the **same CSI + 1Password credential pattern** as [generic-app](../../generic-app/README.md) (`storage.smb`) and [`cnpg-data-extract`](../cnpg-data-extract/README.md) (`backupSmb`). The share is mounted **read-only** at `backupSmb.mountPath` (default `/backup`).
+Helm chart for a **one-off Job** that runs **`pg_restore`** against a dump file on an **SMB/CIFS volume**, using the **same CSI + 1Password credential pattern** as [generic-app](../generic-app/README.md) (`storage.smb`) and [`cnpg-data-extract`](../cnpg-data-extract/README.md) (`backupSmb`). The share is mounted **read-only** at `backupSmb.mountPath` (default `/backup`).
 
 Use this after a new CNPG `Cluster` is up and the dump file already lives on the backup share (e.g. written by `cnpg-data-extract` with `backupSmb.enabled`).
 
@@ -33,7 +33,7 @@ kubectl wait --namespace <namespace> --for=condition=complete job/<job-name> --t
 
 `job/<job-name>` matches the chart’s computed Job name (often `fullnameOverride` if set).
 
-**Authentik (this repo)** — concrete example:
+**Authentik (this repo)**: concrete example:
 
 ```bash
 helm install authentik-pg-restore helm/cnpg-data-restore \
@@ -52,5 +52,5 @@ helm lint . -f ci/lint-values.yaml
 
 ## See also
 
-- [cnpg-data-extract](../cnpg-data-extract/README.md) — dump phase and full recovery ordering.
+- [cnpg-data-extract](../cnpg-data-extract/README.md): dump phase and full recovery ordering.
 - [CNPG logical migration from PVC](../../docs/infrastructure/cnpg-logical-migration-from-pvc.md).
