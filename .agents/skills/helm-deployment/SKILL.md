@@ -5,7 +5,7 @@ description: Deploy Helm charts for the homelab GitOps environment using Flux, K
 
 # Helm deployment
 
-You are an AI assistant that helps with the deployment of Helm charts for the homelab environment. You are proficient in GitOps practices using Flux and Kustomize for Kubernetes deployments. Your goal is to help with the deployment of Helm charts for the homelab environment.
+Deploy Helm charts for the homelab environment through Flux and Kustomize, with `generic-app` as the standard app chart.
 
 # Input
 
@@ -14,7 +14,6 @@ The user will provide a link to the helm chart and/or repository that they want 
 - [LINK] - The link to the helm chart and/or repository that they want to deploy.
 - [DIRECTORY] - The directory to deploy the helm chart and/or repository to.
 - [ICON] - The icon to use for the application.
-- [DIRECTORY] - The directory to deploy the helm chart and/or repository to.
 
 # Task
 
@@ -22,10 +21,10 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 
 # Actions
 
-- Start by reviewing the deployments adjacent to the [DIRECTORY] to understand the existing deployment structure and values.
-- Now, pull the chart and/or repository into `.scratch/` (see [`.scratch/README.md`](../../../.scratch/README.md); not `/tmp`).
-- Next, you will thoroughly review the chart and/or repository to understand the deployment structure and values.
-  - Leverage DeepWiki whenever possible to further understand the chart and/or repository.
+- Review the deployments adjacent to [DIRECTORY] to understand the existing deployment structure and values.
+- Pull the chart and/or repository into `.scratch/` (see [`.scratch/README.md`](../../../.scratch/README.md); not `/tmp`).
+- Review the chart and/or repository to understand its structure and values.
+  - Use DeepWiki where available to understand the chart and/or repository.
   - **Run DeepWiki antipattern checks** per `.agents/rules/deepwiki.md` — probe for privacy, security, and general fuckery before writing any manifests.
   - **Use Context7** per `.agents/rules/context7.md` to pull current documentation for the chart and its dependencies — verify values schema, default config, and API surface before writing any manifests.
   - Understand required vs optional components and their purposes.
@@ -64,7 +63,7 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
     - Only create separate resources if the chart doesn't support the required feature
   - Understand how database connection is configured (env vars, config files, service discovery)
   - For PostgreSQL with generic-app: Connection uses service name pattern `{app-name}-postgres-rw.{namespace}.svc.cluster.local`
-- Take a step back and think about what values need to be set for the deployment to be successful in our environment.
+- Decide what values the deployment needs to succeed in this environment.
   - If you are unsure about authentication, networking, or component requirements, ask per `.agents/context/questions.md` (structured-question tool when in the tool list). Do not dump a multi-Ask markdown wall.
 - Determine if the helm chart's repository is already added to the Flux repository list.
   - If not, add it to the repository list.
@@ -94,15 +93,15 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
     1. Does the application natively support OIDC/OAuth? → Use `authentik.mode: "oidc"` with `httproute.enabled: true`
     2. Does the application have local authentication or no auth? → Use `authentik.mode: "proxy"` (no HTTPRoute needed)
     3. Does the application require SAML? → Use SAML provider (manual blueprint required)
-- Once you have the deployment drafted, you will need to test the supplied values against the chart to pre-validate the deployment.
-  - This will involve using `helm template` to render the template and validate the deployment.
+- With the deployment drafted, pre-validate the values against the chart.
+  - Use `helm template` to render the chart and check the output.
   - Validate service names and ports match your networking configuration
   - Understand port mapping:
     - `container.port`: The port the application listens on inside the container
     - `service.port`: The port exposed by the Kubernetes service (can differ from container port)
     - `service.targetPort`: The port on the container the service forwards to (usually matches container.port)
     - Common pattern: Service exposes port 80, targets container port 8080 (or similar)
-  - Make any necessary adjustments to the values to ensure the chart generates the expected resources.
+  - Adjust values until the chart generates the expected resources.
 - Create documentation for the deployment:
   - Follow standards in `docs/documentation-standards.md`
   - Use template from `docs/readme-template.md`
@@ -124,8 +123,8 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - Without this step, Flux won't manage the new component - it will exist in git but never be applied to the cluster
   - Example: Add `- 04-apps/hypermind/flux-kustomization.yaml` to the root resources list
   - This is the #1 most forgotten step when creating new deployments outside existing categories
-- When you are satisfied with the deployment, present your work to the user for review and approval.
-  - At this point, the user will likely apply the deployment to the cluster, and we can observe the deployment in action.
+- Present the deployment to the user for review and approval.
+  - The user will likely apply it to the cluster; observe it in action from there.
 - After the user applies and tests the deployment:
   - **Post-deployment validation checklist**:
     - [ ] Application started successfully (check pod logs, not just pod status)
@@ -148,7 +147,7 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
     - **What was missing**: Information or guidance that would have prevented issues
     - **Suggested additions**: Specific text/sections to add to this prompt
     - **Suggested modifications**: Changes to existing guidance that would improve accuracy
-  - Focus on generalizable learnings, not application-specific quirks
+  - Focus on lessons that generalize, not application-specific quirks
   - If the deployment exposed a common pattern not documented here, propose adding it
   - Ask the user if they'd like to apply any suggested improvements to this prompt
 
@@ -226,7 +225,7 @@ The generic-app chart supports both proxy and OIDC authentication modes via `aut
 - **Validate Assumptions**: Don't add secrets/env vars based on patterns alone - verify the application actually needs them
 - **Web UI First**: If an application supports web UI configuration, prefer that over pre-configuring via secrets/env vars
 - **Iterate Based on Reality**: After deployment, simplify based on how the application actually behaves, not initial assumptions
-- **User Feedback**: Actively seek user feedback after deployment to understand what's actually needed
+- **User Feedback**: Ask the user after deployment what was actually needed
 
 ## Secrets and Environment Variables
 
@@ -384,7 +383,7 @@ After completing a Helm deployment:
 1. **Identify patterns**: Note common issues with configuration, authentication, or networking
 2. **Update chart docs**: Suggest improvements to generic-app chart README if gaps found
 3. **Update standards**: Suggest additions to documentation standards if needed
-4. **Refine this prompt**: Suggest additions to this prompt based on learnings
+4. **Refine this prompt**: Suggest additions to this prompt based on what the deployment surfaced
 
 Format improvement suggestions as:
 

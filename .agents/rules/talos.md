@@ -8,8 +8,6 @@ alwaysApply: false
 
 ## Official Documentation References
 
-The following documentation should be referenced when working with Talos Linux configurations:
-
 ### Core Documentation
 
 - [Official Talos Documentation](mdc:https:/www.talos.dev/latest)
@@ -71,8 +69,5 @@ The following documentation should be referenced when working with Talos Linux c
    - Upgrade paths should be clearly defined
    - Logging configurations must be appropriate for the environment
    - **Validate configurations locally as much as possible** before applying to cluster
-   - **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
-
----
-
-_Note: This document will be updated with additional rules and best practices as they are defined._
+   - **Do not make any changes without first consulting the operator**,
+     presenting options, and obtaining explicit approval

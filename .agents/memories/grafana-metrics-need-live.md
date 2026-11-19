@@ -16,6 +16,6 @@ fine read-only. Static claims use local evals, not fake Prom numbers.
 
 ## References
 
-- [`autoresearch/SKILL.md`](../skills/autoresearch/SKILL.md) — Grafana section
+- [`autoresearch/SKILL.md`](../skills/autoresearch/SKILL.md): Grafana section
 - [`docs/research/README.md`](../../docs/research/README.md)
 - [`tools.md`](../context/tools.md)

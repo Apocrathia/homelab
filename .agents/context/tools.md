@@ -10,7 +10,7 @@ systems: use MCP when a server is configured for the job.
 
 - Prefer Grafana MCP (`query_prometheus`, `query_prometheus_histogram`,
   Loki query/stats) for [`autoresearch`](../skills/autoresearch/SKILL.md)
-  runtime metrics — read-only, explicit time ranges; never scrape with
+  runtime metrics (read-only, explicit time ranges); never scrape with
   embedded credentials.
 - Prefer GitLab MCP for MR / CI / pipeline reads (`watch-mr`, `find-work` Open
   MRs / CI scouts) over `glab` / raw API when the server is configured.
@@ -21,10 +21,10 @@ systems: use MCP when a server is configured for the job.
     `flux reconcile helmrelease --force` because the MCP schema omits a
     `force` argument.
   - Use `flux` / `kubectl` CLI for Flux only when MCP errors, is
-    unavailable, or cannot express the action (not for “I want `--force`”).
+    unavailable, or cannot express the action (not for "I want `--force`").
 - Prefer CLI (`kubectl`, `flux`, `helm`, `talosctl`) when you need exact flags,
-  pipes, or local render (`helm template`) — or when MCP is unavailable.
-  “Exact flags” does not override the Flux MCP reconcile rule above.
+  pipes, or local render (`helm template`), or when MCP is unavailable.
+  "Exact flags" does not override the Flux MCP reconcile rule above.
 - Local filesystem / git / renders: Shell, Read, Grep (not MCP).
 - Mutating MCP calls still need the same permission bar as mutating CLI. Ask
   first.
@@ -37,14 +37,14 @@ systems: use MCP when a server is configured for the job.
 
 ## Common local checks
 
-| Intent                 | Typical command                                                                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Render a chart         | `helm template` into `.scratch/`                                                                                                                                   |
-| YAML / markdown format | Prettier; yamllint where the repo already uses it                                                                                                                  |
-| Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths                                                                                                          |
-| Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` (also via `context-links` pre-commit)                                                            |
-| Rank next work         | [`find-work`](../skills/find-work/SKILL.md) (read-only) before implementing; see [`development-loop.md`](./development-loop.md)                                    |
-| Draft commit / MR      | [`draft-commit`](../skills/draft-commit/SKILL.md) — draft by default; ships when authorized ([`constraints.md#commit-and-ship`](./constraints.md#commit-and-ship)) |
+| Intent                 | Typical command                                                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Render a chart         | `helm template` into `.scratch/`                                                                                                                                  |
+| YAML / markdown format | Prettier; yamllint where the repo already uses it                                                                                                                 |
+| Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths                                                                                                         |
+| Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` (also via `context-links` pre-commit)                                                           |
+| Rank next work         | [`find-work`](../skills/find-work/SKILL.md) (read-only) before implementing; see [`development-loop.md`](./development-loop.md)                                   |
+| Draft commit / MR      | [`draft-commit`](../skills/draft-commit/SKILL.md): draft by default; ships when authorized ([`constraints.md#commit-and-ship`](./constraints.md#commit-and-ship)) |
 
 File gaps under [`docs/issues/`](../../docs/issues/README.md) via
 [`file-issue`](../skills/file-issue/SKILL.md). Plans:

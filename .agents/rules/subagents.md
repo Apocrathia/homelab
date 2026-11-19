@@ -7,7 +7,7 @@ alwaysApply: true
 
 Subagent delegation is graph orchestration: each subagent is a node, the parent
 wires the edges, and atomic tasks report back for compilation by the parent or
-another node. This is graph engineering — multiple agents, each running their
+another node. This is graph engineering: multiple agents, each running their
 own loop, connected through a directed acyclic graph (DAG). A single agent
 doing everything is a degenerate graph (one node). The work graph in
 [`development-loop.md`](../context/development-loop.md) is the full DAG.
@@ -58,7 +58,7 @@ Roles: `implementer` \| `reviewer` \| `verifier` \| unpaired.
 `manifest-implementer` and `reviewer` form an inseparable pair;
 `manifest-verifier` is a separate arbiter after the pair returns pass.
 Domain reviewers (`security-analyst`, `documentation-reviewer`) still fill the
-**reviewer** slot — do not invent parallel role names for the same jobs.
+**reviewer** slot; do not invent parallel role names for the same jobs.
 
 Invoke by name or delegate explicitly. Run independent agents in parallel in
 one message.
@@ -67,7 +67,7 @@ one message.
 
 When a task has **2+ independent domains** (different files, skills, or research
 areas that do not share write locks), the parent **MUST** launch parallel
-subagents (Task tool / harness equivalent) — one agent per domain — rather than
+subagents (Task tool / harness equivalent), one agent per domain, rather than
 serially exploring alone.
 
 **Fan out when:** multi-file harvest; parallel research; independent
@@ -79,11 +79,11 @@ shared state matters; exploratory "what is broken?" before domains are known.
 ## When to stay in the parent
 
 The parent may coordinate, answer questions, or make a trivial edit without
-spawning a subagent — but **any file edit still requires a worktree first**
+spawning a subagent, but **any file edit still requires a worktree first**
 (see [`worktrees.md`](./worktrees.md)). Trivial single-file edits skip subagent
 delegation, not worktree setup.
 
-- Single known file, single edit, no discovery — parent may edit directly in
+- Single known file, single edit, no discovery: parent may edit directly in
   the worktree.
 - Operator asked you not to delegate.
 - Subagent would need conversation context the prompt cannot carry (rare;
@@ -128,9 +128,9 @@ implementer → reviewer → pass | gap
 - **Implementer never grades itself.** Pass against the Bar is the reviewer's
   job. Local smoke checks are fine; they are not a pass.
 - **Reviewer does not inherit implementer rationale.** Give Goal, Bar,
-  Artifact, constraints — not the implementer's narrative.
+  Artifact, constraints, not the implementer's narrative.
 - **Each round is a new Task for both sides.** On `gap`, spawn a **new**
-  implementer (gap + Bar + Artifact — omit prior-round narrative) and then a
+  implementer (gap + Bar + Artifact; omit prior-round narrative) and then a
   **new** reviewer.
 - **Fan out only independent slices.** Coupled surfaces get one implementer
   (sequential). Reviewers stay fresh either way.

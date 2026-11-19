@@ -63,7 +63,7 @@ Confirm from Git:
    - **Preferred long-term**: `flux reconcile helmrelease --namespace [NAMESPACE] [HELMRELEASE_NAME] --with-source`, then verify Longhorn `Volume` + PV + PVC exist and PVC is `Bound`.
    - **If PV/PVC are missing or wrong**: render from **Git** (see **Render command**) and apply **only** what you need. When the Longhorn **`Volume` CR already exists** from restore, apply **only `PersistentVolume` + `PersistentVolumeClaim`** so you do not overwrite in-progress restore state on the Volume CR.
    - Right after apply, the PVC may show **`Pending`** briefly, then **`Bound`** once the volume is ready for attachment.
-7. **Gate before scale-up** — Do **not** raise replicas until **`PersistentVolume` and `PersistentVolumeClaim` exist** and the PVC is **`Bound`** to the correct PV (`spec.csi.volumeHandle` = `[LONGHORN_VOL]`). If the workload scaled up while the PVC was missing or **`Pending`**, fix storage first, wait for **`Bound``, then **delete the stuck pod\*\* if needed so a new one schedules.
+7. **Gate before scale-up** — Do **not** raise replicas until **`PersistentVolume` and `PersistentVolumeClaim` exist** and the PVC is **`Bound`** to the correct PV (`spec.csi.volumeHandle` = `[LONGHORN_VOL]`). If the workload scaled up while the PVC was missing or **`Pending`**, fix storage first, wait for **`Bound`**, then **delete the stuck pod** if needed so a new one schedules.
 8. **Scale up** (Git and/or `kubectl scale` per your drift strategy). **Verify** pod running, PVC `Bound`, app healthy.
 
 # Render command (reference)

@@ -1,4 +1,4 @@
-# `.agents/memories/` — Lessons learned
+# `.agents/memories/`: Lessons learned
 
 Notes worth keeping across sessions so future agents do not re-learn the same
 footgun. This path matches the [.agents Protocol](https://dotagentsprotocol.com/)

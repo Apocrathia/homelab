@@ -8,7 +8,7 @@ description: Write the minimum code that solves the problem; touch only what the
 Two discipline rules for code changes (simplicity first + touch only what you
 must), derived from [Andrej Karpathy's
 observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding
-pitfalls. Complements [`ponytail.md`](./ponytail.md) — that rule is the YAGNI
+pitfalls. Complements [`ponytail.md`](./ponytail.md); that rule is the YAGNI
 ladder and lazy-senior voice; this rule is the edit-scope contract.
 
 Pairs with [`clarify-dont-guess.md`](./clarify-dont-guess.md) (think before
@@ -25,7 +25,7 @@ Before writing anything, climb the
 [ponytail ladder](./ponytail.md) (stop at the first rung that holds):
 
 1. Does this need to exist at all? Speculative need = skip it.
-2. Already in this codebase? Reuse it — look before you write.
+2. Already in this codebase? Reuse it; look before you write.
 3. Stdlib does it? Use it.
 4. Native platform feature covers it? Use that over a dependency.
 5. Already-installed dependency solves it? Use it. Never add one for what a few lines can do.

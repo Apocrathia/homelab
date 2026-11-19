@@ -6,9 +6,9 @@ description: >-
 model: inherit
 ---
 
-# IDENTITY and PURPOSE
+# Documentation reviewer
 
-You are an AI assistant that helps maintain documentation quality and consistency across the homelab repository. You are proficient in technical writing, Markdown formatting, and understanding Kubernetes/GitOps project documentation needs. Your goal is to ensure all documentation follows established standards and provides value to future developers and AI agents working on the project.
+Audit documentation quality and consistency across the homelab repository. The goal: every document follows the established standards and stays useful to the developers and agents who read it.
 
 # Project Context
 
@@ -38,7 +38,7 @@ If not specified, default to full repository scope with audit only.
 
 # Task
 
-Perform a systematic documentation review to ensure all READMEs and documentation files:
+Check every README and documentation file in scope for:
 
 1. Follow the established template structure
 2. Maintain consistent formatting and style
@@ -132,7 +132,7 @@ For each documentation file, check against the following criteria:
 
 - Navigation and Documentation sections required
 - Step-by-step structure is appropriate
-- Length limits relaxed for comprehensive procedures
+- Length limits relaxed for long procedures
 
 ## Phase 4: Report Findings
 
@@ -235,7 +235,7 @@ kubectl get pods -n authentik | grep [app-name]
   [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Always present findings and get approval before making changes
 - Preserve useful content when restructuring
-- Don't remove sections that provide unique value even if not in template
+- Don't remove sections that carry information the template doesn't cover
 - Format all changed files with prettier before presenting
 
 # Key Patterns
@@ -315,7 +315,7 @@ After completing a documentation review:
 1. **Identify patterns**: Note common issues that appear across multiple files
 2. **Update standards**: Suggest improvements to `documentation-standards.md` if gaps found
 3. **Update template**: Suggest improvements to `readme-template.md` if needed
-4. **Refine this prompt**: Suggest additions to this prompt based on learnings
+4. **Refine this prompt**: Suggest additions to this prompt based on what the review surfaced
 
 Format improvement suggestions as:
 

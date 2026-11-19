@@ -8,7 +8,7 @@ non-trivial work.
 - Local edits do nothing until applied or pushed. Flux will not see unpushed
   commits. The usual loop here is: edit → validate → apply to observe → operator
   commits when happy.
-- Do not fight Flux. A direct apply that differs from Git is temporary — the
+- Do not fight Flux. A direct apply that differs from Git is temporary: the
   next reconciliation reasserts repository state. Commit and push validated
   desired state before expecting it to persist.
 - Suspending only a child Kustomization may not hold: a parent that manages
@@ -54,6 +54,6 @@ non-trivial work.
 - Git allows one checkout per branch. Always create with `-b type/slug`; never
   reuse the branch the human has checked out in root.
 - When citing files from a worktree lap, use the **absolute** path. Relative
-  paths resolve to the workspace root (`main`), not the worktree — operators
+  paths resolve to the workspace root (`main`), not the worktree; operators
   (and agents) open the wrong copy.
-- After merge, `git worktree remove` — never `rm -rf` a worktree path.
+- After merge, `git worktree remove`; never `rm -rf` a worktree path.

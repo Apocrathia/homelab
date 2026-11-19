@@ -10,7 +10,7 @@ alwaysApply: false
 
 - **Always test template conditionals**: Use `helm template` to verify `{{- if }}` blocks actually execute
 - **Avoid double negatives**: Use `{{- if .Values.feature }}` not `{{- if not .Values.feature }}` for clarity
-- **Test empty arrays**: Empty arrays `[]` evaluate to `false` in Helm templates - account for this
+- **Test empty arrays**: Empty arrays `[]` evaluate to `false` in Helm templates; account for this
 - **Validate range loops**: Ensure `{{- range }}` blocks have proper data structures to iterate over
 
 ## Volume Management
@@ -53,8 +53,8 @@ alwaysApply: false
 ## Configuration validation
 
 - **Always validate proposed Helm values against the chart defaults** when suggesting Helm configurations.
-- **Do not create fake directories, extra config maps, or documentation scaffolding** — prefer simpler solutions with minimal extra fluff.
-- **Prefer solutions that are way simpler with minimal extra fluff** — avoid unnecessary complexity.
+- **Do not create fake directories, extra config maps, or documentation scaffolding**: prefer simpler solutions with minimal extra fluff.
+- **Prefer solutions that are way simpler with minimal extra fluff**; avoid unnecessary complexity.
 
 ## Icons
 

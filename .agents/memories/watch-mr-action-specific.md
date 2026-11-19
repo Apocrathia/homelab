@@ -16,4 +16,4 @@ merge or approve unless asked for that act.
 ## References
 
 - [`watch-mr/SKILL.md`](../skills/watch-mr/SKILL.md)
-- [`development-loop.md`](../context/development-loop.md) — tier 3 maintain
+- [`development-loop.md`](../context/development-loop.md): tier 3 maintain
