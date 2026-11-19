@@ -30,7 +30,7 @@ spec:
       # ImagePullBackOff'd). The images/dockerhub namespace label makes the
       # Kyverno-cloned pull secret cover docker.io pulls.
       # renovate: datasource=docker depName=docker.io/library/rabbitmq
-      image: docker.io/library/rabbitmq:4.4.0-management-alpine@sha256:4841f6384ef8313c3594cd3f2e9f40c10805f8a61c45f08a9a5d9ddea8199267
+      image: docker.io/library/rabbitmq:4.4.1-management-alpine@sha256:2b47b1aa05ec7e373950ad2e9200e9f95a9da7039c8d22c19dbf5a59101362c4
       container:
         name: rabbitmq
         port: 5672
