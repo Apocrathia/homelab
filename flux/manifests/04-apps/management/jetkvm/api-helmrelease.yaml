@@ -8,9 +8,11 @@ spec:
   interval: 1h
   chart:
     spec:
-      chart: ./helm/generic-app
+      chart: generic-app
+      # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
+      version: "0.0.91"
       sourceRef:
-        kind: GitRepository
+        kind: HelmRepository
         name: homelab
         namespace: flux-system
 
