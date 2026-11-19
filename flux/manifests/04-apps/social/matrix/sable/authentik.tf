@@ -106,7 +106,7 @@ resource "authentik_application" "app" {
   slug            = "sable"
   group           = "Social"
   meta_launch_url = "https://sable.gateway.services.apocrathia.com/"
-  open_in_new_tab = false
+  open_in_new_tab = true
 
   meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/social/matrix/sable/icon.svg"
   meta_description = "Sable — Discord-like Matrix client (OIDC via MAS)"
