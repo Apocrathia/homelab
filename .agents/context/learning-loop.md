@@ -4,7 +4,7 @@ How agents learn from outcomes and failures. Three tiers: patterns → rules →
 structural enforcement. Accumulate and prune.
 
 The [`retrospective`](../skills/retrospective/SKILL.md) skill is the
-operational trigger — outcome review, git history for external changes,
+operational trigger: outcome review, git history for external changes,
 classification, and routing (local context, rule/skill/enforcement proposals, or
 upstream contributions to the shared agent core).
 
@@ -15,7 +15,7 @@ one or two lessons, or an explicit "no lessons; no pattern."
 
 ## Git history review (required after external changes)
 
-Changes land on `main` without this agent's involvement — human commits, other
+Changes land on `main` without this agent's involvement: human commits, other
 agents' MRs, hotfixes. Mine git / GitLab history for significant changes to
 context surfaces (`AGENTS.md`, `.agents/`, `docs/`). For each: what / why /
 whether context still matches. See
@@ -23,10 +23,10 @@ whether context still matches. See
 
 ## Pattern extraction
 
-1. **Classify** — maps to existing type, or propose a new type (human approves).
-2. **Process vs domain** — transferable process vs lab-specific (Flux, Talos, …).
-3. **Criterion** — success **and** (2+ similar past successes, or human judgment).
-4. **Action** — propose; after approval, write
+1. **Classify:** maps to existing type, or propose a new type (human approves).
+2. **Process vs domain:** transferable process vs lab-specific (Flux, Talos, …).
+3. **Criterion:** success **and** (2+ similar past successes, or human judgment).
+4. **Action:** propose; after approval, write
    [`.agents/memories/<topic>.md`](../memories/README.md).
 
 ## Anti-pattern extraction

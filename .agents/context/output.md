@@ -11,7 +11,7 @@ only if needed.
 
 - **Lead:** 1–3 sentences that answer or state what changed. No preamble.
 - **Body:** Prefer bullets / compact tables over prose. Cut anything that does
-  not change the operator’s next action.
+  not change the operator's next action.
 - **Ceiling:** If a reply needs more than ~half a screen of explanation, put the
   bulk in `.scratch/` and link it. Chat is the index.
 - **Questions:** Follow [`questions.md`](./questions.md). Do not interview in a
@@ -53,5 +53,5 @@ markdown unless the schema asks for it.
 
 ## Subagents
 
-Summarize outcomes for the operator. Do not paste a child agent’s full dump.
+Summarize outcomes for the operator. Do not paste a child agent's full dump.
 The parent coordinates; it does not hoard context in the reply.

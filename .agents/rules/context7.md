@@ -9,8 +9,8 @@ Context7 (`user-context7` MCP) retrieves up-to-date documentation and code examp
 
 ## Tools
 
-1. `resolve-library-id` — resolve a library name to a Context7-compatible ID (must call first)
-2. `query-docs` — query documentation using the resolved library ID
+1. `resolve-library-id`: resolve a library name to a Context7-compatible ID (must call first)
+2. `query-docs`: query documentation using the resolved library ID
 
 Always call `resolve-library-id` before `query-docs` unless the user provides an ID in `/org/project` format.
 
@@ -33,11 +33,11 @@ Context7 pulls from official documentation. DeepWiki reads source code and repos
 | Environment variable names documented in README                      | Context7 |
 | Environment variable names buried in source code                     | DeepWiki |
 
-Use both when deploying a new app — Context7 for configuration, DeepWiki for vetting.
+Use both when deploying a new app: Context7 for configuration, DeepWiki for vetting.
 
 ## Query tips
 
 - Be specific: "How to configure PostgreSQL connection in Authentik Helm chart" beats "authentik config"
-- Include version context when relevant — `resolve-library-id` returns available versions
-- Max 3 calls per question per tool — use the best result you have after that
+- Include version context when relevant: `resolve-library-id` returns available versions
+- Max 3 calls per question per tool; use the best result you have after that
 - Pick libraries by name match, source reputation, snippet count, and benchmark score

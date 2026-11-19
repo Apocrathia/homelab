@@ -30,14 +30,18 @@ manual chores. Not a fake enterprise platform.
 
 ## Nested `.agents/` trees
 
-App folders can carry their own `.agents/` tree — a nested `AGENTS.md`
-router, `context/` modules, and vendored `skills/` — isolated from the root
-skill pool and loaded only when working inside that subtree. Two instances so
-far: the Grafana tooling module, the first folder-scoped module with a
-hand-authored skill
-([`flux/manifests/03-services/observability/grafana/AGENTS.md`](../../flux/manifests/03-services/observability/grafana/AGENTS.md)),
-and the Tenzir stack, the first vendored upstream-skills instance
-([`flux/manifests/04-apps/security/tenzir/AGENTS.md`](../../flux/manifests/04-apps/security/tenzir/AGENTS.md)).
+App folders can carry their own `.agents/` tree: a nested `AGENTS.md`
+router plus `context/` modules and/or vendored `skills/`, isolated from the
+root skill pool and loaded only when working inside that subtree. Four
+instances so far:
+
+- Grafana tooling, the first folder-scoped module with a hand-authored skill:
+  [`flux/manifests/03-services/observability/grafana/AGENTS.md`](../../flux/manifests/03-services/observability/grafana/AGENTS.md)
+- Renovate, context-only with no skills yet:
+  [`flux/manifests/03-services/renovate-operator/AGENTS.md`](../../flux/manifests/03-services/renovate-operator/AGENTS.md)
+- Tenzir stack, the first vendored upstream-skills instance:
+  [`flux/manifests/04-apps/security/tenzir/AGENTS.md`](../../flux/manifests/04-apps/security/tenzir/AGENTS.md)
+- Fleet MDM tree: [`fleet/AGENTS.md`](../../fleet/AGENTS.md)
 
 ## How agents should behave here
 
@@ -52,22 +56,23 @@ and the skill they invoked.
 Reconcile this inventory when adding or removing modules
 ([`reconcile-context`](../skills/reconcile-context/SKILL.md)).
 
-| File                                                 | Purpose                                 | If wrong                                      |
-| ---------------------------------------------------- | --------------------------------------- | --------------------------------------------- |
-| [`README.md`](./README.md)                           | Hub: orientation + this map             | Agents miss the entrypoint                    |
-| [`loading.md`](./loading.md)                         | Load vs skip                            | Context bloat or missing cues                 |
-| [`constraints.md`](./constraints.md)                 | Non-negotiables                         | Unsafe cluster or GitOps behavior             |
-| [`traps.md`](./traps.md)                             | Recurring footguns                      | Repeat known failures                         |
-| [`nomenclature.md`](./nomenclature.md)               | Naming vocabulary                       | Inconsistent resource / path names            |
-| [`tools.md`](./tools.md)                             | MCP and CLI preferences                 | Wrong tool, noisy ops                         |
-| [`questions.md`](./questions.md)                     | How to ask the operator                 | Markdown question walls / guessing            |
-| [`voice.md`](./voice.md)                             | Chat tone + doc prose                   | Sterile or fake-corporate agents              |
-| [`output.md`](./output.md)                           | How agents structure replies            | Unreadable dump replies                       |
-| [`development-loop.md`](./development-loop.md)       | Find → rank → Launch brief → ship       | Agents invent busywork or skip stop gates     |
-| [`agent-orchestration.md`](./agent-orchestration.md) | Hermes / A2A need→agent vs MCP fallback | Wrong namespace, invented agents, no fallback |
-| [`vertical-slices.md`](./vertical-slices.md)         | How to size plans / briefs / MRs        | Horizontal layer dumps                        |
-| [`learning-loop.md`](./learning-loop.md)             | Patterns → rules → enforcement          | Lessons lost; no promotion path               |
-| [`enforcement.md`](./enforcement.md)                 | Hooks/CI over hope                      | Rules without mechanical teeth                |
+| File                                                 | Purpose                                                 | If wrong                                      |
+| ---------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------- |
+| [`README.md`](./README.md)                           | Hub: orientation + this map                             | Agents miss the entrypoint                    |
+| [`loading.md`](./loading.md)                         | Load vs skip                                            | Context bloat or missing cues                 |
+| [`context-management.md`](./context-management.md)   | Keep the window thin: compact / fork / delegate / write | Fat context, lost state                       |
+| [`constraints.md`](./constraints.md)                 | Non-negotiables                                         | Unsafe cluster or GitOps behavior             |
+| [`traps.md`](./traps.md)                             | Recurring footguns                                      | Repeat known failures                         |
+| [`nomenclature.md`](./nomenclature.md)               | Naming vocabulary                                       | Inconsistent resource / path names            |
+| [`tools.md`](./tools.md)                             | MCP and CLI preferences                                 | Wrong tool, noisy ops                         |
+| [`questions.md`](./questions.md)                     | How to ask the operator                                 | Markdown question walls / guessing            |
+| [`voice.md`](./voice.md)                             | Chat tone + doc prose                                   | Sterile or fake-corporate agents              |
+| [`output.md`](./output.md)                           | How agents structure replies                            | Unreadable dump replies                       |
+| [`development-loop.md`](./development-loop.md)       | Find → rank → Launch brief → ship                       | Agents invent busywork or skip stop gates     |
+| [`agent-orchestration.md`](./agent-orchestration.md) | Hermes / A2A need→agent vs MCP fallback                 | Wrong namespace, invented agents, no fallback |
+| [`vertical-slices.md`](./vertical-slices.md)         | How to size plans / briefs / MRs                        | Horizontal layer dumps                        |
+| [`learning-loop.md`](./learning-loop.md)             | Patterns → rules → enforcement                          | Lessons lost; no promotion path               |
+| [`enforcement.md`](./enforcement.md)                 | Hooks/CI over hope                                      | Rules without mechanical teeth                |
 
 This README is excluded from "must appear in every routing row"; it is the map.
 

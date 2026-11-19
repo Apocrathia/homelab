@@ -16,6 +16,7 @@ Source of truth for **all** agent rules (Markdown). Frontmatter (`alwaysApply`,
 | `ambiguity-goes-back-to-source.md` | Flag irreducible ambiguity with `[NEEDS CLARIFICATION]`        |
 | `question-format.md`               | AskQuestion-first; points at `context/questions.md`            |
 | `response-shape.md`                | Short replies; half-screen rule                                |
+| `i-have-adhd.md`                   | ADHD-shaped output: action-first, numbered steps, no walls     |
 | `context-management.md`            | Meter-first compact; fork/delegate/write; file handoffs        |
 | `merge-authorization.md`           | Never merge/approve/push to main without explicit operator ask |
 | `ontology-framework.md`            | Harness entry classes + validation rules R1–R6                 |
@@ -46,7 +47,7 @@ Source of truth for **all** agent rules (Markdown). Frontmatter (`alwaysApply`,
 | --------------------------------- | ----------------------------------------------------------------------------- |
 | `operations.md`                   | Maintenance and ops practices, backup/recovery, QA-during-ops                 |
 | `observability.md`                | Monitoring, logging, alerting, metrics, health indicators                     |
-| `mcp.md`                          | MCP tools usage — when to prefer MCP over CLI, tool selection                 |
+| `mcp.md`                          | MCP tools usage: when to prefer MCP over CLI, tool selection                  |
 | `context7.md`                     | Context7 MCP usage patterns for retrieving up-to-date library documentation   |
 | `deepwiki.md`                     | DeepWiki MCP usage patterns for repository research and antipattern detection |
 | `conventional-commit-messages.md` | Conventional Commits specification for commit messages                        |

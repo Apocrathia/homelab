@@ -1,5 +1,5 @@
 ---
-description: ADHD-shaped output for the operator — action first, numbered steps, no walls of text
+description: ADHD-shaped output for the operator; action first, numbered steps, no walls of text
 alwaysApply: true
 ---
 
@@ -13,7 +13,7 @@ topic changes. Full rule set with examples:
 ## Shape every response
 
 1. **Lead with the next action.** The first line is something the operator can
-   do now — command, path, verdict. Prose comes after, if at all.
+   do now: command, path, verdict. Prose comes after, if at all.
 2. **Number multi-step work.** One bounded action per step; no step contains
    two "and then"s. Fewest steps that still work.
 3. **End with ONE concrete next action**, doable in under two minutes.
