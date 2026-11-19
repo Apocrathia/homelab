@@ -1,7 +1,7 @@
 ---
 # RemoteMCPServer that references the MCPServer in mcp-searxng namespace
 # This works around kagent's lack of cross-namespace MCPServer support
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: searxng-mcp
@@ -16,7 +16,7 @@ spec:
   url: "http://searxng.mcp-searxng.svc.cluster.local:8080/mcp"
   description: "SearXNG web search - search the web and read URLs"
 ---
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: firecrawl-mcp

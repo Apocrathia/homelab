@@ -1,6 +1,6 @@
 ---
-apiVersion: kagent.dev/v1alpha2
-kind: SandboxAgent
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
 metadata:
   name: hello-substrate
   namespace: kagent
@@ -9,14 +9,17 @@ metadata:
     app.kubernetes.io/part-of: kagent
     app.kubernetes.io/component: smoke
 spec:
-  type: Declarative
-  description: Disposable Go smoke agent on Agent Substrate (gVisor actor)
-  declarative:
-    runtime: go
-    modelConfig: default-model-config
-    systemMessage: |
-      You are a friendly assistant living inside an Agent Substrate sandbox.
-      When asked who you are, say "I am hello-substrate, a Go ADK declarative
-      agent running inside a gVisor actor."
-  # Omit substrate.workerPoolRef: name-only resolves in the agent namespace
-  # (kagent). Controller defaultWorkerPool points at ate-system/kagent-default.
+  # Chart-created Go ADK Harness (harnesses.kagent.enabled in helmrelease.yaml)
+  harnessRef:
+    name: kagent-default
+  template:
+    inline:
+      description: Disposable Go smoke agent on Agent Substrate (gVisor actor)
+      modelConfig:
+        name: default-model-config
+      systemPrompt: |
+        You are a friendly assistant living inside an Agent Substrate sandbox.
+        When asked who you are, say "I am hello-substrate, a Go ADK declarative
+        agent running inside a gVisor actor."
+  # WorkerPool selection lives on the Harness (kagent-default), which pins
+  # the same-namespace WorkerPool from workerpool.yaml.

@@ -7,10 +7,7 @@ metadata:
 
 resources:
   - namespace.yaml
-  - rbac-ate-api.yaml
   - secret.yaml
-  - modelconfig.yaml
-  - agentharness.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

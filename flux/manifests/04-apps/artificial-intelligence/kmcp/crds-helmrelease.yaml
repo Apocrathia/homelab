@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+# MCPServer CRD (kagent.dev/v1alpha1) — kagent-crds 1.0.1 dropped it, so the
+# CRD + controller moved to the standalone kmcp charts.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kmcp-crds
+  namespace: kagent
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: kmcp-crds
+      # renovate: datasource=docker depName=ghcr.io/kagent-dev/kmcp/helm/kmcp-crds
+      version: "0.4.0"
+      sourceRef:
+        kind: HelmRepository
+        name: kmcp
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false

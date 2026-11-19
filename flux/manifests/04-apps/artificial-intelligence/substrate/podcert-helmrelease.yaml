@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+# One per cluster: signs service-DNS + pod-identity + postgres certificates and
+# publishes the ClusterTrustBundles every substrate client validates against.
+# Requires the kube-apiserver feature gates from talos/patches/unified-patch.yaml
+# (ClusterTrustBundle, ClusterTrustBundleProjection, PodCertificateRequest +
+# certificates.k8s.io/v1beta1 runtime config).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: substrate-podcert
+  namespace: podcertificate-controller-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: substrate-crds
+      namespace: ate-system
+  chart:
+    spec:
+      chart: substrate-podcert
+      # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate-podcert
+      version: "1.0.1"
+      sourceRef:
+        kind: HelmRepository
+        name: substrate
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    # Defaults point at the substrate release's ate-api-server ServiceAccount
+    # (release name "substrate" keeps the unprefixed name); it is the client
+    # that requests postgres login certificates. Password logins are used
+    # instead, but the SA grant stays valid for the optional cert path.
+    postgresClientNamespace: ate-system
+    postgresClientServiceAccount: ate-api-server

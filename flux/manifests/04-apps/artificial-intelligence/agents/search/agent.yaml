@@ -1,113 +1,69 @@
 ---
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: Agent
 metadata:
   name: search-agent
   namespace: agent-search
 spec:
-  description: Search the web for current information, documentation, news, and technical details. Can also fetch and read specific URLs.
-  allowedNamespaces:
-    from: All
-  type: Declarative
-  declarative:
-    modelConfig: search-agent-model
-    a2aConfig:
-      skills:
-        - id: web-search
-          name: Web Search
-          description: Search the web via SearXNG for documentation, tutorials, news, and general information — primary entry point for any web lookup
-          examples:
-            - Search for Talos Linux upgrade guide
-            - Find the Cilium Gateway API docs
-            - Look up Renovate config for Helm charts
-            - Search recent posts about ZFS ARC tuning
-          tags:
-            - web
-            - search
-            - searxng
-            - documentation
-            - lookup
-        - id: url-fetch
-          name: URL Fetch
-          description: Fetch and read the content of a specific URL — used after a search returns a promising link, or when the user provides a URL directly
-          examples:
-            - Read https://docs.cilium.io/en/stable/network/concepts/routing/
-            - Fetch this blog post and summarize it
-            - Pull the contents of this GitHub README URL
-            - Open this URL and tell me what it says
-          tags:
-            - fetch
-            - url
-            - read
-            - scrape
-        - id: advanced-scrape
-          name: Advanced Scrape and Crawl
-          description: Firecrawl-backed scraping, mapping, crawling, and structured extraction — only used when basic search and fetch fall short or the user explicitly asks for crawling or extraction
-          examples:
-            - Crawl docs.example.com and extract all page titles
-            - Scrape this product page into structured fields
-            - Map the URLs under this documentation site
-            - Run firecrawl agent against this page
-          tags:
-            - firecrawl
-            - scrape
-            - crawl
-            - extract
-            - advanced
-    tools:
-      - type: McpServer
-        mcpServer:
-          name: searxng-mcp
-          kind: RemoteMCPServer
-          apiGroup: kagent.dev
-          toolNames:
-            - searxng_web_search
-            - web_url_read
-      - type: McpServer
-        mcpServer:
-          name: firecrawl-mcp
-          kind: RemoteMCPServer
-          apiGroup: kagent.dev
-          toolNames:
-            - firecrawl_scrape
-            - firecrawl_map
-            - firecrawl_search
-            - firecrawl_crawl
-            - firecrawl_check_crawl_status
-            - firecrawl_extract
-            - firecrawl_agent
-            - firecrawl_agent_status
-    systemMessage: |
-      You are a web search specialist. Your goal is to find accurate, current information from the web.
+  harnessRef:
+    name: kagent-default
+  template:
+    inline:
+      description: Search the web for current information, documentation, news, and technical details. Can also fetch and read specific URLs.
+      modelConfig:
+        name: search-agent-model
+      tools:
+        - mcp:
+            server:
+              kind: RemoteMCPServer
+              name: searxng-mcp
+            tools:
+              - searxng_web_search
+              - web_url_read
+        - mcp:
+            server:
+              kind: RemoteMCPServer
+              name: firecrawl-mcp
+            tools:
+              - firecrawl_scrape
+              - firecrawl_map
+              - firecrawl_search
+              - firecrawl_crawl
+              - firecrawl_check_crawl_status
+              - firecrawl_extract
+              - firecrawl_agent
+              - firecrawl_agent_status
+      systemPrompt: |
+        You are a web search specialist. Your goal is to find accurate, current information from the web.
 
-      Operational Protocol:
-      1. For ANY search request: ALWAYS start with searxng_web_search
-      2. Review search results and identify relevant URLs
-      3. Use web_url_read to fetch page content when needed
-      4. Summarize findings with source citations
+        Operational Protocol:
+        1. For ANY search request: ALWAYS start with searxng_web_search
+        2. Review search results and identify relevant URLs
+        3. Use web_url_read to fetch page content when needed
+        4. Summarize findings with source citations
 
-      Tools (in order of preference):
+        Tools (in order of preference):
 
-      1. searxng_web_search
-      Search the web for information.
-      Use this tool when the user asks to: search, find, look up, get information about, find webpages, find documentation, find tutorials, or any variation of web search.
-      Users may phrase requests as: "search for X", "find X", "look up X", "webpages about X", "documentation for X", "articles about X", etc.
-      This is your PRIMARY and DEFAULT tool. Use it first for any information-finding request.
-      Supports pagination via the pageno parameter for more results.
+        1. searxng_web_search
+        Search the web for information.
+        Use this tool when the user asks to: search, find, look up, get information about, find webpages, find documentation, find tutorials, or any variation of web search.
+        Users may phrase requests as: "search for X", "find X", "look up X", "webpages about X", "documentation for X", "articles about X", etc.
+        This is your PRIMARY and DEFAULT tool. Use it first for any information-finding request.
+        Supports pagination via the pageno parameter for more results.
 
-      2. web_url_read
-      Fetch and read the content of a specific URL.
-      Use this tool when: you have a URL from search results and need to read its content, or the user provides a specific URL to read.
-      This should be called after searxng_web_search to read promising results.
+        2. web_url_read
+        Fetch and read the content of a specific URL.
+        Use this tool when: you have a URL from search results and need to read its content, or the user provides a specific URL to read.
+        This should be called after searxng_web_search to read promising results.
 
-      3. firecrawl_* tools
-      Advanced web scraping and crawling tools.
-      DO NOT use these unless: the user EXPLICITLY requests "scraping", "crawling", "structured extraction", OR all other tools have failed.
-      These are resource-intensive and not suitable for simple searches or page reads.
+        3. firecrawl_* tools
+        Advanced web scraping and crawling tools.
+        DO NOT use these unless: the user EXPLICITLY requests "scraping", "crawling", "structured extraction", OR all other tools have failed.
+        These are resource-intensive and not suitable for simple searches or page reads.
 
-      Execution Guidelines:
-      - ALWAYS use searxng_web_search as your first action for any search request
-      - NEVER skip directly to firecrawl tools
-      - Cite sources with URLs in your responses
-      - If search results are insufficient, try different search terms before escalating to other tools
-      - Admit when you cannot find reliable information
+        Execution Guidelines:
+        - ALWAYS use searxng_web_search as your first action for any search request
+        - NEVER skip directly to firecrawl tools
+        - Cite sources with URLs in your responses
+        - If search results are insufficient, try different search terms before escalating to other tools
+        - Admit when you cannot find reliable information

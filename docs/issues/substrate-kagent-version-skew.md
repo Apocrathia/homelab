@@ -1,7 +1,7 @@
 ---
 title: "Substrate 0.0.10 is unusable by any released kagent"
 kind: bug
-status: blocked
+status: superseded
 severity: high
 source: agent
 found_at: 2026-07-25
@@ -94,3 +94,21 @@ decision for the operator.
 - Rollout plan context: `docs/plans/substrate-dedicated-rustfs.md`,
   `docs/plans/agent-substrate-rollout.md` (documents the original
   `0.0.6 ↔ kagent 0.9.12` pairing rationale).
+
+## Resolution (2026-11-19)
+
+Superseded by the kagent 1.0.1 + substrate 1.0.1 migration
+(`chore/upgrade-kagent-substrate-1.0`):
+
+- Client/server proto skew: kagent 1.0.1 vendors the substrate client at
+  v1.0.x and pairs with substrate chart 1.0.1 — the version-pairing
+  acceptance criterion is met by construction, and Renovate now tracks both
+  charts (the hold comments are gone).
+- JWT issuer defect: eliminated by substrate 1.0's auth redesign —
+  `isInClusterKubernetesIssuer` is deleted in v1.0.1; auth now runs on the
+  in-cluster `ateIdpServer` (actor JWTs, default issuer
+  `https://idp.ate-system.svc`) plus pod-identity mTLS via
+  `substrate-podcert`. No anonymous API-server access is involved.
+- The kagent 0.10.x path is dead: 0.10.6 ships a substrate-disabled chart
+  gate (Wolfi Python ADK images cannot restore from a Substrate checkpoint
+  on arm64), and substrate 0.0.9 still carries the Talos issuer defect.

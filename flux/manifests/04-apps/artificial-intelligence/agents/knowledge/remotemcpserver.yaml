@@ -1,6 +1,6 @@
 ---
 # RemoteMCPServer for Qdrant vector knowledge base
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: qdrant-mcp
@@ -16,7 +16,7 @@ spec:
   description: "Qdrant vector store - semantic knowledge storage and retrieval"
 ---
 # RemoteMCPServer for OpenZIM offline encyclopedic content
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: openzim-mcp
@@ -32,7 +32,7 @@ spec:
   description: "OpenZIM - offline Wikipedia and encyclopedic content"
 ---
 # RemoteMCPServer for DeepWiki GitHub repository documentation
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: deepwiki-mcp

@@ -1,0 +1,21 @@
+---
+apiVersion: ate.dev/v1
+kind: WorkerPool
+metadata:
+  name: kagent-default
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: kagent
+    app.kubernetes.io/component: worker-pool
+    kagent.dev/worker-pool: kagent-default
+spec:
+  # Capacity for kagent-namespace agents (homelab-agent, investigator-agent,
+  # hello-substrate) plus room for chart Harness smoke tests. agent-*
+  # namespaces run their own single-replica pools.
+  replicas: 4
+  # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateworker-gvisor
+  workerImage: ghcr.io/kagent-dev/substrate/ateworker-gvisor:v1.0.1
+  sandboxClasses:
+    - name: gvisor
+      configRef:
+        name: gvisor-default

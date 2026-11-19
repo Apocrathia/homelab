@@ -9,4 +9,6 @@ resources:
   - secret.yaml
   - modelconfig.yaml
   - remotemcpserver.yaml
+  - harness.yaml
+  - workerpool.yaml
   - agent.yaml

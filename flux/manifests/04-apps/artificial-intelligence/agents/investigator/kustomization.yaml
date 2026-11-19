@@ -7,4 +7,6 @@ metadata:
 resources:
   - secret.yaml
   - modelconfig.yaml
+  - agenttemplate.yaml
+  - egresspolicy.yaml
   - agent.yaml

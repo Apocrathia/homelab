@@ -39,6 +39,7 @@ resources:
   - jupyterhub.yaml
   - k8sgpt.yaml
   - kagent.yaml
+  - kmcp.yaml
   - substrate.yaml
   - mecatl.yaml
   - litellm.yaml

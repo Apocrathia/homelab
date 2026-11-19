@@ -1,0 +1,20 @@
+---
+# Namespace-local capacity for knowledge-agent (Harness.workerPoolRef is a
+# same-namespace reference in v1alpha3). Single agent → single worker.
+apiVersion: ate.dev/v1
+kind: WorkerPool
+metadata:
+  name: kagent-default
+  namespace: agent-knowledge
+  labels:
+    app.kubernetes.io/name: knowledge-agent
+    app.kubernetes.io/component: worker-pool
+    kagent.dev/worker-pool: kagent-default
+spec:
+  replicas: 1
+  # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateworker-gvisor
+  workerImage: ghcr.io/kagent-dev/substrate/ateworker-gvisor:v1.0.1
+  sandboxClasses:
+    - name: gvisor
+      configRef:
+        name: gvisor-default

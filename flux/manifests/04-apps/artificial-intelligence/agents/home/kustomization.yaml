@@ -8,6 +8,8 @@ resources:
   - namespace.yaml
   - secret.yaml
   - modelconfig.yaml
+  - harness.yaml
+  - workerpool.yaml
   - agent.yaml
   - remotemcpserver.yaml
   - bridge

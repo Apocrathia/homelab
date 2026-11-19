@@ -8,6 +8,7 @@ metadata:
 resources:
   - k8sgpt
   - kagent
+  - kmcp
   - agents
   - comfyui
   - duckdb
