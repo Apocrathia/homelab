@@ -15,7 +15,7 @@ slice: hitl
 ## Problem / desired state
 
 Discord → agent today is a custom Python bridge
-(`agents/homelab/bridge/`) calling kagent A2A, plus a ToolHive Discord MCP
+(`flux/manifests/04-apps/artificial-intelligence/agents/homelab/bridge/`) calling kagent A2A, plus a ToolHive Discord MCP
 for outbound tools, sharing a bot token via 1Password. It works, but it is
 homegrown glue.
 
@@ -46,7 +46,7 @@ or shrink our bridge so we are not maintaining a one-off forever.
 
 ## Implementation hint
 
-Compare `agents/homelab/bridge/src/main.py` to upstream bot behavior; prefer
+Compare `flux/manifests/04-apps/artificial-intelligence/agents/homelab/bridge/src/main.py` to upstream bot behavior; prefer
 adopting their image/env contract over rewriting from scratch. Coordinate
 token/MCP ownership with ToolHive→kmcp and any AgentHarness Slack/Discord
 channel specs.

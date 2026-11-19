@@ -1,4 +1,4 @@
-# `.scratch/` — agent ephemeral workspace
+# `.scratch/`: agent ephemeral workspace
 
 Use this directory for temporary files during agent work: extracted Helm values, rendered manifests, chart downloads, one-off scripts, dump staging, etc.
 
@@ -9,7 +9,7 @@ Use this directory for temporary files during agent work: extracted Helm values,
 - Do **not** commit contents of this directory. Git ignores everything under `.scratch/` except this README.
 - Clean up when finished (`rm` / `mv` confined to `.scratch/` is allowed by the shell guard without an extra approval). Prefer leaving clutter over deleting paths outside `.scratch/`.
 - Do **not** put secrets here. Prefer 1Password Item CRs and never write credentials to disk for convenience.
-- Manifests under `.scratch/` are for local apply / validation only — never commit them as recovery YAML.
+- Manifests under `.scratch/` are for local apply / validation only; never commit them as recovery YAML.
 
 ## Examples
 

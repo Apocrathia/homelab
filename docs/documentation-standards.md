@@ -171,7 +171,7 @@ Before submitting documentation updates:
 - [ ] Follows template structure
 - [ ] Uses consistent formatting
 - [ ] Includes navigation breadcrumbs
-- [ ] External links use angle bracket format
+- [ ] External links use `[Link Text](url)` markdown format (angle brackets only for bare URLs)
 - [ ] Code blocks have language tags
 - [ ] Troubleshooting section includes common commands
 - [ ] Security considerations documented (if applicable)

@@ -26,7 +26,7 @@ updated_at: YYYY-MM-DD
 ## Decisions
 
 <!-- Decisions made during planning, with short rationale.
-     Format: Decision — chosen option — why / reversibility. -->
+     Format: Decision; chosen option; why / reversibility. -->
 
 ## Steps
 
@@ -42,9 +42,9 @@ updated_at: YYYY-MM-DD
 - helm template …
 - yamllint <files>
 - Trivy on changed paths
-- Flux MCP read (Kustomization / HelmRelease status) — read-only; mutate needs ask
+- Flux MCP read (Kustomization / HelmRelease status); read-only; mutate needs ask
 -->
 
 ## Notes
 
-<!-- Optional context. No secrets — 1Password Item names only. -->
+<!-- Optional context. No secrets; 1Password Item names only. -->

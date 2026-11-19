@@ -21,7 +21,7 @@ resource envelopes that duplicate isolation the platform will
 eventually provide natively.
 
 Desired state: one consolidated plane where we define pipelines only,
-not nodes — a single node today, a single Git-backed "deployment" at
+not nodes; a single node today, a single Git-backed "deployment" at
 the December relaunch. The functional split becomes unnecessary once
 upstream pipelines can span nodes; a future horizontal rescale is a
 file move per pipeline, not a data migration (stateless + CH-direct
@@ -34,7 +34,7 @@ execution. Vendor-stated 2026-10-21: IPC in progress, "scale
 vertically inside a node until then", single pipelines spanning nodes
 once it lands; earlier signal was Q1 2027. The December relaunch
 (Git-backed deployments) is the adjacent milestone. Nothing public as
-of 2026-11-01 — release notes carry no IPC GA yet.
+of 2026-11-01; release notes carry no IPC GA yet.
 
 Unblock signal: upstream release notes / changelog GA the IPC layer,
 or vendor confirmation via the Slack Connect channel.
@@ -63,13 +63,13 @@ or vendor confirmation via the Slack Connect channel.
 ## Implementation hint
 
 Design (wave structure, gates, merged-node sizing) is intentionally
-deferred to unblock time — the distributed model may change the how
+deferred to unblock time; the distributed model may change the how
 entirely.
 
 ## Notes
 
 - Sizing evidence 2026-11-01 (Mimir, read-only): tetragon flood peak
-  11.89Gi — its 12Gi limit is measured, not padding; coincident
+  11.89Gi; its 12Gi limit is measured, not padding; coincident
   fleet peak 16.91Gi / 4.54 CPU over 14d; workers 4 × 16 CPU / 64Gi.
 - Operator 2026-11-01: no changes now; park as blocked and do one
   topology churn when the distributed model is ready.

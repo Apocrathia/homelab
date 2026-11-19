@@ -36,22 +36,22 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
 
 ## Decisions
 
-- Shadow with non-matching filter — empty filter would autodiscover the whole
+- Shadow with non-matching filter: empty filter would autodiscover the whole
   group and double-open MRs against CE; a junk filter exercises discovery
   with zero executor jobs. Reversible by one-line filter change.
-- Namespace-scoped RBAC (`rbac.ownNamespaceOnly: true`) — all spawned jobs
+- Namespace-scoped RBAC (`rbac.ownNamespaceOnly: true`); all spawned jobs
   live in the operator namespace; no ClusterRole for the operator.
-- Policy engine on at install — `policy.enabled: true`; defaults already
+- Policy engine on at install: `policy.enabled: true`; defaults already
   allow gitlab.com and the renovate/renovatebot images.
-- Reuse `renovate-secrets` 1Password item — operator wants `RENOVATE_TOKEN` /
+- Reuse `renovate-secrets` 1Password item; operator wants `RENOVATE_TOKEN` /
   `GITHUB_COM_TOKEN` keys; same PAT values as `gitlab-token` / `github-token`.
-- UI routed via Gateway with OIDC from day one — the operator serves the UI
+- UI routed via Gateway with OIDC from day one; the operator serves the UI
   unauthenticated without an auth provider, so exposure only happens with
   Authentik OIDC configured. Admin access limited to `kubernetes-admins`.
-- Job image `ghcr.io/renovatebot/renovate` — avoids Docker Hub rate limits;
+- Job image `ghcr.io/renovatebot/renovate`; avoids Docker Hub rate limits;
   in policy `allowedImages`.
 - Carry CE's registry credentials into executor Jobs via `extraEnv` +
-  `secretKeyRef` — `detectHostRulesFromEnv: true` builds hostRules from the
+  `secretKeyRef`; `detectHostRulesFromEnv: true` builds hostRules from the
   `DOCKER_*` env vars; without them Docker Hub pulls hit anonymous rate
   limits and GHCR pulls lose auth.
 
@@ -60,12 +60,12 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
 - [x] Shadow manifests + HelmRepository + registrations (merged, !3889)
 - [x] Web UI via Gateway + Authentik OIDC blueprint (merged, !3889)
 - [x] CRD-ordering fix: `RenovateJob` moved to `config/` with its own Flux
-      Kustomization depending on the operator one — applying the CR and the
+      Kustomization depending on the operator one; applying the CR and the
       CRD-installing HelmRelease from the same Kustomization deadlocks
       (CR dry-run failure aborts the apply before the HelmRelease exists)
 - [x] Operator adds fields to the `renovate-secrets` 1Password item:
       `RENOVATE_TOKEN` + `GITHUB_COM_TOKEN` (same values as `gitlab-token` /
-      `github-token`) and a generated `oidc-session-secret` — without the
+      `github-token`) and a generated `oidc-session-secret`; without the
       first, discovery jobs fail auth
 - [x] Merge shadow MR; confirm Flux reconciles `services-renovate-operator`
 - [x] Copy the Authentik provider's client ID + secret into `oidc-client-id`
@@ -98,13 +98,13 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
 - `pre-commit run --files <changed files>`
 - `kubectl get renovatejobs -n renovate-operator` and
   `kubectl describe renovatejob homelab -n renovate-operator` (read-only)
-- `kubectl get jobs -n renovate-operator` — discovery jobs only during shadow
+- `kubectl get jobs -n renovate-operator`: discovery jobs only during shadow
 
 ## Notes
 
 - Chart pulled to `.scratch/renovate-operator-chart/` for review (6.0.0).
 - Known CE wart carried into cutover watch: the
   `renovate/ghcr.io-lklynet-hypermind-swarm-1.x` branch fails to update every
-  run — fix or drop that pin separately.
+  run; fix or drop that pin separately.
 - Kyverno `cleanup-*-jobs` policies reap finished Jobs after 24h; enable the
   operator's log storage (valkey/S3) if job logs must live longer.

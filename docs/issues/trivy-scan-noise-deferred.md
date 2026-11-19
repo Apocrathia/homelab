@@ -28,7 +28,9 @@ buckets.
 
 ### Actionable siblings
 
-- Tracked `uv.lock` HIGH CVEs → `trivy-uv-lock-high-cves.md`
+- Tracked `uv.lock` HIGH CVEs → fixed by `9bab75fbc` (the
+  `trivy-uv-lock-high-cves` issue was delete-on-ship'd); re-file only if the
+  scan bucket refills.
 
 ### Also seen
 
@@ -39,7 +41,7 @@ those on; this deferral is not their backlog.
 
 ## Repro
 
-N/A — scoping record for scan triage.
+N/A; scoping record for scan triage.
 
 ## Acceptance
 

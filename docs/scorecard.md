@@ -18,8 +18,8 @@ Scorecard assesses open source projects for security risks through automated che
 
 The badge above shows the aggregate score. For detailed check results:
 
-- [Latest Results](scorecard-details.md) - Human-readable breakdown of all checks
-- [Full Results (JSON)](scorecard-full.json) - Raw JSON data
+- [Latest Results](https://apocrathia.gitlab.io/homelab/scorecard-details.md) - Human-readable breakdown of all checks (CI artifact; published with the Pages site, not in the repo)
+- [Full Results (JSON)](https://apocrathia.gitlab.io/homelab/scorecard-full.json) - Raw JSON data
 
 ## Schedule
 

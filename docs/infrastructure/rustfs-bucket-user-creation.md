@@ -5,20 +5,20 @@ Use this when an app needs **new object storage** on the NAS RustFS instance
 recreate one after an incident. This is the standard onboarding path for
 every RustFS consumer in the homelab.
 
-## Facts (verified 2026-09-10/11; re-verified 2026-10-10 on the `tenzir` onboarding — all four API calls 200, scoping battery green)
+## Facts (verified 2026-09-10/11; re-verified 2026-10-10 on the `tenzir` onboarding: all four API calls 200, scoping battery green)
 
 - Endpoint: `http://storage.services.apocrathia.com:9009` (S3 API **and**
   admin API on the same port; no TLS on the LAN segment)
 - Build: RustFS `1.0.0-beta.12`, data root `/mnt/Pool/Backup/S3`
   (rustfs-only folder; relocated 2026-09-11 out of the Library SMB share)
 - Root credentials: 1Password item **`rustfs-terraform-secrets`**
-  (`username` / `credential` fields — the pair this runbook's scripts read;
+  (`username` / `credential` fields; the pair this runbook's scripts read;
   the item also carries duplicated `root-access-key` / `root-access-secret`
   fields with the same shapes, presumably legacy. Both pairs resolve to the
   same root identity as of 2026-10-10)
 - The web console is **not exposed on the LAN** (only 9009 answers; the
   console default port 9001 has nothing listening). Console access requires
-  a port-forward or enabling `RUSTFS_CONSOLE_ADDRESS` on the NAS — see
+  a port-forward or enabling `RUSTFS_CONSOLE_ADDRESS` on the NAS; see
   [Console (manual) path](#console-manual-path).
 - Management model is **manual** (admin API), same as the old MinIO. A
   Terraform route was built and validated, then backed out: the AWS provider
@@ -29,7 +29,7 @@ every RustFS consumer in the homelab.
 
 All four steps are HTTP calls to the same endpoint, SigV4-signed with the
 **root** credentials, `service=s3`, `region=us-east-1`. The signing must
-cover **query parameters** — the admin API rejects unsigned query strings.
+cover **query parameters**: the admin API rejects unsigned query strings.
 
 The `op` CLI (1Password) provides the root credentials:
 
@@ -95,7 +95,7 @@ await call("PUT", f"/rustfs/admin/v3/add-canned-policy?name={name}",
            ROOT_AK, ROOT_SK, body=policy.encode(), content_type="application/json")
 ```
 
-`Action: ["s3:*"]` scoped to the bucket ARNs is deliberate — narrower action
+`Action: ["s3:*"]` scoped to the bucket ARNs is deliberate; narrower action
 lists caused churn on MinIO and telemetry clients need multipart/list.
 
 ### 3. Create the user (admin API)
@@ -106,10 +106,10 @@ await call("PUT", f"/rustfs/admin/v3/add-user?accessKey={access_key}",
            ROOT_AK, ROOT_SK, body=body.encode(), content_type="application/json")
 ```
 
-Generate a strong access key (uppercase A-Z + digits, no `/` — SigV4 breaks)
+Generate a strong access key (uppercase A-Z + digits, no `/`; SigV4 breaks)
 and secret; store them in a **1Password item** named `<name>-secrets` with
 fields `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (plus any app-specific
-field like `KOPIA_PASSWORD` — that one is client-side encryption, RustFS
+field like `KOPIA_PASSWORD`; that one is client-side encryption, RustFS
 never sees it).
 
 Convention from the 2026-10-10 `tenzir` run: prefix the access key with the
@@ -117,7 +117,7 @@ consumer name uppercased (`TENZIR…`) so access keys are self-identifying in
 logs; alnum-only secret (40 chars) avoids any signing edge cases.
 
 Agents can write the keypair directly into the vault item from the host
-session — no operator copy step needed (verified 2026-10-10):
+session; no operator copy step needed (verified 2026-10-10):
 
 ```bash
 op item edit <name>-secrets "AWS_ACCESS_KEY_ID=<access_key>" "AWS_SECRET_ACCESS_KEY=<secret>"
@@ -149,31 +149,31 @@ creation 403.
 ### Known wart
 
 Non-root `ListBuckets` (GET `/`) used to return **500** on this build
-(`errBucketMetadataNotInitialized`, beta.12). No longer reproduces — verified
+(`errBucketMetadataNotInitialized`, beta.12). No longer reproduces; verified
 live 2026-10-17 (clickhouse consumer onboarding): a new user's GET `/`
 returns a **scoped 200** listing only the user's own bucket. Cosmetic either
-way — apps address buckets by name. Expect the scoped listing during
+way; apps address buckets by name. Expect the scoped listing during
 verification, not a 500.
 
 ## Console (manual) path
 
 Documented as the fallback for humans. **Unverified in practice on this
-instance** — the console is not currently reachable on the LAN. To use it:
+instance**: the console is not currently reachable on the LAN. To use it:
 
 1. Enable/expose the console on the NAS: set `RUSTFS_CONSOLE_ENABLE=true`
    and `RUSTFS_CONSOLE_ADDRESS=":9010"` (or default `:9001`) in
    `/etc/default/rustfs`, restart RustFS, then either expose the port or SSH
    port-forward (`ssh nas -L 9001:localhost:9010`).
-   **Restarting interrupts S3 briefly** — loki/mimir/tempo/kopia all blip
+   **Restarting interrupts S3 briefly**: loki/mimir/tempo/kopia all blip
    for seconds; kopia movers retry.
 2. Log in with **Key Login** using the root credentials. If the page cannot
    reach the server, open `/config` and point it at
    `http://storage.services.apocrathia.com:9009`.
 3. **Create bucket**: Object Browser → Create Bucket → `<name>` (no
-   versioning, no quota — parity with existing consumers).
+   versioning, no quota; parity with existing consumers).
 4. **Create policy**: Identity and Access Management → Policies → Create
-   Policy — name `<name>`, JSON from step 2 above.
-5. **Create user**: Users → Create User — name `<name>`, generated or pasted
+   Policy; name `<name>`, JSON from step 2 above.
+5. **Create user**: Users → Create User; name `<name>`, generated or pasted
    key pair, attach policy `<name>`. Copy credentials to the 1Password item.
 6. Verify with the new user's keys exactly as in the API path (step 5).
 
@@ -182,7 +182,7 @@ permissions); the flow is always bucket → policy → user + attach.
 
 ## Operational notes
 
-- **Data-root relocation wipes ALL state** — buckets, IAM users, policies
+- **Data-root relocation wipes ALL state**: buckets, IAM users, policies
   (2026-09-11 incident). If the root must move: stop writes, rclone data
   out, move the root, recreate all buckets/users/policies via this runbook,
   rclone data back. The rustfs agent session holds the full stored recipe.

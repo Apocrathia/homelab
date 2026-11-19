@@ -5,7 +5,7 @@ Git history is the archive.
 
 ## Layout
 
-Flat directory — no `open/` or `closed/` folders:
+Flat directory, no `open/` or `closed/` folders:
 
 ```
 docs/issues/
@@ -19,15 +19,15 @@ Slug is `kebab-case` and names the gap, not the date
 
 ## Issues vs plans
 
-| Surface        | Holds                                                         |
-| -------------- | ------------------------------------------------------------- |
-| `docs/issues/` | **What** — problem / desired state, acceptance, feedback loop |
-| `docs/plans/`  | **How** — steps, checkboxes, implementation detail            |
+| Surface        | Holds                                                        |
+| -------------- | ------------------------------------------------------------ |
+| `docs/issues/` | **What**: problem / desired state, acceptance, feedback loop |
+| `docs/plans/`  | **How**: steps, checkboxes, implementation detail            |
 
 Plans live under [`docs/plans/`](../plans/README.md) (durable / agent loop).
 Author via
 [project-planner](../../.agents/agents/project-planner/agent.md). Do not bury a
-full plan inside an issue — link it via optional `plan:` frontmatter when you
+full plan inside an issue; link it via optional `plan:` frontmatter when you
 have one.
 
 ## Status and lifecycle
@@ -47,7 +47,7 @@ exists during review; it goes away with the file.
 | Fixable in the current branch / lap     | Fix it; do not file                                                                             |
 | Real gap, not fixing now                | File an issue from `_template.md`                                                               |
 | Duplicate of an existing issue          | Update the existing file; do not create a second                                                |
-| Single `ponytail:` shortcut             | Comment in code — not an issue                                                                  |
+| Single `ponytail:` shortcut             | Comment in code; not an issue                                                                   |
 | Clustered related `ponytail:` debt      | One issue covering the theme                                                                    |
 | Scope fuzzy / multiple valid approaches | Run [alignment](../../.agents/skills/alignment/SKILL.md) first; file after shared understanding |
 
@@ -63,9 +63,9 @@ conventions SoT).
 ## Homelab constraints
 
 - **No secrets in issue bodies.** Reference 1Password Item names / vault paths
-  only — never tokens, passwords, kubeconfigs, or `.env` contents.
+  only; never tokens, passwords, kubeconfigs, or `.env` contents.
 - **Cluster incidents** may be filed with evidence (Flux object names, alert
-  names, log excerpts without secrets). Filing does not authorize mutate —
+  names, log excerpts without secrets). Filing does not authorize mutate;
   `kubectl apply`, `flux reconcile`, and other live changes still need
   operator permission.
 - Agents never `git commit`. Operator commits.
@@ -102,16 +102,16 @@ Copy from [`_template.md`](./_template.md):
 1. Problem / desired state
 2. Repro (bugs; omit or N/A otherwise)
 3. Acceptance
-4. Feedback loop — name the verify commands (e.g. `kustomize build`,
+4. Feedback loop; name the verify commands (e.g. `kustomize build`,
    `helm template`, `yamllint`, Trivy on changed paths, Flux MCP read-only
    checks). If you cannot name a loop, run alignment first.
-5. Implementation hint — light pointer, not a plan
+5. Implementation hint; light pointer, not a plan
 6. Notes
 
 ## Related
 
-- [file-issue](../../.agents/skills/file-issue/SKILL.md) — file / update / delete-on-ship
-- [alignment](../../.agents/skills/alignment/SKILL.md) — fuzzy scope before filing
-- [project-planner](../../.agents/agents/project-planner/agent.md) — how / plans
-- [docs/research/README.md](../research/README.md) — findings; recommendations may become issues
-- [reconcile-context](../../.agents/skills/reconcile-context/SKILL.md) — agent context drift after behavior moves
+- [file-issue](../../.agents/skills/file-issue/SKILL.md): file / update / delete-on-ship
+- [alignment](../../.agents/skills/alignment/SKILL.md): fuzzy scope before filing
+- [project-planner](../../.agents/agents/project-planner/agent.md): how / plans
+- [docs/research/README.md](../research/README.md): findings; recommendations may become issues
+- [reconcile-context](../../.agents/skills/reconcile-context/SKILL.md): agent context drift after behavior moves

@@ -13,7 +13,7 @@ slice: hitl
 # kmcp: allow the generated Service port to differ from the container port
 
 Upstream enhancement request for `kagent-dev/kmcp`, staged locally for
-refinement before filing. Not a homelab bug — the workaround (a companion
+refinement before filing. Not a homelab bug; the workaround (a companion
 Service) exists; this is about kmcp exposing the knob natively.
 
 ## Problem / desired state
@@ -57,12 +57,12 @@ Service-port override should apply to the port the Service advertises.
   `port: <chosen>` / `targetPort: <deployment.port>`, and the controller does
   not revert it.
 - Behavior is defined for both `http` and `stdio` transport types.
-- Default is unchanged (Service port == container port) when the field is unset
-  — no breaking change for existing CRs.
+- Default is unchanged (Service port == container port) when the field is unset;
+  no breaking change for existing CRs.
 
 ## Feedback loop
 
-- `kubectl get svc <name> -n <ns> -o yaml` — confirm `port` vs `targetPort`
+- `kubectl get svc <name> -n <ns> -o yaml`: confirm `port` vs `targetPort`
   after applying the new field (read-only).
 - Upstream: unit test in `translateTransportAdapterService` asserting the split
   when the field is set and equality when it is unset.
@@ -84,7 +84,7 @@ The enhancement is to source `Port` from a new optional field and keep
   in the same namespace using the kmcp pod selector
   (`app.kubernetes.io/{instance,name}: <cr-name>`) with `port: 80`,
   `targetPort: 8080`, and point clients at it. kmcp ignores non-owned Services.
-  Not adopted yet — kept on `8080` pending this upstream knob.
+  Not adopted yet; kept on `8080` pending this upstream knob.
 - Separate, related kmcp gap observed during the ToolHive→kmcp migration (file
   distinctly if pursued): HTTP-transport images get no auto `PORT`/`MCP_PORT`
   env injection and no declared `containerPort`, so port wiring is manual.

@@ -1,8 +1,8 @@
 ---
 title: Tenzir CH-only stateless migration
-status: complete
+status: done
 found_at: 2026-10-21
-updated_at: 2026-10-29
+updated_at: 2026-11-19
 area: security
 ---
 
@@ -12,7 +12,7 @@ Retire the per-node lake: every node goes ingest -> normalize ->
 attest in-stream -> `to_clickhouse` direct. ClickHouse stays the only
 record store; the import-lake-compaction-archive pipeline dies per node.
 The original design review lives in the 2026-10-21 design doc
-(`.scratch/tenzir-stateless/`, gitignored scratch — this plan is the
+(`.scratch/tenzir-stateless/`, gitignored scratch; this plan is the
 durable record).
 
 ## Target architecture
@@ -27,8 +27,8 @@ durable record).
 
 ## Phases and status
 
-- **Phase 0 — per-node diagnostics (B1)**: DONE (2026-10-21, 7/7 live-verified).
-- **Phase 1 — 6.20 GA wave** (MR !5582): DONE (2026-10-27). Fleet on
+- **Phase 0: per-node diagnostics (B1)**: DONE (2026-10-21, 7/7 live-verified).
+- **Phase 1: 6.20 GA wave** (MR !5582): DONE (2026-10-27). Fleet on
   `v6.20.0`; all 62 attest digests byte-stable across the nova data-model
   change (offline-proven, package baselines); live evidence: zero tamper
   false-flags through the rollout and the walker-churn incident window.
@@ -37,31 +37,31 @@ durable record).
   the 6.20.0 notes (the pre-December phase-2 clock stays
   meeting-authority); baseline capability not in this release (phase-3
   charter baseline component stays gated).
-- **Lap 2a-1 — tetragon direct legs** (MR !5600): DONE (2026-10-27),
+- **Lap 2a-1: tetragon direct legs** (MR !5600): DONE (2026-10-27),
   production-proven: 20h zero-restart, direct legs at flood rate
   (~244k rows/15m), 100% attest coverage, zero tamper findings.
   Bounded 60s sort window (the ordering landmine), verify window
   24h -> 90m, `ocsf.null` leak killed, `parallelism` dropped. Probe
   fixtures: `packages/homelab/tests/tetragon-direct-{attest,verify-clean}`.
-- **Lap 2e — pull-plane stateless** (MRs !5622-!5625, 2026-10-28):
+- **Lap 2e: pull-plane stateless** (MRs !5622-!5625, 2026-10-28):
   DONE, cluster-side included. Found the first of three shipped-broken
   classes: the MRs deleted the `persistence` key instead of setting
-  `enabled: false` — the chart default rendered a 10Gi PVC, and the
+  `enabled: false`; the chart default rendered a 10Gi PVC, and the
   fleet-wide "field is immutable" upgrade failures were 10Gi-vs-5Gi vct
   size conflicts, not the removal trap. Fixed by MR !5629.
-- **Lap 2b — netflow direct legs** (MR !5626 + fixes): DONE
+- **Lap 2b: netflow direct legs** (MR !5626 + fixes): DONE
   (2026-10-29). Direct leg + in-stream attestation + 90m verify
   window + compaction-rule removal; landed stateless via the sts
   dance. Carried the same persistence-key bug class.
-- **Lap 2d — core direct legs** (MR !5627 + fixes): DONE (2026-10-29).
+- **Lap 2d: core direct legs** (MR !5627 + fixes): DONE (2026-10-29).
   All 5 import legs -> direct attest + INSERT, sigma's own CH leg, 90m
   verify window (the walker-OOM fix that ended the 2026-10-28 core
   crash-loop), compaction-rule removal, no PVC. Two more shipped-broken
   classes surfaced at boot: escaped quotes in the table f-string
   (MR !5654) and `fork_merge` arms around the sink-only to_clickhouse
-  legs (MR !5665) — three parse-error classes shipped through green CI
+  legs (MR !5665); three parse-error classes shipped through green CI
   because node-pipeline TQL is only parsed at pod boot.
-- **Lap 2a-2 — tetragon teardown** (MR !5630): DONE (2026-10-29).
+- **Lap 2a-2: tetragon teardown** (MR !5630): DONE (2026-10-29).
   The compaction plugin, `ocsf-archive.tql`, `storage.yaml`, and the
   20Gi PVC all deleted; the sts dance landed the stateless spec.
 
@@ -74,7 +74,7 @@ direct legs; the CH load spread across replicas by the
 operator-native `serviceTemplates` ClusterIP front door
 (MR !5712, chi-0-0-0 had carried the walks at ~1270m).
 
-- **Phase 3 — introspection charter**: CH wiring + scheduled
+- **Phase 3: introspection charter**: CH wiring + scheduled
   volume/freshness passes over `ocsf.*`; baseline-abnormality gated
   on the upstream baseline capability.
 
@@ -85,27 +85,27 @@ operator-native `serviceTemplates` ClusterIP front door
   stragglers drop (named in the pipeline comment).
 - Concurrent-closure seam-write race under a >=60s exporter-stall
   catch-up burst (2a-2 watch item).
-- Alerting math: `to_prometheus` truncates to ms — samples are per-burst,
+- Alerting math: `to_prometheus` truncates to ms; samples are per-burst,
   not per-event (B1 finding); freshness/absence alerts count bursts.
 
 ## Incident record (2026-10-27/29)
 
 **Secrets consolidation outage (10-27/28)**: the `chore/clickhouse-secrets-consolidation` merge rewired the CH
 password refs onto `tenzir-secrets` and pruned the `clickhouse-secrets`
-Secret, but the vault item never carried the CH fields — every CH-wired
+Secret, but the vault item never carried the CH fields; every CH-wired
 node went `CreateContainerConfigError` (~4h detection-plane outage).
 Recovery: the four CH password fields were restored into the vault item
 via the 1Password Connect REST API (values recovered from the untouched
 `clickhouse-secrets` item), the OnePasswordItem re-synced, and the
 stuck HelmRelease state machine cleared (HelmRelease deletion + pod
 deletion). One `op`/curl debugging response echoed live token values
-into the agent conversation log (local-only) — token rotation is an
+into the agent conversation log (local-only); token rotation is an
 operator call. Process gap to carry forward: secret-key ref rewires
 need the vault-side copy verified before merge, not after.
 
 **Core crash-loop (10-28/29)**: with its verify walk still on the 24h
 window (2d not yet merged), core OOMKilled every ~8 minutes for ~19h
-(136 restarts, 8Gi limit) — the boot-time walk against the grown
+(136 restarts, 8Gi limit); the boot-time walk against the grown
 `ocsf.*` tables is the same walker-OOM class lap 2a-1 fixed on
 tetragon. Repeated unclean kills corrupted the lake catalog (malformed
 partitions), compounding each boot. Detection feeds (k8s-audit,

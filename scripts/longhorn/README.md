@@ -26,7 +26,7 @@ Disk selection: by default the script picks a disk whose `path` contains `longho
 
 ### `cleanup-longhorn-snapshots.sh`
 
-Comprehensive snapshot cleanup that handles three types of cleanup:
+Snapshot cleanup that handles three types:
 
 - Old recurring job snapshots beyond retention policy
 - Old system-generated snapshots (no RecurringJob label)
@@ -76,7 +76,7 @@ Linear flow: consider each **candidate** Longhorn volume (see **`CANDIDATE_FILTE
 
 Have **schedulable Longhorn disks** before bulk restore. **Scale down workloads** (or otherwise release the PVC) before **`restore`**; PVC delete hangs if a pod still mounts it. The script skips volumes that still have pods using the PVC unless **`SKIP_PREFLIGHT=1`**.
 
-After PVC delete, **Flux** (or whatever owns the claim) recreates the PVC on its normal interval — the script **does not** call **`flux reconcile`** or annotate HelmReleases; it only **waits** up to **`RECREATE_PVC_WAIT_SEC`** for the PVC to exist again.
+After PVC delete, **Flux** (or whatever owns the claim) recreates the PVC on its normal interval; the script **does not** call **`flux reconcile`** or annotate HelmReleases; it only **waits** up to **`RECREATE_PVC_WAIT_SEC`** for the PVC to exist again.
 
 **Usage:**
 
@@ -95,7 +95,7 @@ Long runs: redirect to a log and **`tail -f`**; output may be block-buffered whe
 
 ### `update-volume-data-locality.sh`
 
-Patches existing volumes to `dataLocality: best-effort` by default (matches the Longhorn HelmRelease). Lets Kubernetes schedule the workload without requiring a local replica on the same node—useful after node chaos or faulted strict-local volumes.
+Patches existing volumes to `dataLocality: best-effort` by default (matches the Longhorn HelmRelease). Lets Kubernetes schedule the workload without requiring a local replica on the same node, useful after node chaos or faulted strict-local volumes.
 
 Longhorn does **not** allow converting between `strict-local` and other locality modes while the volume is **attached**. Detach first (scale down workloads), then run the script. To push `strict-local` again: `NEW_LOCALITY=strict-local ./update-volume-data-locality.sh`.
 
@@ -264,13 +264,13 @@ Restarts engines for degraded volumes to force Longhorn reconciliation. This hel
 
 **Order of operations:**
 
-1. **Optional:** `./fix-disk-uuid-mismatch.sh rescan` — sets `longhorn.io/force-disk-rescan` / `force-sync` on every `nodes.longhorn.io` (sometimes enough if metadata was only stale).
-2. **Check:** `./fix-disk-uuid-mismatch.sh status` — confirms whether **any** disk is `Schedulable` and shows replica counts per node.
-3. **Prepare:** `./fix-disk-uuid-mismatch.sh prepare NODE ...` — `allowScheduling: false` and `evictionRequested: true` on the chosen disk so replicas can move elsewhere.
+1. **Optional:** `./fix-disk-uuid-mismatch.sh rescan`: sets `longhorn.io/force-disk-rescan` / `force-sync` on every `nodes.longhorn.io` (sometimes enough if metadata was only stale).
+2. **Check:** `./fix-disk-uuid-mismatch.sh status`: confirms whether **any** disk is `Schedulable` and shows replica counts per node.
+3. **Prepare:** `./fix-disk-uuid-mismatch.sh prepare NODE ...`: `allowScheduling: false` and `evictionRequested: true` on the chosen disk so replicas can move elsewhere.
 4. **Wait** until `status` shows **zero replicas** on each node you will `finish` (watch `kubectl get replicas.longhorn.io -n longhorn-system` if needed).
-5. **Finish:** `./fix-disk-uuid-mismatch.sh finish NODE ...` — JSON remove that disk key from `spec.disks`, wait, then merge the same disk config back so Longhorn records the **current** filesystem UUID.
+5. **Finish:** `./fix-disk-uuid-mismatch.sh finish NODE ...`: JSON remove that disk key from `spec.disks`, wait, then merge the same disk config back so Longhorn records the **current** filesystem UUID.
 
-**Cluster-wide deadlock:** If **no** disk in the cluster is schedulable, eviction has nowhere to land; replica counts never drop and `finish` will keep refusing. Escape paths include: add a **second** Longhorn disk on one or more nodes (new path + fresh filesystem, schedulable), then run `prepare` on the broken disks so eviction targets the healthy path; restore from **Longhorn backups**; or follow Longhorn’s [orphaned replica recovery](https://longhorn.io/kb/restoring-data-from-an-orphaned-replica-directory/) if you are deliberately recovering data outside normal scheduling — understand data risk before deleting replica CRs.
+**Cluster-wide deadlock:** If **no** disk in the cluster is schedulable, eviction has nowhere to land; replica counts never drop and `finish` will keep refusing. Escape paths include: add a **second** Longhorn disk on one or more nodes (new path + fresh filesystem, schedulable), then run `prepare` on the broken disks so eviction targets the healthy path; restore from **Longhorn backups**; or follow Longhorn’s [orphaned replica recovery](https://longhorn.io/kb/restoring-data-from-an-orphaned-replica-directory/) if you are deliberately recovering data outside normal scheduling; understand data risk before deleting replica CRs.
 
 **UI equivalent:** Disable scheduling and request eviction on the disk, wait for replicas to drain, then delete the disk from the node and re-add the same path and settings.
 
