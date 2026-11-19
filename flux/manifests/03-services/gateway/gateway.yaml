@@ -33,9 +33,6 @@ metadata:
   namespace: envoy-system
 spec:
   gatewayClassName: envoy
-  addresses:
-    - type: IPAddress
-      value: "10.100.1.99"
   listeners:
     - name: https
       protocol: HTTPS
