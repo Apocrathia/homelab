@@ -1,5 +1,7 @@
 # Packages
 
+> **Navigation**: [← Tenzir](../README.md)
+
 Shared TQL package source for five of the seven nodes, rendered as ConfigMaps by the
 root [`kustomization.yaml`](../kustomization.yaml) and mounted read-only
 into the node pods at `/etc/tenzir/packages`. One source of truth: the

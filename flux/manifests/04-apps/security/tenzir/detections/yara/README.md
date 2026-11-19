@@ -1,5 +1,7 @@
 # YARA detections scaffold
 
+> **Navigation**: [← Detections](../README.md)
+
 Scaffolding for future byte-stream detection. No pipeline consumes this
 content today: the tenzir `yara` operator (YARA-X) needs a finite byte
 source (a file ingest, an image-layer scanner, a captured-payload feed)

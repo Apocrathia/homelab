@@ -1,5 +1,7 @@
 # Vendored stix package
 
+> **Navigation**: [← Packages](../README.md)
+
 The official `stix` TQL package, vendored byte-for-byte from
 [github.com/tenzir/library](https://github.com/tenzir/library) @
 `c6bba5f894455ce113f47e923605460b1b720edc` (2026-10-13). It fetches STIX
@@ -13,7 +15,7 @@ provenance recorded here.
 
 ## Runtime vs repo-side content
 
-Only `package.yaml` and `operators/` are runtime content — the four files
+Only `package.yaml` and `operators/` are runtime content, the four files
 render as ConfigMaps and mount read-only at `/etc/tenzir/packages/stix/`
 ([kustomization](../../kustomization.yaml)). `tests/`, `examples/`,
 `fixtures/`, and `changelog/` are repo-side: the tenzir-test harness runs

@@ -26,10 +26,10 @@ Container ports are `>1023` because the daemon drops to `nobody:nogroup` before 
 
 ## Configuration
 
-- **Config file**: `opencanary.conf` is generated into the `opencanary-config` ConfigMap by kustomize and mounted read-only at `/etc/opencanaryd/opencanary.conf` — OpenCanary's first config search path.
+- **Config file**: `opencanary.conf` is generated into the `opencanary-config` ConfigMap by kustomize and mounted read-only at `/etc/opencanaryd/opencanary.conf`; OpenCanary's first config search path.
 - **The daemon exits at boot without a config file**; there is no default config in the image.
 - **Service set**: HTTP + SSH only for v1. Other modules (ftp, telnet, mysql, redis, ...) are disabled by absence in the config.
-- **SSH host keys**: generated on first start into `/var/tmp` (a 1Gi Longhorn volume) so the host key fingerprint stays stable across pod restarts. A fresh key every restart makes repeat visitors suspicious.
+- **SSH host keys**: generated on first start into `/var/tmp` (a Longhorn volume) so the host key fingerprint stays stable across pod restarts. A fresh key every restart makes repeat visitors suspicious.
 - **`portscan` module stays off**: it tails `/var/log/kern.log`, which does not exist in the container.
 
 See `helmrelease.yaml` and `opencanary.conf` for the complete configuration.
@@ -47,7 +47,7 @@ The [Dashboard](#dashboard) section renders these alerts in Grafana; for ad-hoc 
 
 ### Future: MISP/OpenCTI feed
 
-OpenCanary ships `WebhookHandler`, `SlackHandler`, `TeamsHandler`, SMTP, socket, and hpfeeds handlers — all configured under `logger.kwargs.handlers` in `opencanary.conf`. When the security stack grows, add a `WebhookHandler` pointing at a receiver that normalizes the JSON into MISP sightings or OpenCTI indicators instead of (or alongside) the console handler.
+OpenCanary ships `WebhookHandler`, `SlackHandler`, `TeamsHandler`, SMTP, socket, and hpfeeds handlers, all configured under `logger.kwargs.handlers` in `opencanary.conf`. When the security stack grows, add a `WebhookHandler` pointing at a receiver that normalizes the JSON into MISP sightings or OpenCTI indicators instead of (or alongside) the console handler.
 
 ## Security Considerations
 
@@ -58,7 +58,7 @@ OpenCanary ships `WebhookHandler`, `SlackHandler`, `TeamsHandler`, SMTP, socket,
 
 ## Dashboard
 
-`grafana/dashboard.json` ships "OpenCanary Alerts" — a Grafana dashboard in the **Security** folder, managed by grafana-operator:
+`grafana/dashboard.json` ships "OpenCanary Alerts", a Grafana dashboard in the **Security** folder, managed by grafana-operator:
 
 - Alerts (24h) stat + alert rate by logtype
 - Top attacker source IPs (7d) bar gauge

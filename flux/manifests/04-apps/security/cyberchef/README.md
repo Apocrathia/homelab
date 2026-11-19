@@ -16,7 +16,7 @@ and analyse data without it leaving the tab.
 ## Access
 
 - **External URL**: `https://cyberchef.gateway.services.apocrathia.com`
-- **Tailnet**: same URL via split DNS — the door friends use
+- **Tailnet**: same URL via split DNS; the door friends use
 - **Internal Service**: `http://cyberchef.cyberchef.svc.cluster.local:8080`
 
 ## Configuration

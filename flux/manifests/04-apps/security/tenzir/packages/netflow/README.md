@@ -1,5 +1,7 @@
 # Vendored netflow package
 
+> **Navigation**: [← Packages](../README.md)
+
 The official `netflow` TQL package, vendored byte-for-byte from
 [github.com/tenzir/library](https://github.com/tenzir/library) @
 `c6bba5f894455ce113f47e923605460b1b720edc` (2026-10-13). It maps
@@ -13,7 +15,7 @@ no license file; vendored as-is with provenance recorded here.
 
 ## Runtime vs repo-side content
 
-Only `package.yaml` and `operators/` are runtime content — the five files
+Only `package.yaml` and `operators/` are runtime content, the five files
 render as ConfigMaps and mount read-only at `/etc/tenzir/packages/netflow/`
 ([kustomization](../../kustomization.yaml)). `tests/`, `examples/`, and
 `changelog/` are repo-side: the tenzir-test harness runs the baselines from

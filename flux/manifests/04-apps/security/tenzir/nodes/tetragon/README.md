@@ -12,15 +12,15 @@ OTLP listener for the tetragon alloy), tetragon-ocsf (the OCSF
 mapping with endpoint enrichment on the Network
 Activity arm), geo-open-loader (the daily GeoIP context builder for
 that enrichment), pipeline-metrics-to-mimir (the flood node's
-liveness arm — the same series shape the other metrics-shipping
+liveness arm, the same series shape the other metrics-shipping
 nodes (core, netflow, investigations) ship), and
-tetragon-attest-verify (the hourly record_integrity walk — the
+tetragon-attest-verify (the hourly record_integrity walk, the
 verification half of the attestation lane below). The diagnostics
 pair (error-diagnostics-to-mimir, diagnostics-to-loki) ships from
-this node again — restored per-node with the B1 lap after the
+this node again, restored per-node with the B1 lap after the
 central poller's retirement. The split exists so the flood's CPU and memory
 behavior cannot starve the detection plane on the core node, and
-the loader is equally decoupled — a slow or failed MMDB fetch never
+the loader is equally decoupled, a slow or failed MMDB fetch never
 stalls ingest (the context keeps serving the last good database).
 
 The chart runs the pipelines in subprocesses (`pipeline-subprocesses`):
@@ -57,12 +57,12 @@ Enrichment scope is class-grounded, not blanket: only the Network
 Activity (4001) arm carries IP endpoints (from the monitor-network
 kprobe's sock argument), so only it gains geo country + ASN
 (`endpoint.location.country`, `network_endpoint.autonomous_system`)
-plus a reverse-DNS hostname on both endpoints — Process Activity
+plus a reverse-DNS hostname on both endpoints, Process Activity
 (1007) and File System Activity (1001) map process identity and file
 paths with no IP anywhere in the source event, and stay untouched
 (fork_merge complementary-where gate; a null-key context_enrich
 still writes its into-field, so mixed-class streams cannot run the
-operators unconditionally). Private addresses stay bare — Geo Open
+operators unconditionally). Private addresses stay bare, Geo Open
 marks them not routed and the gated assignments filter those
 markers. The enrichment sits after `ocsf_cast` and before the
 direct/publish legs, so ClickHouse and the node-local
@@ -116,17 +116,17 @@ floods.
 CH-DIRECT (phase 2, lap 2a-1): the tetragon OCSF classes (Process
 Activity 1007, File System Activity 1001, Network Activity 4001) ride
 `tetragon-ocsf`'s in-stream leg straight to the per-class
-`ocsf.<Class_Name>` tables — a bounded 60s event-time window sorts
+`ocsf.<Class_Name>` tables, a bounded 60s event-time window sorts
 each batch on (time, uid), stamps the record_integrity attestation,
 and hands the stream to `to_clickhouse`. The 15-minute lake +
-archive rule that used to mediate this died with lap 2a-2 — the
+archive rule that used to mediate this died with lap 2a-2, the
 direct leg is production-proven (20h zero-restart at flood rate,
 100% attest coverage, zero tamper findings; ship counts and
 query_log verified live). The Base
 Event fallback for unknown export kinds cannot name a class and never
 reached CH via the rule's types-scoping; the direct leg carries that
 gate in-stream (`where class_uid in [...]`), which also keeps the
-`to_clickhouse` table f-string away from null class_name — the
+`to_clickhouse` table f-string away from null class_name, the
 archive-era `ocsf.null` f-string leak (27,987 rows pre-bump, the GA
 rollout field note) cannot ride into the direct path. ClickHouse is
 the OCSF record. There is no node storage (lap 2a-2): the state
@@ -139,10 +139,10 @@ ClickHouse OCSF store is the record), and the retired
 bucket as frozen history; deleting it is a separate operator call.
 
 `to_clickhouse` carries the archive rule's insert shape verbatim
-(the lap's design risk note — watch the first window's insert batch
+(the lap's design risk note, watch the first window's insert batch
 sizing on ship): `mode="append"` fails loudly if the DDL is missing,
 and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds the
-insert buffers on the flood classes — the 60s window emits ~48k
+insert buffers on the flood classes, the 60s window emits ~48k
 stamped records per flood minute in total, so the sink batches at
 window close.
 
@@ -152,8 +152,8 @@ on every record BEFORE the INSERT (the shared lane in
 a per-node SHA-256 fingerprint chain (`chain_uid` =
 `tenzir-node-tetragon`), one chain across all three archived classes
 in (time, uid) order, covering the record exactly as stored. The
-ordering is the lap's central risk — the verify walk re-sorts on the
-same (time, uid) pair, so the windowed sort must match it exactly —
+ordering is the lap's central risk, the verify walk re-sorts on the
+same (time, uid) pair, so the windowed sort must match it exactly,
 and it is probe-pinned, not assumed: the tetragon-direct-attest /
 tetragon-direct-verify-clean package pair proves same-second ties
 break on uid, out-of-order arrivals within the tolerance join their
@@ -166,16 +166,16 @@ and are the lap-2a-2 server-side watch items.
 of the three per-class tables read back, fingerprints recomputed,
 chain links checked; a Detection Finding (2004, severity 4) drops per
 break onto the pod logs AND into `ocsf.Detection_Finding`, inside the
-Grafana tenzir-findings rule's WHERE clauses — tamper evidence pages
+Grafana tenzir-findings rule's WHERE clauses, tamper evidence pages
 through the agent_invoke bridge like every other high-severity finding
 (docs/issues/tenzir-record-integrity-attestations.md). The stamping
 cost is measured, not assumed: the 100k-record harness on this node's
 own class runs ~7s standalone (~14k records/s end to end; the sort
-dominates, the hashing marginal is ~11µs/record —
+dominates, the hashing marginal is ~11µs/record;
 `tetragon-throughput` in the homelab package tests), and the one-off
 tetragon-scale probes recorded 250k (the peak-drain 5-minute pass) in
 ~20s and 750k (a full 15-minute window at the 800 ev/s extreme) in
-~5.5-6 min — the honest numbers and the pass-stacking trade at
+~5.5-6 min, the honest numbers and the pass-stacking trade at
 sustained extreme drain live in the clickhouse README's attestation
 section. No scope-down: the full flood stamps, the operator decides if
 that trade ever needs a dial.
@@ -199,7 +199,7 @@ Tetragon steady state (assumed):
 ```
 
 Lap 2a-2 retired the lake-era storage math with the lake: no PVC, no
-compaction corridor, no disk budgets — the emptyDir state volume and
+compaction corridor, no disk budgets, the emptyDir state volume and
 the in-memory window are the only node-local footprint.
 
 ## Known detection noise
@@ -235,7 +235,7 @@ classes starts from that baseline, not from zero.
    listeners, `persistence.enabled: false` (stateless).
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
-5. **Retention**: none on the node — the direct legs write
+5. **Retention**: none on the node, the direct legs write
    ClickHouse, unmapped kinds drop at the class gate, and the state
    volume is an emptyDir.
 6. **Catalog knobs**: the `tenzir.index` block from

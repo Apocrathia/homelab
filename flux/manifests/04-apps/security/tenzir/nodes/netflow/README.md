@@ -10,26 +10,26 @@ Five pipelines live in
 netflow-ingest (the UDP
 listener + OCSF mapping + endpoint and OSINT enrichment), geo-open-loader
 (the daily GeoIP context builder for that enrichment),
-opencti-osint-loader (the daily OSINT indicator loader — the consumer
+opencti-osint-loader (the daily OSINT indicator loader, the consumer
 half of the intel node's factory, filling this node's ocsf-osint
 context for netflow-ingest's enrich call), pipeline-metrics-to-mimir
 (a dead UDP collector is a silent black hole, so this node keeps the
 core node's liveness series), and
-netflow-attest-verify (the hourly record_integrity walk — the
+netflow-attest-verify (the hourly record_integrity walk, the
 verification half of the attestation lane below). The diagnostics
 pushers (error-diagnostics-to-mimir, diagnostics-to-loki) ship from
-this node again — restored per-node with the B1 lap after the
+this node again, restored per-node with the B1 lap after the
 central poller's retirement. The split exists so the
 collector's lifecycle (listener restarts, pod rolls, future
 vendor-traffic surprises) cannot touch the detection plane, and so
 flow ingest has room to grow when the UniFi renderer fix lands; the
-loader is equally decoupled — a slow or failed MMDB fetch never
+loader is equally decoupled, a slow or failed MMDB fetch never
 stalls flow ingest (the context keeps serving the last good
 database).
 
 The collector moved here from the core node (2026-10-17); the
 `tenzir-ingest-lb` LoadBalancer moved with it
-([`service-ingest.yaml`](./service-ingest.yaml)) — same name, same
+([`service-ingest.yaml`](./service-ingest.yaml)), same name, same
 pool IP `10.100.1.96`, same alloy pairing, only the selector points at
 this pod.
 
@@ -52,7 +52,7 @@ flowchart LR
 Flow records publish onto this node's own `ocsf` topic and feed this
 node's own archive rule, tetragon-style node-local: nothing about the
 flow stream rides the core detection node's bus. No sigma pass runs
-here — no homelab sigma rule targets netflow fields (the homelab rules
+here, no homelab sigma rule targets netflow fields (the homelab rules
 are k8s-audit only), so the move loses no detection coverage; netflow
 events reach the archive and Grafana, not the sigma pass. The OSINT
 stamp changes nothing about that today: the `osint` field +
@@ -94,7 +94,7 @@ RAM = max(2,
 
 The limits (2 cores, 4Gi) stay close to the formula on purpose: the
 formula's 2-core floor binds, and 4Gi is its 2 GB RAM floor with 2x
-headroom. Neither sibling's overshoot driver applies — core's 8Gi comes
+headroom. Neither sibling's overshoot driver applies: core's 8Gi comes
 from a 76k-synopsis boot history, tetragon's 12Gi from the flood
 working set; a fresh tiny lake carries neither. The node is sized for
 today's probe-only traffic with room for the exporter fix
@@ -103,9 +103,9 @@ today's probe-only traffic with room for the exporter fix
 ## Write path and retention
 
 No node-local retention: `netflow-ingest` stamps the OCSF
-`record_integrity` attestation in-stream — the shared lane in
+`record_integrity` attestation in-stream, the shared lane in
 [`packages/homelab/operators/record_integrity/`](../../packages/homelab/operators/record_integrity/README.md)
-— and INSERTs the one OCSF class this node stores (Network Activity 4001) directly to the per-class `ocsf.<Class_Name>` tables on the
+and INSERTs the one OCSF class this node stores (Network Activity 4001) directly to the per-class `ocsf.<Class_Name>` tables on the
 ClickHouse OCSF store. No lake, no compaction rule, no PVC (the
 stateless completion; history in the plan doc). ClickHouse is the
 OCSF record. The retired `s3://tenzir/ocsf/` parquet archive stays
@@ -115,22 +115,22 @@ separate operator call.
 The enrichment/attestation ordering is structural, not scheduled:
 netflow-ingest stamps geo/ASN/hostname AND the OSINT indicators before
 its attest + INSERT leg, so the fingerprint chain covers the ENRICHED
-record — the attestation can never witness a record the OSINT loader
+record, the attestation can never witness a record the OSINT loader
 later mutates, because enrichment finished upstream of the stamp.
 
 The chain (`chain_uid` = `tenzir-node-netflow`) covers the one stored
-class in (time, uid) order — and the (time, uid) tie-break is
+class in (time, uid) order, and the (time, uid) tie-break is
 load-bearing here: v5 exporters stamp whole datagrams of flows with one
 timestamp, so same-time ties are the NORM on this lane.
 `netflow-attest-verify` walks it hourly: the last 90 minutes of
 `ocsf.Network_Activity` read back, fingerprints recomputed, chain
 links checked; a Detection Finding (2004, severity 4) drops per break
 onto the pod logs AND into `ocsf.Detection_Finding`, inside the
-Grafana tenzir-findings rule's WHERE clauses — tamper evidence pages
+Grafana tenzir-findings rule's WHERE clauses, tamper evidence pages
 through the agent_invoke bridge like every other high-severity finding
 (docs/issues/tenzir-record-integrity-attestations.md). The shared
 table note: the tetragon node's direct leg writes its Network Activity
-rows into the same `ocsf.Network_Activity` table — its cross-class
+rows into the same `ocsf.Network_Activity` table, its cross-class
 chain is walked by the tetragon lane; this lane reads and walks only
 THIS node's chain (the `chain_uid` filter in the verify pipeline) so a
 healthy cross-class tetragon record never trips the table-local
@@ -143,7 +143,7 @@ tests pin the chain, the tie-break, and both break types.
 
 - **Template-datagram ordering**: v9/IPFIX flows are undecodable
   without their template datagrams, and the UXG exporter's manual
-  NETFLOW section re-sends templates on `refreshRate: 20` — a collector
+  NETFLOW section re-sends templates on `refreshRate: 20`, a collector
   that boots after them drops undecodable data for up to 20 minutes.
   UDP is fire-and-forget; while the LB has no Ready endpoints,
   datagrams vanish. Rollout order: bring this node up and verify flow
@@ -155,7 +155,7 @@ tests pin the chain, the tie-break, and both break types.
 - **Name disambiguation**: the platform node name `netflow` (this
   HelmRelease's entry, rendering `tenzir-node-netflow`) and the vendored
   TQL package id `netflow` (`netflow::ocsf::normalize`) are unrelated
-  namespaces — one names this node in the hosted workspace, the other
+  namespaces, one names this node in the hosted workspace, the other
   the package the pipeline calls. Do not conflate them.
 
 ## Adding a node
@@ -181,14 +181,14 @@ tests pin the chain, the tie-break, and both break types.
    listeners, `persistence.enabled: false` (stateless).
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
-5. **Retention**: none on the node — the direct leg INSERTs
+5. **Retention**: none on the node, the direct leg INSERTs
    ClickHouse, unmapped kinds drop at the class gate, and the state
    volume is an emptyDir.
 6. **Catalog knobs**: the `tenzir.index` block from
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).
 7. **Archive**: `to_clickhouse` into the per-class `ocsf.<Class_Name>`
-   tables on the ClickHouse OCSF store — same terminal sink, same
+   tables on the ClickHouse OCSF store, same terminal sink, same
    `mode="append"` + `max_batch_rows` shape as every sibling. Detections
    run on the core node only; this node owns its feeds and its lake.
 8. **Content**: if the node mounts package or sigma files, add the
@@ -223,9 +223,9 @@ The Node Pipelines dashboard (Grafana) is this node's liveness view:
 the heartbeat panel reads the `tenzir_pipeline_*` series this node's
 metrics pipelines push; the `pipeline_id` label is the bare pipeline id,
 so the `node` label stamped by every pipeline-metrics arm is what
-separates same-id exporters across nodes — split on `node`
+separates same-id exporters across nodes, split on `node`
 (`netflow` here) when the
 `{{pipeline_name}}` legend shows multiple nodes' self-reports under one
 name. If the exporter went quiet, check the UXG's manual NETFLOW
-section first — a controller config push kills it
+section first, a controller config push kills it
 ([runbook](../../../../../../../docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md)).
