@@ -6,13 +6,13 @@ The Trivy Operator provides continuous security scanning for Kubernetes clusters
 
 ## Overview
 
-- **Vulnerability Scans**: Automated vulnerability scanning for Kubernetes workloads
-- **Configuration Audits**: Automated configuration audits with predefined rules or custom OPA policies
-- **Exposed Secret Scans**: Automated secret scans to find exposed secrets
-- **RBAC Scans**: Role-based access control analysis
-- **Infrastructure Assessment**: Core component configuration validation
-- **Compliance Reports**: CIS benchmarks, NSA/CISA guidance, and Pod Security Standards
-- **SBOM Generation**: Software Bill of Materials for workloads
+- Vulnerability scans for Kubernetes workloads
+- Configuration audits with predefined rules or custom OPA policies
+- Exposed-secret scans
+- RBAC analysis
+- Infrastructure assessment of core component configuration
+- Compliance reports: CIS benchmarks, NSA/CISA guidance, and Pod Security Standards
+- SBOM generation for workloads
 
 ## Architecture
 
@@ -30,7 +30,7 @@ flowchart LR
 - **Metrics → Prometheus**: Vulnerability metrics continue to be scraped by Prometheus via ServiceMonitor.
 - **Alternate storage**: Reports are written to a small scratch PVC instead of CRDs. The PVC is just ephemeral scratch space since Loki is the source of truth.
 
-## Querying Reports in Loki
+## Querying reports in Loki
 
 Reports can be queried in Grafana using LogQL:
 

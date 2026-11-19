@@ -1,80 +1,84 @@
 # Observability Stack (LGTM)
 
-This directory contains the deployment configuration for the full LGTM (Loki, Grafana, Tempo, Mimir) observability stack.
+The LGTM (Loki, Grafana, Tempo, Mimir) observability stack plus its collectors and extras.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Components Deployed
+## Components deployed
 
-### 1. **Grafana Operator** (`grafana/`)
+### 1. Grafana Operator (`grafana/`)
 
-- **Purpose**: Manage Grafana dashboards and datasources via Kubernetes CRDs
-- **Deployment**: Via Grafana Operator Helm chart
-- **Features**:
-  - Dashboard management through `GrafanaDashboard` CRDs
-  - Datasource management through `GrafanaDatasource` CRDs
-  - GitOps-friendly dashboard deployment
-  - Integration with existing kube-prometheus-stack Grafana instance
-- **Note**: The actual Grafana UI is deployed via kube-prometheus-stack in infrastructure
+Manages Grafana dashboards and datasources via Kubernetes CRDs, deployed via
+the Grafana Operator Helm chart:
 
-### 2. **Grafana Alloy** (`alloy/`)
+- Dashboard management through `GrafanaDashboard` CRDs
+- Datasource management through `GrafanaDatasource` CRDs
+- GitOps-friendly dashboard deployment
+- Integration with the existing kube-prometheus-stack Grafana instance
 
-- **Purpose**: Parent folder for three Alloy releases, one per subfolder:
-  `alloy` (shared collector, `logs/`), `alloy-tetragon` (`tetragon/`),
-  `alloy-kube-audit` (`kube-audit/`)
-- **Shared collector features**:
-  - Kubernetes pod log collection
-  - Syslog ingestion (RFC3164/5424) on ports 6514/TCP and 514/UDP
-  - CEF log ingestion from UniFi devices on port 1514/TCP
-  - OpenTelemetry trace collection (OTLP gRPC/HTTP)
-  - Integration with Loki for log storage
-- **External Access**: Via shared ingest LoadBalancer IP (`ingest.services.apocrathia.com`)
-- **Details**: See [`alloy/README.md`](./alloy/README.md)
+The Grafana UI itself is deployed via kube-prometheus-stack in infrastructure.
 
-### 3. **Loki** (`loki/`)
+### 2. Grafana Alloy (`alloy/`)
 
-- **Purpose**: Log aggregation and storage
-- **Deployment**: Via Loki Helm chart
-- **Features**:
-  - Log collection from Kubernetes pods
-  - S3-compatible storage (RustFS on the NAS)
-  - Grafana integration for log querying
-  - Log retention and management
-- **Storage**: S3-compatible storage (RustFS on the NAS)
+Parent folder for three Alloy releases, one per subfolder: `alloy` (shared
+collector, `logs/`), `alloy-tetragon` (`tetragon/`), `alloy-kube-audit`
+(`kube-audit/`). The shared collector handles:
 
-### 4. **Mimir** (`mimir/`)
+- Kubernetes pod log collection
+- Syslog ingestion (RFC3164/5424) on ports 6514/TCP and 514/UDP
+- CEF log ingestion from UniFi devices on port 1514/TCP
+- OpenTelemetry trace collection (OTLP gRPC/HTTP)
+- Integration with Loki for log storage
 
-- **Purpose**: Long-term metrics storage and querying
-- **Deployment**: Via Mimir distributed Helm chart
-- **Features**:
-  - Prometheus-compatible metrics storage
-  - Long-term retention and scalability
-  - Grafana integration for metrics visualization
-  - Multi-tenant support
-- **Storage**: S3-compatible storage (RustFS on the NAS)
+External access via the shared ingest LoadBalancer IP
+(`ingest.services.apocrathia.com`). See [`alloy/README.md`](./alloy/README.md).
 
-### 5. **Tempo** (`tempo/`)
+### 3. Loki (`loki/`)
 
-- **Purpose**: Distributed tracing backend
-- **Deployment**: Via Tempo distributed Helm chart
-- **Features**:
-  - OTLP trace ingestion (gRPC and HTTP)
-  - Trace-to-logs correlation with Loki
-  - Trace-to-metrics with Prometheus
-  - Service graph and node graph visualization
-  - Metrics generation from traces
-- **Storage**: S3-compatible storage (RustFS on the NAS)
+Log aggregation and storage, deployed via the Loki Helm chart:
 
-### 6. **OpenTelemetry Operator** (`otel-operator/`)
+- Log collection from Kubernetes pods
+- Grafana integration for log querying
+- Log retention and management
 
-- **Purpose**: Manage OpenTelemetry components via Kubernetes CRDs
-- **Deployment**: Via OpenTelemetry Operator Helm chart
-- **Features**:
-  - Auto-instrumentation injection for Python, Java, Node.js, .NET
-  - `OpenTelemetryCollector` CRD for deploying collectors
-  - `Instrumentation` CRD for language-specific agent configuration
-  - Pod/namespace annotation-based opt-in for instrumentation
-- **Usage**: Annotate pods with `instrumentation.opentelemetry.io/inject-<language>: "otel-system/<language>"`
+Storage is S3-compatible (RustFS on the NAS).
+
+### 4. Mimir (`mimir/`)
+
+Long-term metrics storage and querying, deployed via the Mimir distributed
+Helm chart:
+
+- Prometheus-compatible metrics storage
+- Long-term retention and scalability
+- Grafana integration for metrics visualization
+- Multi-tenant support
+
+Storage is S3-compatible (RustFS on the NAS).
+
+### 5. Tempo (`tempo/`)
+
+Distributed tracing backend, deployed via the Tempo distributed Helm chart:
+
+- OTLP trace ingestion (gRPC and HTTP)
+- Trace-to-logs correlation with Loki
+- Trace-to-metrics with Prometheus
+- Service graph and node graph visualization
+- Metrics generation from traces
+
+Storage is S3-compatible (RustFS on the NAS).
+
+### 6. OpenTelemetry Operator (`otel-operator/`)
+
+Manages OpenTelemetry components via Kubernetes CRDs, deployed via the
+OpenTelemetry Operator Helm chart:
+
+- Auto-instrumentation injection for Python, Java, Node.js, .NET
+- `OpenTelemetryCollector` CRD for deploying collectors
+- `Instrumentation` CRD for language-specific agent configuration
+- Pod/namespace annotation-based opt-in for instrumentation
+
+Usage: annotate pods with
+`instrumentation.opentelemetry.io/inject-<language>: "otel-system/<language>"`
 
 ### 7. **NetFlow → Tenzir** (removed: goflow2)
 
@@ -85,78 +89,70 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   (`:2055/UDP` on the shared pool IP, Tenzir namespace); UniFi exporters
   keep their `:2055` target.
 
-### 8. **Shared Ingest Pool** (`ingest/`)
+### 8. Shared ingest pool (`ingest/`)
 
-- **Purpose**: Shared LoadBalancer IP for external telemetry ingestion
-- **IP Address**: `10.100.1.96` (`ingest.services.apocrathia.com`)
-- **Services Sharing IP**:
-  - Alloy: syslog (514/UDP, 6514/TCP), CEF (1514/TCP)
-  - Tenzir NetFlow (2055/UDP; `goflow2` removed)
-- **Implementation**: Cilium LB IPAM with `lbipam.cilium.io/sharing-key` annotation
+Shared LoadBalancer IP (`10.100.1.96`, `ingest.services.apocrathia.com`) for
+external telemetry ingestion:
 
-### 9. **Prometheus Extras** (`prometheus/`)
+- Alloy: syslog (514/UDP, 6514/TCP), CEF (1514/TCP)
+- Tenzir NetFlow (2055/UDP; `goflow2` removed)
 
-- **Purpose**: Additional Prometheus scrape targets and exporters
-- **Components**:
-  - SNMP Exporter for network device monitoring (UPS, NAS, switches)
-  - etcd ScrapeConfig for Talos cluster metrics
+Implemented with Cilium LB IPAM and the `lbipam.cilium.io/sharing-key` annotation.
 
-### 10. **Gatus** (`gatus/`) — separate Flux Kustomization
+### 9. Prometheus extras (`prometheus/`)
 
-- **Purpose**: In-cluster synthetic uptime checks (complements Uptime Kuma / Uptime Robot)
-- **Deployment**: Official `gatus-sidecar` chart via Flux Kustomization `services-gatus`
-- **Not** included in `services-observability` (depends on CNPG)
-- **Details**: See [`gatus/README.md`](./gatus/README.md)
+Additional Prometheus scrape targets and exporters:
 
-### 11. **tailscale2otel** (`tailscale2otel/`)
+- SNMP Exporter for network device monitoring (UPS, NAS, switches)
+- etcd ScrapeConfig for Talos cluster metrics
 
-- **Purpose**: Collect Tailscale configuration audit logs (who did what, when)
-  and tailnet inventory metrics from the Tailscale API
-- **Deployment**: `tailscale2otel` chart (OCI, ghcr.io/rknightion/charts)
-- **Features**:
-  - Polls the configuration audit log API (available on all plans; this
-    tailnet is free-plan, so network flow logs are disabled)
-  - Pushes OTLP logs and metrics to the Alloy ingest service (logs → Loki,
-    metrics → Mimir)
-  - OAuth client credentials from 1Password (`tailscale2otel-secrets` item)
-- **Details**: See [`tailscale2otel/README.md`](./tailscale2otel/README.md)
+### 10. Gatus (`gatus/`): separate Flux Kustomization
 
-### 12. **kube-audit alloy** (`alloy/kube-audit/`)
+In-cluster synthetic uptime checks (complements Uptime Kuma / Uptime Robot),
+deployed from the official `gatus-sidecar` chart via Flux Kustomization
+`services-gatus`. **Not** included in `services-observability` (depends on
+CNPG). See [`gatus/README.md`](./gatus/README.md).
 
-- **Purpose**: Tail the kube-apiserver audit log on control planes and
-  dual-write it to Loki and the Tenzir detection node
-- **Deployment**: Grafana Alloy chart as a dedicated root DaemonSet (the
-  audit file is root-only; the shared Alloy runs non-root)
-- **Details**: See [`alloy/kube-audit/README.md`](./alloy/kube-audit/README.md)
+### 11. tailscale2otel (`tailscale2otel/`)
 
-### 13. **tetragon alloy** (`alloy/tetragon/`)
+Collects Tailscale configuration audit logs (who did what, when) and tailnet
+inventory metrics from the Tailscale API, deployed from the
+`tailscale2otel` chart (OCI, ghcr.io/rknightion/charts):
 
-- **Purpose**: Root DaemonSet that tails the tetragon agents' JSON export
-  files (0600 root-owned, out of reach of the shared Alloy) and pushes them
-  as OTLP/HTTP logs to the Tenzir tetragon node; no raw tetragon stream
-  in Loki (export-stdout sidecar dropped)
-- **Details**: See [`alloy/tetragon/README.md`](./alloy/tetragon/README.md)
+- Polls the configuration audit log API (available on all plans; this
+  tailnet is free-plan, so network flow logs are disabled)
+- Pushes OTLP logs and metrics to the Alloy ingest service (logs → Loki,
+  metrics → Mimir)
+- OAuth client credentials from 1Password (`tailscale2otel-secrets` item)
+
+See [`tailscale2otel/README.md`](./tailscale2otel/README.md).
+
+### 12. kube-audit alloy (`alloy/kube-audit/`)
+
+Tails the kube-apiserver audit log on control planes and dual-writes it to
+Loki and the Tenzir detection node. Deployed as a dedicated root DaemonSet
+from the Grafana Alloy chart (the audit file is root-only; the shared Alloy
+runs non-root). See [`alloy/kube-audit/README.md`](./alloy/kube-audit/README.md).
+
+### 13. tetragon alloy (`alloy/tetragon/`)
+
+Root DaemonSet that tails the tetragon agents' JSON export files (0600
+root-owned, out of reach of the shared Alloy) and pushes them as OTLP/HTTP
+logs to the Tenzir tetragon node; no raw tetragon stream in Loki
+(export-stdout sidecar dropped). See
+[`alloy/tetragon/README.md`](./alloy/tetragon/README.md).
 
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:
 
-- **kube-prometheus-stack** (deployed in infrastructure) provides:
-
-  - Grafana UI for visualization
-  - Prometheus for metrics collection
-  - Alertmanager for alerting
-
-- **Observability components** (this folder) provide:
-
-  - Grafana Operator for dashboard/datasource management via CRDs
-  - Loki for log aggregation and storage
-  - Tempo for distributed tracing
-  - Mimir for long-term metrics storage
-  - Grafana Alloy for log, metrics, and trace collection
-  - OpenTelemetry Operator for auto-instrumentation and collector management
-
-- **Data flow**: All components store data in RustFS (S3-compatible storage on the NAS) and feed into the kube-prometheus-stack Grafana instance for unified visualization.
+- kube-prometheus-stack (deployed in infrastructure) provides the Grafana UI,
+  Prometheus for metrics collection, and Alertmanager for alerting.
+- This folder provides Grafana Operator (dashboard/datasource CRDs), Loki
+  (logs), Tempo (traces), Mimir (long-term metrics), Grafana Alloy
+  (collection), and the OpenTelemetry Operator (auto-instrumentation).
+- All components store data in RustFS (S3-compatible storage on the NAS) and
+  feed the kube-prometheus-stack Grafana instance for unified visualization.
 
 ## Data Flow
 
@@ -212,9 +208,9 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 
 ## Maintenance
 
-- **Updates**: Managed via Renovate bot
-- **Scaling**: Horizontal scaling supported for all components
-- **Monitoring**: Self-monitoring via ServiceMonitors
+- Updates via Renovate
+- Horizontal scaling supported for all components
+- Self-monitoring via ServiceMonitors
 
 ## References
 

@@ -1,6 +1,6 @@
 # OpenTelemetry Operator
 
-This directory contains the deployment configuration for the OpenTelemetry Operator, which manages OpenTelemetry components (collectors, instrumentation, target allocators) as Kubernetes custom resources.
+Flux manifests for the OpenTelemetry Operator, which manages OpenTelemetry components (collectors, instrumentation, target allocators) as Kubernetes custom resources.
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
@@ -8,18 +8,18 @@ This directory contains the deployment configuration for the OpenTelemetry Opera
 
 The operator manages the following CRDs:
 
-- **OpenTelemetryCollector**: Deploy and manage OTel Collector instances
-- **Instrumentation**: Auto-instrument applications with language-specific agents
-- **TargetAllocator**: Distribute Prometheus scrape targets across collector instances
-- **OpAMPBridge**: Connect collectors to an OpAMP server for remote management
+- OpenTelemetryCollector: deploy and manage OTel Collector instances
+- Instrumentation: auto-instrument applications with language-specific agents
+- TargetAllocator: distribute Prometheus scrape targets across collector instances
+- OpAMPBridge: connect collectors to an OpAMP server for remote management
 
 ## Architecture
 
 The operator runs as a deployment with:
 
-- **Manager**: Reconciles custom resources and manages component lifecycle
-- **kube-rbac-proxy**: Protects the metrics endpoint with RBAC
-- **Admission Webhooks**: Validates and mutates custom resources
+- Manager: reconciles custom resources and manages component lifecycle
+- kube-rbac-proxy: protects the metrics endpoint with RBAC
+- Admission webhooks: validate and mutate custom resources
 
 ## Integration
 
@@ -31,9 +31,9 @@ The operator's admission webhooks require TLS certificates. This deployment uses
 
 Alloy already provides OpenTelemetry Collector functionality for log collection. The operator enables additional use cases:
 
-- **Per-application collectors**: Deploy dedicated collectors via CR
-- **Auto-instrumentation**: Inject language agents into pods
-- **Prometheus target allocation**: Distribute scrape targets for scaling
+- Per-application collectors: deploy dedicated collectors via CR
+- Auto-instrumentation: inject language agents into pods
+- Prometheus target allocation: distribute scrape targets for scaling
 
 ### With Prometheus
 
@@ -70,11 +70,11 @@ spec:
           exporters: [otlp]
 ```
 
-## Auto-Instrumentation
+## Auto-instrumentation
 
 Pre-configured Instrumentation CRs are deployed in `otel-system` for Python, Java, and Node.js. To enable auto-instrumentation on a pod, add the appropriate annotation.
 
-### Enabling on Pods
+### Enabling on pods
 
 Add one of these annotations to your pod template:
 
@@ -96,7 +96,7 @@ annotations:
   instrumentation.opentelemetry.io/inject-dotnet: "otel-system/dotnet"
 ```
 
-### Example: Enabling on JupyterHub
+### Example: enabling on JupyterHub
 
 In the JupyterHub HelmRelease, add to `hub.extraPodSpec`:
 
@@ -107,7 +107,7 @@ hub:
       instrumentation.opentelemetry.io/inject-python: "otel-system/python"
 ```
 
-### What Gets Instrumented
+### What gets instrumented
 
 The Python agent automatically instruments:
 
@@ -128,7 +128,7 @@ sampler:
 
 ## Troubleshooting
 
-### Check Operator Status
+### Check operator status
 
 ```bash
 kubectl get pods -n otel-system
@@ -143,7 +143,7 @@ kubectl get opentelemetrycollectors -A
 kubectl get instrumentations -A
 ```
 
-### Webhook Issues
+### Webhook issues
 
 ```bash
 # Check webhook configuration
@@ -157,10 +157,6 @@ kubectl get certificate -n otel-system
 ## References
 
 - **[OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)** - Primary documentation
+- **[Auto-Instrumentation](https://opentelemetry.io/docs/kubernetes/operator/automatic/)** - Instrumentation guide
+- **[Operator GitHub](https://github.com/open-telemetry/opentelemetry-operator)** - Source code and issues
 - **[Helm Chart](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-operator)** - Chart source and values
-
-## References
-
-- [OpenTelemetry Kubernetes](https://opentelemetry.io/docs/kubernetes/)
-- [Operator GitHub](https://github.com/open-telemetry/opentelemetry-operator)
-- [Auto-Instrumentation](https://opentelemetry.io/docs/kubernetes/operator/automatic/)

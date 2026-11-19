@@ -1,19 +1,19 @@
-# AGENTS.md — Grafana
+# AGENTS.md: Grafana
 
 Folder-scoped router for agents working on the homelab Grafana instance and
 its surrounding tooling. Repo-wide routing starts at the root
 [AGENTS.md](../../../../../AGENTS.md); this file scopes only this folder.
-Module context lives under [`.agents/`](./.agents/README.md) — start at
+Module context lives under [`.agents/`](./.agents/README.md); start at
 [`.agents/skills/grafana-homelab/SKILL.md`](./.agents/skills/grafana-homelab/SKILL.md)
 for non-trivial Grafana work.
 
 ## What lives here
 
 The kube-prometheus-stack Grafana instance (v13, namespace `prometheus-system`)
-managed by grafana-operator through CRs — `GrafanaDashboard`,
+managed by grafana-operator through CRs (`GrafanaDashboard`,
 `GrafanaDatasource`, `GrafanaFolder`, `GrafanaAlertRuleGroup`,
-`GrafanaServiceAccount` — plus ESO PushSecrets mirroring service-account tokens
-to 1Password.
+`GrafanaServiceAccount`) plus ESO PushSecrets mirroring service-account
+tokens to 1Password.
 
 ## Rules for agents working here
 
@@ -27,7 +27,7 @@ to 1Password.
   [`grafana-homelab` skill](./.agents/skills/grafana-homelab/SKILL.md)
   before touching service accounts, token sync, or alerting.
 
-## gcx — the Grafana CLI
+## gcx: the Grafana CLI
 
 [gcx](https://github.com/grafana/gcx) is the sanctioned CLI for live Grafana
 state (dashboards, alerting, SLO, metrics/logs/traces queries). It works with
@@ -41,7 +41,7 @@ brew install gcx   # or: curl -fsSL https://raw.githubusercontent.com/grafana/gc
 
 The 24 gcx workflow skills (dashboards, alerting, SLO, synthetic
 monitoring, …) are vendored byte-identical into
-[`.agents/skills/`](./.agents/skills/README.md) from gcx v1.6.0 — agents
+[`.agents/skills/`](./.agents/skills/README.md) from gcx v1.6.0; agents
 working this folder read them there. Any live gcx install can also read
 them from the binary (`gcx agent skills get <name>`), and machine-wide
 installation (`gcx agent skills install --all`) is optional for other

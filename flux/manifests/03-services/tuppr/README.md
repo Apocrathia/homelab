@@ -1,4 +1,4 @@
-# Tuppr - Talos Linux Upgrade Controller
+# Tuppr: Talos Linux upgrade controller
 
 Kubernetes controller for managing automated upgrades of Talos Linux and Kubernetes.
 
@@ -6,17 +6,17 @@ Kubernetes controller for managing automated upgrades of Talos Linux and Kuberne
 
 ## Overview
 
-Tuppr provides automated upgrade orchestration for:
+Tuppr provides automated upgrade orchestration:
 
-- **Talos Node Upgrades**: Intelligent node-by-node upgrades with health checks
-- **Kubernetes Upgrades**: Automated Kubernetes version upgrades
-- **Safe Execution**: Upgrades run from healthy nodes, never self-upgrade
-- **Health Validation**: CEL-based expressions for custom cluster validation
-- **Comprehensive Metrics**: Prometheus integration for monitoring upgrade progress
+- Talos node-by-node upgrades with health checks
+- Automated Kubernetes version upgrades
+- Safe execution: upgrades run from healthy nodes, never self-upgrade
+- CEL-based health validation expressions
+- Prometheus metrics for upgrade progress
 
-## Configuration Notes
+## Configuration notes
 
-### Cert-Manager Integration
+### cert-manager integration
 
 The tuppr Helm chart creates a self-signed certificate for its admission webhook. However, the chart's Certificate template is missing the `group` field in the `issuerRef`, which prevents cert-manager from properly issuing the certificate.
 
@@ -24,7 +24,7 @@ This deployment includes a Flux postRenderer that patches the Certificate resour
 
 ## Prerequisites
 
-### Talos API Access Configuration
+### Talos API access configuration
 
 Tuppr requires Talos API access from the `system-upgrade` namespace. This configuration is already included in the unified Talos patch (`talos/patches/unified-patch.yaml`):
 
@@ -52,12 +52,12 @@ talosctl apply-config --file worker.yaml
 
 ## Usage
 
-### Version Management
+### Version management
 
 This deployment includes `TalosUpgrade` and `KubernetesUpgrade` resources that pin the current cluster versions. These resources serve dual purposes:
 
-1. **Version Pinning**: Maintains the current versions as a baseline, preventing unintended upgrades
-2. **Upgrade Trigger**: To upgrade, simply update the version in the respective resource
+1. Version pinning: the current versions are the baseline, preventing unintended upgrades
+2. Upgrade trigger: update the version in the respective resource
 
 The resources are managed by GitOps through Flux and include health checks for safe upgrades:
 
@@ -65,9 +65,9 @@ The resources are managed by GitOps through Flux and include health checks for s
 - CoreDNS availability checks
 - Cilium health validation (Talos upgrades only)
 
-### Talos Node Upgrades
+### Talos node upgrades
 
-The `TalosUpgrade` resource is defined in `talosupgrade.yaml`. Currently pinned to the deployed version with health checks ensuring cluster stability during upgrades.
+The `TalosUpgrade` resource is defined in `talosupgrade.yaml`. Currently pinned to the deployed version; health checks keep the cluster stable during upgrades.
 
 To upgrade Talos:
 
@@ -76,7 +76,7 @@ To upgrade Talos:
 3. Commit and push the changes
 4. Monitor the upgrade: `kubectl get talosupgrade cluster -w`
 
-### Kubernetes Upgrades
+### Kubernetes upgrades
 
 The `KubernetesUpgrade` resource is defined in `kubernetesupgrade.yaml`. Currently pinned to the deployed version with health checks.
 
@@ -88,7 +88,7 @@ To upgrade Kubernetes:
 
 ## Operations
 
-### Monitoring Upgrades
+### Monitoring upgrades
 
 ```bash
 # Watch upgrade progress
@@ -107,7 +107,7 @@ kubectl port-forward -n system-upgrade deployment/tuppr 8081:8081
 curl http://localhost:8081/metrics | grep tuppr_
 ```
 
-### Suspending Upgrades
+### Suspending upgrades
 
 ```bash
 # Suspend Talos upgrade
@@ -140,19 +140,20 @@ kubectl scale deployment tuppr --replicas=1 -n system-upgrade
 
 ## References
 
-- **[Tuppr Documentation](https://github.com/aenix-io/tuppr)** - Official documentation
-- **[Talos Upgrades](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)** - Talos upgrade process
+- **[Tuppr Documentation](https://github.com/home-operations/tuppr)** - Official documentation
+- **[Talos Upgrades](https://www.talos.dev/talos-guides/upgrading-talos/)** - Talos upgrade process
+- [CEL Expression Language](https://cel.dev/)
 
 ## Monitoring
 
-Tuppr provides comprehensive Prometheus metrics:
+Tuppr exposes Prometheus metrics:
 
-- **Upgrade Phase**: Current phase of upgrades (Pending, InProgress, Completed, Failed)
-- **Node Progress**: Counts of total, completed, and failed nodes
-- **Health Checks**: Duration and failure rates
-- **Job Execution**: Active jobs and completion times
+- Upgrade phase (Pending, InProgress, Completed, Failed)
+- Node progress: total, completed, and failed counts
+- Health check duration and failure rates
+- Job execution: active jobs and completion times
 
-### Example Queries
+### Example queries
 
 ```promql
 # Upgrade phase status
@@ -165,15 +166,9 @@ tuppr_talos_upgrade_nodes_completed / tuppr_talos_upgrade_nodes_total * 100
 histogram_quantile(0.95, rate(tuppr_health_check_duration_seconds_bucket[5m]))
 ```
 
-## Important Constraints
+## Important constraints
 
-- **Single TalosUpgrade**: Only one `TalosUpgrade` resource allowed per cluster
-- **Single KubernetesUpgrade**: Only one `KubernetesUpgrade` resource allowed per cluster
-- **No Concurrent Execution**: Talos and Kubernetes upgrades cannot run simultaneously
-- **Sequential Processing**: Upgrades are processed one at a time
-
-## Resources
-
-- [Tuppr GitHub Repository](https://github.com/home-operations/tuppr)
-- [Tuppr Documentation](https://github.com/home-operations/tuppr/blob/main/README.md)
-- [CEL Expression Language](https://cel.dev/)
+- Only one `TalosUpgrade` resource per cluster
+- Only one `KubernetesUpgrade` resource per cluster
+- Talos and Kubernetes upgrades cannot run simultaneously
+- Upgrades are processed one at a time

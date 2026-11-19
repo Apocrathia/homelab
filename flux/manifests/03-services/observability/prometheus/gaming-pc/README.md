@@ -2,7 +2,7 @@
 
 Prometheus scrapes node-exporter metrics from the Fedora gaming workstation.
 
-> **Navigation**: [← Back to Prometheus extras README](../README.md)
+> **Navigation**: [← Back to Observability README](../../README.md)
 
 ## Overview
 
@@ -12,12 +12,12 @@ The gaming PC runs `prometheus-node-exporter` via dnf. Prometheus pulls metrics 
 
 ### ScrapeConfig (`scrapeconfig.yaml`)
 
-- **Target**: `ians-gaming-pc.access.apocrathia.com:9100`
-- **Job label**: `node`
-- **Instance label**: `ians-gaming-pc`
-- **Device type**: `workstation`
-- **Scrape interval**: 30 seconds
-- **Metrics path**: `/metrics`
+- Target: `ians-gaming-pc.access.apocrathia.com:9100`
+- Job label: `node`
+- Instance label: `ians-gaming-pc`
+- Device type: `workstation`
+- Scrape interval: 30 seconds
+- Metrics path: `/metrics`
 
 ## Fedora host setup
 

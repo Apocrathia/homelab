@@ -14,24 +14,24 @@ node.
 - tetragon v1.7.x has no TCP export: `--export-connection` does not exist
   (the agent's only sinks are the rotating export file and the pod-local
   `export-stdout` sidecar), so the chart offers no native push path
-- The export file is written `0600` root-owned on the host — out of reach
+- The export file is written `0600` root-owned on the host, out of reach
   of the shared Alloy DaemonSet (uid 10001)
 - This alloy runs as root with a read-only hostPath mount, all
   capabilities dropped, no privilege escalation, and no Service, ports, or
-  cluster access — the same root surface the
+  cluster access: the same root surface the
   [`kube-audit alloy`](../kube-audit/) carries for the apiserver
   audit log
 
 ## Configuration
 
 - Chart: `grafana/alloy` (service disabled)
-- River config: [`configmap.yaml`](./configmap.yaml) —
+- River config: [`configmap.yaml`](./configmap.yaml):
   `otelcol.receiver.filelog` (public-preview) tails `tetragon.log` plus the
   lumberjack-rotated `tetragon-*.log`, stamps
   `service.name=tetragon-export` and `k8s.node.name`, and exports to
   `otelcol.exporter.otlphttp` at
   `tenzir-node-tetragon.tenzir.svc:4318`
-- No Loki leg: no raw tetragon stream lands in Loki at all — the chart's
+- No Loki leg: no raw tetragon stream lands in Loki at all; the chart's
   `export-stdout` sidecar is dropped
   ([`../../../tetragon/helmrelease.yaml`](../../../tetragon/helmrelease.yaml))
   and the ClickHouse OCSF store is the record. Pivots use the node_name
@@ -45,7 +45,7 @@ node.
 The tenzir pipelines filter this stream on
 `resource.attributes["service.name"] == "tetragon-export"`
 ([`homelab::tetragon::parse`](../../../../04-apps/security/tenzir/packages/homelab/operators/tetragon/parse.tql))
-and map it to OCSF (Process / File / Network Activity) — see the
+and map it to OCSF (Process / File / Network Activity); see the
 [Tenzir README](../../../../04-apps/security/tenzir/).
 
 ## Troubleshooting

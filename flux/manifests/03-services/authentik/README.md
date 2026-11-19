@@ -1,6 +1,6 @@
 # Authentik
 
-Open-source identity and access management solution with SSO, policy-based authorization, and GitOps-driven configuration.
+Open-source identity and access management with SSO, policy-based authorization, and GitOps-driven configuration.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
@@ -12,9 +12,9 @@ This deployment includes:
 - **User Management**: Multi-tenant user directory with policy-based access control
 - **Application Integration**: Outpost-based application SSO
 - **Blueprints**: GitOps-driven configuration management via ConfigMaps
-- **Tiles**: Tofu-managed dashboard tiles (`tiles/`) — one workspace per
+- **Tiles**: Tofu-managed dashboard tiles (`tiles/`), one workspace per
   tile, adopting the blueprint-created application rows
-- **System units**: Tofu-managed authentik-internal state (`system/` —
+- **System units**: Tofu-managed authentik-internal state (`system/`:
   the access-tier groups, the default login flow's MFA stages)
 - **PostgreSQL**: Primary database for user data and configuration
 - **Longhorn**: Persistent storage for database
@@ -22,7 +22,7 @@ This deployment includes:
 ## Access
 
 - **URL**: `https://auth.gateway.services.apocrathia.com`
-- **API**: `https://authentik.authentik-system.svc:9443/api/v3/`
+- **API**: `https://authentik-server.authentik.svc:9443/api/v3/`
 
 ## Configuration
 
@@ -50,17 +50,17 @@ Okta OAuth source client id/secret are entered in the Authentik UI (Directory �
 Group-level only. Groups are tofu-managed in `system/app-access/`; every
 app's own blueprint carries its admins binding:
 
-- **admins** — operator group; an admins binding in each application's own blueprint
-- **users** — friends group; sharing = a users binding in the app's own
+- **admins**: operator group; an admins binding in each application's own blueprint
+- **users**: friends group; sharing = a users binding in the app's own
   blueprint, or `authentik.shared: true` for chart-rendered apps (mirrors the
   app's tailnet exposure)
 - Chart-rendered apps get their admins binding automatically; the former
   jellyfin + demo-app guinea-pig access blueprints are retired
 - One-off user grants are made in the Authentik UI, not GitOps
-- Group membership is also UI-managed — the tofu module never touches it
+- Group membership is also UI-managed; the tofu module never touches it
   (see the membership note in `system/app-access/authentik.tf`)
 
-Default-deny is enforced by the tenant flag `core_default_app_access` (operator-led; superusers get no bypass in 2026.8.2). The flag is a one-time toggle, not chart config — set it **after** joining the admins group in the UI.
+Default-deny is enforced by the tenant flag `core_default_app_access` (operator-led; superusers get no bypass in 2026.8.2). The flag is a one-time toggle, not chart config; set it **after** joining the admins group in the UI.
 
 UI (preferred): admin interface → Settings (`/if/admin/#/admin/settings`) → switch **"Allow application access with no policies"** off.
 
@@ -86,15 +86,13 @@ PostgreSQL backups via CNPG barman to the RustFS `cnpg` bucket
 (`s3://cnpg/authentik`):
 
 - WAL archiving: continuous, zstd-compressed (point-in-time recovery window)
-- Base backups: nightly at 0500 UTC (`scheduled-backup.yaml`), gzip, immediate
-  checkpoint
-- Retention: 14 days (backups + WALs)
+- Base backups: nightly (`scheduled-backup.yaml`), gzip, immediate checkpoint
+- Retention: configured in `scheduled-backup.yaml`
 - Credentials: 1Password item `cnpg-backups-secrets` (bucket-scoped S3 user;
   see `docs/infrastructure/rustfs-bucket-user-creation.md`)
 
 The Longhorn volume is additionally covered by the kopiur volume-backup pilot
-once authentik opts in — barman provides PITR, kopia provides the disk-level
-copy.
+once authentik opts in: barman provides PITR, kopia the disk-level copy.
 
 ## Troubleshooting
 
