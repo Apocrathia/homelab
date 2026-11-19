@@ -33,7 +33,13 @@ publish-generic-app-chart:
         exit 1
       fi
 
+      # Full artifact path for pull/check: helm pull uses the ref as-is.
       CHART_REF="oci://${CI_REGISTRY_IMAGE}/generic-app"
+      # helm push APPENDS the chart name to the oci:// target, so the push
+      # target is the project registry root — pushing to ${CHART_REF} would
+      # land the chart at generic-app/generic-app (the first !6046 landing
+      # did exactly that; the stray repository is harmless).
+      CHART_PUSH_REF="oci://${CI_REGISTRY_IMAGE}"
       echo "Chart version: ${CHART_VERSION}"
 
       if helm pull "${CHART_REF}" --version "${CHART_VERSION}" --destination /tmp > /dev/null 2>&1; then
@@ -50,7 +56,7 @@ publish-generic-app-chart:
       # every default-branch pipeline. Bounded retry, then fail loudly with the
       # likely cause instead of a bare push error.
       for attempt in 1 2 3 4 5; do
-        if helm push "/tmp/generic-app-${CHART_VERSION}.tgz" "${CHART_REF}"; then
+        if helm push "/tmp/generic-app-${CHART_VERSION}.tgz" "${CHART_PUSH_REF}"; then
           exit 0
         fi
         echo "push failed (attempt ${attempt}/5) — registry may still be enabling; retrying in 30s"
