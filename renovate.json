@@ -57,6 +57,12 @@
       "groupName": "generic-app chart"
     },
     {
+      "description": "One MR for all generic-app OCI chart version pins — each new tag touches the flipped HelmReleases",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["registry.gitlab.com/apocrathia/homelab/generic-app"],
+      "groupName": "generic-app chart"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": false,
@@ -161,7 +167,6 @@
         "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n\\s*image = [\"'](?:[^:]+):(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']"
       ]
     },
-
     {
       "customType": "regex",
       "description": "Crossplane provider package refs (OCI tags)",

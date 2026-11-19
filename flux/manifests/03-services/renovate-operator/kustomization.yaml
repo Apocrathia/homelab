@@ -9,6 +9,7 @@ metadata:
 resources:
   - namespace.yaml
   - secret.yaml
+  - gitlab-registry.yaml
   - helmrelease.yaml
   - crossplane.yaml
 

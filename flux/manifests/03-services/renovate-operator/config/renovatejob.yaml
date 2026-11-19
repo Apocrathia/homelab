@@ -43,6 +43,16 @@ spec:
         secretKeyRef:
           name: renovate-operator-secret
           key: GITHUB_COM_TOKEN
+    - name: DOCKER_REGISTRY_GITLAB_COM_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: gitlab-registry-deploy-token
+          key: username
+    - name: DOCKER_REGISTRY_GITLAB_COM_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: gitlab-registry-deploy-token
+          key: password
   parallelism: 1
   renovateConfig:
     inline: |
