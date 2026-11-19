@@ -12,7 +12,7 @@ manifest stays the source of truth for tunables (sizes, limits,
 retention values, ports). The NetFlow
 collector moved to the dedicated
 [netflow node](../netflow/README.md), and the `tenzir-ingest-lb`
-LoadBalancer (pool IP `10.100.1.96`) moved with it — this node owns no
+LoadBalancer (pool IP `10.100.1.96`) moved with it, this node owns no
 LB service anymore.
 
 - k8s-audit-ingest-http / k8s-audit-ingest-grpc: OTLP listeners for the
@@ -29,16 +29,16 @@ LB service anymore.
 - http-ingest: fleet webhook and trivy-report-reader payloads
 - authentik-pull: cron pull of the authentik events API
 - geo-open-loader: the daily CIRCL Geo Open MMDB builder for the
-  geo-open enrichment context (decoupled from the detection plane — a
+  geo-open enrichment context (decoupled from the detection plane, a
   failed fetch never stalls the sigma pass)
-- opencti-osint-loader: the intel factory's consumer half — reads the
+- opencti-osint-loader: the intel factory's consumer half; reads the
   intel node's ocsf.OSINT_Inventory_Info ClickHouse table into
   the node-local ocsf-osint lookup-table context (the vendored
   `tenzir` library package's update_context, entries aging out after
   30d); in-stream consumption of the context stays with the category-4
   ingress nodes per the factory doctrine
 - fleet-assets-loader: the hourly consumer half of the fleet_assets
-  factory — pulls the enrichment node's ocsf.fleet_assets table from
+  factory, pulls the enrichment node's ocsf.fleet_assets table from
   ClickHouse (FINAL, latest per Fleet host uuid) into this node's
   fleet_assets lookup-table context, keyed on primary_ip, so the
   audit and authentik arms above can stamp host identity onto
@@ -47,16 +47,16 @@ LB service anymore.
   successful load)
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir: the node's own
   operational metrics. The diagnostics-to-loki /
-  error-diagnostics-to-mimir pair ships from this node again —
+  error-diagnostics-to-mimir pair ships from this node again,
   restored per-node with the B1 lap after the central poller's
   retirement, so the poller-era double-ship concern is moot
-- detection-attest-verify: the record_integrity verification walk —
+- detection-attest-verify: the record_integrity verification walk;
   reads the last 90 minutes of every ocsf class back from the
   ClickHouse query store, recomputes each attestation fingerprint, and walks the
   per-node prev_event chain; a Detection Finding (2004) drops per
   break, hourly (the `every` wrapper): the finding lands on the pod
   logs and INSERTs into `ocsf.Detection_Finding`, inside the Grafana
-  tenzir-findings rule's WHERE clauses — tamper evidence pages through
+  tenzir-findings rule's WHERE clauses, tamper evidence pages through
   the agent_invoke bridge (landed;
   docs/issues/tenzir-record-integrity-attestations.md). The stamping
   half rides each source pipeline's in-stream attest + INSERT leg.
@@ -91,7 +91,7 @@ flowchart LR
 Enrichment scope is source-grounded: the kube-audit map always sets
 `src_endpoint.ip` from `sourceIPs[0]` (a clean, always-present
 source-IP field, grounded in the audit fixtures), so API Activity
-gains geo country + ASN on the API caller unconditionally — the
+gains geo country + ASN on the API caller unconditionally, the
 dominant cluster-internal callers stay bare through the Geo Open
 not-routed markers, and only external API callers geolocate. The
 authentik map sets `src_endpoint.ip` from `client_ip` on every IAM
@@ -103,12 +103,12 @@ stream cannot run the operators unconditionally). The same arms also
 look up the src endpoint IP in the fleet_assets context (keyed on
 Fleet's primary_ip) and stamp `src_endpoint.hostname` +
 `src_endpoint.os.name` in the vendored tenzir-ocsf Network Endpoint
-shape — the audit and authentik src IPs are mostly cluster-internal
+shape, the audit and authentik src IPs are mostly cluster-internal
 and miss, but a homelab login from a Fleet-managed LAN host gains
 its inventory identity (fleet_assets rows without a primary_ip cannot
 join and are skipped by the loader). No dns_lookup on
 either: pod/service PTRs are NXDOMAIN noise, LAN clients have no
-homelab PTRs, and attacker PTRs are absent or ISP-generic — the geo
+homelab PTRs, and attacker PTRs are absent or ISP-generic, the geo
 ASN name already carries the provider. Private addresses stay bare.
 
 The chart is this node's whole world: feeders, the bus, sigma, the lake,
@@ -158,7 +158,7 @@ are low-volume and the formula's source term already carries them.
 
 No node-local retention: every source pipeline attests in-stream and
 INSERTs directly to the per-class `ocsf.<Class_Name>` tables on the
-ClickHouse OCSF store — no lake, no compaction rule, no PVC (the
+ClickHouse OCSF store, no lake, no compaction rule, no PVC (the
 stateless completion; the lake-era rules and their 15-minute horizon
 died with it, history in the plan doc). ClickHouse is the record and
 the queryable history. The retired `s3://tenzir/ocsf/` parquet archive
@@ -171,8 +171,8 @@ drop at each pipeline's class gate and never reach the store.
 
 Retention lives in ClickHouse: monthly partitions, a 7-day hot-to-cold
 tier move, and a DELETE horizon of 400 days (90 for
-`ocsf.Network_Activity`) — the startup scripts are the source
-([`../clickhouse/config/10-startup-scripts.xml`](../clickhouse/config/10-startup-scripts.xml)).
+`ocsf.Network_Activity`), the startup scripts are the source
+([`../../clickhouse/config/10-startup-scripts.xml`](../../clickhouse/config/10-startup-scripts.xml)).
 
 ## Adding a node
 

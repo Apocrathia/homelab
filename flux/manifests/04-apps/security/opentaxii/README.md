@@ -1,6 +1,6 @@
 # OpenTAXII
 
-TAXII server for the homelab threat-intel exchange - serves both TAXII 1.x and TAXII 2.1, giving MISP and OpenCTI feeders a place to push and pull STIX content.
+TAXII server for the homelab threat-intel exchange. Serves both TAXII 1.x and TAXII 2.1; MISP and OpenCTI feeders push and pull STIX content here.
 
 > **Navigation**: [← Back to Security README](../README.md)
 
@@ -24,7 +24,7 @@ The upstream image ships both TAXII implementations in every recent tag; what di
 
 Deployed tag: `0.10.0b1`. The beta label is the tradeoff; it buys TAXII 2.1 out of the box (0.9.3 requires hand-maintaining the entire config to get it), current gunicorn, and the fixes queued for 0.10.0. If it misbehaves, dropping to `0.9.3` means losing default TAXII 2.1.
 
-OpenCTI's TAXII2 connector only speaks TAXII 2.0/2.1, and modern MISP-to-OpenCTI exchange is STIX 2.x - so TAXII 2.1 is the one that matters for the integration path.
+OpenCTI's TAXII2 connector only speaks TAXII 2.0/2.1, and MISP-to-OpenCTI exchange is STIX 2.x, so TAXII 2.1 is the one that matters for the integration path.
 
 ## Access
 
@@ -87,7 +87,7 @@ The OpenCTI taxii2 import connector consumes discovery at `http://opentaxii.open
 
 ## Dashboard
 
-`grafana/dashboard.json` ships "OpenTAXII Workload" — a Grafana dashboard in the **Security** folder, managed by grafana-operator:
+`grafana/dashboard.json` ships "OpenTAXII Workload", a Grafana dashboard in the **Security** folder, managed by grafana-operator:
 
 - Pod CPU and memory (working set) for the deployment
 - Container restarts stat

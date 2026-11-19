@@ -1,5 +1,7 @@
 # Vendored tenzir package
 
+> **Navigation**: [← Packages](../README.md)
+
 The official `tenzir` utilities TQL package, vendored byte-for-byte from
 [github.com/tenzir/library](https://github.com/tenzir/library) @
 `c6bba5f894455ce113f47e923605460b1b720edc` (2026-10-13). This lane mounts
@@ -7,7 +9,7 @@ its OSINT pair: `tenzir::osint::update_context` loads OCSF OSINT Inventory
 Info events into the shared `ocsf-osint` lookup table (the core node's
 opencti-osint-loader pipeline,
 [wiring](../../nodes/core/helmrelease.yaml)), and `tenzir::osint::enrich`
-stamps matched OSINT objects onto in-stream category-4 events — the
+stamps matched OSINT objects onto in-stream category-4 events, the
 consumption half that no node's pipelines call yet. The package's
 detect/ocsf operators ride along unmounted. The upstream repo carries no
 license file; vendored as-is with provenance recorded here.
@@ -21,7 +23,7 @@ read-only at `/etc/tenzir/packages/tenzir/`
 `changelog/` are repo-side: the tenzir-test harness runs the baselines
 from this tree ([suite](../homelab/tests/README.md)); `examples/` and
 `changelog/` are upstream bookkeeping. Note that `package.yaml` declares
-the `process-name-baselines` lookup-table context — every node that loads
+the `process-name-baselines` lookup-table context, every node that loads
 this package materializes that context at boot, unused until a baseline
 lane consumes it.
 

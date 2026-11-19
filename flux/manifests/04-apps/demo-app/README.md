@@ -32,7 +32,7 @@ This directory contains:
 - `kustomization.yaml` - Kustomize configuration for Flux deployment (namespace, HelmRelease, nginx ConfigMap)
 - `README.md` - This documentation
 
-Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is chart-rendered too — the chart's `authentik.managedBy: terraform` mode renders the OnePasswordItem + provider-opentofu ProviderConfig/Workspace docs with chart-generated inline HCL. The app has no HTTPRoute of its own (`httproute.enabled: false`); the `ak-outpost-demo-app-outpost` route (ns `authentik`) is still the only route serving `demo.gateway.services.apocrathia.com`, on both gateways — the per-app outpost is now UNMANAGED tofu-wise (the new proxy shape renders no outpost); it stays live and serving until the W4 sweep retires it. The old `tailnet-shared-httproute.yaml` era is over — that file was deleted.
+Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is chart-rendered too — the chart's `authentik.managedBy: terraform` mode renders the OnePasswordItem + provider-opentofu ProviderConfig/Workspace docs with chart-generated inline HCL. The app has no HTTPRoute of its own (`httproute.enabled: false`); the `ak-outpost-demo-app-outpost` route (ns `authentik`) is still the only route serving `demo.gateway.services.apocrathia.com`, on both gateways — the per-app outpost is unmanaged tofu-wise (the new proxy shape renders no outpost).
 
 ## Authentik Ownership
 
@@ -212,7 +212,7 @@ httproute:
 - **URL**: `https://demo.gateway.services.apocrathia.com` (same hostname as the LAN)
 - **Authentication**: SSO through Authentik (routes to the demo-app outpost, same as the LAN route)
 - **TLS**: Wildcard certificate for `*.gateway.services.apocrathia.com` terminated at the tailnet gateway
-- **Routing**: The outpost-generated HTTPRoute `ak-outpost-demo-app-outpost` (ns `authentik`) dual-parents `main-gateway`/`https` and `tailnet-gateway`/`https-gateway-services` — the outpost route owns both doors; the app has no route manifest of its own (the deleted `tailnet-shared-httproute.yaml` era is over). Background: [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
+- **Routing**: The outpost-generated HTTPRoute `ak-outpost-demo-app-outpost` (ns `authentik`) dual-parents `main-gateway`/`https` and `tailnet-gateway`/`https-gateway-services` — the outpost route owns both doors; the app has no route manifest of its own. Background: [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
 
 ### Internal Access
 
@@ -250,7 +250,7 @@ httproute:
 
 ## References
 
-- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Helm chart documentation
+- **[Generic-App Chart](../../../../helm/generic-app/README.md)** - Helm chart documentation
 - **[Flux HelmRelease](https://fluxcd.io/flux/components/helm/helmreleases/)** - Flux Helm controller
 
 ## Chart Version Compatibility
@@ -337,7 +337,7 @@ cp -r flux/manifests/04-apps/demo-app flux/manifests/04-apps/my-new-app
 # Commit and push to trigger Flux deployment
 ```
 
-For detailed chart documentation, see [Generic-App Chart README](../../../helm/generic-app/README.md)
+For detailed chart documentation, see [Generic-App Chart README](../../../../helm/generic-app/README.md)
 
 ### Storage Integration
 

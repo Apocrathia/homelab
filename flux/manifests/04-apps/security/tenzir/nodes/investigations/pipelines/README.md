@@ -1,5 +1,7 @@
 # Pipelines (investigations)
 
+> **Navigation**: [← Investigations node](../README.md)
+
 One `.tql` file per Tenzir pipeline that `investigations` runs.
 Each file is the pipeline's `definition`, verbatim.
 

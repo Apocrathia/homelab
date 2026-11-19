@@ -3,7 +3,7 @@
 > **Navigation**: [← Tenzir](../README.md) | [Core node](../core/README.md) | [Enrichment node](../enrichment/README.md) | [Introspection node](../introspection/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
 One process (HelmRelease `tenzir-node-intel`, rendering pod
-`tenzir-node-intel`) reserved as the fleet's **CTI factory plane** —
+`tenzir-node-intel`) reserved as the fleet's **CTI factory plane**,
 operator choice (c) of the intel-lane rounds: the factory row lives here,
 not on the enrichment node. Its pipelines pull external
 threat intel and land it in ClickHouse; the first row is live:
@@ -16,20 +16,20 @@ OSINT Inventory Info, and append them to the ClickHouse
 [opencti-osint-loader](../core/pipelines/opencti-osint-loader.tql)
 pulls the table into its node-local `ocsf-osint` context (the consumer
 half). The [enrichment node](../enrichment/README.md) keeps the other
-factory plane: internal reference data — fleet assets, baselines — not
+factory plane: internal reference data (fleet assets, baselines), not
 threat intel.
 
-- **Pure puller, no ingest surface** — no `extraPorts`, no listener
+- **Pure puller, no ingest surface**: no `extraPorts`, no listener
   Service, no web server (and so no `certificate.yaml`), no Gateway
   route: the chart renders only the main `tenzir-node-intel` Service
   on `:5158` for node RPC. All factory work is outbound: the platform
   WebSocket, the OpenCTI TAXII pull, and ClickHouse writes.
-- **Engine line** — the factory's vendored `stix` package's taxii fetch
+- **Engine line**: the factory's vendored `stix` package's taxii fetch
   operator needs the 6.20 engine line (entries()): this node ran the
   `v6.20.0-rc` ahead of GA to land the row early, and the rc pin retired
   with the fleet-wide `v6.20.0` bump when 6.20 GA shipped (2026-10-26);
   see [`helmrelease.yaml`](./helmrelease.yaml).
-- **One factory row, dual-schedule** — `tenzir.pipelines` carries the
+- **One factory row, dual-schedule**: `tenzir.pipelines` carries the
   opencti-taxii-factory-walk and opencti-taxii-factory-poll pipelines:
   a daily full walk of the TAXII collection at 07:00 plus
   `added_after` polls at 01/13/19 (the upstream isMalicious
@@ -40,9 +40,9 @@ threat intel.
   diagnostics pair (`diagnostics-to-loki` /
   `error-diagnostics-to-mimir`) every node ships since B1: the lane
   runs on this node's own engine, so its diagnostics ship regardless
-  of the fleet's image line — the central poller's cross-version
+  of the fleet's image line, the central poller's cross-version
   export gap on this node dies with the poller.
-- **Deploys live** — this HelmRelease carries no `spec.suspend`: the
+- **Deploys live**: this HelmRelease carries no `spec.suspend`; the
   factory row is this lap's deliverable. (The fleet's
   storage-collector nodes are currently suspended
   cluster-side, out of band; the enrichment and introspection nodes
@@ -50,12 +50,11 @@ threat intel.
 
 ## The OSINT row's shape contract
 
-Probed offline end-to-end 2026-10-21 (probe tree under
-[`.scratch/tenzir-netflow-osint-lap/intel-shape-probe/`](../../../../../../../.scratch/tenzir-netflow-osint-lap/intel-shape-probe/)
-in the primary checkout — throwaway evidence, not shipped):
+Probed offline end-to-end 2026-10-21 (throwaway probe tree under `.scratch/`
+in the primary checkout, since deleted, evidence not shipped):
 
 - The vendored `stix::ocsf::map` emits `osint` as a **one-element
-  array** (`$ocsf.osint = [$ocsf.osint]`; never edited — the vendored
+  array** (`$ocsf.osint = [$ocsf.osint]`; never edited, the vendored
   `tenzir::osint::update_context` / `enrich` pair pins that shape).
   A dotted typed column (`osint.value` & co) can never bind an array,
   and a ClickHouse `JSON` column cannot hold a top-level array either,
@@ -63,12 +62,12 @@ in the primary checkout — throwaway evidence, not shipped):
   JSON. The DDL ships exactly that shape
   ([`../../clickhouse/config/10-startup-scripts.xml`](../../clickhouse/config/10-startup-scripts.xml)):
   the four dotted `osint.*` typed columns the table originally declared
-  (modeled on sibling event-table style) sat NULL on every row —
-  364,447 live rows — and are removed.
+  (modeled on sibling event-table style) sat NULL on every row
+  (364,447 live rows) and are removed.
 - The consumer loaders (core and netflow
   [opencti-osint-loader](../core/pipelines/opencti-osint-loader.tql))
-  read via **SQL-mode projection** — `JSONExtractArrayRaw` over the
-  catch-all, re-typed in-pipeline — which is uniform across engine
+  read via **SQL-mode projection**, `JSONExtractArrayRaw` over the
+  catch-all, re-typed in-pipeline, which is uniform across engine
   lines: 6.19.1 (the loader nodes) table mode does not reconstruct
   catch-all tables at all, and 6.20 (this node's rc engine) table mode
   reconstructs but re-types IP-shaped indicator values, breaking the
@@ -80,7 +79,7 @@ in the primary checkout — throwaway evidence, not shipped):
 DROP COLUMN "osint.value", DROP COLUMN "osint.type_id",
 DROP COLUMN "osint.risk_score", DROP COLUMN "osint.expiration_time"`
   (or DROP TABLE + next walk).
-  They are inert — NULL on old rows, ignored by the loaders — so this
+  They are inert (NULL on old rows, ignored by the loaders), so this
   is hygiene, not function. The old rows themselves need no cleanup:
   their catch-all JSONs are intact and load correctly post-fix.
 
@@ -91,14 +90,14 @@ Live-verified 2026-10-21 (read-only queries against the table): of the
 `status_id = 99` (the STIX `revoked: true` flag); exactly two are
 active. The revoked mass is the MISP connector's abuse.ch ThreatFox
 archive backfill content (2022-era file hashes, "ThreatFox IOCs for
-2022-…" MISP events) whose re-import passes during the Oct 18–20
+2022-…" MISP events) whose re-import passes during the Oct 18-20
 backfill window (the OOM-retried 4→8Gi operation in the MISP issue)
-created duplicate copies and revoked them — the most-repeated name
+created duplicate copies and revoked them, the most-repeated name
 appears as dozens of distinct revoked STIX objects, created and revoked
 in the same import second. The two active rows are noise indicators
 ("TCP", "AF_INET") from a Kunai analysis report. So the mass-revoked
-state is real as served by the TAXII collection, not a mapping artifact
-— and the loader's erase semantics handle it by design: post-fix, the
+state is real as served by the TAXII collection, not a mapping artifact,
+and the loader's erase semantics handle it by design: post-fix, the
 `ocsf-osint` context holds only the active minority (today: two junk
 entries). The enrichment payoff rides on the opencti/misp lane
 resolving the archive re-import churn; until then this factory
@@ -106,7 +105,7 @@ correctly mirrors whatever OpenCTI serves.
 
 Until the OpenCTI side resolves, each daily walk re-appends the whole
 (~365k-row) collection as fresh rows, TTL-capped at 400 days of
-indicator age and cold-tiered at 90 — a partition-level prune is an
+indicator age and cold-tiered at 90, a partition-level prune is an
 operator call if the growth bothers.
 
 ## Connectivity
@@ -121,12 +120,12 @@ flowchart LR
 
 Outbound only: the node dials the platform, OpenCTI, and ClickHouse;
 nothing dials in and no Gateway HTTPRoute exists for it. The dashed lane
-is the consumer half on the core node — the table, not this node, is
+is the consumer half on the core node, the table, not this node, is
 the handoff.
 
 ## Storage
 
-Stateless (lap 2e): `persistence.enabled: false` — the chart renders
+Stateless (lap 2e): `persistence.enabled: false`, the chart renders
 the state volume as an emptyDir, no PVC. The factory row streams its
 pulls straight to ClickHouse with no lake import; there is no archive
 rule, no transit buffer, and nothing of value on the node. The
@@ -150,8 +149,8 @@ app.tenzir.com workspace and its `tnz_...` token copied into the
 `intel-node-token` field of the `tenzir-secrets` 1Password item
 ([`../../secret.yaml`](../../secret.yaml) materializes the Secret in
 this namespace; the OnePasswordItem CR is field-agnostic, so the new
-key arrives with the operator's next item sync — no manifest change).
-The factory row reads one more vault field, `opencti-taxii-token` —
+key arrives with the operator's next item sync, no manifest change).
+The factory row reads one more vault field, `opencti-taxii-token`:
 the TAXII bearer token written by the opencti lane (the manifests may
 land first; the pipeline retries via restart-on-error until the field
 materializes). The ClickHouse writer is the shared existing `tenzir`
@@ -159,14 +158,14 @@ user; no new user needed. The node comes up on apply.
 
 ## Roadmap
 
-1. ~~First factory row~~ — **done**: the OpenCTI TAXII row is live
+1. ~~First factory row~~, **done**: the OpenCTI TAXII row is live
    (this node) plus the core-node loader (the consumer half). The
    TAXII 2.1 export surface and collection are the opencti lane's
    slice-7 handoff
    ([opencti-deployment.md](../../../../../../../docs/issues/opencti-deployment.md));
    the collection's indicator volume climbs as the MISP connector
    import finishes.
-2. **Threat intel — abuse.ch ThreatFox** IOC feed as a second intel
+2. **Threat intel: abuse.ch ThreatFox** IOC feed as a second intel
    source into its own ClickHouse table plus ingress loaders; the
    factory pattern is proven by the OpenCTI row.
 
@@ -183,5 +182,5 @@ A failed walk self-heals: `restart-on-error` retries every minute and
 the next scheduled cron re-runs the lane regardless; the daily walk
 reconciles anything the polls missed. First boot after an engine bump:
 if the pod crash-loops, read `server.log` via the `tenzir-logs`
-mount before anything else — the file logger is the diagnostics
+mount before anything else, the file logger is the diagnostics
 surface the warning verbosity exists for.

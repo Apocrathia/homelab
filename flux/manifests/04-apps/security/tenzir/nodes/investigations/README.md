@@ -8,7 +8,7 @@ nothing else: durable OCSF-modeled case and evidence records in
 ClickHouse, written by agents, read by the operator in Grafana. Three
 lanes, one blast radius:
 
-- **Write lane** — the standing
+- **Write lane**: the standing
   [`investigations-ingest-http`](./pipelines/investigations-ingest-http.tql)
   pipeline: agents POST thin JSON envelopes to `accept_http :8080`; the
   [`homelab::investigations::ocsf::map`](../../packages/homelab/operators/investigations/ocsf/README.md)
@@ -20,29 +20,29 @@ lanes, one blast radius:
   `investigations-writer` user. No archive rule and no local import: the
   node lake stays empty by construction and ClickHouse is the only
   durable copy.
-- **Attestation verify lane** — the standing
+- **Attestation verify lane**: the standing
   [`investigations-attest-verify`](./pipelines/investigations-attest-verify.tql)
   pipeline: reads every stored record back with the SELECT-scoped
   `investigations-reader` user, recomputes each attestation's
   fingerprint, and walks the per-case `prev_event` chains, emitting a
   Detection Finding (2004) on any break. The walk is scheduled hourly
-  (the `every` wrapper — first walk at pipeline start, then hourly
+  (the `every` wrapper, first walk at pipeline start, then hourly
   re-walks), and the pipeline entry runs `unstoppable: true`: the
   first roll's walker came up completed-terminal with zero walks ever
   (query_log-proven), so a completed walk is a failed state and
-  `restart-on-error` relaunches it — completion -> failed -> relaunch.
+  `restart-on-error` relaunches it, completion -> failed -> relaunch.
   Each finding drops onto the pod logs and INSERTs into
   `ocsf.Detection_Finding` with the `tenzir` lake-writer user, landing
-  inside the Grafana tenzir-findings rule — a chain break pages through
+  inside the Grafana tenzir-findings rule, a chain break pages through
   the agent_invoke bridge (homelab-agent -> the investigator) instead
   of waiting for a human to read pod logs (the scheduled-walk box in
   `docs/issues/tenzir-record-integrity-attestations.md`, landed).
-- **Query lane** — the node REST API (web server `:5160`,
+- **Query lane**: the node REST API (web server `:5160`,
   `/api/v0/pipeline/launch` + `/api/v0/serve`, `X-Tenzir-Token` auth):
   agents launch bounded `from_clickhouse` pipelines over
   `investigations.records` and the raw `ocsf.*` lake tables with the
   SELECT-scoped `investigations-reader` user. ClickHouse credentials
-  never reach the agents — the node resolves `secret(...)` node-side.
+  never reach the agents, the node resolves `secret(...)` node-side.
 
 The query lane is IN-CLUSTER ONLY (operator decision, investigations
 design): no Gateway route, no HTTPRoute. Agents in the `kagent` and
@@ -69,11 +69,11 @@ Datastore Activity (6005, Query) pins:
 The map asserts the required pieces (`kind`, `case_uid` or a case open,
 `title` on open, `verdict_id` on close, `query_string` on evidence) and
 drops a malformed POST's events with assert-WARNINGS in the node
-diagnostics — the POST itself still 200s (`accept_http` default), so the
+diagnostics, the POST itself still 200s (`accept_http` default), so the
 agent's write confirmation is the query-lane read-back, not the POST
 response. `metadata.correlation_uid` is the case spine on every record;
 evidence `observables[].event_uid` links the raw lake rows the pinned
-snapshot came from. Free-text close disposition rides `desc` — `verdict`
+snapshot came from. Free-text close disposition rides `desc`; `verdict`
 is the caption sibling of `verdict_id` and is derived, not carried.
 
 ## Connectivity
@@ -96,14 +96,14 @@ flowchart LR
   an injected pipeline definition cannot execute commands, run Python,
   or write files. The egress trio (`to_http`/`to_s3`/`to_tcp`) is the
   open denylist decision ([`helmrelease.yaml`](./helmrelease.yaml)).
-- ClickHouse users with grants only — `investigations-writer` INSERT +
+- ClickHouse users with grants only: `investigations-writer` INSERT +
   SELECT (SELECT for the to_clickhouse DESCRIBE refresh),
   `investigations-reader` SELECT on `investigations.*` + `ocsf.*`; no
   ALTER/TRUNCATE/DROP for either. Wipe is not a permitted operation.
 - Chart NetworkPolicy: ingress from the agent namespaces and
   same-namespace pods only.
 - Append-only records: the residual risk floor is visible, attributed,
-  easily-recoverable pollution — not destruction. The `record_integrity`
+  easily-recoverable pollution, not destruction. The `record_integrity`
   attestation chain now stamps every stored record (the attest operator
   in the write lane) and the `investigations-attest-verify` pipeline
   walks the chains hourly, writing break findings into the lake's
@@ -124,15 +124,15 @@ flowchart LR
    fields).
 2. **Platform node token**: provision a node in the app.tenzir.com
    workspace and copy its `tnz_...` token into the
-   `investigations-node-token` field — the HelmRelease reads it via
+   `investigations-node-token` field, the HelmRelease reads it via
    `nodes[].token`.
 3. **Apply**: cert-manager auto-issues the web server's TLS pair
    ([`certificate.yaml`](./certificate.yaml), self-signed ClusterIssuer),
-   so the node boots with both lanes — the write lane and the web server
+   so the node boots with both lanes, the write lane and the web server
    (`:5160`, TLS + token). Agent callers use the `X-Tenzir-Token` and
    skip CA verification (the token is the real auth; the NetworkPolicy
    scopes who may call).
-4. **Generate the API token** (operator-side, once — web-server tokens
+4. **Generate the API token** (operator-side, once, web-server tokens
    are node state on the PVC, not config):
 
    ```sh
@@ -141,10 +141,10 @@ flowchart LR
    ```
 
    `tenzir` alone is the pipeline runner (one pipeline argument, no
-   subcommands) — the control binary is `tenzir-ctl`, which ships in the
+   subcommands), the control binary is `tenzir-ctl`, which ships in the
    node image and also runs from a workstation as
    `uvx --from tenzir@<deployed engine version> tenzir-ctl` against an
-   endpoint (the version lives in the node HelmRelease image tag — not
+   endpoint (the version lives in the node HelmRelease image tag, not
    cited here, it rots).
 
 5. **Vault copy**: paste the printed token into the
@@ -162,7 +162,7 @@ the 2 GB RAM floor (catalog term ~0 at an empty lake). Limits live in
 
 ## Retention
 
-None locally — no lake to retain. The PVC carries node state only
+None locally, no lake to retain. The PVC carries node state only
 (platform registration, web-token state, diagnostics) at a 5Gi cap; the
 record is `investigations.records` on ClickHouse, which has **no TTL by
 design**: a case record is a durable audit record. The tiered storage
@@ -171,10 +171,10 @@ ever moves or deletes a part.
 
 ## Known limitations
 
-- **Static API token, no per-caller identity** — attribution is
+- **Static API token, no per-caller identity**: attribution is
   record-level (envelope fields + `ai_operation` stamping), not
   caller-level; per-caller tokens are the upgrade path.
-- **Grafana examine surface shipped (P-2)** — the `grafana` user's
+- **Grafana examine surface shipped (P-2)**: the `grafana` user's
   grants now include SELECT on `investigations.*`
   ([cluster.yaml](../../clickhouse/cluster.yaml)), and the case
   dashboards
@@ -182,7 +182,7 @@ ever moves or deletes a part.
   [investigations-case-detail](../../grafana/investigations-case-detail.json))
   read the store over the `ocsf-clickhouse` datasource. The agent query
   lane keeps the `investigations-reader` user.
-- **Attestation chain linkage is per-node-lifetime memory** — the
+- **Attestation chain linkage is per-node-lifetime memory**: the
   `investigations-chains` context lives on the node, so a node restart
   restarts every case chain at its next record (`prev_event` absent,
   write-time WARNING); the verify walk treats that as the documented

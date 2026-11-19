@@ -17,7 +17,7 @@ publish "findings"
 ```
 
 The detector is a static policy check on the currently-assigned privileges,
-independent of how or why the mode was assigned — it fires the same whether a
+independent of how or why the mode was assigned, it fires the same whether a
 person chose it deliberately or a repo's checked-in configuration set it.
 
 Detectors live in the `tenzir::detect::agent` namespace, alongside

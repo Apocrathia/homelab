@@ -2,42 +2,42 @@
 
 OpenAEV (Open Adversarial Exposure Validation, formerly OpenBAS) is Filigran's
 open-source exposure-validation platform: attack simulations and tabletop
-exercises with defense coverage measurement — the attack-side sibling of
+exercises with defense coverage measurement, the attack-side sibling of
 OpenCTI in the Filigran security suite.
 
 > **Navigation**: [← Back to Security README](../README.md)
 
 ## Overview
 
-- **openaev** — platform pod (API + React SPA + websockets) plus its CNPG
+- **openaev**: platform pod (API + React SPA + websockets) plus its CNPG
   PostgreSQL cluster; Flyway migrates the schema on boot
-- **openaev-opensearch** — single-node OpenSearch engine, security plugin off
+- **openaev-opensearch**: single-node OpenSearch engine, security plugin off
   (official compose parity), CNP-locked to the platform pod
-- **openaev-rabbitmq** — RabbitMQ broker with the upstream-mandated
-  `rabbitmq.conf` (512MB max message, 24h consumer timeout)
-- Object storage rides the NAS RustFS instance — no in-cluster MinIO
+- **openaev-rabbitmq**: RabbitMQ broker with the upstream-mandated
+  `rabbitmq.conf` (upstream-mandated broker limits)
+- Object storage rides the NAS RustFS instance: no in-cluster MinIO
 - **URL**: `https://openaev.gateway.services.apocrathia.com`
 - Sizing, image digests, probes: the manifests in this directory are the
   source of truth
 
 ## Configuration
 
-Env-only; the admin is seeded from `OPENAEV_ADMIN_*` at boot — no first-run
+Env-only; the admin is seeded from `OPENAEV_ADMIN_*` at boot, no first-run
 wizard. Everything else is set up in the web UI after login. See
 `helmrelease.yaml` for the full env list.
 
 **Before applying**, create the 1Password item
 `vaults/Secrets/items/openaev-secrets` with fields:
 
-- `username`, `password` — PostgreSQL app credentials
-- `admin-email`, `admin-password` — breakglass admin login
-- `admin-token` — UUIDv4; admin API/agent token
-- `encryption-key`, `encryption-salt` — DB encryption key derivation
-- `healthcheck-key` — UUID; gates `/api/health`
-- `rustfs-access-key`, `rustfs-secret-key` — scoped keys for RustFS bucket
+- `username`, `password`: PostgreSQL app credentials
+- `admin-email`, `admin-password`: breakglass admin login
+- `admin-token`: UUIDv4; admin API/agent token
+- `encryption-key`, `encryption-salt`: DB encryption key derivation
+- `healthcheck-key`: UUID; gates `/api/health`
+- `rustfs-access-key`, `rustfs-secret-key`: scoped keys for RustFS bucket
   `openaev` (create the bucket and keys on the NAS first)
-- `rabbitmq-user`, `rabbitmq-pass` — broker credentials
-- `oidc-client-id`, `oidc-client-secret` — filled post-merge (below)
+- `rabbitmq-user`, `rabbitmq-pass`: broker credentials
+- `oidc-client-id`, `oidc-client-secret`: filled post-merge (below)
 
 ## Authentication
 
@@ -58,7 +58,7 @@ CNP blocks that host (and all world egress), so the exporter self-disables.
 ## SSO license watch
 
 OIDC is Community Edition in 3.261016.0 (verified in upstream source). OpenCTI
-moved SSO config into the UI behind an Enterprise Edition gate — if OpenAEV
+moved SSO config into the UI behind an Enterprise Edition gate, if OpenAEV
 does the same, expect SSO to need a license. Re-verify on major bumps.
 
 ## Troubleshooting

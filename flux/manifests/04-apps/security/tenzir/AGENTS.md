@@ -5,10 +5,10 @@ the detection plane, the tetragon node the flood isolate, the netflow
 node the NetFlow collector isolate, the investigations node the agent
 investigations plane, the enrichment node the internal-reference-data
 factory (builds the fleet-assets and baselines lookup tables into
-ClickHouse for the other nodes' loaders; one pipeline so far — the
+ClickHouse for the other nodes' loaders; one pipeline so far: the
 hourly Fleet asset pull into `ocsf.fleet_assets`), the introspection
 node the introspection plane (its local diagnostics lane pair ships its
-own pipelines' diagnostics — every node ships its own pair since B1
+own pipelines' diagnostics; every node ships its own pair since B1
 and the central poller is retired; charter direction: scheduled inward
 detection passes over the `ocsf.*` tables), and the intel node
 the CTI factory plane (its opencti-taxii-factory-walk / -poll pipelines pull
@@ -37,15 +37,15 @@ Reference docs for this stack, vendored from
 [github.com/tenzir/skills](https://github.com/tenzir/skills) @
 `a47ab4c6bd0518bf132be3751d95ae7e61468c29` (2026-10-16), Apache-2.0:
 
-| Skill                                                  | Covers                                                            |
-| ------------------------------------------------------ | ----------------------------------------------------------------- |
-| [`tenzir`](./.agents/skills/tenzir/SKILL.md)           | Tenzir docs — TQL, operators, functions, integrations, deployment |
-| [`tenzir-ocsf`](./.agents/skills/tenzir-ocsf/SKILL.md) | OCSF schema — classes, objects, attributes, profiles              |
+| Skill                                                  | Covers                                                           |
+| ------------------------------------------------------ | ---------------------------------------------------------------- |
+| [`tenzir`](./.agents/skills/tenzir/SKILL.md)           | Tenzir docs: TQL, operators, functions, integrations, deployment |
+| [`tenzir-ocsf`](./.agents/skills/tenzir-ocsf/SKILL.md) | OCSF schema: classes, objects, attributes, profiles              |
 
 Both are generated upstream (synced from tenzir.com docs): never
 hand-edit; refresh by re-copying from the pinned-or-newer upstream commit
 ([refresh procedure](./.agents/skills/README.md)). They are local to this
 subtree, not in the repo-root `.agents/skills/` pool, so they never land in
-general agent context — agents arrive via the root `AGENTS.md` routing row.
+general agent context: agents arrive via the root `AGENTS.md` routing row.
 Follow each skill's doc-map links on demand. Folder map:
 [`.agents/README.md`](./.agents/README.md).

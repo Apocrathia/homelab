@@ -1,16 +1,18 @@
 # Pipelines (enrichment)
 
-The drop zone for the enrichment node's pipelines — the lap-2 factory
+> **Navigation**: [← Enrichment node](../README.md)
+
+The drop zone for the enrichment node's pipelines, the lap-2 factory
 pipeline plus the fleet-standard diagnostics pair:
 
-- [`fleet-assets-pull.tql`](./fleet-assets-pull.tql) — the hourly
+- [`fleet-assets-pull.tql`](./fleet-assets-pull.tql): the hourly
   Fleet host-inventory pull (`GET /api/v1/fleet/hosts`, Bearer via
   the `fleetdm-token` secret) into `ocsf.fleet_assets` on the
   ClickHouse query store. The core node's loader pipeline is the
   consumer half.
 - [`diagnostics-to-loki.tql`](./diagnostics-to-loki.tql) /
-  [`error-diagnostics-to-mimir.tql`](./error-diagnostics-to-mimir.tql)
-  — the diagnostics pair every node ships since B1 (byte-identical to
+  [`error-diagnostics-to-mimir.tql`](./error-diagnostics-to-mimir.tql):
+  the diagnostics pair every node ships since B1 (byte-identical to
   the siblings' lanes modulo the node label): this node's own
   diagnostics to Loki (`job=tenzir-diagnostics`, `node=enrichment`)
   and error/warning samples to Mimir.
@@ -18,7 +20,7 @@ pipeline plus the fleet-standard diagnostics pair:
 The factory lanes on this node are internal reference data only (see
 [`../README.md`](../README.md) for the roadmap): `fleet-assets`
 (shipped above) and baselines once the post-6.20 GA capability
-lands. Threat intel is not this node's lane — it lives on the
+lands. Threat intel is not this node's lane, it lives on the
 [intel node](../../intel/README.md).
 
 Each pipeline lives as one `.tql` file here (its `definition`,
