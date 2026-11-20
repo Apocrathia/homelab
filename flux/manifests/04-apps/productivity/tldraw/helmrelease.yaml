@@ -24,6 +24,9 @@ spec:
       container:
         name: node
         port: 5858
+      service:
+        port: 5858
+        targetPort: 5858
         # The chart renders env from app.container.env — the original MR
         # nested it at app.env, so Helm dropped it and NODE_ENV never reached
         # the process. Without NODE_ENV=production the server registers no
@@ -134,10 +137,10 @@ spec:
     authentik:
       managedBy: terraform
       enabled: true
-      category: "Design"
+      category: "Productivity"
       displayName: "tldraw"
       externalHost: "https://tldraw.gateway.services.apocrathia.com"
-      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/tldraw/icon.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/productivity/tldraw/icon.svg"
       interceptHeaderAuth: false
       shared: true
 

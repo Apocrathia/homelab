@@ -62,10 +62,6 @@ Parametric 3D CAD in the browser, an independent project from Tangency Labs.
 
 Digital audio workstation (DAW) in the browser.
 
-### [tldraw](./tldraw/README.md)
-
-Multiplayer whiteboard — realtime collaboration, room-based scenes.
-
 ### [TextureCraft](./texturecraft/README.md)
 
 3D texture painting workflow in the browser.
