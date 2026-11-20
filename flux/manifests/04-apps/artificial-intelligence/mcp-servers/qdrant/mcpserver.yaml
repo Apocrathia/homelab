@@ -18,7 +18,7 @@ spec:
     # C toolchain (`linker cc not found`) in the slim image. Enforced by an
     # allowedVersions rule in renovate.json; do not bump the major here.
     # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-    image: public.ecr.aws/docker/library/python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
+    image: public.ecr.aws/docker/library/python:3.13-slim@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f
     port: 8080
     cmd: /bin/sh
     args:
@@ -27,7 +27,7 @@ spec:
         pip install --quiet uv
         export PATH="/tmp/.local/bin:$PATH"
         export QDRANT_API_KEY="$(cat /var/run/secrets/qdrant/api-key)"
-        exec uvx mcp-server-qdrant --transport stdio
+        exec uvx mcp-server-qdrant==0.8.1 --transport stdio
     env:
       QDRANT_URL: http://qdrant.qdrant.svc.cluster.local:6333
       COLLECTION_NAME: knowledge

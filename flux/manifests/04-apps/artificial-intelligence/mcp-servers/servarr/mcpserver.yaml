@@ -28,7 +28,7 @@ spec:
         cd /tmp
         git clone --depth 1 https://github.com/bdfrost/mcp-servarr.git
         cd mcp-servarr
-        pip install --quiet -r requirements.txt
+        pip install --quiet -r requirements.txt 'mcp<2'
         exec python src/server.py
     env:
       HOME: /tmp

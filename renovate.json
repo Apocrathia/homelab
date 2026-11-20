@@ -82,6 +82,16 @@
       "matchPackageNames": ["docker/library/python"],
       "matchFiles": ["flux/manifests/04-apps/security/artex/helmrelease.yaml"],
       "allowedVersions": "<=3.14"
+    },
+    {
+      "description": "openzim-mcp (libzim) and mcp-server-qdrant (pydantic-core, fastembed) install pip deps at pod start and pip backtracks to crash-looping ancient versions once the wheels run out — pin the base python image to 3.13 or lower so Renovate can't re-drift it past the deps' wheel coverage; lift when the deps publish newer-python wheels",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["docker/library/python"],
+      "matchFileNames": [
+        "flux/manifests/04-apps/artificial-intelligence/mcp-servers/openzim/mcpserver.yaml",
+        "flux/manifests/04-apps/artificial-intelligence/mcp-servers/qdrant/mcpserver.yaml"
+      ],
+      "allowedVersions": "<=3.13"
     }
   ],
   "customManagers": [

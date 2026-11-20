@@ -23,7 +23,7 @@ spec:
         export HOME=/tmp &&
         export TRUENAS_URL="$(cat /var/run/secrets/mcp/truenas-url)" &&
         export TRUENAS_API_KEY="$(cat /var/run/secrets/mcp/truenas-api-key)" &&
-        pip install --quiet truenas-mcp-server &&
+        pip install --quiet truenas-mcp-server 'mcp<2' &&
         export PATH="$HOME/.local/bin:$PATH" &&
         exec truenas-mcp-server
     env:
