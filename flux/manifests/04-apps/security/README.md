@@ -80,6 +80,14 @@ reconnaissance across 26 modules with OPSEC scoring, entity graphs, and
 report exports. Single FastAPI container, no database; JSON-file persistence
 on Longhorn.
 
+### [Strix](./strix/README.md)
+
+Self-hosted autonomous AI pentesting: LLM agents run a Kali-based toolbox in
+sandbox containers spawned through an in-namespace Docker daemon, validate
+findings with working PoCs, and serve the results in a web viewer. CLI-first
+(scans launch by exec'ing into the pod); the pip-installed orchestrator and
+its sandbox image stay pinned via Renovate.
+
 ### [Tenzir](./tenzir/README.md)
 
 SIEM detection + investigations plane: seven standalone Tenzir nodes that

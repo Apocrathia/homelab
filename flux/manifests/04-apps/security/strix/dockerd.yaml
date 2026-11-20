@@ -1,0 +1,124 @@
+---
+# Docker daemon for strix's sandbox containers. The OSS CLI spawns one
+# sandbox container per scan (ghcr.io/usestrix/strix-sandbox, upstream's
+# official image) through the Docker API; the generic-app chart cannot
+# render privileged containers, so dockerd runs as a raw Deployment in the
+# app namespace (openaev raw-manifest pattern) with its own Longhorn claim
+# holding the image cache. Port 2375 is plain HTTP (DOCKER_TLS_CERTDIR=""),
+# reachable only from the strix app pod per networkpolicy.yaml — the same
+# compensating-control shape as openaev's unauthenticated opensearch.
+# Scans run inside this pod: the heavy tooling resource limits live here.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: strix-dockerd
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: dockerd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      # Distinct from the app claims (runtime 5Gi, data 20Gi) so no claim
+      # can bind another subsystem's Available PV. Re-pullable image cache,
+      # deliberately outside the kopia backup set.
+      storage: 30Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strix-dockerd
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: dockerd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # RWO Longhorn claim
+  selector:
+    matchLabels:
+      app: strix-dockerd
+  template:
+    metadata:
+      labels:
+        app: strix-dockerd
+        app.kubernetes.io/name: strix
+        app.kubernetes.io/component: dockerd
+    spec:
+      automountServiceAccountToken: false
+      # dockerd needs privileged to mount overlay2 layers, manage iptables,
+      # and grant NET_RAW/NET_ADMIN to the sandbox containers strix creates
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: false
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: dockerd
+          # renovate: datasource=docker depName=docker.io/library/docker
+          image: docker.io/library/docker:29.10.0-dind@sha256:4bbc7223f81db790097c6dea42fb93e05b8fead4f0431fbe6ccaba6e8473201c
+          env:
+            # Plain HTTP on 2375 inside the namespace; the
+            # CiliumNetworkPolicy is the compensating control
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              # Scan tooling (nmap, sqlmap, chromium) runs inside sandboxes
+              # on this daemon; sized for a single concurrent scan
+              cpu: "2"
+              memory: 6Gi
+          readinessProbe:
+            # dind also binds the unix socket, so the in-container CLI
+            # reaches the daemon without DOCKER_HOST
+            exec:
+              command: ["docker", "info"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["docker", "info"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: docker
+              mountPath: /var/lib/docker
+      volumes:
+        - name: docker
+          persistentVolumeClaim:
+            claimName: strix-dockerd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: strix-dockerd
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: dockerd
+spec:
+  type: ClusterIP
+  selector:
+    app: strix-dockerd
+  ports:
+    - name: docker
+      port: 2375
+      targetPort: 2375
+      protocol: TCP
