@@ -1,0 +1,57 @@
+---
+# User-level containers/storage configuration for the rootless podman
+# service, mounted over the image's own
+# /home/podman/.config/containers/ (which wins over /etc/containers/
+# per containers.conf precedence). Two overrides matter:
+#
+# 1. The image's /etc/containers/containers.conf forces host namespaces
+#    (netns/userns/ipcns/utsns = "host") — its podman-in-podman demo
+#    shape. Strix sandboxes need isolated namespaces (per-sandbox caido
+#    loopback, NET_ADMIN scoped to the sandbox netns), so this file
+#    resets them to podman's defaults. It also drops the image's
+#    /proc:/proc container volume (leaks pod process info into
+#    sandboxes).
+# 2. The image's /etc/containers/storage.conf sets
+#    mount_program=/usr/bin/fuse-overlayfs and mountopt "nodev,fsync=0"
+#    (fuse-only options). /dev/fuse cannot be passed to unprivileged
+#    pods, so storage.conf switches to native overlay mounted inside
+#    podman's nested user namespace (kernel 5.11+, userxattr) and drops
+#    the fuse-only mountopt. If the store errors on first boot, switch
+#    driver to "vfs" (slower, no fuse/userns-overlay needed).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: strix-podman-config
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman
+data:
+  containers.conf: |
+    [containers]
+    # Override the image's host-namespace tuning: sandboxes are isolated
+    netns = "private"
+    userns = "private"
+    ipcns = "private"
+    utsns = "private"
+    # No cgroup delegation inside the pod; keep the image's engine settings
+    cgroupns = "host"
+    cgroups = "disabled"
+    log_driver = "k8s-file"
+
+    [engine]
+    cgroup_manager = "cgroupfs"
+    events_logger = "file"
+    runtime = "crun"
+  storage.conf: |
+    [storage]
+    driver = "overlay"
+    # graphroot defaults to $HOME/.local/share/containers/storage — the
+    # Longhorn-backed store volume mounted below
+    [storage.options.overlay]
+    # /dev/fuse is unavailable in unprivileged pods: native overlay in the
+    # user namespace instead of the fuse-overlayfs helper
+    mount_program = ""
+    # nodev survives from the image conf; drop the fuse-only fsync=0;
+    # userxattr is required for unprivileged overlay mounts in a userns
+    mountopt = "nodev,userxattr"

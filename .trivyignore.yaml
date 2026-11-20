@@ -12,26 +12,13 @@ misconfigurations:
       - "cronjob.yaml"
       - "daemonset.yaml"
       - "dind.yaml"
-      - "dockerd.yaml"
     statement: >-
       Some CronJobs and DaemonSets intentionally leave the root filesystem
       writable (e.g. apt/compile steps in jobs, or tdarr-node transcoding),
-      the pentagi docker-in-docker daemon writes /var/lib/docker and /run by
-      design, and the strix Docker-in-Docker daemon writes runtime state
-      outside its mounted image cache. Prefer fixing with
-      readOnlyRootFilesystem plus emptyDir mounts when practical; until then
-      suppress by basename for cronjob.yaml, daemonset.yaml, dind.yaml, and
-      dockerd.yaml only.
-  - id: AVD-KSV-0017
-    paths:
-      - "dockerd.yaml"
-    statement: >-
-      Strix spawns its pentest sandbox containers through a real Docker
-      daemon, which requires privileged (overlay2 mounts, iptables, and
-      NET_RAW/NET_ADMIN grants to the sandboxes). The generic-app chart
-      cannot render privileged containers, hence the raw Deployment.
-      Compensating controls: dedicated namespace, no service-account token,
-      and a CiliumNetworkPolicy restricting 2375 to the strix app pod.
+      and the pentagi docker-in-docker daemon writes /var/lib/docker and
+      /run by design. Prefer fixing with readOnlyRootFilesystem plus
+      emptyDir mounts when practical; until then suppress by basename for
+      cronjob.yaml, daemonset.yaml, and dind.yaml only.
   - id: AVD-KSV-0017
     paths:
       - "dind.yaml"
