@@ -73,6 +73,15 @@ the OpenCTI catalog (180 external-import connectors checked); and OpenTAXII
 keeps TAXII 1.x and 2.1 storage disjoint, so the hub role is specifically the
 TAXII 2.1 side.
 
+### [PentAGI](./pentagi/README.md)
+
+PentAGI is an open-source autonomous AI penetration-testing platform:
+multi-agent pentester/coder/installer roles that run real tools inside
+docker sandboxes. Runs the official upstream image under generic-app with a
+dedicated privileged docker-in-docker daemon for agent sandboxes,
+CloudNativePG (pgvector) for flow/knowledge storage, and an Authentik proxy
+in front of the local-account UI.
+
 ### [Prism](./prism/README.md)
 
 Self-hosted OSINT scanner: domain, IP, email, phone, and username

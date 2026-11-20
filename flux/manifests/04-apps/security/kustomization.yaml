@@ -13,6 +13,7 @@ resources:
   - opencanary
   - opencti
   - opentaxii
+  - pentagi
   - coraza
   - strix
   - tenzir

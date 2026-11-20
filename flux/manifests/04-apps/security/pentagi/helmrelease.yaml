@@ -1,0 +1,200 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: pentagi
+  namespace: pentagi
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: generic-app
+      # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
+      version: "0.0.91"
+      sourceRef:
+        kind: HelmRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: pentagi
+      namespace: pentagi
+      # PentAGI: autonomous AI pentest agents (multi-agent pentester/coder/
+      # installer/assistant) that run real tools inside docker sandboxes.
+      # Upstream publishes this official image from their own namespace, so
+      # no in-pod assembly (ARTEX pattern) is needed. Alpine-based, runs as
+      # the embedded pentagi user (uid 100, gid 101); goose migrations run
+      # automatically at startup against the CNPG cluster in postgres.yaml.
+      # renovate: datasource=docker depName=vxcontrol/pentagi
+      image: docker.io/vxcontrol/pentagi:2.2.0@sha256:64bd1802799142a12bc5eb23c15a1ccc50d3476736d3d2a98a9b773910283a1e
+      replicas: 1
+      container:
+        name: pentagi
+        port: 8443
+        env:
+          # Full PostgreSQL DSN; same item's username/password keys bootstrap
+          # the CNPG cluster (postgres.yaml). Keep the three fields in sync.
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: pentagi-secrets
+                key: dsn
+          # Cookie/session signing salt; empty salt disables API-token
+          # minting, so set it. Optional key: missing key leaves it unset.
+          - name: COOKIE_SIGNING_SALT
+            valueFrom:
+              secretKeyRef:
+                name: pentagi-secrets
+                key: cookie-signing-salt
+                optional: true
+          # LLM provider keys are env-only in PentAGI (no web-UI credential
+          # editing); the app boots with zero providers and flows fail until
+          # at least one is set. Optional keys: wire only what you use.
+          - name: OPEN_AI_KEY
+            valueFrom:
+              secretKeyRef:
+                name: pentagi-secrets
+                key: openai-key
+                optional: true
+          - name: ANTHROPIC_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: pentagi-secrets
+                key: anthropic-api-key
+                optional: true
+          - name: GEMINI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: pentagi-secrets
+                key: gemini-api-key
+                optional: true
+          # Agent sandboxes: the privileged dockerd from dind.yaml. The app
+          # Fatals without a reachable daemon, and worker containers stay
+          # inside that daemon (docker named-volume workspaces, the
+          # documented remote-socket path).
+          - name: DOCKER_HOST
+            value: tcp://pentagi-dind.pentagi.svc.cluster.local:2375
+          # Public URL behind the Authentik proxy; used for OAuth callbacks
+          # and generated links.
+          - name: PUBLIC_URL
+            value: https://pentagi.gateway.services.apocrathia.com
+          # Trust X-Forwarded-For from the Authentik outpost over the pod
+          # network (Cilium native-routing pod CIDR).
+          - name: TRUSTED_PROXIES
+            value: "10.42.0.0/16"
+          # Gateway terminates TLS; the app serves plain HTTP on 8443
+          # (upstream's SERVER_USE_SSL=true default generates self-signed
+          # certs into an ssl/ dir we do not mount).
+          - name: SERVER_PORT
+            value: "8443"
+          - name: SERVER_USE_SSL
+            value: "false"
+          # Disable the default 3h phone-home to update.pentagi.com (build
+          # fingerprint + config summary). Re-enable by removing this if you
+          # want the version badge.
+          - name: UPDATE_CHECK_INTERVAL
+            value: "0"
+          - name: TZ
+            value: America/Denver
+      # Upstream image runs as the embedded pentagi user (uid 100/gid 101);
+      # no capabilities needed: the sandbox daemon is reached over TCP, not
+      # a mounted socket. Writable rootfs (not readOnlyRootFilesystem) because
+      # the entrypoint writes an ollama signing key under /root/.ollama.
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 101
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        fsGroup: 101
+        fsGroupChangePolicy: OnRootMismatch
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+      service:
+        type: ClusterIP
+        port: 8443
+        targetPort: 8443
+        portName: http
+      # GET /api/v1/info answers 200 for unauthenticated guests (TryAuth
+      # middleware) and touches the session layer, so it is a real health
+      # signal for app + DB wiring.
+      healthChecks:
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/info
+            port: 8443
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 60
+          successThreshold: 1
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/info
+            port: 8443
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/info
+            port: 8443
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: data
+          mountPath: /opt/pentagi/data
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          # Flow data, files, knowledge uploads (DATA_DIR=/opt/pentagi/data)
+          - name: data
+            capacity: 10Gi
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/pentagi-secrets"
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Security"
+      displayName: "PentAGI"
+      externalHost: "https://pentagi.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/pentagi/icon.svg"
+      metaDescription: "Autonomous AI penetration testing agents"
+      metaPublisher: "PentAGI Development Team (MIT)"
+
+    httproute:
+      enabled: false
+
+    gatus:
+      enabled: true
+      group: security
+      path: /api/v1/info
+
+    # Kopia snapshots of the durable app volume; the dind image cache
+    # (dind.yaml PVC) is deliberately excluded, it re-pulls.
+    backup:
+      enabled: true
+      volumes:
+        - data

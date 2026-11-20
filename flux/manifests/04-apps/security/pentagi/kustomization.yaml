@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: pentagi
+  namespace: pentagi
+  labels:
+    app.kubernetes.io/name: pentagi
+
+resources:
+  - namespace.yaml
+  - dind.yaml
+  - networkpolicy.yaml
+  - postgres.yaml
+  - scheduled-backup.yaml
+  - backup-secret.yaml
+  - helmrelease.yaml
