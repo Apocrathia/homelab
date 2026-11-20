@@ -1,0 +1,402 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: artex
+  namespace: artex
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: generic-app
+      # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
+      version: "0.0.91"
+      sourceRef:
+        kind: HelmRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: artex
+      namespace: artex
+      # Upstream publishes no registry image. The app runs from the runtime
+      # volume (/rt) assembled by the init containers below; this base
+      # provides python 3.14 (bbot venv, sqlmap) on trixie — bbot 3.0.2 caps at <3.15.
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+      container:
+        name: artex
+        port: 8787
+        env:
+          # Full PostgreSQL DSN (postgres://artex:<password>@artex-postgres-rw...)
+          # stored whole in 1Password; the same item's username/password keys
+          # bootstrap the CNPG cluster. Keep the three fields in sync.
+          - name: ARTEX_PG_DSN
+            valueFrom:
+              secretKeyRef:
+                name: artex-secrets
+                key: dsn
+          # JWT signing + secret-encryption keys live on the keys volume,
+          # outside data/ (which the file manager browses)
+          - name: ARTEX_JWT_KEY_DIR
+            value: /app/keys
+          # Trust X-Forwarded-For from the Authentik outpost over the pod
+          # network so login rate limits see real client IPs
+          - name: ARTEX_TRUSTED_PROXIES
+            value: "10.42.0.0/16"
+          # Toolbox on the runtime volume; venv after system python so plain
+          # python3 stays the base interpreter
+          - name: PATH
+            value: /rt/bin:/rt/npm/bin:/rt/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/rt/venv/bin
+          # Shared libraries from the extracted Debian packages (nmap,
+          # chromium deps)
+          - name: LD_LIBRARY_PATH
+            value: /rt/root/usr/lib/x86_64-linux-gnu:/rt/root/usr/lib
+          - name: PLAYWRIGHT_BROWSERS_PATH
+            value: /rt/browsers
+      # Bring the extracted fonts into the rootfs (fontconfig only reads
+      # /usr/share/fonts), then run the release binary directly: k8s owns
+      # crash restarts, so upstream's start.sh supervisor is unnecessary.
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          cp -rn /rt/root/usr/share/fonts/. /usr/share/fonts/ 2>/dev/null || true
+          exec /rt/app/artex -addr :8787 -proxy 127.0.0.1:8788 -data /app/data
+      # Runtime assembly, jetkvm pattern: each init installs its slice onto
+      # the persistent /rt volume and skips when its stamp file matches, so
+      # a Renovate pin bump rebuilds only the affected slice. Ecosystem
+      # installers (go install, npm, pip, apt download + dpkg-deb -x) verify
+      # integrity themselves; only the ARTEX release is fetched and
+      # sha256-checked by hand.
+      initContainers:
+        - name: fetch-artex
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              # renovate: datasource=github-releases depName=BaaRai/ARTEX
+              ARTEX_VERSION=v0.6.0
+              [ "$(cat /rt/.stamps/artex 2>/dev/null || true)" = "$ARTEX_VERSION" ] && exit 0
+              echo "[fetch-artex] installing $ARTEX_VERSION"
+              apt-get update
+              apt-get install -y --no-install-recommends ca-certificates curl unzip
+              gh_release="https://github.com/BaaRai/ARTEX/releases/download/$ARTEX_VERSION"
+              asset="artex-${ARTEX_VERSION#v}-linux-amd64.zip"
+              curl -fsSL -o "/tmp/$asset" "$gh_release/$asset"
+              curl -fsSL -o /tmp/SHA256SUMS "$gh_release/SHA256SUMS"
+              want="$(awk -v a="$asset" '$2 == a { print $1 }' /tmp/SHA256SUMS)"
+              got="$(sha256sum "/tmp/$asset" | cut -d' ' -f1)"
+              [ -n "$want" ] && [ "$want" = "$got" ] || { echo "checksum mismatch for $asset" >&2; exit 1; }
+              rm -rf /rt/app
+              unzip -q "/tmp/$asset" -d /tmp/pkg
+              mv /tmp/pkg/artex-linux-amd64 /rt/app
+              chmod +x /rt/app/artex
+              mkdir -p /rt/bin /rt/.stamps
+              echo "$ARTEX_VERSION" > /rt/.stamps/artex
+              echo "[fetch-artex] done"
+          volumeMounts:
+            - name: runtime
+              mountPath: /rt
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        - name: go-tools
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/golang
+          image: public.ecr.aws/docker/library/golang:1.26-trixie@sha256:cff05dd6b81c901f2e8249eb6f91c69a60451d0f12c26bfef08e476a85b32d4d
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              # renovate: datasource=go depName=github.com/projectdiscovery/nuclei/v3
+              NUCLEI_VERSION=v3.11.1
+              # renovate: datasource=go depName=github.com/projectdiscovery/httpx
+              HTTPX_VERSION=v1.12.0
+              # renovate: datasource=go depName=github.com/projectdiscovery/subfinder/v2
+              SUBFINDER_VERSION=v2.17.0
+              # renovate: datasource=go depName=github.com/projectdiscovery/katana
+              KATANA_VERSION=v1.8.0
+              # renovate: datasource=go depName=github.com/ffuf/ffuf/v2
+              FFUF_VERSION=v2.3.0
+              # renovate: datasource=go depName=github.com/hahwul/dalfox
+              DALFOX_VERSION=v3.2.4
+              STAMP="nuclei=$NUCLEI_VERSION httpx=$HTTPX_VERSION subfinder=$SUBFINDER_VERSION"
+              STAMP="$STAMP katana=$KATANA_VERSION ffuf=$FFUF_VERSION dalfox=$DALFOX_VERSION"
+              [ "$(cat /rt/.stamps/go-tools 2>/dev/null || true)" = "$STAMP" ] && exit 0
+              echo "[go-tools] installing $STAMP"
+              mkdir -p /rt/bin /rt/.stamps
+              export GOBIN=/rt/bin GOPATH=/tmp/gopath GOCACHE=/tmp/gocache
+              export CGO_ENABLED=0 GOTOOLCHAIN=local
+              go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@"$NUCLEI_VERSION"
+              go install github.com/projectdiscovery/httpx/cmd/httpx@"$HTTPX_VERSION"
+              go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@"$SUBFINDER_VERSION"
+              go install github.com/projectdiscovery/katana/cmd/katana@"$KATANA_VERSION"
+              go install github.com/ffuf/ffuf/v2@"$FFUF_VERSION"
+              go install github.com/hahwul/dalfox@"$DALFOX_VERSION"
+              echo "$STAMP" > /rt/.stamps/go-tools
+              echo "[go-tools] done"
+          volumeMounts:
+            - name: runtime
+              mountPath: /rt
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+        - name: node-tools
+          # Node 22 line, same as the upstream image, on trixie to match the
+          # main container libc; the binary is copied to /rt/bin
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+          image: public.ecr.aws/docker/library/node:22-trixie-slim@sha256:68c76cfad89921b927eae28ba21407475e29d0ce450afcdbe70c1532db042b64
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              # renovate: datasource=npm depName=@playwright/mcp
+              PLAYWRIGHT_MCP_VERSION=0.0.83
+              # renovate: datasource=npm depName=@playwright/cli
+              PLAYWRIGHT_CLI_VERSION=0.1.22
+              # renovate: datasource=npm depName=playwright
+              PLAYWRIGHT_VERSION=1.64.1
+              export PLAYWRIGHT_BROWSERS_PATH=/rt/browsers
+              STAMP="pw-mcp=$PLAYWRIGHT_MCP_VERSION pw-cli=$PLAYWRIGHT_CLI_VERSION"
+              STAMP="$STAMP playwright=$PLAYWRIGHT_VERSION node=$(node --version)"
+              [ "$(cat /rt/.stamps/node-tools 2>/dev/null || true)" = "$STAMP" ] && exit 0
+              echo "[node-tools] installing $STAMP"
+              mkdir -p /rt/bin /rt/.stamps
+              npm install -g --prefix /rt/npm "@playwright/mcp@${PLAYWRIGHT_MCP_VERSION}" "@playwright/cli@${PLAYWRIGHT_CLI_VERSION}" "playwright@${PLAYWRIGHT_VERSION}"
+              /rt/npm/bin/playwright-cli --help >/dev/null
+              /rt/npm/bin/playwright install chromium
+              # @playwright/mcp bundles its own playwright-core expecting a different
+              # Chromium build; install that revision too (same as the upstream image)
+              "/rt/npm/lib/node_modules/@playwright/mcp/node_modules/.bin/playwright-core" install chromium
+              # node runtime for the main container: the binary from this digest-pinned
+              # image, same bookworm libc as the python base
+              cp /usr/local/bin/node /rt/bin/node
+              echo "$STAMP" > /rt/.stamps/node-tools
+              echo "[node-tools] done"
+          volumeMounts:
+            - name: runtime
+              mountPath: /rt
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+        - name: system-tools
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              # renovate: datasource=pypi depName=bbot
+              BBOT_VERSION=3.0.2
+              # renovate: datasource=pypi depName=sqlmap
+              SQLMAP_VERSION=1.9.9
+              STAMP="bbot=$BBOT_VERSION sqlmap=$SQLMAP_VERSION"
+              [ "$(cat /rt/.stamps/system-tools 2>/dev/null || true)" = "$STAMP" ] && exit 0
+              echo "[system-tools] installing $STAMP"
+              mkdir -p /rt/bin /rt/.stamps
+              rm -rf /rt/venv
+              python -m venv /rt/venv
+              /rt/venv/bin/pip install --no-cache-dir --upgrade "bbot==${BBOT_VERSION}" "sqlmap==${SQLMAP_VERSION}"
+              # Debian system tools + Chromium runtime libraries into a volume prefix:
+              # apt verifies each .deb against the signed indices, dpkg-deb -x unpacks
+              # into /rt/root so the main container gets them via PATH/LD_LIBRARY_PATH
+              PKGS="ca-certificates ripgrep curl wget vim git jq unzip xz-utils"
+              PKGS="$PKGS dnsutils iputils-ping netcat-openbsd inetutils-telnet whois nmap"
+              PKGS="$PKGS fonts-liberation"
+              PKGS="$PKGS libasound2 libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libcairo2"
+              PKGS="$PKGS libcups2 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0 libnspr4 libnss3"
+              PKGS="$PKGS libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6"
+              PKGS="$PKGS libxfixes3 libxkbcommon0 libxrandr2"
+              rm -rf /rt/root
+              mkdir -p /rt/root /tmp/debs
+              cd /tmp/debs
+              apt-get update
+              apt-get download $(apt-cache depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances $PKGS | grep '^\w' | sort -u)
+              for deb in *.deb; do dpkg-deb -x "$deb" /rt/root; done
+              echo "$STAMP" > /rt/.stamps/system-tools
+              echo "[system-tools] done"
+          volumeMounts:
+            - name: runtime
+              mountPath: /rt
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      # The Go server runs as root so it can chown the executor home and
+      # drop agent subprocesses to an unprivileged uid (10001); CHOWN/
+      # SETUID/SETGID are the minimum caps for that sandbox setup.
+      # fsGroup 0: volumes hold root-owned files; the chart default (1000)
+      # would recursively chgrp them and break the executor's home.
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+        capabilities:
+          add:
+            - CHOWN
+            - SETUID
+            - SETGID
+      resources:
+        requests:
+          cpu: 250m
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 4Gi
+      service:
+        type: ClusterIP
+        port: 8787
+        targetPort: 8787
+        portName: http
+      healthChecks:
+        # GET /api/health returns {"ok":true} anonymously
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8787
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 60
+          successThreshold: 1
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8787
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8787
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: runtime
+          mountPath: /rt
+        - name: data
+          mountPath: /app/data
+        - name: keys
+          mountPath: /app/keys
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          # Assembled toolbox + release binary; rebuilt per-slice on version
+          # change, deliberately excluded from kopia backups. Capacity
+          # profiles are distinct across all four claims (12/30/1/10Gi) so
+          # no claim can bind another subsystem's Available PV.
+          - name: runtime
+            capacity: 12Gi
+          # Traffic index, task files, transcripts, executor home
+          - name: data
+            capacity: 30Gi
+          # jwt.key + secret.key; losing these loses all sessions and sealed
+          # secrets (AES-256-GCM key material)
+          - name: keys
+            capacity: 1Gi
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/artex-secrets"
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Security"
+      displayName: "ARTEX"
+      externalHost: "https://artex.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/artex/icon.png"
+      metaDescription: "Self-hosted autonomous penetration testing platform — LLM-driven multi-agent offensive security with evidence-bound findings"
+      metaPublisher: "ARTEX (AGPL-3.0)"
+
+    httproute:
+      enabled: false
+
+    gatus:
+      enabled: true
+      group: security
+      path: /api/health
+
+    postgres:
+      enabled: true
+      backup:
+        enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:70664ebcfa1100361b5bdc28bbf06fdbe08db2dc4ad7bd14de33c5e05fe8ea8e
+      instances: 1
+      database: artex
+      owner: artex
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+
+    # Kopia snapshots of the durable Longhorn volumes only; runtime is
+    # rebuildable from the pinned versions in the init scripts
+    backup:
+      enabled: true
+      volumes:
+        - data
+        - keys
