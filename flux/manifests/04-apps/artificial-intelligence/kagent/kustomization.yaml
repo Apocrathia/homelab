@@ -13,6 +13,8 @@ resources:
   - scheduled-backup.yaml
   - crds-helmrelease.yaml
   - helmrelease.yaml
+  - workerpool.yaml
+  - builtin-agents
   - hello-substrate.yaml
   - crossplane.yaml
 

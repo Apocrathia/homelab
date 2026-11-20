@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: podcertificate-controller-system
+  labels:
+    app.kubernetes.io/name: substrate-podcert
+    app.kubernetes.io/component: certificate-signer
+    app.kubernetes.io/part-of: substrate
+    app.kubernetes.io/managed-by: flux

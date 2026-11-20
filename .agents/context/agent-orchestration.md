@@ -32,14 +32,16 @@ Register kagent agents in `litellm.yml` under top-level `agents:` with
 
 ### Namespaces
 
-| Kind                         | Namespace        | Examples                                                  |
-| ---------------------------- | ---------------- | --------------------------------------------------------- |
-| User / domain agents         | `agent-<domain>` | `agent-git/git-agent`, `agent-home/home-agent`            |
-| System agents (kagent chart) | `kagent`         | `k8s-agent`, `helm-agent`, `observability-agent`, …       |
-| Homelab tech assistant       | `kagent`         | `homelab-agent` (Discord bridge stays in `agent-homelab`) |
+The whole kagent fleet lives in `kagent/<name>`: kagent 1.0 tool refs are
+same-namespace-only, so the fleet shares one namespace and one WorkerPool.
+The former `agent-<domain>` namespaces are deleted except two bridge-only
+survivors.
 
-Do not probe user agents under `kagent/<name>`: cards live under
-`agent-<domain>/<name>`.
+| Kind                         | Namespace | Examples                                                       |
+| ---------------------------- | --------- | -------------------------------------------------------------- |
+| User / domain agents         | `kagent`  | `kagent/git-agent`, `kagent/home-agent`, `kagent/search-agent` |
+| Built-in system agents       | `kagent`  | `k8s-agent`, `helm-agent`, `observability-agent`, …            |
+| Bridge namespaces (MCP only) | `agent-*` | `agent-home`, `agent-homelab` (deploy the MCP bridges)         |
 
 ## Need → A2A → MCP fallback
 
@@ -52,12 +54,12 @@ is down or unregistered, use those aliases through LiteLLM.
 
 | Need                                     | A2A agent (`namespace`/`name`)                                               | MCP fallback (LiteLLM aliases)                                                  |
 | ---------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| GitHub / GitLab (issues, MRs, pipelines) | `agent-git`/`git-agent`                                                      | `github`, `gitlab`                                                              |
-| Home Assistant automation / devices      | `agent-home`/`home-agent`                                                    | `homeassistant` (also `grafana` on that agent)                                  |
-| Proxmox / TrueNAS / UniFi                | `agent-infrastructure`/`infrastructure-agent`                                | `proxmox`, `truenas`, `unifi`                                                   |
-| Sonarr / Radarr (Servarr)                | `agent-media`/`media-agent`                                                  | `servarr`                                                                       |
-| Web search                               | `agent-search`/`search-agent`                                                | `searxng`, `firecrawl`                                                          |
-| Encyclopedia / memory / repo docs        | `agent-knowledge`/`knowledge-agent`                                          | `openzim`, `qdrant`, `deepwiki` (+ `searxng` / `firecrawl` if search is enough) |
+| GitHub / GitLab (issues, MRs, pipelines) | `kagent`/`git-agent`                                                         | `github`, `gitlab`                                                              |
+| Home Assistant automation / devices      | `kagent`/`home-agent`                                                        | `homeassistant` (also `grafana` on that agent)                                  |
+| Proxmox / TrueNAS / UniFi                | `kagent`/`infrastructure-agent`                                              | `proxmox`, `truenas`, `unifi`                                                   |
+| Sonarr / Radarr (Servarr)                | `kagent`/`media-agent`                                                       | `servarr`                                                                       |
+| Web search                               | `kagent`/`search-agent`                                                      | `searxng`, `firecrawl`                                                          |
+| Encyclopedia / memory / repo docs        | `kagent`/`knowledge-agent`                                                   | `openzim`, `qdrant`, `deepwiki` (+ `searxng` / `firecrawl` if search is enough) |
 | Homelab Q&A / multi-domain orchestration | `kagent`/`homelab-agent`                                                     | Compose domain MCPs (`flux`, `grafana`, …) as needed                            |
 | Hermes (orchestrator, Discord, ops)      | `hermes-agent`/`hermes-agent` (registered on LiteLLM)                        | Direct MCP tools; delegate via `a2a_call` to kagent agents                      |
 | Kubernetes ops / troubleshooting         | `kagent`/`k8s-agent`                                                         | `flux` (inventory / reconcile); no general kubectl MCP                          |
@@ -73,6 +75,8 @@ is down or unregistered, use those aliases through LiteLLM.
   [`development-loop.md`](./development-loop.md) graph.
 - Delegate domain work to the A2A agent in the table when registered; otherwise
   the MCP fallback column.
-- Do not invent agents. Live fleet is the rows above (user domain agents +
-  system agents in `kagent`). Manifest inventory:
+- Do not invent agents. Live fleet is the rows above (all kagent agents in
+  `kagent`, built-ins vendored under
+  `flux/manifests/04-apps/artificial-intelligence/kagent/builtin-agents/`).
+  Manifest inventory:
   [`agents/README.md`](../../flux/manifests/04-apps/artificial-intelligence/agents/README.md).

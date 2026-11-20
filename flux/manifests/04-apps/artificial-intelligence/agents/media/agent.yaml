@@ -1,103 +1,19 @@
 ---
-apiVersion: kagent.dev/v1alpha2
+# Thin wrapper: the behavior lives in AgentTemplate/media-agent so other
+# agents can bind it as a same-namespace subAgent tool (v1alpha3 agent-tools
+# are namespace-local). Runs on the chart Harness + WorkerPool in `kagent`.
+apiVersion: api.kagent.dev/v1alpha3
 kind: Agent
 metadata:
   name: media-agent
-  namespace: agent-media
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: media-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: artificial-intelligence
 spec:
-  description: Media management agent for Sonarr/Radarr automation
-  # Allow cross-namespace access from any namespace (secured via Cilium NetworkPolicy)
-  allowedNamespaces:
-    from: All
-  type: Declarative
-  declarative:
-    modelConfig: media-agent-model
-    a2aConfig:
-      skills:
-        - id: servarr-search-and-add
-          name: Sonarr and Radarr Search
-          description: Search Sonarr and Radarr for TV series and movies — first step before adding new content for download
-          examples:
-            - Search Sonarr for Severance
-            - Find the movie Sicario in Radarr
-            - Look up Foundation series
-            - Search for The Bear season 3
-          tags:
-            - sonarr
-            - radarr
-            - search
-            - tv
-            - movies
-        - id: servarr-queue-and-recents
-          name: Sonarr and Radarr Queue and Recents
-          description: Inspect the active download queue and recently grabbed series and movies in Sonarr and Radarr
-          examples:
-            - What's in the Sonarr download queue?
-            - Show recent Radarr movies
-            - List recently grabbed TV episodes
-            - Check Radarr queue progress
-          tags:
-            - sonarr
-            - radarr
-            - queue
-            - downloads
-            - recents
-        - id: servarr-calendar
-          name: Sonarr and Radarr Calendar
-          description: Show upcoming TV episodes and movie releases tracked by Sonarr and Radarr
-          examples:
-            - What's coming up on Sonarr this week?
-            - Show the Radarr release calendar
-            - When's the next episode of Severance?
-            - List upcoming movie releases
-          tags:
-            - sonarr
-            - radarr
-            - calendar
-            - upcoming
-            - releases
-    tools:
-      - type: McpServer
-        mcpServer:
-          name: servarr-mcp
-          kind: RemoteMCPServer
-          apiGroup: kagent.dev
-          toolNames:
-            - sonarr_search_series
-            - sonarr_get_recent_series
-            - sonarr_get_queue
-            - sonarr_get_calendar
-            - radarr_search_movies
-            - radarr_get_recent_movies
-            - radarr_get_queue
-            - radarr_get_calendar
-    systemMessage: |
-      You are a media management specialist for a homelab media server setup.
-
-      Operational Protocol:
-      1. Identify the request as Servarr (Sonarr/Radarr downloads and automation)
-      2. Use search tools to find content before taking actions
-      3. When adding content, confirm the correct match
-      4. Provide clear status summaries
-
-      Tools (Sonarr/Radarr):
-
-      1. sonarr_search_series / radarr_search_movies
-      Use when: user wants to find or add TV shows or movies.
-      Trigger phrases: "add", "download", "get", "request", TV show names, movie names, etc.
-
-      2. sonarr_get_recent_series / radarr_get_recent_movies
-      Use when: user asks about recently grabbed/downloaded content.
-
-      3. sonarr_get_queue / radarr_get_queue
-      Use when: user asks about download status or queue.
-      Trigger phrases: "downloading", "queue", "status", "progress", etc.
-
-      4. sonarr_get_calendar / radarr_get_calendar
-      Use when: user asks about upcoming releases or what's coming soon.
-      Trigger phrases: "upcoming", "calendar", "coming soon", "next episode", etc.
-
-      Execution Guidelines:
-      - Use search before adding - confirm correct match
-      - Provide clear status updates (downloading, available, missing)
-      - Keep responses concise and actionable
+  harnessRef:
+    name: kagent-default
+  template:
+    ref:
+      name: media-agent

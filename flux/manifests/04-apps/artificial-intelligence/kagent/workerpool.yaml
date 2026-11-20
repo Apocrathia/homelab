@@ -1,0 +1,21 @@
+---
+apiVersion: ate.dev/v1
+kind: WorkerPool
+metadata:
+  name: kagent-default
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: kagent
+    app.kubernetes.io/component: worker-pool
+    kagent.dev/worker-pool: kagent-default
+spec:
+  # Capacity for the whole consolidated fleet: every custom and vendored
+  # builtin agent runs in this namespace now — replica count is parity with
+  # the 0.10.x ate-system pool that served the same agent set.
+  replicas: 4
+  # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateworker-gvisor
+  workerImage: ghcr.io/kagent-dev/substrate/ateworker-gvisor:v1.0.1
+  sandboxClasses:
+    - name: gvisor
+      configRef:
+        name: gvisor-default

@@ -8,8 +8,11 @@ Media management agent for Servarr (Sonarr/Radarr) integration.
 
 ## Configuration
 
-The agent is defined by the `Agent` CR in `agent.yaml`; model wiring in
-`modelconfig.yaml`; MCP tools via `remotemcpserver.yaml`.
+The behavior lives in the `AgentTemplate` CR (`agenttemplate.yaml`) in the
+`kagent` namespace (the consolidated agent fleet); `agent.yaml` is a thin
+`Agent` wrapper on the chart Harness. Model wiring in `modelconfig.yaml`; MCP
+tools via `remotemcpserver.yaml` — all in `kagent`. homelab-agent binds this
+agent as a same-namespace subAgent tool.
 
 ## Tools
 
@@ -34,10 +37,10 @@ Requires 1Password item `media-agent-secrets` in Secrets vault with:
 
 ```bash
 # Check agent status
-kubectl get agents media-agent --namespace agent-media
+kubectl get agents media-agent --namespace kagent
 
-# View agent logs
-kubectl logs --namespace agent-media -l app.kubernetes.io/name=media-agent -f
+# Controller logs (substrate agents run on the shared worker pool)
+kubectl logs --namespace kagent deployment/kagent-controller -f
 ```
 
 ## References

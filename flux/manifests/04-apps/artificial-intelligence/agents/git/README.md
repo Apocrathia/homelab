@@ -8,8 +8,11 @@ Git platform agent for GitHub and GitLab repository management.
 
 ## Configuration
 
-The agent is defined by the `Agent` CR in `agent.yaml`; model wiring in
-`modelconfig.yaml`; MCP tools via `remotemcpserver.yaml`.
+The behavior lives in the `AgentTemplate` CR (`agenttemplate.yaml`) in the
+`kagent` namespace (the consolidated agent fleet); `agent.yaml` is a thin
+`Agent` wrapper on the chart Harness. Model wiring in `modelconfig.yaml`; MCP
+tools via `remotemcpserver.yaml` — all in `kagent`. homelab-agent binds this
+agent as a same-namespace subAgent tool.
 
 ## Tools
 
@@ -33,7 +36,7 @@ Requires 1Password item `git-agent-secrets` in Secrets vault with:
 | ----------------- | --------------- |
 | `litellm-api-key` | LiteLLM API key |
 
-Also syncs `github-mcp-secrets` into this namespace as `github-mcp-client-secrets`.
+Also syncs `github-mcp-secrets` into `kagent` as `github-mcp-client-secrets`.
 The git-agent RemoteMCPServer sends that value as the `Authorization` header on
 every call to github-mcp (the MCP server itself stores no PAT).
 
@@ -41,7 +44,7 @@ every call to github-mcp (the MCP server itself stores no PAT).
 | --------------- | --------------------------------------------------------------------- |
 | `authorization` | GitHub PAT **including the `Bearer ` prefix** (e.g. `Bearer ghp_...`) |
 
-Also syncs `gitlab-mcp-secrets` into this namespace as `gitlab-mcp-client-secrets`.
+Also syncs `gitlab-mcp-secrets` into `kagent` as `gitlab-mcp-client-secrets`.
 The RemoteMCPServer sends `gitlab-token` as the `Private-Token` header on every
 call to gitlab-mcp (REMOTE_AUTHORIZATION; the MCP pod holds no PAT).
 
@@ -53,10 +56,10 @@ call to gitlab-mcp (REMOTE_AUTHORIZATION; the MCP pod holds no PAT).
 
 ```bash
 # Check agent status
-kubectl get agents git-agent --namespace agent-git
+kubectl get agents git-agent --namespace kagent
 
-# View agent logs
-kubectl logs --namespace agent-git -l app.kubernetes.io/name=git-agent -f
+# Controller logs (substrate agents run on the shared worker pool)
+kubectl logs --namespace kagent deployment/kagent-controller -f
 ```
 
 ## References

@@ -1,0 +1,25 @@
+---
+# Sandbox egress grant for the investigations node (replaces the 0.10.x
+# Agent.sandbox.network.allowedDomains entry). Write lane: plain HTTP, no
+# auth (node NetworkPolicy scopes callers). Query lane: node REST API behind
+# X-Tenzir-Token — the gateway injects the credential from tenzir-secrets,
+# so the value never reaches the runtime (the 0.10.x file-mount channel is
+# gone in v1alpha3; the runtime sends the header with any placeholder value).
+apiVersion: api.kagent.dev/v1alpha3
+kind: EgressPolicy
+metadata:
+  name: investigator-tenzir-egress
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: investigator-agent
+    app.kubernetes.io/component: egress-policy
+    app.kubernetes.io/part-of: artificial-intelligence
+spec:
+  destinations:
+    - origin: http://tenzir-node-investigations.tenzir.svc.cluster.local:8080
+    - origin: https://tenzir-node-investigations.tenzir.svc.cluster.local:5160
+      authentication:
+        header: X-Tenzir-Token
+        secretKeyRef:
+          name: tenzir-secrets
+          key: investigations-api-token

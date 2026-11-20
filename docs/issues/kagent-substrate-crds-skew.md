@@ -1,7 +1,7 @@
 ---
 title: "kagent 0.10.0 cannot create ActorTemplates against substrate 0.0.6 (CRD skew)"
 kind: bug
-status: open
+status: superseded
 severity: high
 source: agent
 found_at: 2026-09-05
@@ -69,3 +69,13 @@ substrate upgrade lands (renovate would need an ignore).
 ## Feedback loop
 
 - After the substrate chart bump merges: `kubectl get helmrelease -n ate-system substrate-crds substrate` both Ready, then AgentHarness openclaw becomes Ready within a reconcile interval.
+
+## Resolution (2026-11-19)
+
+Superseded by the kagent 1.0.1 + substrate 1.0.1 migration
+(`chore/upgrade-kagent-substrate-1.0`): the 1.0 API replaced
+AgentHarness/ActorTemplate with Agent + AgentTemplate + Harness
+(controller-compiled ActorTemplates), so the v1alpha2 skew this issue
+tracked no longer exists. The openclaw harness it blocked is deleted with
+that migration (backend removed upstream; the openclaw README carries the
+reactivation facts).

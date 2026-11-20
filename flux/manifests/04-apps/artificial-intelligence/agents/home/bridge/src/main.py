@@ -32,7 +32,7 @@ logger = logging.getLogger("home-agent-bridge")
 
 KAGENT_URL = os.environ.get(
     "KAGENT_URL",
-    "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent/",
+    "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/home-agent/",
 )
 LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "8080"))
 A2A_TIMEOUT_SECONDS = float(os.environ.get("A2A_TIMEOUT_SECONDS", "300"))

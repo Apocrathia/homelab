@@ -1,30 +1,30 @@
 ---
 # RemoteMCPServer that references the MCPServer in mcp-searxng namespace
 # This works around kagent's lack of cross-namespace MCPServer support
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: searxng-mcp
-  namespace: agent-search
+  namespace: kagent
   labels:
     app.kubernetes.io/name: searxng-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-search
+    app.kubernetes.io/part-of: search-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
   url: "http://searxng.mcp-searxng.svc.cluster.local:8080/mcp"
   description: "SearXNG web search - search the web and read URLs"
 ---
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: firecrawl-mcp
-  namespace: agent-search
+  namespace: kagent
   labels:
     app.kubernetes.io/name: firecrawl-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-search
+    app.kubernetes.io/part-of: search-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

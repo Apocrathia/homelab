@@ -8,17 +8,13 @@ The homelab tech assistant, accessible via Discord. Powered by kagent.
 
 This deployment includes:
 
-- Declarative kagent Agent CRD in the `kagent` namespace (same namespace as system agents for tool wiring)
+- kagent Agent CR (v1alpha3) in the `kagent` namespace, running on the chart Harness + WorkerPool
 - Discord MCP (`mcp-discord`) for outbound messages and channel tools; `RemoteMCPServer` in `kagent`
 - Discord bridge in `agent-homelab` that forwards messages to kagent via A2A
 - Integration with LiteLLM for model access
-- Delegation to specialized agents via A2A:
-  - `search-agent` - Web search and URL reading
-  - `k8s-agent` - Kubernetes cluster operations (system)
-  - `helm-agent` - Helm release management (system)
-  - `cilium-policy-agent` - Network policy creation (system)
-  - `cilium-manager-agent` - Cilium management (system)
-  - `observability-agent` - Prometheus/Grafana monitoring (system)
+- SubAgent tools (same-namespace AgentTemplates; v1alpha3 agent-tools are
+  namespace-local, which is why the whole fleet consolidated into `kagent`):
+  investigator, k8s, observability, media, infrastructure, git, knowledge
 
 ```mermaid
 sequenceDiagram

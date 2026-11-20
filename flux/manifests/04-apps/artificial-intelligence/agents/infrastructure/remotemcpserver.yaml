@@ -1,43 +1,43 @@
 ---
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: proxmox-mcp
-  namespace: agent-infrastructure
+  namespace: kagent
   labels:
     app.kubernetes.io/name: proxmox-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-infrastructure
+    app.kubernetes.io/part-of: infrastructure-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
   url: "http://proxmox.mcp-proxmox.svc.cluster.local:8080/mcp"
   description: "Proxmox VE - VM and container management, cluster status"
 ---
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: truenas-mcp
-  namespace: agent-infrastructure
+  namespace: kagent
   labels:
     app.kubernetes.io/name: truenas-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-infrastructure
+    app.kubernetes.io/part-of: infrastructure-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
   url: "http://truenas.mcp-truenas.svc.cluster.local:8080/mcp"
   description: "TrueNAS - storage pools, datasets, shares, and system status"
 ---
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: unifi-mcp
-  namespace: agent-infrastructure
+  namespace: kagent
   labels:
     app.kubernetes.io/name: unifi-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-infrastructure
+    app.kubernetes.io/part-of: infrastructure-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

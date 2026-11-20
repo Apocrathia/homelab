@@ -102,25 +102,25 @@ a2a_agents:
     url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent"
     timeout: 120
   git-agent:
-    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent"
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/git-agent"
     timeout: 120
   home-agent:
-    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent"
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/home-agent"
     timeout: 120
   infrastructure-agent:
-    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/infrastructure-agent"
     timeout: 120
   investigator-agent:
     url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/investigator-agent"
     timeout: 120
   knowledge-agent:
-    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent"
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/knowledge-agent"
     timeout: 120
   media-agent:
-    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-media/media-agent"
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/media-agent"
     timeout: 120
   search-agent:
-    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent"
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/search-agent"
     timeout: 120
   k8s-agent:
     url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/k8s-agent"

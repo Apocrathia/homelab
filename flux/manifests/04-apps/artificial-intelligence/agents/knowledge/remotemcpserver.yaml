@@ -1,14 +1,14 @@
 ---
 # RemoteMCPServer for Qdrant vector knowledge base
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: qdrant-mcp
-  namespace: agent-knowledge
+  namespace: kagent
   labels:
     app.kubernetes.io/name: qdrant-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-knowledge
+    app.kubernetes.io/part-of: knowledge-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -16,15 +16,15 @@ spec:
   description: "Qdrant vector store - semantic knowledge storage and retrieval"
 ---
 # RemoteMCPServer for OpenZIM offline encyclopedic content
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: openzim-mcp
-  namespace: agent-knowledge
+  namespace: kagent
   labels:
     app.kubernetes.io/name: openzim-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-knowledge
+    app.kubernetes.io/part-of: knowledge-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -32,15 +32,15 @@ spec:
   description: "OpenZIM - offline Wikipedia and encyclopedic content"
 ---
 # RemoteMCPServer for DeepWiki GitHub repository documentation
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: deepwiki-mcp
-  namespace: agent-knowledge
+  namespace: kagent
   labels:
     app.kubernetes.io/name: deepwiki-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-knowledge
+    app.kubernetes.io/part-of: knowledge-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

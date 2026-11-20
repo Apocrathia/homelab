@@ -14,6 +14,8 @@ spec:
   description: |
     Isolates MCP servers to only accept traffic from authorized namespaces.
     Allowed sources: namespaces with mcp-client=true label, same namespace, system namespaces.
+    (kagent and litellm are the mcp-client namespaces since the agent fleet
+    consolidated into kagent; the agent-* namespaces no longer exist.)
   # Target all pods in namespaces labeled as MCP servers
   endpointSelector:
     matchExpressions:
@@ -29,7 +31,7 @@ spec:
               operator: In
               values:
                 - "true"
-    # Allow traffic from MCP client namespaces (litellm, kagent, agent-*)
+    # Allow traffic from MCP client namespaces (kagent, litellm)
     - fromEndpoints:
         - matchExpressions:
             - key: io.cilium.k8s.namespace.labels.mcp-client

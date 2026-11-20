@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/1Password/onepassword-operator/main/config/crd/bases/onepassword.com_onepassworditems.yaml
+# ED25519 signing pools for substrate-podcert. Each 1Password item needs a
+# `pool` field holding the CA pool JSON generated once by the operator from a
+# substrate v1.0.1 checkout:
+#   go run ./cmd/ate-setup create podcertificate-controller-cas
+# The controller mounts these as its three signer pools (service-DNS,
+# pod-identity, postgres) and publishes the matching ClusterTrustBundles.
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: service-dns-ca-pool
+  namespace: podcertificate-controller-system
+spec:
+  itemPath: "vaults/Secrets/items/service-dns-ca-pool"
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: pod-identity-ca-pool
+  namespace: podcertificate-controller-system
+spec:
+  itemPath: "vaults/Secrets/items/pod-identity-ca-pool"
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: postgres-ca-pool
+  namespace: podcertificate-controller-system
+spec:
+  itemPath: "vaults/Secrets/items/postgres-ca-pool"

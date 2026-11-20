@@ -1,12 +1,13 @@
 ---
+# Bridge-only namespace: home-agent itself runs in `kagent` with the rest of
+# the consolidated fleet; this namespace hosts the home-agent-bridge
+# HelmRelease (HA rest_command webhook receiver).
 apiVersion: v1
 kind: Namespace
 metadata:
   name: agent-home
   labels:
-    app.kubernetes.io/name: home-agent
-    app.kubernetes.io/component: agent
+    app.kubernetes.io/name: home-agent-bridge
+    app.kubernetes.io/component: bridge
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
-    kagent-agent: "true"
-    mcp-client: "true"

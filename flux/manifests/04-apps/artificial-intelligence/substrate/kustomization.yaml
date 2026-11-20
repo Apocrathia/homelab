@@ -9,6 +9,13 @@ resources:
   - namespace.yaml
   - secret.yaml
   - crds-helmrelease.yaml
+  - podcert-namespace.yaml
+  - podcert-ca-pools.yaml
+  - podcert-helmrelease.yaml
+  - postgres.yaml
+  - postgres-secrets.yaml
+  - scheduled-backup.yaml
+  - backup-secret.yaml
   - cache-helmrelease.yaml
+  - atelet-helmrelease.yaml
   - helmrelease.yaml
-  - workerpool.yaml
