@@ -26,9 +26,12 @@ spec:
       retries: 3
   values:
     # Second ExternalDNS instance: writes per-app A records for
-    # *.gateway.services.apocrathia.com into the tailnet CoreDNS's etcd so
-    # tailnet devices resolve the same hostnames the LAN uses, but pointing
-    # at tailnet-gateway (100.120.155.113) instead of main-gateway.
+    # *.gateway.services.apocrathia.com plus the bare
+    # matrix.apocrathia.com server_name host into the tailnet CoreDNS's
+    # etcd so tailnet devices resolve the same hostnames the LAN uses,
+    # but pointing at tailnet-gateway's device address - which follows
+    # the gateway status, so device recreation re-points records
+    # automatically - instead of main-gateway.
     # The UniFi-backed instance in 03-services/external-dns keeps the LAN
     # side; both instances must keep disjoint gateway filters or dual-
     # parentRef routes leak CGNAT addresses into the wrong DNS zone.
@@ -48,6 +51,7 @@ spec:
     txtPrefix: "k8s.tailnet.%{record_type}-"
     domainFilters:
       - gateway.services.apocrathia.com
+      - matrix.apocrathia.com
     extraArgs:
       # Only routes attached to tailnet-gateway produce records here. Routes
       # on main-gateway are the UniFi instance's job.

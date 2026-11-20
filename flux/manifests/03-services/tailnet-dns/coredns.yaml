@@ -1,8 +1,8 @@
 ---
 # Corefile for the tailnet DNS resolver. Two server blocks: the homelab
-# domain zone apocrathia.com (etcd app zone gateway.services, static
-# game host and matrix server_name records, forward of LAN-only names
-# to the services VLAN resolver at 10.100.1.1) and the
+# domain zone apocrathia.com (etcd zones gateway.services and
+# matrix.apocrathia.com, static game host record, forward of LAN-only
+# names to the services VLAN resolver at 10.100.1.1) and the
 # access.apocrathia.com zone (forwarded to the access VLAN resolver at
 # 10.100.0.1). Queries for any other zone are refused - this instance is
 # not a general resolver.
@@ -19,13 +19,13 @@ data:
     # Homelab domain zone, one block for everything under apocrathia.com
     # except the access VLAN (own block below, different upstream). Chain:
     # hosts -> etcd -> forward.
-    # - hosts: static records for the bare game host (one tailnet
-    #   address, both names - alias) and for matrix.apocrathia.com, the
-    #   Synapse server_name host at the tailnet-gateway operator-proxy
-    #   device IP - the federation/client door. fallthrough passes the
-    #   rest on.
-    # - etcd: the app zone gateway.services.apocrathia.com (records
-    #   written by the external-dns-tailnet release in this namespace).
+    # - hosts: static record for the bare game host (one tailnet
+    #   address, both names - alias). fallthrough passes the rest on.
+    # - etcd: the app zone gateway.services.apocrathia.com and the bare
+    #   matrix.apocrathia.com server_name host (records written by the
+    #   external-dns-tailnet release in this namespace; the matrix
+    #   record follows tailnet-gateway's status address, so gateway
+    #   device recreation re-points it automatically).
     # - forward: LAN-only names (e.g. storage.services.apocrathia.com,
     #   the NAS) come from the services VLAN resolver at 10.100.1.1 -
     #   the same answers LAN clients get.
@@ -39,11 +39,10 @@ data:
         ready :8181
         hosts {
             100.108.85.40 game.services.apocrathia.com game.apocrathia.com
-            100.120.155.113 matrix.apocrathia.com
             ttl 60
             fallthrough
         }
-        etcd gateway.services.apocrathia.com {
+        etcd gateway.services.apocrathia.com matrix.apocrathia.com {
             path /skydns
             endpoint http://etcd.tailnet-dns.svc.cluster.local:2379
             # no fallthrough: unknown names in the app zone NXDOMAIN
