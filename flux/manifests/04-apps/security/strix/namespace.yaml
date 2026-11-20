@@ -11,6 +11,11 @@ metadata:
     # use; the current images pull from quay.io/public.ecr.aws, and podman
     # fetches the ghcr.io sandbox itself).
     images/dockerhub: "true"
+    # Opt-in to the shared kopiur repository (ClusterRepository/nas-rustfs
+    # selects consumer namespaces by this label and evaluates it at
+    # admission — without it the chart-rendered SnapshotPolicy is rejected,
+    # which is why only the schedule existed on-cluster)
+    backup.apocrathia.com/repo: nas-rustfs
     # The rootless podman sandbox daemon (podman.yaml) needs seccomp
     # Unconfined plus SETUID/SETGID in its bounding set for the nested user
     # namespace containerd's RuntimeDefault profile blocks — both beyond the
