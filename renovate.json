@@ -63,6 +63,12 @@
       "enabled": false
     },
     {
+      "description": "ASF stays on the 6.x lineage — v7 removes plugin APIs (IBotCommand2, Steam.EAccess) that FreePackages 1.7.1.x and ASFFreeGames v1.9.x are built against (TypeLoadException crash loop); lift when both plugins ship ASF-7-compatible releases",
+      "matchPackageNames": ["ghcr.io/justarchinet/archisteamfarm"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "Strict semver only — registry floods non-semver tags (main-*, sha-*, litellm_* branch builds, latest); default docker versioning would chase them",
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
       "versioning": "semver"

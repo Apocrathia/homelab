@@ -19,8 +19,12 @@ spec:
   values:
     app:
       name: archisteamfarm
+      # ASF held on the 6.x lineage — v7 removed plugin APIs (IBotCommand2,
+      # Steam.EAccess) that FreePackages 1.7.1.x and ASFFreeGames v1.9.x are
+      # built against (TypeLoadException crash loop, 2026-11-20). Major updates
+      # blocked in renovate.json; lift when both plugins ship ASF-7 builds.
       # renovate: datasource=docker depName=ghcr.io/justarchinet/archisteamfarm
-      image: ghcr.io/justarchinet/archisteamfarm:7.0.0.9@sha256:8bd6ca41ad7fb192300380f047a2951d41bf92936b316036a7aa3f8a38797159
+      image: ghcr.io/justarchinet/archisteamfarm:6.3.11.7@sha256:884137cd5dd93c42c789008ce12016107073b1c7bfa79c59cd675b583ae30975
       container:
         name: archisteamfarm
         port: 1242
