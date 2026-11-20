@@ -13,8 +13,8 @@ area: security
 > storage/secrets foundation, SSO, integration, risks, and a slice plan.
 > Promoted from `.scratch/misp-opencti-design.md` into the ledger on
 > 2026-10-10 when the operator approved the deployment. Follow-ups are
-> landing as issues `docs/issues/misp-deployment.md` and
-> `docs/issues/opencti-deployment.md`.
+> landing as the misp-deployment and opencti-deployment issues (both
+> shipped, live-verified, since delete-on-ship'd; git history).
 
 **Promotion corrections (2026-10-10, slice 1):** the scratch version named
 the MariaDB backup bucket `opencti-mariadb-backups` (wrong owner: MariaDB

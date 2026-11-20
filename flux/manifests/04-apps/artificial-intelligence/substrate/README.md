@@ -33,6 +33,14 @@ kagent controller substrate endpoints live in `config.substrate` on the
 release (`dns:///api.ate-system.svc:443`, `https://atenet-router.ate-system.svc:443`,
 `https://idp.ate-system.svc`).
 
+kagent releases vendor a specific substrate client version (the
+`replace github.com/agent-substrate/substrate` line in kagent's `go/go.mod`).
+Keep the deployed substrate chart at or below that version. Chart and CRDs are
+held at the pinned kagent pairing (see `helmrelease.yaml`); close Renovate bumps
+until the substrate-kagent version-skew issue's acceptance passes (superseded
+by the merged kagent/substrate 1.0.1 upgrade; delete-on-ship'd, git history
+is the archive).
+
 ## Access
 
 Internal only. API endpoint used by kagent:

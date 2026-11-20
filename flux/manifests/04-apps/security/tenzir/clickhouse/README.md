@@ -372,9 +372,8 @@ toYYYYMM(time)`, monthly. Reason: part-count pressure; daily meant up
   `ttl_only_drop_parts` a `DELETE` horizon lands whole-month late at
   most (rows can wait up to a month past their age for their part to
   drop), and partition keys have no live `ALTER`, the live cutover
-  plan is
-  [`docs/plans/ocsf-monthly-partition-cutover.md`](../../../../../../docs/plans/ocsf-monthly-partition-cutover.md)
-  (tracked as
+  plan is the "OCSF store monthly-partition cutover" runbook plan
+  (delete-on-ship'd; git history is the archive), tracked as
   [`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../../docs/issues/ocsf-live-monthly-cutover.md)).
 - **PVC-only metadata**: schema metadata (incl. S3 disk metadata under
   `/var/lib/clickhouse/disks/`) lives on the PVC only, losing all
@@ -736,5 +735,5 @@ The CRs match the operator chart 0.27.4 CRD schemas; the DDL +
 tiered-policy XML run
 end-to-end on `clickhouse-server:25.8.33.6` with a Keeper (tables,
 grants enforcement, dotted-column inserts, TTL move-to-cold, 400d
-delete cap, restart idempotency, see the plan's evidence notes in
-[`docs/plans/clickhouse-rollout.md`](../../../../../../docs/plans/clickhouse-rollout.md)).
+delete cap, restart idempotency, see the plan's evidence notes in the
+"ClickHouse rollout" plan (delete-on-ship'd; git history is the archive)).

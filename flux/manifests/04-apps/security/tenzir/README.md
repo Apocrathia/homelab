@@ -5,8 +5,8 @@
 Seven standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own pipelines and
 no node-local storage, every write attests and INSERTs to ClickHouse
-in-stream ([stateless migration
-plan](../../../../../docs/plans/tenzir-stateless-migration.md)). The [core node](./nodes/core/README.md) is the detection plane:
+in-stream (per the "Tenzir CH-only stateless migration" plan,
+delete-on-ship'd; git history). The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to
 a unified OCSF bus, runs one sigma pass over it, and INSERTs every
 write to ClickHouse in-stream. The [tetragon node](./nodes/tetragon/README.md) owns only the
@@ -112,8 +112,9 @@ and the rendered Secret keys match them:
   `enrichment-node-token` / `introspection-node-token` / `intel-node-token`: the
   pre-provisioned Tenzir Platform node tokens, one per node
 - `opencti-taxii-token`: the OpenCTI TAXII 2.1 bearer token, written
-  by the opencti lane, its SIEM-handoff checklist
-  ([`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md));
+  by the opencti lane, its SIEM-handoff checklist (the
+  "Deploy OpenCTI threat-intelligence platform" issue, delete-on-ship'd;
+  git history);
   the intel node's opencti-taxii-factory-walk and
   opencti-taxii-factory-poll pipelines read it
   (`TENZIR_SECRETS__OPENCTI_TAXII_TOKEN` on tenzir-node-intel)
@@ -173,7 +174,7 @@ source pipelines drop them at the class gate. The retired
 `s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs bucket
 as frozen history (deleting it is a separate operator call). The
 per-node lake PVCs, the `ocsf-archive` compaction rules, and the
-15-minute transit window they served are gone with the
-[stateless migration](../../../../../docs/plans/tenzir-stateless-migration.md).
+15-minute transit window they served are gone with the stateless
+migration (plan delete-on-ship'd; git history is the archive).
 
 Detail lives in the node READMEs.

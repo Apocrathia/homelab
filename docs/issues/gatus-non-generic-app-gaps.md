@@ -7,7 +7,6 @@ source: human
 found_at: 2026-08-01
 area: observability
 slice: hitl
-plan: docs/plans/gatus-cluster-uptime.md
 ---
 
 # Gatus: cover non-generic-app Helm deployments

@@ -16,7 +16,7 @@ fields, never values.
 
 ## `ocsf-clickhouse`
 
-Rollout plan MR-2 ([docs/plans/clickhouse-rollout.md](../../../../../../docs/plans/clickhouse-rollout.md)):
+Rollout plan MR-2 (the "ClickHouse rollout" plan, delete-on-ship'd; git history):
 Grafana queries the ClickHouse OCSF store deployed by the MR-1 lane
 ([`clickhouse-tenzir` CR-level Service](../../../../04-apps/security/tenzir/clickhouse/)) through the
 first-party `grafana-clickhouse-datasource` plugin, pinned `4.20.0` via the

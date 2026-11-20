@@ -105,4 +105,4 @@ When a new Trivy finding appears:
 
 - [Trivy KSV-0109 docs](https://avd.aquasec.com/misconfig/ksv-0109)
 - [.trivyignore.yaml](../../.trivyignore.yaml): path-scoped suppressions
-- [docs/issues/trivy-scan-noise-deferred.md](../issues/trivy-scan-noise-deferred.md): deferred noise buckets (gitignored paths, scratch)
+- "Defer Trivy noise" issue (delete-on-ship'd; git history): deferred noise buckets (gitignored paths, scratch)

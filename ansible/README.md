@@ -123,7 +123,7 @@ not the CI path.
 
 ## Related
 
-- Plan: [`docs/plans/ansible-host-gitops.md`](../docs/plans/ansible-host-gitops.md)
+- Plan: "Ansible host GitOps" (delete-on-ship'd; git history is the archive)
 - UniFi NUC / IPFIX hosting: [`docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md`](../docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md)
 - Fleet (visibility): [`fleet/`](../fleet/)
-- Tofu Connect pattern: [`docs/plans/tofu-1password-provider.md`](../docs/plans/tofu-1password-provider.md)
+- Tofu Connect pattern: "OpenTofu secrets via 1Password provider" plan (delete-on-ship'd; git history)

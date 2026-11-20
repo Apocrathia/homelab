@@ -92,8 +92,8 @@ Service; runners are on the cluster) and `OP_CONNECT_TOKEN`. Vault is looked
 up by **name** (`Secrets`; no UUID in git). Put the GitLab PAT in a 1Password
 API Credential item **credential** field and set
 `onepassword_gitlab_pat_item_title` in the deployment `terragrunt.hcl`. Do not
-export `GITLAB_TOKEN`. See
-[`docs/plans/tofu-1password-provider.md`](../docs/plans/tofu-1password-provider.md).
+export `GITLAB_TOKEN`. See the "OpenTofu secrets via 1Password
+provider" plan (delete-on-ship'd; git history is the archive).
 
 ```bash
 # From a pod/runner on the cluster (same as CI). Local: port-forward first.

@@ -119,4 +119,4 @@ kubectl get pods -n authentik | grep gatus
 
 - **[Gatus](https://github.com/TwiN/gatus)**: health dashboard
 - **[gatus-sidecar](https://github.com/home-operations/gatus-sidecar)**: K8s discovery sidecar
-- **[Plan](../../../../../docs/plans/gatus-cluster-uptime.md)**: design decisions
+- **Plan**: design decisions in the "Gatus: in-cluster uptime monitoring" plan (delete-on-ship'd; git history)
