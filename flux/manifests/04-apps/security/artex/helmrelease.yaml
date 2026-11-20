@@ -216,7 +216,7 @@ spec:
             - |
               set -euo pipefail
               # renovate: datasource=pypi depName=bbot
-              BBOT_VERSION=3.0.2
+              BBOT_VERSION=3.1.0
               # renovate: datasource=pypi depName=sqlmap
               SQLMAP_VERSION=1.9.9
               STAMP="bbot=$BBOT_VERSION sqlmap=$SQLMAP_VERSION"
