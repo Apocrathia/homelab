@@ -68,6 +68,10 @@ Privacy-respecting metasearch engine aggregating multiple providers.
 
 Browser-based markdown notes on a folder of plain files, including nested paths.
 
+### [tldraw](./tldraw/README.md)
+
+Multiplayer diagramming whiteboard — realtime collaboration, room-based scenes.
+
 ### [Wakapi](./wakapi/README.md)
 
 Coding time tracking compatible with WakaTime.
