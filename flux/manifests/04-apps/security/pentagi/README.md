@@ -44,9 +44,12 @@ search, scraper, and knowledge-base tooling wired in.
   `postgres://pentagi:<password>@pentagi-postgres-rw.pentagi.svc.cluster.local:5432/pentagi?sslmode=disable`
 - `cookie-signing-salt` (optional but recommended) — cookie signing;
   without it API-token minting is disabled
-- `openai-key` / `anthropic-api-key` / `gemini-api-key` (optional) — LLM
-  provider keys; the app boots with zero providers and flows fail until
-  one is set (these are env-only in PentAGI)
+- `litellm-key` (optional) — the in-cluster LiteLLM gateway's master key;
+  wires the OpenAI provider slot to
+  `http://litellm.litellm.svc.cluster.local:4000/v1` (see below)
+- `anthropic-api-key` / `gemini-api-key` (optional) — direct provider
+  fallbacks; leave unset to route everything through LiteLLM (these keys
+  are env-only in PentAGI, no web-UI credential editing)
 
 The pod stays pending until the item exists (the DSN key is required).
 
@@ -56,6 +59,29 @@ The pod stays pending until the item exists (the DSN key is required).
   API tokens, user preferences
 - **Env**: DSN, cookie salt, provider keys, docker endpoint, public URL,
   trusted proxies — everything else is upstream default
+
+## LLM models through the LiteLLM gateway
+
+The OpenAI provider slot points at the in-cluster LiteLLM gateway
+(`OPEN_AI_SERVER_URL=http://litellm.litellm.svc.cluster.local:4000/v1`,
+key `litellm-key` above). Two mechanics matter when picking models:
+
+- The UI's model list is PentAGI's **bundled OpenAI catalog**
+  (`backend/pkg/providers/openai/models.yml`, from gpt-6-astra down to
+  o1) — it does not query the gateway's live model list, so the UI will
+  happily offer names LiteLLM does not know
+- Every request sends the exact model string to the gateway, so only
+  names LiteLLM has deployments or aliases for actually work. Matching
+  the current gateway model list: `gpt-5`, `gpt-5-nano`, `o3-mini`
+  (plus `claude-sonnet-4-5` / `claude-4-5-haiku` and the open-weight
+  models, usable by setting them as a provider-profile model)
+
+PentAGI's out-of-box per-agent defaults (`gpt-5.4-nano`,
+`gpt-5.4-mini`, `gpt-5.6-terra`) are NOT in the gateway's list: either
+pick a known model per flow (flow creation lets you choose), or set the
+per-agent models in Settings → Providers to a gateway-known name, or add
+matching aliases on the LiteLLM side. Anthropic/Gemini direct keys
+(above) remain as fallback wiring.
 
 ## Limitations / notes
 

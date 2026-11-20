@@ -7,8 +7,18 @@ metadata:
     app.kubernetes.io/name: pentagi
     app.kubernetes.io/component: autonomous-pentest
     app.kubernetes.io/part-of: security
-    # vxcontrol/pentagi + docker.io/library/docker live on docker.io; Kyverno
-    # clones the docker.io pull secret into namespaces with this label.
+    # vxcontrol/pentagi lives on docker.io; Kyverno clones the docker.io
+    # pull secret into namespaces with this label.
     images/dockerhub: "true"
+    # The rootless podman sandbox daemon (podman.yaml) holds SYS_ADMIN:
+    # containerd's RuntimeDefault seccomp profile only allows the nested
+    # user-namespace syscalls for containers with CAP_SYS_ADMIN in their
+    # bounding set, and Pod Security baseline rejects caps beyond its
+    # default set (strix's podman pod hit the live baseline rejection right
+    # after its merge). The app pod itself is unprivileged (uid 100, caps
+    # dropped).
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
     # Opt-in to the shared kopiur repository (ClusterRepository/nas-rustfs)
     backup.apocrathia.com/repo: nas-rustfs

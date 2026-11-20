@@ -48,15 +48,27 @@ spec:
                 name: pentagi-secrets
                 key: cookie-signing-salt
                 optional: true
-          # LLM provider keys are env-only in PentAGI (no web-UI credential
-          # editing); the app boots with zero providers and flows fail until
-          # at least one is set. Optional keys: wire only what you use.
+          # LLM: the openai provider slot points at the in-cluster LiteLLM
+          # gateway (operator decision; upstream's own docs describe this
+          # LiteLLM-proxy setup for their custom-provider flow, and the
+          # provider code notes "passthrough mode in LiteLLM"). The bundled
+          # OpenAI model catalog is served to the UI regardless of the
+          # backend URL - only names LiteLLM has deployments or aliases for
+          # actually work; see the README's model list. Keys are env-only in
+          # PentAGI (no web-UI credential editing); the app boots with zero
+          # providers and flows fail until one is set.
+          - name: OPEN_AI_SERVER_URL
+            value: http://litellm.litellm.svc.cluster.local:4000/v1
+          # LiteLLM master key (field being added to the 1Password item);
+          # optional so the pod still boots if the field is not there yet.
           - name: OPEN_AI_KEY
             valueFrom:
               secretKeyRef:
                 name: pentagi-secrets
-                key: openai-key
+                key: litellm-key
                 optional: true
+          # Direct Anthropic fallback: leave unset to route everything
+          # through LiteLLM instead.
           - name: ANTHROPIC_API_KEY
             valueFrom:
               secretKeyRef:
