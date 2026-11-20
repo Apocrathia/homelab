@@ -199,7 +199,7 @@ variable "adoption" {
 
 variable "import_provider_pk" {
   type        = number
-  description = "Live pk of the proxy provider to adopt. Gate-time varmap only; never in git. 0 = unset (steady
+  description = "Live pk of the proxy provider to adopt. Gate-time varmap only; never in git. 0 = unset (steady state)."
   default     = 0
 }
 
