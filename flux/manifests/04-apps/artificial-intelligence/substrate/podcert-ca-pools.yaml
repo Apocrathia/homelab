@@ -1,31 +1,113 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/1Password/onepassword-operator/main/config/crd/bases/onepassword.com_onepassworditems.yaml
-# ED25519 signing pools for substrate-podcert. Each 1Password item needs a
-# `pool` field holding the CA pool JSON generated once by the operator from a
-# substrate v1.0.1 checkout:
-#   go run ./cmd/ate-setup create podcertificate-controller-cas
-# The controller mounts these as its three signer pools (service-DNS,
+# ED25519 signing pools for substrate-podcert, mirrored out of the
+# consolidated substrate-secrets item (ate-system) via External Secrets. The
+# controller mounts these as its three signer pools (service-DNS,
 # pod-identity, postgres) and publishes the matching ClusterTrustBundles.
-apiVersion: onepassword.com/v1
-kind: OnePasswordItem
+# Pool JSON lives in the vault item fields service-dns-ca-pool /
+# pod-identity-ca-pool / postgres-ca-pool; each ExternalSecret maps one field
+# into the `pool` key the chart mounts.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-secrets
+  namespace: podcertificate-controller-system
+---
+# Read access to exactly one Secret, scoped to ate-system.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: external-secrets-read-substrate-secrets
+  namespace: ate-system
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["agent-substrate-secrets"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: external-secrets-read-substrate-secrets
+  namespace: ate-system
+subjects:
+  - kind: ServiceAccount
+    name: external-secrets
+    namespace: podcertificate-controller-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: external-secrets-read-substrate-secrets
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: kubernetes-ate-system
+spec:
+  provider:
+    kubernetes:
+      remoteNamespace: ate-system
+      server:
+        url: https://kubernetes.default.svc
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
+          namespace: podcertificate-controller-system
+      auth:
+        serviceAccount:
+          name: external-secrets
+          namespace: podcertificate-controller-system
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: service-dns-ca-pool
   namespace: podcertificate-controller-system
 spec:
-  itemPath: "vaults/Secrets/items/service-dns-ca-pool"
+  refreshInterval: 1h
+  secretStoreRef:
+    name: kubernetes-ate-system
+    kind: ClusterSecretStore
+  target:
+    name: service-dns-ca-pool
+  data:
+    - secretKey: pool
+      remoteRef:
+        key: agent-substrate-secrets
+        property: service-dns-ca-pool
 ---
-apiVersion: onepassword.com/v1
-kind: OnePasswordItem
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: pod-identity-ca-pool
   namespace: podcertificate-controller-system
 spec:
-  itemPath: "vaults/Secrets/items/pod-identity-ca-pool"
+  refreshInterval: 1h
+  secretStoreRef:
+    name: kubernetes-ate-system
+    kind: ClusterSecretStore
+  target:
+    name: pod-identity-ca-pool
+  data:
+    - secretKey: pool
+      remoteRef:
+        key: agent-substrate-secrets
+        property: pod-identity-ca-pool
 ---
-apiVersion: onepassword.com/v1
-kind: OnePasswordItem
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: postgres-ca-pool
   namespace: podcertificate-controller-system
 spec:
-  itemPath: "vaults/Secrets/items/postgres-ca-pool"
+  refreshInterval: 1h
+  secretStoreRef:
+    name: kubernetes-ate-system
+    kind: ClusterSecretStore
+  target:
+    name: postgres-ca-pool
+  data:
+    - secretKey: pool
+      remoteRef:
+        key: agent-substrate-secrets
+        property: postgres-ca-pool
