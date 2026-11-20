@@ -13,6 +13,8 @@ mr-change-summary:
     # Bail after N consecutive transport errors / failed states (not soft stub retries).
     MAX_CONSECUTIVE_FAILURES: "3"
     HTTP_TIMEOUT_S: "600"
+    # Overall wall-clock budget for the agent invocation (seconds).
+    AGENT_BUDGET_S: "900"
     DIFF_MAX_BYTES: "120000"
     CHANGED_FILES_MAX_LINES: "500"
     GIT_DEPTH: "200"
