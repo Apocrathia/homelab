@@ -14,6 +14,13 @@ spec:
     # 1.0.1 dropped them).
     - name: kmcp-crds
       namespace: kagent
+    # The 1.0.1 controller hard-exits ~10s after start when it cannot dial
+    # the substrate API (ate-api in ate-system), so substrate Ready is a hard
+    # precondition: without this edge a kagent chart bump races the substrate
+    # rollout and every upgrade times out on Deployment InProgress (the
+    # upgrade/rollback loop of 2026-11-20).
+    - name: substrate
+      namespace: ate-system
   chart:
     spec:
       chart: kagent

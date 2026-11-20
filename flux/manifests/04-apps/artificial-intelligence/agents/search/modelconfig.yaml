@@ -9,5 +9,11 @@ spec:
   model: glm-5.3-prime
   openAI:
     baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
-  apiKeySecret: search-agent-secrets
+  # kagent 1.0.1 compiles shared subagent trees into one runtime with one
+  # gateway credential per origin+header: every ModelConfig in a shared tree
+  # must reference the same Secret. All agent litellm keys are the same value;
+  # kagent-secrets is the chart default's Secret, so the tree standardizes on
+  # it (the search-agent-secrets OnePasswordItem is now unused by this
+  # ModelConfig).
+  apiKeySecret: kagent-secrets
   apiKeySecretKey: litellm-api-key

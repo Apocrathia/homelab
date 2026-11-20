@@ -54,6 +54,21 @@ spec:
             description: Knowledge management agent - stores, retrieves, and searches information across vector stores, encyclopedic sources, and GitHub repository documentation
             templateRef:
               name: knowledge-agent
+        # promql-agent and search-agent were previously reachable only through
+        # observability-agent / knowledge-agent. kagent 1.0.1 forbids shared
+        # AgentTemplates from carrying subAgent tools of their own (one shared
+        # level only), so both bind directly here to keep the reachable tool
+        # inventory unchanged.
+        - subAgent:
+            name: promql-agent
+            description: GeneratePromQLTool generates PromQL queries from natural language descriptions.
+            templateRef:
+              name: promql-agent
+        - subAgent:
+            name: search-agent
+            description: Search the web for current information, documentation, news, and technical details. Can also fetch and read specific URLs.
+            templateRef:
+              name: search-agent
         - mcp:
             server:
               kind: RemoteMCPServer

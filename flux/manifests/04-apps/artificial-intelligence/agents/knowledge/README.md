@@ -13,13 +13,12 @@ The knowledge agent stores, retrieves, and synthesizes information across source
 
 ## Tools
 
-| Tool           | Source           | Purpose                                           |
-| -------------- | ---------------- | ------------------------------------------------- |
-| `qdrant-store` | Qdrant MCP       | Store memories/knowledge with semantic embeddings |
-| `qdrant-find`  | Qdrant MCP       | Semantic search across stored knowledge           |
-| OpenZIM tools  | OpenZIM MCP      | Query offline encyclopedic content                |
-| DeepWiki tools | DeepWiki MCP     | GitHub repository documentation and Q&A           |
-| search-agent   | subAgent binding | Web search for current information                |
+| Tool           | Source       | Purpose                                           |
+| -------------- | ------------ | ------------------------------------------------- |
+| `qdrant-store` | Qdrant MCP   | Store memories/knowledge with semantic embeddings |
+| `qdrant-find`  | Qdrant MCP   | Semantic search across stored knowledge           |
+| OpenZIM tools  | OpenZIM MCP  | Query offline encyclopedic content                |
+| DeepWiki tools | DeepWiki MCP | GitHub repository documentation and Q&A           |
 
 ## Usage
 
@@ -29,9 +28,11 @@ Other agents (like homelab-agent) call it to store and recall knowledge, look up
 
 - **Model**: via LiteLLM (pinned in `modelconfig.yaml`)
 - **Namespace**: `kagent` (the consolidated agent fleet): behavior in
-  `agenttemplate.yaml`, thin `Agent` wrapper in `agent.yaml`. Binds
-  `search-agent` as a same-namespace subAgent tool; homelab-agent binds this
-  agent the same way.
+  `agenttemplate.yaml`, thin `Agent` wrapper in `agent.yaml`. homelab-agent
+  binds this agent as a same-namespace subAgent tool. The 0.10.x
+  `search-agent` subAgent is not carried over: kagent 1.0.1 forbids subAgent
+  tools on templates shared with other agents (homelab-agent binds
+  `search-agent` directly).
 
 ## Troubleshooting
 

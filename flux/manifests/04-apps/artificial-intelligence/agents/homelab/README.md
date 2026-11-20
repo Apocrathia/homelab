@@ -14,7 +14,10 @@ This deployment includes:
 - Integration with LiteLLM for model access
 - SubAgent tools (same-namespace AgentTemplates; v1alpha3 agent-tools are
   namespace-local, which is why the whole fleet consolidated into `kagent`):
-  investigator, k8s, observability, media, infrastructure, git, knowledge
+  investigator, k8s, observability, media, infrastructure, git, knowledge,
+  promql, search (promql and search bind directly here because kagent 1.0.1
+  allows only one shared-subagent level — the specialists' templates cannot
+  carry subAgent tools of their own)
 
 ```mermaid
 sequenceDiagram

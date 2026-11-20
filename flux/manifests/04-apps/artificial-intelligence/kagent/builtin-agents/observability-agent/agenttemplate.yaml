@@ -12,8 +12,11 @@
 # 1.0.1, so the Grafana tools rebind to grafana-mcp (the standalone
 # mcp-grafana server; RemoteMCPServer consolidated into this namespace
 # with home-agent) — get_datasource dropped, not served by mcp-grafana.
-# The promql-agent agent tool becomes a subAgent binding to the
-# vendored promql-agent AgentTemplate.
+# The 0.10.x promql-agent agent tool is NOT rebound here: kagent 1.0.1
+# rejects shared AgentTemplates that carry subAgent tools of their own
+# ("consecutive Shared AgentTemplate tools exceed the kagent runtime
+# boundary"), and homelab-agent binds this template. homelab-agent binds
+# promql-agent directly instead.
 apiVersion: api.kagent.dev/v1alpha3
 kind: AgentTemplate
 metadata:
@@ -80,11 +83,6 @@ spec:
           - find_error_pattern_logs
           - create_incident
           - add_activity_to_incident
-    - subAgent:
-        name: promql-agent
-        description: GeneratePromQLTool generates PromQL queries from natural language descriptions.
-        templateRef:
-          name: promql-agent
   systemPrompt: |
     # Observability AI Agent System Prompt
 

@@ -1,9 +1,13 @@
 ---
 # Portable behavior for knowledge-agent (bound as a same-namespace subAgent tool
-# by homelab-agent; binds search-agent as its own subAgent). Extracted verbatim
-# from the per-namespace Agent CR when the fleet consolidated into `kagent`
-# (kagent 1.0 agent-tools are namespace-local: one namespace, one template per
-# behavior, no copies).
+# by homelab-agent). Extracted verbatim from the per-namespace Agent CR when the
+# fleet consolidated into `kagent` (kagent 1.0 agent-tools are namespace-local:
+# one namespace, one template per behavior, no copies). Does NOT bind
+# search-agent as its own subAgent: kagent 1.0.1 rejects shared AgentTemplates
+# that carry subAgent tools of their own ("consecutive Shared AgentTemplate
+# tools exceed the kagent runtime boundary"), and this tree's models must not
+# stack two litellm credentials on one header. homelab-agent binds
+# search-agent directly instead.
 apiVersion: api.kagent.dev/v1alpha3
 kind: AgentTemplate
 metadata:
@@ -18,11 +22,6 @@ spec:
   modelConfig:
     name: knowledge-agent-model
   tools:
-    - subAgent:
-        name: search-agent
-        description: Search the web for current information, documentation, news, and technical details. Can also fetch and read specific URLs.
-        templateRef:
-          name: search-agent
     - mcp:
         server:
           kind: RemoteMCPServer
