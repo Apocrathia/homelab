@@ -218,7 +218,7 @@ spec:
               # renovate: datasource=pypi depName=bbot
               BBOT_VERSION=3.0.2
               # renovate: datasource=pypi depName=sqlmap
-              SQLMAP_VERSION=1.9.9
+              SQLMAP_VERSION=1.10.11
               STAMP="bbot=$BBOT_VERSION sqlmap=$SQLMAP_VERSION"
               [ "$(cat /rt/.stamps/system-tools 2>/dev/null || true)" = "$STAMP" ] && exit 0
               echo "[system-tools] installing $STAMP"
