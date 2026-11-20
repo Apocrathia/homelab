@@ -92,7 +92,8 @@ spec:
               [ -n "$want" ] && [ "$want" = "$got" ] || { echo "checksum mismatch for $asset" >&2; exit 1; }
               rm -rf /rt/app
               unzip -q "/tmp/$asset" -d /tmp/pkg
-              mv /tmp/pkg/artex-linux-amd64 /rt/app
+              # build.sh zips a versioned top dir (artex-<ver>-linux-amd64)
+              mv /tmp/pkg/artex-*-linux-amd64 /rt/app
               chmod +x /rt/app/artex
               mkdir -p /rt/bin /rt/.stamps
               echo "$ARTEX_VERSION" > /rt/.stamps/artex
