@@ -38,7 +38,6 @@ Workload resources (deployment, service, PVCs, etc.) are generated from the gene
 
 The Authentik stack, proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings, is owned by the provider-opentofu `Workspace` (`demo-app-authentik`). The chart renders it: `authentik.managedBy: terraform` in `helmrelease.yaml` makes the generic-app chart render the OnePasswordItem + ProviderConfig/Workspace docs with CHART-GENERATED inline HCL (the file-pair pattern, same shape as gatus MINUS the outpost resource); values only, no module refs, no varmap in git, no per-app tofu files. Every value composes from the `authentik` values block; per-app config deltas become values keys, never raw HCL edits.
 
-
 ## Storage Pattern
 
 The demo app demonstrates a multi-volume storage approach:
