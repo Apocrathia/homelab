@@ -16,11 +16,11 @@ rules:
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 # RBAC for the kyverno admission controller to perform pre-validation of
-# generate rules. When a ClusterPolicy has a generate rule that clones a
-# resource, Kyverno's admission webhook checks that the admission
-# controller itself has sufficient permissions on the target kind in the
-# target namespace: otherwise it rejects the policy at create/update
-# time. That check does not honor resourceNames, so get/list stay unscoped.
+# generate rules. When a GeneratingPolicy clones a resource, Kyverno's
+# admission webhook checks that the admission controller itself has
+# sufficient permissions on the target kind in the target namespace:
+# otherwise it rejects the policy at create/update time. That check does
+# not honor resourceNames, so get/list stay unscoped.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
