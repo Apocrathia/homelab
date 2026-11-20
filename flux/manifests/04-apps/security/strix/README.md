@@ -11,7 +11,8 @@ proofs-of-concept, and write reports to disk.
 - The OSS distribution is a pip package (`strix-agent`), not an image: an
   init container installs the CLI into a Longhorn-backed venv (artex
   runtime-assembly pattern) and the main container runs a small wrapper that
-  serves the built-in web viewer of the latest run
+  serves the built-in web viewer of the latest run (before the first scan
+  it serves the SPA with the viewer's empty-state response on `/api/run`)
 - Scans run inside sandbox containers
   (`ghcr.io/usestrix/strix-sandbox`, upstream's official image) spawned
   through a Docker-compatible API served by `strix-podman`: a raw
