@@ -1,6 +1,6 @@
 # OpenTAXII
 
-TAXII server for the homelab threat-intel exchange. Serves both TAXII 1.x and TAXII 2.1; MISP and OpenCTI feeders push and pull STIX content here.
+TAXII server for the homelab threat-intel exchange. Serves both TAXII 1.x and TAXII 2.1; the OpenCanary triage lane pushes STIX indicators here and OpenCTI's taxii2 connector pulls them into the knowledge graph (see [Feeders](#feeders)).
 
 > **Navigation**: [← Back to Security README](../README.md)
 
@@ -12,6 +12,7 @@ This deployment includes:
 - PostgreSQL via CloudNativePG (both persistence and auth tables - no SQLite, no `/data` volume)
 - TAXII 1.x services and one collection preloaded from a `data-configuration.yml` ConfigMap on every boot
 - TAXII 2.1 enabled by default (api roots/collections created via CLI, see below)
+- One live feeder: the `opencanary-stix-push` CronJob pushing STIX 2.1 indicators into the public-write `stix-feed` collection ([Feeders](#feeders))
 
 ## Image and TAXII support matrix
 
@@ -84,6 +85,22 @@ Live bootstrap state:
 - collection `952c801c-e4c8-4316-a565-5f97221e799f` - title "stix-feed", public read + public write
 
 The OpenCTI taxii2 import connector consumes discovery at `http://opentaxii.opentaxii.svc.cluster.local:9000/taxii2/` with collections defaulting to `*.*` (polls the single api root/collection), so no per-collection env is needed.
+
+### Feeders
+
+- **`opencanary-stix-push` (shipped)**: CronJob in the [opencanary](../opencanary/README.md) namespace, every 15 minutes - Loki triage of honeypot attacker alerts into one STIX 2.1 indicator per event, POSTed anonymously to `stix-feed` (public write; deterministic `uuid5` ids make lookback-overlap re-POSTs storage no-ops). Mechanism and verify commands: opencanary README.
+- **MISP push (open)**: MISP's native TAXII 2.1 push would re-import events the direct MISP -> OpenCTI connector already covers, so it stays an operator scoping decision (canary-only vs scoped subset; MISP-native scheduled push vs GitOps CronJob): [issue](../../../../../docs/issues/opentaxii-feed-sources.md).
+
+Verify collection content:
+
+```bash
+kubectl exec -n opentaxii opentaxii-postgres-1 -- psql -U postgres -d opentaxii \
+  -t -c "select count(*) from opentaxii_stixobject"
+
+kubectl run -it --rm curl --image=curlimages/curl -n opentaxii -- \
+  curl -s -H "Accept: application/taxii+json;version=2.1" \
+  http://opentaxii.opentaxii.svc.cluster.local:9000/taxii2/9d2329b4-6a06-4f01-9c94-a2c3e6d1a501/collections/952c801c-e4c8-4316-a565-5f97221e799f/objects/
+```
 
 ## Dashboard
 

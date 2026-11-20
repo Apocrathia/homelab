@@ -45,9 +45,56 @@ kubectl -n opencanary logs deployment/opencanary -f
 
 The [Dashboard](#dashboard) section renders these alerts in Grafana; for ad-hoc queries use the Loki selector `namespace=opencanary`.
 
-### Future: MISP/OpenCTI feed
+### STIX push to OpenTAXII (`opencanary-stix-push`)
 
-OpenCanary ships `WebhookHandler`, `SlackHandler`, `TeamsHandler`, SMTP, socket, and hpfeeds handlers, all configured under `logger.kwargs.handlers` in `opencanary.conf`. When the security stack grows, add a `WebhookHandler` pointing at a receiver that normalizes the JSON into MISP sightings or OpenCTI indicators instead of (or alongside) the console handler.
+CronJob `opencanary-stix-push` (`stix-push-cronjob.yaml`, script
+`stix_push.py` mounted from a ConfigMap) is the canary lane of the OpenTAXII
+feed-sources [issue](../../../../../docs/issues/opentaxii-feed-sources.md):
+every 15 minutes it queries Loki for attacker alerts (`logtype >= 2000`,
+same selector as the dashboard) from the last 20 minutes, builds one STIX 2.1
+indicator per alert, and POSTs it to the public-write `stix-feed` collection
+on OpenTAXII; OpenCTI's taxii2 connector polls that collection hourly, so an
+alert reaches OpenCTI within one polling cycle.
+
+- **Indicator shape**: deterministic `uuid5` id over `utc_time|logtype|src_host`,
+  pattern on the attacker source IP (`ipv4-addr`/`ipv6-addr` by family),
+  `valid_from` = alert time, `indicator_types: ["malicious-activity"]`.
+- **`logdata` is never read**: HTTP 3001 and SSH 4002 alerts carry
+  attacker-submitted passwords; the indicator holds only source IP, logtype,
+  and time.
+- **Stateless and idempotent**: no PVC, no secrets (the push is anonymous,
+  the collection has `is_public_write`), and the 20 min lookback overlapping
+  the 15 min schedule makes re-seen alerts storage no-ops server-side
+  (OpenTAXII skips inserts whose STIX id + version already exist).
+- **Failure contract**: per-alert count-and-continue; the job exits non-zero
+  on any push failure or skipped (malformed / source-less) alert, and
+  `backoffLimit: 3` plus the next run's overlapping window retry both.
+
+The daemon-side handler alternative (OpenCanary's `WebhookHandler` and
+friends under `logger.kwargs.handlers` in `opencanary.conf`) stays unused:
+the CronJob keeps the alert path decoupled from the honeypot process and
+needs no `opencanary.conf` change.
+
+Verify the lane:
+
+```bash
+# Job history (failedJobsHistoryLimit 3)
+kubectl -n opencanary get jobs
+
+# Last run: matched/pushed/failed counts
+kubectl -n opencanary logs job/opencanary-stix-push-<timestamp>
+
+# Trigger a manual run
+kubectl -n opencanary create job --from=cronjob/opencanary-stix-push \
+  opencanary-stix-push-manual
+
+# Objects landed in the collection (see the opentaxii README)
+kubectl exec -n opentaxii opentaxii-postgres-1 -- psql -U postgres -d opentaxii \
+  -t -c "select count(*) from opentaxii_stixobject"
+
+# Behavior test (no cluster access needed): fake Loki + fake TAXII
+python3 flux/manifests/04-apps/security/opencanary/tests/test_stix_push.py
+```
 
 ## Security Considerations
 

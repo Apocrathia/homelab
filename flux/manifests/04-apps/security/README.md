@@ -142,8 +142,13 @@ flowchart LR
 Normalization is the graph: MISP events and external STIX both land in
 OpenCTI, which is the single source of TAXII 2.1 for downstream consumers.
 OpenTAXII is the on-ramp for anything that speaks STIX but is neither MISP
-nor OpenCTI. OpenCanary alerts flow Loki-side for now; the STIX push path
-is aspirational until a triage script exists.
+nor OpenCTI. OpenCanary alerts feed it live: the `opencanary-stix-push`
+CronJob ([opencanary README](./opencanary/README.md)) triages Loki-side
+attacker alerts every 15 minutes into STIX 2.1 indicators and pushes them to
+the `stix-feed` collection, which the taxii2 connector imports into OpenCTI
+within one hourly polling cycle. A MISP -> OpenTAXII push lane remains an
+open, operator-gated decision
+([issue](../../../../docs/issues/opentaxii-feed-sources.md)).
 
 ## References
 
