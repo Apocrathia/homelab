@@ -1,17 +1,15 @@
 ---
 # prime-agent webui ingress: the collector on 8788 is reachable ONLY from
-# the Authentik proxy outpost (SSO in front on both doors — the outpost owns
+# the Authentik proxy outpost (SSO in front on both doors: the outpost owns
 # the hostname and dials the app's ClusterIP Service directly), the gateway
 # Envoy L7 path (in-cluster traffic to the gateway LB IP is socket-redirected
-# to the node-local Envoy — reserved:ingress), and the node itself (kubectl
-# port-forward, kubelet probes). The tailscale operator proxy pods no longer
-# dial the app directly: the tailnet door rides the outpost's HTTPRoute
-# (tailnet-gateway parentRef, so tailnet traffic reaches the outpost, not the
-# app). The inbound A2A webhook on 8080 (a2a/server.mjs) is reachable ONLY
+# to the node-local Envoy: reserved:ingress), and the node itself (kubectl
+# port-forward, kubelet probes).
+# The inbound A2A webhook on 8080 (a2a/server.mjs) is reachable ONLY
 # from the LiteLLM broker (litellm.yml's agents: entry targets
 # prime-agent.prime-agent.svc.cluster.local:8080). Everything else is denied by
 # Cilium's default-deny-on-select. trustedCidrs trusts the cluster pod CIDR
-# (10.42.0.0/16 — the outpost's dynamic pod IPs; the operator's gate decision on
+# (10.42.0.0/16: the outpost's dynamic pod IPs; the operator's gate decision on
 # !4929 supersedes 23-analysis-sec F1): the outpost serves tokenless behind
 # SSO, the cluster is the perimeter, and the webui token stays as the
 # break-glass layer for anything the CIDR does not cover (node-local access).
@@ -37,7 +35,7 @@ spec:
         - ports:
             - port: "8788"
               protocol: TCP
-    # Authentik proxy outpost (SSO front door on both doors — dials the
+    # Authentik proxy outpost (SSO front door on both doors: dials the
     # app's ClusterIP Service directly; the hostname's HTTPRoute is the
     # outpost's own, including the tailnet parentRef)
     - fromEndpoints:
@@ -48,7 +46,7 @@ spec:
             - port: "8788"
               protocol: TCP
     # Inbound A2A webhook (a2a/server.mjs, port 8080): the LiteLLM broker is
-    # the only caller — same wire litellm.yml's agents: entry rides today
+    # the only caller: same wire litellm.yml's agents: entry rides today
     # (http://prime-agent.prime-agent.svc.cluster.local:8080), so denying it
     # would break inbound A2A merged before the webui (parity check).
     - fromEndpoints:

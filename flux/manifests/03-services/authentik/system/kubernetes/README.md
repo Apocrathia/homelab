@@ -15,7 +15,3 @@ a config change (see the header notes in `authentik.tf`).
 The k8s side stays in `kube-auth/`: `rbac.yaml` (ClusterRoleBindings)
 and `icon.svg` (the application's `meta_icon` URL points at that repo
 path through the CDN) are not authentik state and do not move.
-
-Retired the `kube-auth/authentik-blueprint.yaml` ConfigMap: the
-blueprint CM prunes and the live objects survive for this workspace to
-adopt.

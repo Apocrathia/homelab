@@ -6,17 +6,17 @@ Scheduled task templates and wires for invoking A2A agents on a fixed cadence.
 
 ## Included
 
-- `scheduled-agent-invoke/` — suspended CronJob **template** (cluster health →
+- `scheduled-agent-invoke/`, suspended CronJob **template** (cluster health →
   Discord). Copy this directory for new task shapes that need a blank slate.
-- `run-loop-agent-invoke/` — suspended CronJob for the **constant loop**
+- `run-loop-agent-invoke/`, suspended CronJob for the **constant loop**
   (`run-loop` heartbeat; in-cluster ceiling = `mode=scout`). Schedule
-  `30 */6 * * *`; unsuspend when ready.
-- `alert-agent-invoke/` — alert-driven invoke path (separate from Cron templates).
-- `dependency-review/` — **live** Renovate MR sweep every 6 hours (`23 */6 * * *`,
-  unsuspended): deterministic upstream facts → git-agent judgment → verdict
+  (schedule in the CronJob manifest); unsuspend when ready.
+- `alert-agent-invoke/`, alert-driven invoke path (separate from Cron templates).
+- `dependency-review/` — **live** Renovate MR sweep (schedule in the CronJob
+  manifest): deterministic upstream facts → git-agent judgment → verdict
   note + `agent-review:*` labels + approval on pass. Unlike its siblings it
   needs GitLab/GitHub tokens (1Password items, see its README).
-- `dependency-merge/` — **live** second stage (`47 */6 * * *`, unsuspended):
+- `dependency-merge/` — **live** second stage (schedule in the CronJob manifest):
   homelab-agent merges `agent-review:pass` MRs past the hard gates
   (infra-class hard block independent of labels, reviewed-sha match, green
   pipeline, no major/infra flags, allowed update types) after its own
@@ -52,7 +52,7 @@ and minimal runtime permissions.
 - These tasks call kagent directly and do not require an API key.
 - Constant-loop / Cron wires must not auto-apply: leave `suspend: true` until
   the operator explicitly enables them.
-- In-cluster A2A has no git checkout — full `run-loop` implement laps need a
+- In-cluster A2A has no git checkout, full `run-loop` implement laps need a
   checkout-backed host (laptop Automation); this Cron is the scout heartbeat.
 
 ## Python (`*/src`)

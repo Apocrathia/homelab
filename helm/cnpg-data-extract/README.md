@@ -60,10 +60,10 @@ Summary (stay **suspended** until after **`cnpg-data-restore`** succeeds; **`flu
 1. **Scale app writers to 0** (`kubectl scale deployment … --namespace <namespace> --replicas 0`).
 1. **`kubectl delete cluster.postgresql.cnpg.io <cluster-name> --namespace <namespace> --wait=true`**
 1. If the instance PVC is **gone** but the Longhorn volume still has PGDATA, set **`pvc.staticLonghorn`** on this chart ([Recreate instance PV and PVC](#recreate-instance-pv-and-pvc)). Skip if the instance PVC is still **Bound**.
-1. **`helm install <release-name> helm/cnpg-data-extract --namespace <namespace> --values /path/to/your-values.yaml`**, then **`kubectl wait --namespace <namespace> --for=condition=complete job/<job-name> --timeout=7200s`**. `<job-name>` is **`fullnameOverride`** if set, else **`<release-name>-cnpg-data-extract`**.
+1. **`helm install <release-name> helm/cnpg-data-extract --namespace <namespace> --values /path/to/your-values.yaml`**, then **`kubectl wait --namespace <namespace> --for=condition=complete job/<job-name>`**. `<job-name>` is **`fullnameOverride`** if set, else **`<release-name>-cnpg-data-extract`**.
 1. Confirm the dump is durable (**`backupSmb`** → file on the share; **emptyDir** only → copy off with **`kubectl cp`** / upload before uninstall).
 1. **`helm uninstall <release-name> --namespace <namespace>`**. If **`pvc.staticLonghorn`** was used, chart-managed instance PV/PVC go with the release; clear any **stale Released** PV that would block the next claim ([above](#recreate-instance-pv-and-pvc)).
-1. **Still suspended:** apply **only** the **`Cluster`** from Git (`helm template … generic-app` or `kubectl kustomize …` + `yq`; see the prompt). Wait for the new primary **Ready**.
+1. **Still suspended:** apply **only** the **`Cluster`** from Git (`helm template … generic-app` or `kubectl kustomize …` + `yq`). Wait for the new primary **Ready**.
 1. **`helm install`** [`cnpg-data-restore`](../cnpg-data-restore/README.md), **`kubectl wait`** for the restore Job. Read **Target database must be empty of app schema** there if migrations raced ahead.
 1. **`helm uninstall`** the restore release **`--namespace <namespace>`**.
 1. **`flux resume kustomization <flux-kustomization-name> --namespace flux-system`**. You do **not** need a separate **`flux reconcile`** for this flow; the CLI may **wait for one reconciliation** after resume; that is normal.

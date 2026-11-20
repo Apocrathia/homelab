@@ -1,4 +1,4 @@
-# Linux software — custom package definitions
+# Linux software: custom package definitions
 
 Empty slot: only the `.keep` placeholder lives here. Software in use today is
 declared under `software:` in `fleets/home.yml` (Fleet-maintained apps); this

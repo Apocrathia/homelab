@@ -4,7 +4,7 @@
 
 ## Overview
 
-PdfCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+PdfCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://pdfcraft.gateway.services.apocrathia.com`
 

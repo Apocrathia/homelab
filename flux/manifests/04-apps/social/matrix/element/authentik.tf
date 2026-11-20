@@ -1,15 +1,15 @@
-# Element Web's Authentik stack — HCL half of the canonical file pair.
+# Element Web's Authentik stack: HCL half of the canonical file pair.
 #
 # Pair contract: crossplane.yaml carries the Crossplane objects
 # (OnePasswordItem + ProviderConfig + Workspace); authentik.tf is the
 # single source of truth for the HCL. kustomization.yaml stitches them at
-# build time — configMapGenerator packages this file and the replacements
+# build time: configMapGenerator packages this file and the replacements
 # rule copies its bytes into spec.forProvider.module (source: Inline,
 # module: "" placeholder), so the rendered module stays byte-identical to
 # this file. Never render this directory outside kustomize.
 #
-# FRESH CREATE — element has NO live tfstate Secret. The resources below
-# are UNGATED — no count-conditional module gating; this file IS element's
+# FRESH CREATE: element has NO live tfstate Secret. The resources below
+# are UNGATED: no count-conditional module gating; this file IS element's
 # stack, and the first sync creates everything.
 #
 # OIDC mode: oauth2 provider + application + admins binding. Per-client
@@ -80,7 +80,7 @@ resource "authentik_provider_oauth2" "app" {
   # client_id is required by the TF resource (the blueprint
   # auto-generated it when unset); fresh create uses the deterministic
   # house convention (the app name). client_secret is never set here
-  # (Sensitive) — authentik generates it server-side; the operator pulls
+  # (Sensitive): authentik generates it server-side; the operator pulls
   # it from the Authentik API/UI into the matrix-secrets 1Password item
   # (element-oidc-client-secret) after the first sync.
   client_id = "element"
@@ -134,7 +134,7 @@ resource "authentik_policy_binding" "admins" {
 }
 
 # Users-group binding (order-20 house pattern): friends on the tailnet
-# log in through these tiles — the whole point of the homeserver. MAS
+# log in through these tiles: the whole point of the homeserver. MAS
 # JIT-provisions @<username>:matrix.apocrathia.com on first login.
 resource "authentik_policy_binding" "users" {
   target = authentik_application.app.uuid

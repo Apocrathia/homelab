@@ -33,7 +33,7 @@ spec:
           # and gatus (probes http://halcyon.halcyon.svc:80). All must pass.
           - name: HALCYON_ALLOWED_HOSTS
             value: "halcyon.gateway.services.apocrathia.com,halcyon.halcyon.svc.cluster.local,halcyon.halcyon.svc"
-          # Remote Play "shared mirror" seed — survives restarts on the /data volume
+          # Remote Play "shared mirror" seed: survives restarts on the /data volume
           - name: REMOTE_PLAY_SEED
             value: "/data/remote-play-seed.json"
           # Server-side integrations: visitors get a stocked store; keys never
@@ -108,7 +108,7 @@ spec:
         emptyDir:
           - name: tmp
             mountPath: /tmp
-          # vite preview writes a config timestamp file here on every boot —
+          # vite preview writes a config timestamp file here on every boot,
           # EROFS CrashLoopBackOff with readOnlyRootFilesystem otherwise
           - name: vite-temp
             mountPath: /app/node_modules/.vite-temp

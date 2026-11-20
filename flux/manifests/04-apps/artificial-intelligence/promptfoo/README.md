@@ -1,23 +1,23 @@
 # Promptfoo
 
-[Promptfoo](https://promptfoo.dev/) is an LLM eval framework and red-teaming platform — declarative configs to compare model outputs, score with assertions, and probe LLM apps for vulnerabilities (prompt injection, PII leakage, jailbreaks, etc.).
+[Promptfoo](https://promptfoo.dev/) is an LLM eval framework and red-teaming platform, declarative configs to compare model outputs, score with assertions, and probe LLM apps for vulnerabilities (prompt injection, PII leakage, jailbreaks, etc.).
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
 ## Overview
 
-This deployment runs `promptfoo` from the official npm package on top of the official `python:3.13` debian image, behind Authentik, with the SQLite database, eval results, and blob outputs persisted on Longhorn at `/data/.promptfoo`. The server is a Node.js Express app on port 3000 with a built-in `/health` endpoint.
+This deployment runs `promptfoo` from the official npm package on top of the official `python` debian image (tag in `helmrelease.yaml`), behind Authentik,
 
-The deployment uses our `helm/generic-app` chart rather than the upstream Helm chart at `promptfoo/promptfoo:helm/chart/promptfoo` — that chart pins `image.tag: v1.0.0` (the real latest is two orders of magnitude ahead), bakes in a Traefik Ingress with cert-manager annotations, requires a placeholder `imagePullSecrets`, and undersizes resources at 100m/128Mi.
+The deployment uses our `helm/generic-app` chart rather than the upstream Helm chart at `promptfoo/promptfoo:helm/chart/promptfoo`, that chart pins `image.tag: v1.0.0` (the real latest is two orders of magnitude ahead), bakes in a Traefik Ingress with cert-manager annotations, requires a placeholder `imagePullSecrets`, and undersizes resources at 100m/128Mi.
 
 ### Why not the upstream `ghcr.io/promptfoo/promptfoo` image
 
 Promptfoo's red-team workflows shell out to the Python-based [`modelaudit`](https://pypi.org/project/modelaudit/) CLI to scan ML model files. The upstream image is alpine (musl libc) and modelaudit's required `modelaudit-picklescan` dependency is a Rust+PyO3 wheel with no `musllinux` build, which forces a source build that fails on alpine without a full C+Rust toolchain. Two ways to fix that:
 
-1. **Build a custom image** that bakes in modelaudit + a debian base. Avoided here — we don't want to maintain a custom registry image.
+1. **Build a custom image** that bakes in modelaudit + a debian base. Avoided here, we don't want to maintain a custom registry image.
 2. **Install everything declaratively at boot** on top of stock images. Picked.
 
-The init container fetches the official Node binary tarball from `nodejs.org`, npm-installs `promptfoo`, creates a Python venv, and pip-installs `modelaudit` — all into an `emptyDir` at `/opt/promptfoo`. Cold start is ~3-5 minutes; nothing is third-party, nothing is custom-built.
+The init container fetches the official Node binary tarball from `nodejs.org`, npm-installs `promptfoo`, creates a Python venv, and pip-installs `modelaudit`, all into an `emptyDir` at `/opt/promptfoo`. Cold start is ~3-5 minutes; nothing is third-party, nothing is custom-built.
 
 ## Access
 
@@ -26,11 +26,11 @@ The init container fetches the official Node binary tarball from `nodejs.org`, n
 
 ## Authentication
 
-Authentik proxy provider — promptfoo OSS has no native auth (SSO is Enterprise-only), so the proxy is the only line of defense. The web UI and MCP endpoints are upstream-designed as single-user developer tools; do not expose without the proxy in front.
+Authentik proxy provider, promptfoo OSS has no native auth (SSO is Enterprise-only), so the proxy is the only line of defense. The web UI and MCP endpoints are upstream-designed as single-user developer tools; do not expose without the proxy in front.
 
 ## Configuration
 
-All configuration happens through the web UI (or by uploading `promptfooconfig.yaml` files). Bring your own LLM provider — point promptfoo at LiteLLM (`http://litellm.litellm.svc.cluster.local:4000`) for in-cluster access to every model the proxy exposes. API keys you paste into the UI live in the SQLite db on the PVC, not in 1Password.
+All configuration happens through the web UI (or by uploading `promptfooconfig.yaml` files). Bring your own LLM provider, point promptfoo at LiteLLM (`http://litellm.litellm.svc.cluster.local:4000`) for in-cluster access to every model the proxy exposes. API keys you paste into the UI live in the SQLite db on the PVC, not in 1Password.
 
 ## Privacy & lockdown
 
@@ -45,22 +45,22 @@ The deployment disables every outbound call promptfoo makes by default:
 | `PROMPTFOO_DISABLE_REMOTE_GENERATION=true`         | No fallback to `api.promptfoo.app` for grading or test generation |
 | `PROMPTFOO_DISABLE_REDTEAM_REMOTE_GENERATION=true` | Same, specifically for red-team payload generation                |
 
-**Trade-off:** with remote generation disabled, the red-team helpers will not auto-generate adversarial payloads from `api.promptfoo.app`. You must supply your own LLM provider for that — point promptfoo's red-team config at LiteLLM. See the [self-hosting docs](https://www.promptfoo.dev/docs/usage/self-hosting/) for the env var reference.
+**Trade-off:** with remote generation disabled, the red-team helpers will not auto-generate adversarial payloads from `api.promptfoo.app`. You must supply your own LLM provider for that, point promptfoo's red-team config at LiteLLM. See the [self-hosting docs](https://www.promptfoo.dev/docs/usage/self-hosting/) for the env var reference.
 
 ## Storage & runtime layout
 
-| Mount            | Volume       | Purpose                                                                              |
-| ---------------- | ------------ | ------------------------------------------------------------------------------------ |
-| `/data`          | Longhorn PVC | `$HOME` for promptfoo — sqlite db, blobs, eval results. Persists across restarts.    |
-| `/opt/promptfoo` | `emptyDir`   | Bootstrap install — `node/`, `npm/`, `venv/`. Re-populated by the init on every pod. |
-| `/tmp`           | `emptyDir`   | Scratch space (root FS is read-only).                                                |
+| Mount            | Volume       | Purpose                                                                             |
+| ---------------- | ------------ | ----------------------------------------------------------------------------------- |
+| `/data`          | Longhorn PVC | `$HOME` for promptfoo, sqlite db, blobs, eval results. Persists across restarts.    |
+| `/opt/promptfoo` | `emptyDir`   | Bootstrap install, `node/`, `npm/`, `venv/`. Re-populated by the init on every pod. |
+| `/tmp`           | `emptyDir`   | Scratch space (root FS is read-only).                                               |
 
 ## Bootstrap (init container)
 
-Both the init and main containers use the same image — `public.ecr.aws/docker/library/python:3.13` (the AWS ECR mirror of Docker library `python:3.13`). The init container runs as uid 1000 with a read-only root FS and dropped capabilities, then:
+Both the init and main containers use the same image (the AWS ECR mirror of Docker library `python`; exact tag in `helmrelease.yaml`). The init container runs as uid 1000 with a read-only root FS and dropped capabilities, then:
 
 1. Downloads the pinned Node.js binary tarball from `nodejs.org` and extracts it to `/opt/promptfoo/node`.
-2. `npm install --omit=dev` of `promptfoo@<version>` into `/opt/promptfoo/npm` (25m timeout; npm cache on `/tmp`, not the Longhorn PVC).
+2. `npm install --omit=dev` of `promptfoo@<version>` into `/opt/promptfoo/npm` (npm cache on `/tmp`, not the Longhorn PVC).
 3. Creates a Python venv at `/opt/promptfoo/venv`.
 4. `pip install modelaudit==<version>` into the venv.
 5. Smoke-tests each binary and the promptfoo server entry path.
@@ -90,11 +90,11 @@ Every pod restart re-runs the init (emptyDir is gone with the pod). On a warm no
 - npm install promptfoo: ~60-120s
 - pip install modelaudit: ~30-60s
 
-Total: 2–4 minutes before the main container starts. This is intentional — emptyDir keeps `/opt` clean and reproducible, no PVC growth, no install-state drift across upgrades. The `startupProbe` allows up to 5 minutes (`failureThreshold: 30 × periodSeconds: 5`) for promptfoo's own boot after the init finishes.
+Total: 2-4 minutes before the main container starts. This is intentional, emptyDir keeps `/opt` clean and reproducible, no PVC growth, no install-state drift across upgrades. The `startupProbe` allows up to 5 minutes (`failureThreshold: 30 × periodSeconds: 5`) for promptfoo's own boot after the init finishes.
 
 ### ModelAudit coverage
 
-We install base `modelaudit` only (no `[all]` extras). Heavy extras like `torch` and `scikit-learn` aren't needed for the highest-value scanners — pickle/picklescan catches malicious opcodes in `.pkl`/`.bin`/`.pt`/`.pth` (PyTorch model files are pickles at the wire level), and HuggingFace Hub + cloud storage fetchers cover remote scanning. Formats that need the heavy extras (Keras `.h5`, deep torch-aware analysis) will surface as "unsupported format" in the UI — bump to `modelaudit[all]` in the init script if/when needed; debian + a venv handles the source-build fine.
+We install base `modelaudit` only (no `[all]` extras). Heavy extras like `torch` and `scikit-learn` aren't needed for the highest-value scanners, pickle/picklescan catches malicious opcodes in `.pkl`/`.bin`/`.pt`/`.pth` (PyTorch model files are pickles at the wire level), and HuggingFace Hub + cloud storage fetchers cover remote scanning. Formats that need the heavy extras (Keras `.h5`, deep torch-aware analysis) will surface as "unsupported format" in the UI, bump to `modelaudit[all]` in the init script if/when needed; debian + a venv handles the source-build fine.
 
 ### Maintenance
 

@@ -4,10 +4,9 @@
 
 One process (HelmRelease `tenzir-node-introspection`, rendering pod
 `tenzir-node-introspection`) reserved as the fleet's **introspection
-plane**. Since the B1 lap every node ships its own pipeline
-diagnostics to Loki and Mimir through its node-config lane pair
-(the central poller Deployment that used to ride here is retired) and
-this node's own pair covers its own two pipelines, byte-identical to
+plane**. Every node ships its own pipeline diagnostics to Loki and Mimir
+through its node-config lane pair (there is no central poller) and this
+node's own pair covers its own two pipelines, byte-identical to
 the siblings' pair modulo the node label. The Grafana
 `tenzir-node-pipelines` dashboard keeps working unchanged: same
 `job=tenzir-diagnostics` labels, same `tenzir_pipeline_errors` /
@@ -24,7 +23,7 @@ the siblings' pair modulo the node label. The Grafana
   for node RPC. All work is outbound (platform WebSocket, plus the
   two ship lanes dialing Loki and Mimir).
 - **Charter direction: inward detection**; the stateless design's
-  phase 3 (post-GA) gives this node scheduled
+  next step gives this node scheduled
   `from_clickhouse` volume/freshness/baseline passes over the
   `ocsf.*` tables, landing operational Detection Findings. See
   [Charter](#charter-inward-detection) below.
@@ -46,8 +45,8 @@ re-ship history (Loki has no dedup). The per-arm hidden split stays
 load-bearing: the Loki arm filters `where not hidden` (platform-UI
 pipeline deprecation noise stays out of the log lines), while the
 Mimir error/warning arms count hidden entries too, because most
-warning volume is hidden (live 2026-10-18 store reads: netflow 306
-hidden vs 3 visible warnings; investigations 1104 hidden), filtering
+warning volume is hidden (store reads: netflow 306 hidden vs 3 visible
+warnings; investigations 1104 hidden), filtering
 them would change
 `sum_over_time(tenzir_pipeline_warnings[6h])` materially versus the
 series the dashboard has always counted. Console-only transformer
@@ -56,11 +55,10 @@ node pod stays the surface for those.
 
 ## Charter: inward detection
 
-The node's post-GA direction (design phase 3 of the CH-only
-migration): scheduled `from_clickhouse` passes over the `ocsf.*`
-tables, volume and freshness per class, baseline-abnormality once
-the post-6.20-GA baseline capability lands, landing their findings
-as `ocsf.Detection_Finding` rows:
+The node's charter direction: scheduled `from_clickhouse` passes over
+the `ocsf.*` tables, volume and freshness per class,
+baseline-abnormality once the post-6.20-GA baseline capability
+lands, landing their findings as `ocsf.Detection_Finding` rows:
 
 - **Wiring first**: the node has no ClickHouse wiring today. The
   charter needs `from_clickhouse` reads (the shared `tenzir` user,
@@ -79,7 +77,7 @@ ocsf.Detection_Finding`), the enrichment node's
   becomes failed becomes relaunch), server-side pass evidence via
   the ClickHouse `query_log` (never `pipeline_list`), and a
   freshness/absence alert on that pass evidence.
-- **Timing**: unblocked by phase 0 (this B1 lap) and GA; the
+- **Timing**: unblocked by the diagnostics lanes and GA; the
   `ocsf.*` tables are populated today, so the charter's freshness
   passes can instrument the phase-2 write-path migration as it
   lands instead of trailing it. The baseline-abnormality component
@@ -90,7 +88,7 @@ ocsf.Detection_Finding`), the enrichment node's
 
 ## Storage
 
-Stateless (lap 2e): `persistence.enabled: false`, the chart renders
+Stateless: `persistence.enabled: false`, the chart renders
 the state volume as an emptyDir, no PVC. The node imports nothing and
 nothing of value rides it.
 
@@ -124,6 +122,6 @@ kubectl exec -n tenzir tenzir-node-introspection-0 --   tenzir -e localhost:5158
 kubectl get helmrelease -n tenzir tenzir-node-introspection
 ```
 
-B1 lanes can come up born-dead on fresh rolls, validate first boot
+diagnostics lanes can come up born-dead on fresh rolls, validate first boot
 server-side (diagnostics in Loki, `tenzir_pipeline_*` samples in
 Mimir), not from `pipeline_list` states.

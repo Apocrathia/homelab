@@ -1,18 +1,18 @@
 /**
- * A2A — native tools for the LiteLLM-brokered homelab kagent agents.
+ * A2A, native tools for the LiteLLM-brokered homelab kagent agents.
  *
  * Replaces the a2a Python skill for this harness. The wire is plain JSON-RPC
  * over HTTP (A2A 1.0, kind-typed parts, object status with .state) against
- * POST {base}/a2a/{agent}, so no client SDK is needed — fetch covers it.
+ * POST {base}/a2a/{agent}, so no client SDK is needed, fetch covers it.
  * Broker URL + auth headers come from ~/.prime/agent/mcp-secrets.json under
  * the `a2a` key (override with MCP_SECRETS_FILE), or from A2A_BASE_URL +
  * A2A_API_KEY env vars (container deployments), read at call time so secret
  * edits need no reload.
  *
  * Tools:
- *  a2a_agents — live roster (GET /v1/agents)
- *  a2a_send   — message/send to one agent; returns reply + task/context ids
- *  a2a_task   — tasks/get poll for a long-running task
+ *  a2a_agents, live roster (GET /v1/agents)
+ *  a2a_send   , message/send to one agent; returns reply + task/context ids
+ *  a2a_task   , tasks/get poll for a long-running task
  *
  * This directory also carries the inbound side of the wire: server.mjs is a
  * standalone A2A server (message/send + tasks/get) that owns port 8080 on
@@ -226,7 +226,7 @@ async function* streamEvents(
             error.message.startsWith(`${agent}: A2A error`)
           )
             throw error;
-          // non-JSON data line — skip
+          // non-JSON data line, skip
         }
       }
     }
@@ -253,7 +253,7 @@ function textParts(message: any): string[] {
 
 /**
  * Question text from kagent's ask_user data part (input-required pauses).
- * ponytail: covers the shapes this lab's kagent produces — data.args.
+ * ponytail: covers the shapes this lab's kagent produces, data.args.
  * toolConfirmation.hint and data.args.questions[].question; other data-part
  * shapes are not rendered, the status line still names the state.
  */
@@ -291,7 +291,7 @@ function extractReply(result: any): A2aReply {
     }
   }
   // status.message carries the agent's own words on input-required, but
-  // kagent echoes the user message there while working — skip user-role text.
+  // kagent echoes the user message there while working, skip user-role text.
   if (!parts.length && result?.status?.message?.role !== "user") {
     parts.push(...textParts(result?.status?.message));
   }
@@ -319,7 +319,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const WEBHOOK_PORT = parseInt(process.env.A2A_WEBHOOK_PORT ?? "8080", 10);
 
 /**
- * Respawn the inbound A2A webhook server when it is down — the webui
+ * Respawn the inbound A2A webhook server when it is down, the webui
  * beacon's spawnCollectorIfDown pattern (probe first, one spawn attempt per
  * 30s per process via a globalThis flag, detached+unref so the server owns
  * the port and survives sessions). Only runs where A2A_WEBHOOK_TOKEN is set:
@@ -354,7 +354,7 @@ async function ensureWebhookUp(): Promise<void> {
 
 export default function a2aExtension(pi: ExtensionAPI) {
   // Cluster box only (A2A_WEBHOOK_TOKEN gate): keep the inbound webhook
-  // server alive across session starts. No timers — probe and spawn once.
+  // server alive across session starts. No timers, probe and spawn once.
   pi.on("session_start", async () => {
     if (process.env.A2A_WEBHOOK_TOKEN) await ensureWebhookUp();
   });
@@ -467,7 +467,7 @@ export default function a2aExtension(pi: ExtensionAPI) {
         }
       } catch (error) {
         // A caller cancel is a real error; our own timeout with a known
-        // task id is the slow-agent path — fall through to the poll hint.
+        // task id is the slow-agent path, fall through to the poll hint.
         if (signal?.aborted || !taskId) throw error;
       }
       const reply = extractReply({

@@ -25,7 +25,7 @@ rules:
     verbs: ["get", "watch", "list"]
   # Enumerated from the cluster's installed chaos-mesh.org CRDs (chart 2.8.4,
   # `kubectl api-resources --api-group=chaos-mesh.org`) instead of a
-  # resources: ["*"] wildcard — keeps Trivy KSV-0046 clean with no ignorefile
+  # resources: ["*"] wildcard: keeps Trivy KSV-0046 clean with no ignorefile
   # entry. UPDATE THIS LIST on chart upgrades: a new CRD the dashboard cannot
   # see is silent breakage.
   - apiGroups: ["chaos-mesh.org"]

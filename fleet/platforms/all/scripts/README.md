@@ -1,4 +1,4 @@
-# Scripts (all platforms) — shell scripts shared by every fleet
+# Scripts (all platforms): shell scripts shared by every fleet
 
 Holds `fleet-dm-was-here.sh`, which recreates the Desktop marker the
 `fleet-dm-was-here` policy checks for. Home loads it through

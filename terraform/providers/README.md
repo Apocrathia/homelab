@@ -1,4 +1,4 @@
-# providers — Terragrunt provider generators
+# providers: Terragrunt provider generators
 
 One HCL file per vendor (cloudflare, gitlab, okta, proxmox, tailscale) that
 generates the deployment's `provider.tf`: the 1Password Connect ephemeral auth

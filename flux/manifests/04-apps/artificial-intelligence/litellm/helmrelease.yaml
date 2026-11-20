@@ -97,12 +97,12 @@ spec:
       tag: "v1.108.2"
 
     # Chart-native HPA; min 3 keeps a NotReady pod from emptying endpoints.
-    # CPU-only signal — chart 1.104.2's hpa.yaml supports it, but we (like
+    # CPU-only signal: chart 1.104.2's hpa.yaml supports it, but we (like
     # chart defaults) deliberately omit targetMemoryUtilizationPercentage:
     # prisma query-engine memory ratchets to worst-ever-write and never
     # releases. One-time first-apply blip: 3-way merge drops spec.replicas,
-    # ReplicaSet scales 3→1, HPA restores 3 in ~15s but cold start 60–90s —
-    # net ~90–120s one ready pod; apply in a quiet window.
+    # ReplicaSet scales 3→1, HPA restores 3 in ~15s but cold start 60-90s,
+    # net ~90-120s one ready pod; apply in a quiet window.
     autoscaling:
       enabled: true
       minReplicas: 3
@@ -185,7 +185,7 @@ spec:
     # Additional environment variables
     envVars:
       CONFIG_FILE_PATH: "/etc/litellm/config.yaml"
-      # Valkey (Redis protocol) for response cache — see valkey.yaml
+      # Valkey (Redis protocol) for response cache: see valkey.yaml
       REDIS_HOST: litellm-valkey
       REDIS_PORT: "6379"
       # OpenTelemetry configuration for tracing
@@ -261,7 +261,7 @@ spec:
           enabled: true # Auto-deletes old job before creating new one
 
     # Probes: chart 1.104.2 has no separateHealthApp/separateHealthPort
-    # values (silently ignored) — removed. Liveness tuned so load-burst
+    # values (silently ignored): removed. Liveness tuned so load-burst
     # stalls of the serving loop don't get the pod killed:
     # 30s period, 10s timeout, 6 failures = ~3 min sustained failure
     # before a restart (was 15s/5s/5 = 75s).

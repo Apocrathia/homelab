@@ -10,10 +10,10 @@ talks to it over in-cluster gRPC (no Gateway exposure).
 
 This deployment installs:
 
-- `substrate-crds` — `WorkerPool` / `ActorTemplate` (`ate.dev/v1alpha1`)
-- `substrate` — ate-api-server, ate-controller, atelet, atenet, and Valkey
-- `ate-cache` — dedicated RustFS hot cache for regenerable actor snapshots
-- `WorkerPool/kagent-default` — platform capacity for kagent (privileged ateom
+- `substrate-crds`, `WorkerPool` / `ActorTemplate` (`ate.dev/v1alpha1`)
+- `substrate`, ate-api-server, ate-controller, atelet, atenet, and Valkey
+- `ate-cache`, dedicated RustFS hot cache for regenerable actor snapshots
+- `WorkerPool/kagent-default`, platform capacity for kagent (privileged ateom
   pods; kept here so PSA baseline in `kagent` does not block them)
 
 kagent controller substrate flags live on the [kagent](../kagent/README.md)

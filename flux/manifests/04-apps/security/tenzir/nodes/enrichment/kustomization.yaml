@@ -10,9 +10,8 @@ resources:
 
 # TQL definitions live as .tql files under pipelines/ (one per
 # pipeline); the generator below packages them and the replacements
-# stitch them into the HelmRelease at build time — the sibling node
-# kustomization shape, grown here in lap 2 with the first factory
-# pipeline.
+# stitch them into the HelmRelease at build time; the sibling node
+# kustomization shape, grown with the first factory pipeline.
 generatorOptions:
   disableNameSuffixHash: true
 

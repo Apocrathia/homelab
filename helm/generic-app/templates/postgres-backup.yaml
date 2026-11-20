@@ -20,7 +20,7 @@ metadata:
   namespace: {{ .Values.app.namespace | default .Values.app.name }}
 spec:
   # CNPG cron is 6-field (seconds first): "0 0 5 * * *" = daily 05:00 UTC.
-  # A 5-field "0 5 * * *" parses as minute=5 hourly (caught live 2026-09-15).
+  # A 5-field "0 5 * * *" parses as minute=5 hourly.
   schedule: {{ .Values.postgres.backup.schedule | quote }}
   backupOwnerReference: self
   cluster:

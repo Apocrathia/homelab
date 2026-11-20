@@ -1,5 +1,5 @@
 {% set server_names = [nginx_site_domain] + (nginx_site_aliases | default([])) %}
-# {{ nginx_site_domain }} — reverse proxy to {{ nginx_site_upstream }}.
+# {{ nginx_site_domain }}: reverse proxy to {{ nginx_site_upstream }}.
 # Cert: /etc/ssl/ansible/{{ nginx_site_domain }}.pem (minted/renewed by
 # nickjj.acme_sh via Cloudflare DNS-01; reloadcmd reloads nginx).
 server {

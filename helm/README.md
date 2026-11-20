@@ -1,4 +1,4 @@
-# helm — charts maintained in this repo
+# helm: charts maintained in this repo
 
 Three local charts: `generic-app`, the shared application chart most
 workloads deploy through, and the CNPG pair `cnpg-data-extract` /

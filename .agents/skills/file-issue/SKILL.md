@@ -24,7 +24,7 @@ Question channel when acceptance is fuzzy:
 
 | Situation                                           | Action                                                                                    |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Fixable in the current change                       | Fix it — no issue                                                                         |
+| Fixable in the current change                       | Fix it: no issue                                                                          |
 | Out of scope for current change                     | File (or update duplicate)                                                                |
 | Duplicate of an existing open issue                 | Update that file                                                                          |
 | Feature / spec / multi-path bug; acceptance unclear | [`alignment`](../alignment/SKILL.md) first, then file                                     |

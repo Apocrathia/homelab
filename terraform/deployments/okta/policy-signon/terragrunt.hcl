@@ -2,20 +2,20 @@
 # Okta sign-on policy (network zone wiring)
 # -----------------------------------------------------------------------------
 # Custom sign-on policy above the system default:
-#   1. ALLOW from trusted zones (Home Egress + Tailscale) — MFA required,
+#   1. ALLOW from trusted zones (Home Egress + Tailscale): MFA required,
 #      preferred-style: DEVICE prompt + remembered devices
-#   2. ALLOW everywhere else — MFA required at every sign-in attempt
+#   2. ALLOW everywhere else; MFA required at every sign-in attempt
 #
-# Tor anonymizers are denied by the BLOCKLIST "Tor Anonymizers" zone itself —
+# Tor anonymizers are denied by the BLOCKLIST "Tor Anonymizers" zone itself;
 # blocklist zones are enforced globally by Okta and cannot be referenced in
 # policy rules (the API rejects them).
 #
 # Zone ids come from the okta/network-zone unit (terragrunt dependency).
 #
-# Auth (1Password Connect — no OKTA_API_TOKEN in env):
-#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
-#   OP_CONNECT_TOKEN — Connect API token with read on the vault
-#   TF_HTTP_*        — state backend
+# Auth (1Password Connect, no OKTA_API_TOKEN in env):
+#   OP_CONNECT_HOST  - http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN - Connect API token with read on the vault
+#   TF_HTTP_*       ; state backend
 #
 # Do NOT export OKTA_API_TOKEN. Do NOT commit vault UUIDs.
 

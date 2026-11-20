@@ -1,15 +1,15 @@
-# Sable's Authentik stack — HCL half of the canonical file pair.
+# Sable's Authentik stack: HCL half of the canonical file pair.
 #
 # Pair contract: crossplane.yaml carries the Crossplane objects
 # (OnePasswordItem + ProviderConfig + Workspace); authentik.tf is the
 # single source of truth for the HCL. kustomization.yaml stitches them at
-# build time — configMapGenerator packages this file and the replacements
+# build time: configMapGenerator packages this file and the replacements
 # rule copies its bytes into spec.forProvider.module (source: Inline,
 # module: "" placeholder), so the rendered module stays byte-identical to
 # this file. Never render this directory outside kustomize.
 #
-# FRESH CREATE — sable has NO live tfstate Secret. The resources below
-# are UNGATED — no count-conditional module gating; this file IS sable's
+# FRESH CREATE: sable has NO live tfstate Secret. The resources below
+# are UNGATED: no count-conditional module gating; this file IS sable's
 # stack, and the first sync creates everything.
 #
 # OIDC mode: oauth2 provider + application + admins binding. Per-client
@@ -68,7 +68,7 @@ data "authentik_property_mapping_provider_scope" "profile" {
   scope_name = "profile"
 }
 
-# OIDC provider for Sable. client_id omitted — authentik generates it.
+# OIDC provider for Sable. client_id omitted: authentik generates it.
 resource "authentik_provider_oauth2" "app" {
   name = "sable-oidc-provider"
 
@@ -127,7 +127,7 @@ resource "authentik_policy_binding" "admins" {
 }
 
 # Users-group binding (order-20 house pattern): friends on the tailnet
-# log in through these tiles — the whole point of the homeserver. MAS
+# log in through these tiles: the whole point of the homeserver. MAS
 # JIT-provisions @<username>:matrix.apocrathia.com on first login.
 resource "authentik_policy_binding" "users" {
   target = authentik_application.app.uuid

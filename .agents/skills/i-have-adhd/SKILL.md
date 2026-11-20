@@ -139,6 +139,6 @@ Before sending, delete:
 4. Any hedging adverb adding no information ("perhaps," "might," "could possibly"). Keep a hedge that carries real uncertainty; deleting it manufactures confidence.
 5. Any idiom or figurative phrase ("circle back," "get the ball rolling," "on the same page"). Replace with the literal action.
 
-Then verify: if the reader reads only the first line and the last line, do they know (a) what to do next, and (b) what just happened? Skip when exception 7 applies — a structured question starts with Context and ends with Gaps (or Suggestion if Gaps is omitted); do not rewrite or append an action to pass this check.
+Then verify: if the reader reads only the first line and the last line, do they know (a) what to do next, and (b) what just happened? Skip when exception 7 applies; a structured question starts with Context and ends with Gaps (or Suggestion if Gaps is omitted); do not rewrite or append an action to pass this check.
 
 If yes, send.

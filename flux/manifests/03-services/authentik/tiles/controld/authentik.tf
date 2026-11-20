@@ -1,20 +1,20 @@
-# ControlD's Authentik tile — HCL half of the canonical file pair.
+# ControlD's Authentik tile. HCL half of the canonical file pair.
 #
 # Pair contract: crossplane.yaml carries the Crossplane objects
 # (ProviderConfig + Workspace); authentik.tf is the single source of
-# truth for the HCL. kustomization.yaml stitches them at build time —
+# truth for the HCL. kustomization.yaml stitches them at build time:
 # configMapGenerator packages this file and the replacements rule
 # copies its bytes into spec.forProvider.module (source: Inline,
 # module: "" placeholder), so the rendered module stays byte-identical
 # to this file. Never render this directory outside kustomize.
 #
 # Tile mode (the jetkvm shape): the Authentik footprint is the dashboard
-# launchpad tile + the admins binding ONLY — no provider, no outpost, no
+# launchpad tile + the admins binding ONLY: no provider, no outpost, no
 # flows or scope lookups.
 #
-# CREATED, not adopted: ControlD is a net-new tile with no retired-blueprint
-# predecessor, so this workspace CREATES the application + binding on first
-# reconcile. There are no adoption variables or import blocks.
+# CREATED, not adopted: ControlD is a net-new tile, so this workspace
+# CREATES the application + binding on first reconcile. There are no
+# adoption variables or import blocks.
 
 terraform {
   required_providers {
@@ -26,7 +26,7 @@ terraform {
 
   # PARTIAL backend (the module's versions.tf shape): the per-app args
   # (secret_suffix/namespace/in_cluster_config) come from the ProviderConfig
-  # spec.backendFile — the provider writes them to crossplane.remote.tfbackend
+  # spec.backendFile: the provider writes them to crossplane.remote.tfbackend
   # and passes them via -backend-config at tofu init. The empty block MUST
   # stay: -backend-config without a backend block falls back to the LOCAL
   # backend (warning only), which reads an EMPTY state and plans a full

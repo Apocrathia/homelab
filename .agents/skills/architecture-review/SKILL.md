@@ -52,11 +52,11 @@ Friction you hit while exploring **is** the signal.
 
 ## Issue content (per candidate)
 
-- **Problem** — modules involved, coupling, integration risk
-- **Proposed direction** — interface sketch, what complexity moves behind a boundary
-- **Dependency strategy** — in-process | local-substitutable | ports/adapters | external mock
-- **Feedback loop** — boundary test, render check, or dogfood step that proves the refactor
-- **Testing strategy** — new checks; shallow tests to delete after
+- **Problem**: modules involved, coupling, integration risk
+- **Proposed direction**: interface sketch, what complexity moves behind a boundary
+- **Dependency strategy**: in-process | local-substitutable | ports/adapters | external mock
+- **Feedback loop**: boundary test, render check, or dogfood step that proves the refactor
+- **Testing strategy**: new checks; shallow tests to delete after
 
 Do not paste a full plan; link a plan later via [`project-planner`](../../agents/project-planner/agent.md) if needed.
 
@@ -73,5 +73,5 @@ Do not paste a full plan; link a plan later via [`project-planner`](../../agents
 - Edit production manifests or app code in this skill (exploration until issues are filed)
 - Open GitLab issues unless the operator directs
 - File vague "refactor X" without a named feedback loop
-- Create a worktree for this skill — exploration is read-only; worktrees belong
+- Create a worktree for this skill; exploration is read-only; worktrees belong
   to a later implement lap

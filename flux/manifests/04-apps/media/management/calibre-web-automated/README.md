@@ -8,7 +8,7 @@ Automated Calibre ebook library: ingests books, pulls metadata, converts formats
 
 This deployment includes:
 
-- Ingest pipeline wired to Books/\_import (underscore prefix keeps it sorted to the top) — files placed there are processed and removed
+- Ingest pipeline wired to Books/\_import (underscore prefix keeps it sorted to the top), files placed there are processed and removed
 - Auto-created Calibre library at the Books share root (metadata.db, organized folders)
 - Format conversion via bundled Calibre (MOBI to EPUB, etc.)
 - NETWORK_SHARE_MODE for the SMB library (SQLite WAL off, polling watcher)
@@ -29,16 +29,16 @@ Authentik OIDC (chart-rendered provider + admins binding). CWA's own account sys
 
 Post-deploy OAuth setup (CWA Admin → Basic Configuration → OAuth):
 
-1. Metadata URL: `https://auth.gateway.services.apocrathia.com/application/o/calibre-web-automated/.well-known/openid-configuration` — click **Test Metadata**
+1. Metadata URL: `https://auth.gateway.services.apocrathia.com/application/o/calibre-web-automated/.well-known/openid-configuration`, click **Test Metadata**
 2. Client ID / secret from the authentik provider (`calibre-web-automated-oidc-provider`)
 3. Scopes: `openid profile email groups` (groups required for admin roles)
-4. OAuth Redirect Host: `https://calibre.gateway.services.apocrathia.com` — prevents redirect URI drift; restart CWA after setting it
+4. OAuth Redirect Host: `https://calibre.gateway.services.apocrathia.com`, prevents redirect URI drift; restart CWA after setting it
 
 ## Initial Setup
 
 1. Open the URL and log in with the default credentials, then **change the admin password immediately** (the CWA README documents the defaults).
 2. Ingest settings: tune which formats convert (PDF/EPUB/MOBI handling) and the target format in CWA Settings.
-3. Drop books into the Books/\_import folder — CWA files them into the library automatically and removes the sources. The old Import pile is not wired up; move books into \_import in batches for a controlled ingest.
+3. Drop books into the Books/\_import folder, CWA files them into the library automatically and removes the sources. The old Import pile is not wired up; move books into \_import in batches for a controlled ingest.
 
 ## Troubleshooting
 
@@ -53,7 +53,7 @@ kubectl logs -n calibre-web-automated deployment/calibre-web-automated -f
 kubectl exec -n calibre-web-automated deployment/calibre-web-automated -- cat /config/cwa_ingest_status
 ```
 
-If the web UI 500s on a fresh install, a non-root first boot corrupted the config volume — wipe the config PVC and redeploy (upstream issue #1223).
+If the web UI 500s on a fresh install, a non-root first boot corrupted the config volume, wipe the config PVC and redeploy (upstream issue #1223).
 
 ## References
 

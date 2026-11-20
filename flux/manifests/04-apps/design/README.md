@@ -12,7 +12,7 @@ SketchUp-style 3D modeler for woodworking in the browser.
 
 ### [CADCraft](./cadcraft/README.md)
 
-Open-source CAD — parametric solid modeling in the browser.
+Open-source CAD, parametric solid modeling in the browser.
 
 ### [Craft Anything](./craft-anything/README.md)
 
@@ -56,7 +56,7 @@ Photo editor in the browser.
 
 ### [SolidCraft](./solidcraft/README.md)
 
-Parametric 3D CAD in the browser — an independent project from Tangency Labs.
+Parametric 3D CAD in the browser, an independent project from Tangency Labs.
 
 ### [SoundCraft](./soundcraft/README.md)
 

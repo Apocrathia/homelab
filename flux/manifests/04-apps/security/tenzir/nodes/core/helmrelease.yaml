@@ -30,7 +30,7 @@ spec:
   values:
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
-    # "tenzir-node" — release tenzir-node-core + entry core would
+    # "tenzir-node": release tenzir-node-core + entry core would
     # double to tenzir-node-core-core. The override pins fullname
     # at tenzir-node so the entry renders tenzir-node-core.
     fullnameOverride: tenzir-node
@@ -69,10 +69,9 @@ spec:
           key: core-node-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
         # kube-audit alloy and the shared alloy OTLP log fan-out push at
-        # tenzir-node-core:4318 (the tetragon alloy moved to the tetragon
-        # node); the fleet webhook and the trivy-report-reader POST to
-        # http-ingest 8080. NetFlow 2055/UDP moved to the netflow node,
-        # tenzir-ingest-lb selector flipped with it.
+        # tenzir-node-core:4318; the fleet webhook and the trivy-report-reader
+        # POST to http-ingest 8080. NetFlow 2055/UDP and the tenzir-ingest-lb
+        # selector live on the netflow node.
         extraPorts:
           - name: otlp-grpc
             containerPort: 4317
@@ -82,7 +81,7 @@ spec:
             containerPort: 8080
 
     # Stateless: every OCSF pipeline writes directly to ClickHouse with
-    # in-stream attestation — no lake import, no archive rule. No PVC.
+    # in-stream attestation: no lake import, no archive rule. No PVC.
     # Context tables are all memory; platform registration is via the
     # Secret.
     persistence:
@@ -103,22 +102,20 @@ spec:
             - /etc/tenzir/packages
           # Server-log verbosity: the chart's injected default
           # (tenzir.file-verbosity: quiet) writes nothing to server.log,
-          # so pipeline failures that point at it — the 2026-10-17
-          # class_uid compaction incident surfaced "partition transform:
-          # pipeline failed; see server log for diagnostics" with an
-          # empty log behind it — stay blind. warning puts the file at
-          # the problem surface ([warning]/[error]/[critical], the lines
-          # the docs' troubleshooting grep filters for) without the
-          # info-level chatter. server.log lands at /var/log/tenzir (the
-          # image's TENZIR_LOG_FILE=/var/log/tenzir/server.log) and
-          # rotates at 10 MiB — readOnlyRootFilesystem made that path
-          # unwritable, the 2026-10-17 crashloop, until the tenzir-logs
-          # emptyDir (extraVolumes below) backed it.
+          # so pipeline failures that point at it stay blind (a failed
+          # pipeline says "see server log for diagnostics" and the log is
+          # empty). warning puts the file at the problem surface
+          # ([warning]/[error]/[critical], the lines the docs'
+          # troubleshooting grep filters for) without the info-level chatter.
+          # server.log lands at /var/log/tenzir (the image's
+          # TENZIR_LOG_FILE=/var/log/tenzir/server.log) and rotates at 10
+          # MiB; readOnlyRootFilesystem makes that path unwritable, so the
+          # tenzir-logs emptyDir (extraVolumes below) backs it.
           file-verbosity: warning
           # Node-resident enrichment state (contexts are per-node, shared
           # across this node's pipelines, and survive pipeline restarts;
           # creation arguments apply only at creation, so this block never
-          # reconfigures an existing context — each context's loader
+          # reconfigures an existing context; each context's loader
           # pipeline is the refresh path). The geoip context is created
           # empty at boot and filled by context_load of CIRCL's free Geo
           # Open country+ASN MMDB (~80 MiB in node memory, headroom the
@@ -130,9 +127,9 @@ spec:
           # tenzir::osint::update_context, entries expiring 30d after
           # their last application (the operator's max_age); declared
           # empty at boot, same pattern as geo-open.
-          # The fleet_assets lookup table (lap 2) is filled hourly by the
+          # The fleet_assets lookup table is filled hourly by the
           # fleet-assets-loader pipeline below from the enrichment
-          # node's ClickHouse output — the factory/loader split of the
+          # node's ClickHouse output; the factory/loader split of the
           # vendored asset-inventory guide; contexts are per-node, so
           # this node's own loader owns its copy (the enrichment node
           # only writes the shared source table).
@@ -147,18 +144,18 @@ spec:
             # (the archive rule's attest leg + the verify pipeline): one
             # lookup-table entry (key = the node identity constant
             # tenzir-node-core) holding the per-node chain's cross-pass
-            # tail — the previous archive pass's last record uid,
+            # tail; the previous archive pass's last record uid,
             # type_uid, and fingerprint, which the next pass's first
             # record links to as prev_event (the batch seam; the
             # intra-batch links ride the attest operator's internal
-            # lag — probed: context reads run engine-batches ahead of
+            # lag: context reads run engine-batches ahead of
             # the writes at batch rate, so the context is the seam
             # channel only, never the intra-batch channel). Same shape
             # as the investigations node's investigations-chains. The
             # table is memory: a NODE restart loses it, and the next
             # pass's first record restarts the chain with prev_event
             # absent plus one WARNING diagnostic from attest (the
-            # epoch marker; best-effort per node lifetime — the verify
+            # epoch marker; best-effort per node lifetime; the verify
             # lane's per-record fingerprint recompute still catches
             # post-hoc mutation across restarts, only the linkage gap
             # around a restart is lost, documented in the datalake
@@ -193,7 +190,7 @@ spec:
                 after the cast and before the store/publish legs, so the
                 lake, the archive, the sigma pass, and the unified OCSF
                 bus all see the enriched record: the API caller's origin
-                (src_endpoint.ip, sourceIPs[0] — a clean, always-present
+                (src_endpoint.ip, sourceIPs[0]: a clean, always-present
                 source-IP field in the audit fixtures) gains geo country +
                 ASN from the node-resident geo-open context (filled by
                 geo-open-loader), mapped into OCSF endpoint fields
@@ -203,7 +200,7 @@ spec:
                 src_endpoint set by the map, and a null IP (empty
                 sourceIPs) degrades to a bare endpoint via the gated
                 assignments. sourceIPs[0] is dominantly cluster-internal
-                (pod/service CIDRs) — Geo Open marks those not routed and
+                (pod/service CIDRs); Geo Open marks those not routed and
                 the filters leave the endpoint bare, so only external
                 API callers (operator kubectl, anything outside the
                 cluster) actually geolocate. No dns_lookup: pod/service
@@ -228,7 +225,7 @@ spec:
                 (rule id + subject composite) and import into the node
                 lake; the ocsf archive rule exports them to ClickHouse
                 after the 15-minute horizon. Grafana owns alerting off
-                the archive — there is no other egress.
+                the archive; there is no other egress.
               definition: ""
               restart-on-error: 1 minute
             http-ingest:
@@ -259,21 +256,21 @@ spec:
                 Enrichment runs after the cast and before the
                 store/publish legs, so the lake, the archive, the sigma
                 pass, and the bus all see the enriched record: the login
-                geo — src_endpoint.ip (client_ip) gains country + ASN from
+                geo; src_endpoint.ip (client_ip) gains country + ASN from
                 the node-resident geo-open context (filled by
                 geo-open-loader), mapped into OCSF endpoint fields
                 (endpoint.location.country,
                 network_endpoint.autonomous_system). The fork_merge
                 complementary-where gate covers both IAM classes, which
                 all carry src_endpoint (login/logout/login_failed and the
-                account mutations alike — geo answers "from where was this
+                account mutations alike; geo answers "from where was this
                 account changed", not just where the login happened);
                 the Base Event arm has no endpoint and passes through
                 untouched (a null-key context_enrich still writes its
                 into-field, probed on v6.19.1, so the mixed-class stream
                 cannot run the operators unconditionally). No dns_lookup:
                 LAN clients have no PTRs in the homelab DNS and attacker
-                PTRs are absent or ISP-generic — the ASN name already
+                PTRs are absent or ISP-generic; the ASN name already
                 carries the provider, and a hostname would add no triage
                 signal a failed-login hunt actually uses. Private
                 addresses stay bare; Geo Open marks them not routed and
@@ -307,7 +304,7 @@ spec:
                 Builder pipeline for the geo-open geoip context (declared
                 in the contexts block above): fetches CIRCL's free Geo
                 Open country+ASN MMDB and atomically replaces the context
-                state — the two-pipeline builder/consumer shape from the
+                state: the two-pipeline builder/consumer shape from the
                 vendored add-enrichment-contexts tutorial. Geo Open over
                 GeoLite2 on purpose: MaxMind needs a license account plus
                 out-of-band download plumbing (tar.gz extract,
@@ -319,7 +316,7 @@ spec:
                 from_http requires a parser, so read_all wraps the ~80 MiB
                 download into one event and write_all unwraps it to the
                 byte stream context_load consumes. context_load replaces
-                the whole state, so a failed fetch never half-updates —
+                the whole state, so a failed fetch never half-updates;
                 the context keeps serving the last good database and
                 restart-on-error retries in a minute. every 24h fires its
                 first run at pipeline start (fresh node: context filled
@@ -342,7 +339,7 @@ spec:
                 library `tenzir` package's update_context operator. The
                 factory appends the collection's current state on every
                 walk, so the loader applies updates in event-time order
-                — the indicator's STIX modified time, ORDER BY
+                : the indicator's STIX modified time, ORDER BY
                 server-side: per key the newest version lands last, and
                 a revoked row (status Removed; STIX versioning bumps
                 modified on revoke) erases the key after older active
@@ -350,18 +347,18 @@ spec:
                 regardless of order. The read rides SQL-mode
                 projection, not table mode (6.19.1 table mode does not
                 reconstruct catch-alls at all, and 6.20 table mode
-                re-types IP-shaped indicator values — the vendored
+                re-types IP-shaped indicator values; the vendored
                 operators pin string keys): the projection re-types the
                 osint array back to record shape with values coerced to
                 strings, and rows without a joinable indicator value
                 (compound/yara patterns) drop before the update. The
                 round trip rebuilds the event fields but not the
-                schema name, so the pipeline stamps @name back —
+                schema name, so the pipeline stamps @name back;
                 update_context gates on it. max_age=30d is the upstream
                 default: entries unseen by a walk for 30d age out.
                 every 24h fires at pipeline start (fresh node:
                 context filled seconds after boot, same shape as
-                geo-open-loader), then daily — the factory's own walk
+                geo-open-loader), then daily; the factory's own walk
                 is daily, so the context converges to the table state
                 daily. In-stream enrichment of live events with this
                 context stays at the category-4 (Network Activity)
@@ -372,12 +369,12 @@ spec:
             fleet-assets-loader:
               name: fleet assets loader
               description: |
-                Lap-2 consumer half of the fleet_assets factory: reads
+                Consumer half of the fleet_assets factory: reads
                 the enrichment node's ocsf.fleet_assets output from the
                 ClickHouse query store and fills this node's
                 fleet_assets lookup-table context (declared in the
                 contexts block above; contexts are per-node, so this
-                node needs its own loader — the enrichment node only
+                node needs its own loader; the enrichment node only
                 writes the shared table). SELECT ... FINAL collapses
                 each Fleet host uuid to its highest-last_seen row (the
                 ReplacingMergeTree version column); ORDER BY last_seen
@@ -385,7 +382,7 @@ spec:
                 freshest host on any IP shared across hosts (DHCP
                 reuse). Rows without a primary_ip cannot join events
                 and are skipped in the SQL. every 1h fires at pipeline
-                start, then hourly — authentik and k8s-audit events
+                start, then hourly; authentik and k8s-audit events
                 pass unenriched until the first successful load (the
                 empty lookup table is a no-op miss, the geo-open
                 boot-window precedent). restart-on-error retries a
@@ -400,7 +397,7 @@ spec:
                 ingress/egress event counts, emitted every 10s) to the Mimir
                 remote-write endpoint kube-prometheus-stack remote-writes to;
                 the mimir gateway injects the tenant header, so no auth here.
-                Raw shape, not shape="prometheus" — that transform drops all
+                Raw shape, not shape="prometheus"; that transform drops all
                 non-health schemas, pipeline metrics included. Grafana reads
                 the tenzir_pipeline_{ingress,egress}_events series; note this
                 pipeline (and its siblings) also self-report in those series.
@@ -408,8 +405,8 @@ spec:
                 internal flag (ingress.internal / egress.internal), so
                 bus-internal flow (publish, import, subscribe) is separable
                 from external export in the series; the node label pins the
-                pushing node — pipeline_ids are not node-qualified
-                (live-verified 2026-10-17: the vendored docs'
+                pushing node; pipeline_ids are not node-qualified
+                (the vendored docs'
                 demo-node/m57-suricata example applies to platform pipelines,
                 not node-config pipelines), and without it the same-named
                 self-reports from this node and the siblings collide on one
@@ -422,7 +419,7 @@ spec:
               name: sigma metrics to mimir
               description: |
                 Pushes the tenzir.metrics.sigma events (rule evaluations and
-                matches per input batch) to Mimir as tenzir_sigma_* series —
+                matches per input batch) to Mimir as tenzir_sigma_* series;
                 matches are the findings volume the dashboard shows. No
                 pipeline labels: the sigma metric schema documents only the
                 count fields.
@@ -433,22 +430,22 @@ spec:
               description: |
                 Verification half of the detection-plane record_integrity
                 lane: reads the last 24h of every core-node ocsf class back
-                (the six per-class tables via table-mode from_clickhouse —
-                the vendor catch-all reconstruction — merged into one
+                (the six per-class tables via table-mode from_clickhouse;
+                the vendor catch-all reconstruction; merged into one
                 stream, because the per-node chain crosses classes),
                 recomputes each attestation's fingerprint over the
                 canonical serialization, and walks the per-node prev_event
                 chain (chain_uid = tenzir-node-core); a Detection Finding
-                (2004) drops onto stdout for every break — content tamper
+                (2004) drops onto stdout for every break: content tamper
                 (fingerprint_mismatch), deletion (chain_link_mismatch), or
-                splice — while the windowed walk tolerates its own edge
+                splice; while the windowed walk tolerates its own edge
                 (the first record's predecessor lives outside the 24h
                 read). The walk is SCHEDULED hourly (the every wrapper,
                 the loader-pipeline shape): the first walk fires at
                 pipeline start, then every 1h re-walks the rolling 24h
                 window. Each break's finding rides two legs: stdout
                 (pod-log visibility) and, via ocsf_derive + ocsf_cast, an
-                INSERT into ocsf.Detection_Finding with the tenzir user —
+                INSERT into ocsf.Detection_Finding with the tenzir user;
                 landing inside the Grafana tenzir-findings rule's WHERE
                 clauses (class 2004, severity 4), so tamper evidence pages
                 through the agent_invoke bridge instead of waiting for a
@@ -466,7 +463,7 @@ spec:
                 sample (value 1, pipeline labels, node label = core) to Mimir
                 for every live error / warning diagnostic, so the dashboard can
                 count both severities with sum_over_time. They otherwise live
-                only in the diagnostics stream, not in metrics. Restored per-node (B1)
+                only in the diagnostics stream, not in metrics. Restored per-node
                 with the central poller's retirement.
               definition: ""
               restart-on-error: 1 minute
@@ -476,15 +473,14 @@ spec:
                 Ships every live, not-hidden pipeline diagnostic to Loki as
                 job=tenzir-diagnostics entries (node label = core).
                 to_fluent_bit resolves $pipeline_name and $severity per event
-                and consumes both out of the shipped body (live-verified
-                2026-10-17 probe); drop discards the ANSI escape-coded
-                rendered field, so the line keeps the rest of the diagnostic
-                record — pipeline_id, hidden, run, timestamp, message, notes,
-                annotations — and the labels carry pipeline + severity. Hidden
+                and consumes both out of the shipped body (probe); drop discards the ANSI
+                escape-coded rendered field, so the line keeps the rest of the diagnostic
+                record: pipeline_id, hidden, run, timestamp, message, notes,
+                annotations; and the labels carry pipeline + severity. Hidden
                 entries (platform-UI pipeline deprecation noise) stay out.
                 Plain HTTP to loki-write, cluster-internal. live=true without
                 retro: no store-backlog replay on start, so restarts never
-                re-ship history (Loki has no dedup) — restored per-node (B1)
+                re-ship history (Loki has no dedup); restored per-node
                 with the central poller's retirement: every node ships its own
                 pair now, so no cross-node consumer can ever blind against it.
               definition: ""
@@ -494,11 +490,10 @@ spec:
     # core/README.md): detection (+1), normalization on 4 sources (+0.8),
     # sources+destinations (+0.5) -> ceil(2.304) = 3 cores; the formula's
     # memory floor is 2 GB at the 15-minute horizon, but the boot catalog
-    # load pulls 76k partition synopses into RAM and OOMKilled the node at
-    # ~94% of load under the old 4Gi on every start (the tetragon sibling:
-    # 4.7k synopses under 12Gi) — 8Gi clears the boot load with ingest and
-    # import headroom. Requests stay small: talos-04 CPU requests are 92%
-    # committed, and limits are caps, not reservations.
+    # load pulls 76k partition synopses into RAM (4Gi was not enough); 8Gi
+    # clears the boot load with ingest and import headroom. Requests stay
+    # small: talos-04 CPU requests are 92% committed, and limits are caps,
+    # not reservations.
     resources:
       requests:
         cpu: 200m
@@ -517,11 +512,9 @@ spec:
     # same tenzir-secrets item (this namespace materializes its
     # OnePasswordItem in secret.yaml): the env var maps to config key
     # tenzir.secrets.clickhouse-password, so the to_clickhouse archive
-    # legs read it as secret("clickhouse-password") — kebab name, the
-    # same env-var shape as the authentik token. The retired to_s3 tail's
-    # rustfs AWS_* env entries are gone with the MR-5 teardown; the
-    # aws-* fields stay on the tenzir-secrets item, unused, for the
-    # operator to delete.
+    # legs read it as secret("clickhouse-password"): kebab name, the
+    # same env-var shape as the authentik token. The aws-* fields stay
+    # on the tenzir-secrets item, unused, for the operator to delete.
     extraEnv:
       - name: TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN
         valueFrom:
@@ -594,9 +587,8 @@ spec:
           name: tenzir-packages-tenzir-osint-enrich
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
-      # readOnlyRootFilesystem made unwritable — the 2026-10-17
-      # crashloop. emptyDir, same lifecycle as the tmp mount; the 10 MiB
-      # rotation cap bounds the disk cost.
+      # readOnlyRootFilesystem makes unwritable. emptyDir, same lifecycle as
+      # the tmp mount; the 10 MiB rotation cap bounds the disk cost.
       - name: tenzir-logs
         emptyDir: {}
 
@@ -604,10 +596,10 @@ spec:
       # Package files mount file-level: kubelet's atomic ConfigMap writer
       # keeps ..data/..2026_* internals at every directory-mount root, and
       # inside the walked package tree they fail Tenzir's operator-path
-      # segment check (SRE-20261010-001 crashloop). subPath binds the single
-      # projected file; kubelet auto-creates parent dirs, and the walked tree
-      # contains only the package files. subPath does not live-propagate
-      # ConfigMap updates — package changes need a pod roll.
+      # segment check (crashloop). subPath binds the single projected file;
+      # kubelet auto-creates parent dirs, and the walked tree contains only
+      # the package files. subPath does not live-propagate ConfigMap
+      # updates; package changes need a pod roll.
       - name: packages-homelab
         mountPath: /etc/tenzir/packages/homelab/package.yaml
         subPath: package.yaml

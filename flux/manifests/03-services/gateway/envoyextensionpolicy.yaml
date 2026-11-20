@@ -19,7 +19,7 @@ spec:
           # renovate: datasource=docker depName=ghcr.io/corazawaf/coraza-proxy-wasm
           url: ghcr.io/corazawaf/coraza-proxy-wasm:0.6.0
       # CRS v4 rules are embedded in the WASM binary.
-      # DetectionOnly — log WAF hits but don't block. Flip to On after tuning.
+      # DetectionOnly: log WAF hits but don't block. Flip to On after tuning.
       # Body limits: coraza defaults reject non-file request bodies over 128KB
       # (SecRequestBodyNoFilesLimit) with 413 — large JSON POSTs (agent/LLM
       # conversations, Fleet osquery batches) die at the WAF. Raised to 32Mi

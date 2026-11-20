@@ -1,4 +1,4 @@
-# `a2a` — LiteLLM-brokered agent calls (skill)
+# `a2a`: LiteLLM-brokered agent calls (skill)
 
 `SKILL.md` documents calling homelab kagent agents through the LiteLLM A2A
 broker (`POST /a2a/{agent_name}`), with auth from

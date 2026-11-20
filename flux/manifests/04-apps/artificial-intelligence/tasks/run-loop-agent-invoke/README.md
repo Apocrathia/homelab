@@ -2,7 +2,7 @@
 
 Constant-loop Cron host. Each schedule tick is one `run-loop` invocation
 (`.agents/skills/run-loop/`) against `homelab-agent` via kagent A2A. The agent
-**keeps going** by the Cron firing again — not by spinning inside a single Job.
+**keeps going** by the Cron firing again, not by spinning inside a single Job.
 
 > **Navigation**: [← Back to Agent Tasks README](../README.md)
 
@@ -27,8 +27,8 @@ Checkout-backed hosts (laptop Automation / workspace runner) own
 
 ## Schedule
 
-- Cron: `30 */6 * * *` (every 6 hours at :30).
-- `concurrencyPolicy: Forbid` — one lap at a time.
+- Cron: every ~6 hours (schedule in the CronJob manifest).
+- `concurrencyPolicy: Forbid`, one lap at a time.
 - Unsuspend: set `suspend: false` in `cronjob.yaml` when ready.
 
 ## What this includes

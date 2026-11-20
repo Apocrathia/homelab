@@ -1,16 +1,15 @@
 # -----------------------------------------------------------------------------
-# GitLab project — Apocrathia/homelab
+# GitLab project: Apocrathia/homelab
 # -----------------------------------------------------------------------------
-# Pattern spike: 1Password Connect ephemeral → gitlab provider (no `op` CLI).
+# 1Password Connect ephemeral → gitlab provider (no `op` CLI).
 #
 # Required env:
-#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
-#   OP_CONNECT_TOKEN — Connect API token with read on the vault
-#   TF_HTTP_*        — state backend (local PAT; CI can use job token)
+#   OP_CONNECT_HOST  - http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN - Connect API token with read on the vault
+#   TF_HTTP_*        - state backend (local PAT; CI can use job token)
 #
 # Do NOT export GITLAB_TOKEN. Do NOT commit vault UUIDs.
 # Set onepassword_gitlab_pat_item_title to the item title in vault Secrets.
-# Start with manage_terraform_label = false; flip true for the label apply.
 
 include "root" {
   path = find_in_parent_folders("root.hcl")
@@ -32,7 +31,7 @@ inputs = {
   manage_terraform_label      = false
 
   # Branch protection: adopt the existing rule on main (import block in the
-  # module), then enforce no direct pushes — everything through MRs.
+  # module), then enforce no direct pushes; everything through MRs.
   manage_branch_protection = true
   protected_branch         = "main"
 

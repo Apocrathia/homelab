@@ -216,7 +216,7 @@ upsert_variable() {
 echo "Target: ${REPO}"
 echo "Source: ${ENV_FILE}"
 echo "Keys:   ${required[*]}"
-echo "Note:   PROXMOX_VE_* / CLOUDFLARE_API_TOKEN / OKTA_API_TOKEN are not synced — Connect ephemeral (providers/*.hcl)"
+echo "Note:   PROXMOX_VE_* / CLOUDFLARE_API_TOKEN / OKTA_API_TOKEN are not synced: Connect ephemeral (providers/*.hcl)"
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   echo "Optional: TOFU_DRIFT_WEBHOOK_URL (will sync)"
 fi
@@ -240,7 +240,7 @@ fi
 
 echo
 if $DRY_RUN; then
-  echo "Dry run complete — no changes written."
+  echo "Dry run complete: no changes written."
 else
   echo "Done. Verify: glab variable list -R ${REPO}"
 fi

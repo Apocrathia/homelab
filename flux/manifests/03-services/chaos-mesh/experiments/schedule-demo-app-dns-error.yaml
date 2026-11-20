@@ -1,6 +1,6 @@
 ---
 # Daily DNS failure on demo-app pods: the chaos DNS server answers SERVFAIL to
-# every domain the pod resolves for 60s. Mechanism test only — the nginx dummy
+# every domain the pod resolves for 60s. Mechanism test only: the nginx dummy
 # serves static files and does not need DNS itself.
 apiVersion: chaos-mesh.org/v1alpha1
 kind: Schedule

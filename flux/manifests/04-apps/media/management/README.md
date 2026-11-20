@@ -1,4 +1,4 @@
-# management — media organization and automation
+# management: media organization and automation
 
 The management half of the media stack: the arr family (bazarr, lidarr,
 radarr, sonarr, whisparr, and more), library tools (calibre-web-automated,

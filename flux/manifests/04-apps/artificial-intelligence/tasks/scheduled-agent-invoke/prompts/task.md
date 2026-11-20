@@ -41,7 +41,7 @@ You are running a scheduled automation task. Execute the workflow end-to-end and
 - First, call `find_channel` with:
   - `channelName: "notifications"`
   - `guildId: "996790779257290772"`
-- If `find_channel` succeeds, immediately call `send_message` with **only** the report body (sections 1–6 below). Do not append delivery confirmations, message links, or “posted to #…” lines to the channel text.
+- If `find_channel` succeeds, immediately call `send_message` with **only** the report body (sections 1-6 below). Do not append delivery confirmations, message links, or “posted to #…” lines to the channel text.
 - If `find_channel` fails specifically because guild ID is required, then stop and return one concise blocker message requesting the guild ID.
 - Do not loop on repeated guild ID requests.
 
@@ -66,4 +66,4 @@ Use this exact template for consistency:
 6. `Next Actions`:
    - one concrete next step per issue (command/check), prioritized
 
-The `send_message` payload must stop after `Next Actions`. Treat `send_message` tool responses (success/link) as internal only — never paste them into the Discord message body.
+The `send_message` payload must stop after `Next Actions`. Treat `send_message` tool responses (success/link) as internal only, never paste them into the Discord message body.

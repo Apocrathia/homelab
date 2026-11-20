@@ -1,7 +1,7 @@
 variable "oauth_apps" {
   description = <<-EOT
     OIDC web apps to manage in this org. Keys are stable Terraform addresses.
-    Client secrets use omit_secret=true — read once from the Okta Admin UI into
+    Client secrets use omit_secret=true; read once from the Okta Admin UI into
     1Password; they are never TF outputs.
   EOT
   type = map(object({

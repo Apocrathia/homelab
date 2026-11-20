@@ -1,6 +1,6 @@
 # Odysseus
 
-[Odysseus](https://github.com/pewdiepie-archdaemon/odysseus) is a self-hosted AI workspace: chat, agents, memory, documents, and research — local-first with built-in auth.
+[Odysseus](https://github.com/pewdiepie-archdaemon/odysseus) is a self-hosted AI workspace: chat, agents, memory, documents, and research, local-first with built-in auth.
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
@@ -8,10 +8,10 @@
 
 This deployment includes:
 
-- **Odysseus UI** — `generic-app` on the upstream Dockerfile's Python base image, bootstrapped at pod start (git clone + pip + `setup.py`)
-- **PostgreSQL** — CloudNative-PG via `postgres.enabled` (`odysseus-postgres-rw`); SQLAlchemy `DATABASE_URL` built at runtime
-- **ChromaDB** — dedicated `odysseus-chromadb` release in this namespace for vector memory
-- **SearXNG** — cluster instance at `searxng.searxng.svc.cluster.local:8080` (not bundled here)
+- **Odysseus UI**, `generic-app` on the upstream Dockerfile's Python base image, bootstrapped at pod start (git clone + pip + `setup.py`)
+- **PostgreSQL**, CloudNative-PG via `postgres.enabled` (`odysseus-postgres-rw`); SQLAlchemy `DATABASE_URL` built at runtime
+- **ChromaDB**, dedicated `odysseus-chromadb` release in this namespace for vector memory
+- **SearXNG**, cluster instance at `searxng.searxng.svc.cluster.local:8080` (not bundled here)
 - **Authentik proxy** in front of Odysseus local login
 
 Cookbook GPU serving, bundled ntfy, and MCP browser tooling are not wired in this scaffold.
@@ -23,9 +23,9 @@ Cookbook GPU serving, bundled ntfy, and MCP browser tooling are not wired in thi
 
 ## Authentication
 
-Authentik **proxy** provider sits in front. Odysseus keeps its own user accounts (`AUTH_ENABLED=true`); you still log into the app after passing Authentik. There is no native OIDC in upstream — proxy mode only.
+Authentik **proxy** provider sits in front. Odysseus keeps its own user accounts (`AUTH_ENABLED=true`); you still log into the app after passing Authentik. There is no native OIDC in upstream, proxy mode only.
 
-First-boot admin user is `admin` (upstream default). Password comes from 1Password field `admin-password` via `ODYSSEUS_ADMIN_PASSWORD` in the init container. `setup.py` only creates the user when `/data/auth.json` is missing — it does not rotate an existing password on pod restart.
+First-boot admin user is `admin` (upstream default). Password comes from 1Password field `admin-password` via `ODYSSEUS_ADMIN_PASSWORD` in the init container. `setup.py` only creates the user when `/data/auth.json` is missing, it does not rotate an existing password on pod restart.
 
 ## Configuration
 
@@ -38,7 +38,7 @@ Most setup is in the **Settings** UI after login. Manifest env vars cover cluste
 | `DB_USERNAME` / `DB_PASSWORD`     | CNPG credentials; app builds `DATABASE_URL` at start |
 | `ALLOWED_ORIGINS`                 | Gateway hostname for CORS                            |
 
-Point LLM providers at LiteLLM (`http://litellm.litellm.svc.cluster.local:4000`) from Settings — same as OpenWebUI/Hermes.
+Point LLM providers at LiteLLM (`http://litellm.litellm.svc.cluster.local:4000`) from Settings, same as OpenWebUI/Hermes.
 
 See `helmrelease.yaml` and `chromadb.yaml` for deployment values.
 
@@ -54,7 +54,7 @@ Create the 1Password item at `vaults/Secrets/items/odysseus-secrets`:
 
 CNPG reads `username` / `password` for cluster bootstrap. The init container waits for `odysseus-postgres-rw` before `setup.py`.
 
-To apply a new `admin-password` after the app has already created `auth.json`, delete `auth.json` on the PVC and restart the pod (or change the password in the Odysseus UI). Upstream `setup.py` still prints the password line to init logs on create — treat those logs as sensitive.
+To apply a new `admin-password` after the app has already created `auth.json`, delete `auth.json` on the PVC and restart the pod (or change the password in the Odysseus UI). Upstream `setup.py` still prints the password line to init logs on create, treat those logs as sensitive.
 
 Some upstream features still use on-disk SQLite for ancillary caches (email scheduler, etc.); the main app schema is PostgreSQL.
 
@@ -97,5 +97,5 @@ kubectl run -n odysseus --rm -it --image=curlimages/curl debug -- \
 
 ## References
 
-- **[Odysseus repository](https://github.com/pewdiepie-archdaemon/odysseus)** — Source, Docker Compose reference, security notes
-- **[Promptfoo deployment](../promptfoo/README.md)** — Stock-image bootstrap pattern used here
+- **[Odysseus repository](https://github.com/pewdiepie-archdaemon/odysseus)**, Source, Docker Compose reference, security notes
+- **[Promptfoo deployment](../promptfoo/README.md)**, Stock-image bootstrap pattern used here

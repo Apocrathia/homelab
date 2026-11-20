@@ -1,7 +1,7 @@
 #!/bin/sh
 # Empty marker on the console/login user's Desktop (macOS + Linux).
 # Triggered by policy "Fleet DM Was Here marker present" via run_script.
-# Fails closed if no interactive user — never writes /tmp or $HOME.
+# Fails closed if no interactive user; never writes /tmp or $HOME.
 set -eu
 
 MARKER='Fleet DM Was Here'
@@ -17,7 +17,7 @@ if [ "$(uname -s)" = Darwin ]; then
     home=$(dscl . -read "/Users/$user" NFSHomeDirectory | awk '{print $2}')
   fi
 else
-  # fleetd has no TTY — logname fails; use the active seat session.
+  # fleetd has no TTY, so logname fails; use the active seat session.
   session=$(loginctl show-seat seat0 -p ActiveSession --value 2>/dev/null || true)
   if [ -n "$session" ]; then
     user=$(loginctl show-session "$session" -p Name --value 2>/dev/null || true)

@@ -9,7 +9,7 @@
 - **mecak8s pods**: stateless agent compute, gRPC :8080 + HTTP/SSE :8081
 - **State**: dedicated mecatl-valkey (Redis protocol) - session snapshots, event streams, virtual filesystem
 - **Coordination**: Kubernetes Leases (chart ships its own RBAC)
-- **Models**: cluster LiteLLM via OpenAI-compatible endpoint (`glm-5.3-prime` default)
+- **Models**: cluster LiteLLM via OpenAI-compatible endpoint (default model in the manifest)
 - **MCP**: streaming-HTTP only; kmcp servers reachable in-cluster (none wired yet)
 - **Posture**: strict - read-only calls allowed, mutating calls denied until pre-configured
 
@@ -27,7 +27,7 @@ mecatui connect mecatl.mecatl.svc.cluster.local:8080
 - **Agents**: defined as Markdown files with YAML frontmatter (name, tools, model, permissionMode, maxTurns)
 - **Secrets** (1Password, single item `mecatl-secrets`):
   - `litellm-api-key` (LiteLLM virtual key), future MCP tokens as `mcp-<server>-token`
-  - `valkey-password` — vestigial: mecatl-valkey is TLS-only (cert-manager `mecatl-valkey-tls`), the channel is the auth
+  - `valkey-password`, vestigial: mecatl-valkey is TLS-only (cert-manager `mecatl-valkey-tls`), the channel is the auth
 - **Model routing**: `defaultProvider`/`model` in the HelmRelease; per-session overrides via the API
 - **MCP servers**: add entries under `mcp.servers` in the HelmRelease
 

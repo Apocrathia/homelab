@@ -1,5 +1,5 @@
 ---
-# Ansible host GitOps — lint/syntax always; check/apply via 1Password Connect.
+# Ansible host GitOps: lint/syntax always; check/apply via 1Password Connect.
 # Included from the repo root .gitlab-ci.yml (same pattern as fleet/).
 #
 # Triggers:
@@ -7,20 +7,20 @@
 #   - Push to default branch touching ansible/** → validate (+ apply if token set)
 #
 # Secrets (1Password item `ansible-secrets` in vault `Secrets`):
-#   ansible_gitops_ed25519       — deploy private key (multiline text field)
-#   ansible_gitops_known_hosts   — known_hosts blob (multiline text field)
+#   ansible_gitops_ed25519       - deploy private key (multiline text field)
+#   ansible_gitops_known_hosts   - known_hosts blob (multiline text field)
 #
 # CI connects as the `ansible` service account (deploy key + NOPASSWD sudo);
 # no become password is fetched or used.
 #
 # CI/CD variables:
-#   OP_CONNECT_TOKEN — Connect API token (shared with tofu; vault must include Secrets)
-#   OP_CONNECT_HOST  — optional override; default is in-cluster Connect Service
+#   OP_CONNECT_TOKEN - Connect API token (shared with tofu; vault must include Secrets)
+#   OP_CONNECT_HOST  - optional override; default is in-cluster Connect Service
 #
 # Runner note: Kubernetes executor forces uid 1000 (non-root, no apt). Stock
 # python images lack a passwd entry for that uid, so OpenSSH aborts. This job
 # image includes vscode (uid 1000) + openssh-client. Keep runner HOME
-# (/home/gitlab-runner emptyDir) — overriding HOME breaks helper gitconfig.
+# (/home/gitlab-runner emptyDir); overriding HOME breaks helper gitconfig.
 # Pass absolute IdentityFile / UserKnownHostsFile so OpenSSH does not use
 # pw_dir (/home/vscode) for keys.
 ---
@@ -34,7 +34,7 @@
     ANSIBLE_COLLECTIONS_PATH: "$CI_PROJECT_DIR/ansible/collections"
     ANSIBLE_ROLES_PATH: "$CI_PROJECT_DIR/ansible/roles"
     # Keys land under runner HOME (/home/gitlab-runner emptyDir); passwd home is
-    # /home/vscode — pass absolute paths so OpenSSH does not use pw_dir.
+    # /home/vscode: pass absolute paths so OpenSSH does not use pw_dir.
     ANSIBLE_PRIVATE_KEY_FILE: "/home/gitlab-runner/.ssh/id_ed25519"
     ANSIBLE_SSH_ARGS: "-o UserKnownHostsFile=/home/gitlab-runner/.ssh/known_hosts -o IdentitiesOnly=yes"
     # In-cluster Connect Service (runners are on the cluster). Same as tofu CI.
@@ -57,7 +57,7 @@
 .ansible-ssh-setup:
   extends: .ansible-base
   before_script:
-    # Duplicated from .ansible-base — avoid GitLab !reference (breaks check-yaml).
+    # Duplicated from .ansible-base; avoid GitLab !reference (breaks check-yaml).
     - python -m venv "$CI_PROJECT_DIR/.venv"
     - source "$CI_PROJECT_DIR/.venv/bin/activate"
     - pip install --upgrade pip
@@ -83,7 +83,7 @@
     - python "$CI_PROJECT_DIR/ansible/ci/fetch_op_secrets.py"
     # community.general.onepassword shells out to `op`; in CI the lookup runs
     # in Connect mode (OP_CONNECT_HOST/TOKEN env from the ansible-secrets
-    # token) — still needs the binary. venv bin is first in PATH and writable
+    # token); still needs the binary. venv bin is first in PATH and writable
     # (runner forces uid 1000, no root).
     - |
       OP_VERSION="2.30.3"
@@ -137,8 +137,8 @@ ansible-apply:
       changes:
         - ansible/**/*
 
-# Nightly drift correction (scheduled pipeline; replaces the retired
-# Semaphore schedule). Same run as ansible-apply, schedule-only.
+# Nightly drift correction (scheduled pipeline). Same run as
+# ansible-apply, schedule-only.
 ansible-drift:
   extends: .ansible-ssh-setup
   stage: deploy

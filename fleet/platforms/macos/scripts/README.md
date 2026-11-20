@@ -1,4 +1,4 @@
-# macOS scripts — shell scripts for Macs
+# macOS scripts: shell scripts for Macs
 
 Empty slot: only the `.keep` placeholder lives here. The scripts Home loads
 today are cross-platform and live in `platforms/all/scripts/`; drop `.keep`

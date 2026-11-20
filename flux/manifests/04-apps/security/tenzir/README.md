@@ -21,13 +21,13 @@ node](./nodes/enrichment/README.md) is the internal-reference-data
 factory: it builds the curated lookup tables (fleet assets,
 baselines) into ClickHouse for the other nodes to pull; its first
 lane, the hourly Fleet host-inventory pull into `ocsf.fleet_assets`,
-shipped in lap 2 (the core node's loader is the consumer half).
+(the core node's loader is the consumer half).
 The [introspection
 node](./nodes/introspection/README.md) is the introspection plane:
 every node ships its own pipeline diagnostics to Loki and Mimir
-through its node-config lane pair (B1, the introspection node's pair
-covers its own pipelines, and the central poller Deployment is
-retired), and the node's charter direction is inward detection:
+through its node-config lane pair (the introspection node's pair
+covers its own pipelines; there is no central poller), and the node's
+charter direction is inward detection:
 scheduled volume/freshness passes over the ocsf.\* tables landing
 operational findings.
 The [intel node](./nodes/intel/README.md) is the CTI factory plane: its
@@ -54,20 +54,17 @@ datasource. Grafana owns notifications; there is no other findings
 egress. The class taxonomy and the bus semantics live in
 [`detections/README.md`](./detections/README.md).
 
-The parquet lane is retired (rollout MR-5 teardown, plan
-[`docs/plans/clickhouse-rollout.md`](../../../../../docs/plans/clickhouse-rollout.md)):
-the nodes write ClickHouse alone, in-stream attest + INSERT, no
-archive rules, and the existing
-`s3://tenzir/ocsf/` archive stays untouched in the rustfs bucket as
-frozen, unqueried history, deleting it is a separate operator call. No
-backfill replays it into ClickHouse (operator decision 2026-10-17: the
-parquet history has no value to preserve).
+The nodes write ClickHouse alone (in-stream attest + INSERT, no archive
+rules), and the existing `s3://tenzir/ocsf/` archive stays untouched in the
+rustfs bucket as frozen, unqueried history; deleting it is a separate
+operator call. No backfill replays it into ClickHouse (the parquet history
+has no value to preserve).
 
 ```mermaid
 flowchart LR
     SRC["sources"] -->|"OTLP · HTTP · NetFlow"| IN[listener]
 
-    subgraph NODE["tenzir node — one per role"]
+    subgraph NODE["tenzir node: one per role"]
         IN --> PARSE["parse (homelab TQL package)"]
         PARSE --> OCSF["normalize to OCSF"]
         OCSF --> BUS["ocsf topic (the bus)"]
@@ -115,14 +112,14 @@ and the rendered Secret keys match them:
   `enrichment-node-token` / `introspection-node-token` / `intel-node-token`: the
   pre-provisioned Tenzir Platform node tokens, one per node
 - `opencti-taxii-token`: the OpenCTI TAXII 2.1 bearer token, written
-  by the opencti lane, its slice-7 handoff
+  by the opencti lane, its SIEM-handoff checklist
   ([`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md));
   the intel node's opencti-taxii-factory-walk and
   opencti-taxii-factory-poll pipelines read it
   (`TENZIR_SECRETS__OPENCTI_TAXII_TOKEN` on tenzir-node-intel)
 
 The same item carries the ClickHouse credentials (the store's
-`clickhouse-*` fields were consolidated onto this item 2026-10-27):
+`clickhouse-*` fields were consolidated onto this item):
 `clickhouse-password` is the ClickHouse `tenzir` writer password six
 nodes read as `TENZIR_SECRETS__CLICKHOUSE_PASSWORD`
 : the direct `to_clickhouse` INSERT legs on core, tetragon, and

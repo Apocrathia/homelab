@@ -50,7 +50,7 @@ curl -s localhost:9822/healthz
 ```
 
 Failed AMP logins show as `amp_up 0` and WARN lines in the exporter logs.
-Repeated bad passwords can trip AMP brute-force protection — stop the pod,
+Repeated bad passwords can trip AMP brute-force protection, stop the pod,
 fix credentials, wait a few minutes, then restart.
 
 ## References

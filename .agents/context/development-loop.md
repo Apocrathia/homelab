@@ -169,7 +169,7 @@ Each actionable find-work row emits a pasteable brief. Discover is read-only;
 build only after the brief is selected.
 
 ```text
-## Launch N — <title>
+## Launch N: <title>
 - Source: <issue path | alert | Flux object | MR>
 - Evidence: <paths / queries / links>
 - Acceptance: <observable done>

@@ -1,4 +1,4 @@
-# `generic-app-longhorn-restore` — Longhorn volume recovery (skill)
+# `generic-app-longhorn-restore`: Longhorn volume recovery (skill)
 
 `SKILL.md` is the runbook for restoring a Longhorn-backed volume of a
 `generic-app` Helm workload: detach workloads, restore from a Longhorn backup

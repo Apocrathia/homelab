@@ -37,9 +37,8 @@ JSON, all in the Grafana `Security` folder:
   pre-epoch), and the evidence observables with their lake row links.
 
 The OCSF dashboards query the `ocsf-clickhouse` datasource over the
-per-class `ocsf.*` tables on the ClickHouse OCSF store (the retired
-duckdb/parquet lane is gone since the MR-5 teardown), so every panel
-reads real archived fields only. The investigations dashboards query
+per-class `ocsf.*` tables on the ClickHouse OCSF store, so every panel
+reads real archived fields only.
 the same datasource over the single-JSON-column `investigations.records`
 table (the case store; `grafana` user grants extended for it in
 [`../clickhouse/cluster.yaml`](../clickhouse/cluster.yaml)), see the

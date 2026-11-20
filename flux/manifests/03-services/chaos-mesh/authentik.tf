@@ -1,9 +1,9 @@
-# chaos-mesh's Authentik stack — HCL half of the canonical file pair.
+# chaos-mesh's Authentik stack. HCL half of the canonical file pair.
 #
 # Pair contract: crossplane.yaml carries the Crossplane objects
 # (OnePasswordItem + ProviderConfig + Workspace); authentik.tf is the
 # single source of truth for the HCL. kustomization.yaml stitches them at
-# build time — configMapGenerator packages this file and the replacements
+# build time: configMapGenerator packages this file and the replacements
 # rule copies its bytes into spec.forProvider.module (source: Inline,
 # module: "" placeholder), so the rendered module stays byte-identical to
 # this file. Never render this directory outside kustomize.
@@ -11,11 +11,10 @@
 # ADDRESS PARITY with the live tfstate Secret
 # (tfstate-chaos-mesh-authentik-chaos-mesh): the resource and data-source
 # names below mirror terraform/modules/authentik-app exactly (the
-# module-era addresses), so the first plan after this layout swap reads
-# No changes — no state-mv gate, no recreate, no import ids. There are NO
-# import blocks here: tofu state holds the objects, and if the state Secret
-# is ever lost, re-adopt via manual tofu import (ids from the live DB) —
-# never a blip.
+# module-era addresses). No changes: no state-mv gate, no recreate, no
+# import ids. There are NO import blocks here: tofu state holds the
+# objects, and if the state Secret is ever lost, re-adopt via manual tofu
+# import (ids from the live DB): never a blip.
 #
 # Proxy mode: provider + application + admins binding + outpost. NOT
 # shared: live carries only the admins binding (no users binding, no
@@ -31,11 +30,11 @@ terraform {
 
   # PARTIAL backend (the module's versions.tf shape): the per-app args
   # (secret_suffix/namespace/in_cluster_config) come from the ProviderConfig
-  # spec.backendFile — the provider writes them to crossplane.remote.tfbackend
+  # spec.backendFile: the provider writes them to crossplane.remote.tfbackend
   # and passes them via -backend-config at tofu init. The empty block MUST
   # stay: -backend-config without a backend block falls back to the LOCAL
   # backend (warning only), which reads an EMPTY state and plans a full
-  # duplicate create set — the parity bar dies right there.
+  # duplicate create set: the parity bar dies right there.
   backend "kubernetes" {}
 }
 
@@ -71,27 +70,27 @@ data "authentik_group" "admins" {
   include_users = false
 }
 
-# Users-group binding source — module-shape parity: the module declares
+# Users-group binding source: module-shape parity: the module declares
 # this data source ungated, so the live state carries it even though
 # chaos-mesh is NOT shared (no users binding resource). Keeping it declared
-# preserves the state address set; unreferenced data sources are fine —
+# preserves the state address set; unreferenced data sources are fine:
 # tofu still reads and stores them.
 data "authentik_group" "users" {
   name          = "users"
   include_users = false
 }
 
-# The service connection the outpost runs through — the one authentik
+# The service connection the outpost runs through: the one authentik
 # creates on install. count stays 1 (not a conditional): the live state
-# address is local[0], the module-era shape; removing count would rename
+# address is local[0], the module shape; removing count would rename
 # the address and plan a destroy/create.
 data "authentik_service_connection_kubernetes" "local" {
   count = 1
   name  = "Local Kubernetes Cluster"
 }
 
-# Proxy provider — chart-blueprint parity. count stays 1: the live state
-# address is app[0], the module-era shape; removing count would rename the
+# Proxy provider: chart-blueprint parity. count stays 1: the live state
+# address is app[0], the module shape; removing count would rename the
 # address and plan a destroy/create.
 resource "authentik_provider_proxy" "app" {
   count = 1
@@ -102,27 +101,27 @@ resource "authentik_provider_proxy" "app" {
   invalidation_flow   = data.authentik_flow.invalidation.id
   authentication_flow = data.authentik_flow.authentication.id
 
-  # Live override 1 of 3 (verified in the authentik DB 2026-09-25): the
+  # Live override 1 of 3: the
   # dashboard service URL, not the app-name pattern the chart would
   # compose.
   internal_host = "http://chaos-dashboard.chaos-mesh.svc.cluster.local:2333"
   external_host = "https://chaos.gateway.services.apocrathia.com"
 
-  # Live override 2 of 3: TRUE (module default false — chart parity; the
+  # Live override 2 of 3: TRUE (module default false: chart parity; the
   # TF resource default is TRUE, so an omitted attribute would PATCH live
   # rows to true on the first apply).
   intercept_header_auth = true
 
-  # skip_path_regex omitted — module parity (the empty list maps to null =
+  # skip_path_regex omitted: module parity (the empty list maps to null =
   # attribute omitted): live rows are empty, and an explicit empty string
   # would PATCH live rows.
 
-  # Live override 3 of 3: minutes=10 (the TF default written at blip time;
-  # the module proxy default is hours=1 — always sent explicitly).
+  # Live override 3 of 3: minutes=10 (TF default;
+  # the module proxy default is hours=1; always sent explicitly).
   access_token_validity = "minutes=10"
 }
 
-# Application — chart-blueprint parity. protocol_provider replaces the
+# Application: chart-blueprint parity. protocol_provider replaces the
 # blueprint's provider FK.
 resource "authentik_application" "app" {
   name            = "Chaos Mesh"
@@ -131,7 +130,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://chaos.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  # Optional metadata: null = attribute omitted — live DB rows are NULL
+  # Optional metadata: null = attribute omitted: live DB rows are NULL
   # for many apps; the config must not invent values.
   meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/chaos-mesh/icon.svg"
   meta_description = "Chaos engineering platform for Kubernetes"
@@ -150,11 +149,10 @@ resource "authentik_policy_binding" "admins" {
   order  = 10
 }
 
-# The outpost itself is workspace-owned (the retired blueprint could never
-# create a provider-less outpost — authentik's OutpostSerializer rejects
-# an empty providers list — so the outpost + the provider m2m land in one
-# apply here). count stays 1: the live state address is app[0], the
-# module-era shape. config: every key the chart blueprint set; the
+# The outpost itself is workspace-owned (authentik's OutpostSerializer
+# rejects an empty providers list, so the outpost + the provider m2m land
+# in one apply here). count stays 1: the live state address is app[0], the
+# module shape. config: every key the chart blueprint set; the
 # parentRef list is the not-shared shape (main-gateway only, no tailnet
 # parentRef) and jsonencode key order is tofu-canonical (sorted).
 resource "authentik_outpost" "app" {

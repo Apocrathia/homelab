@@ -26,7 +26,7 @@ This deployment includes:
 
 ZIM files are managed automatically via a daily CronJob:
 
-- **Schedule**: Daily at 2:00 AM
+- **Schedule**: daily ZIM refresh (schedule in the CronJob)
 - **Updater Script**: `kiwix-zim-updater` from GitHub
 - **Process**: Downloads latest ZIM files and updates library.xml
 - **Options**: HTTP(S) downloads with checksum verification

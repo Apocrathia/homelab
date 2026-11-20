@@ -10,7 +10,8 @@ Companion is an open-source controller for Elgato Stream Decks and other input d
 
 ### Key Features
 
-- **Stream Deck integration**: Elgato Stream Deck device support
+Companion supports Stream Deck devices, a browser UI, multiple input devices and protocols, custom modules, and a REST API for external control.
+
 - **Web interface**: Browser UI for configuration and control
 - **Multi-device**: Multiple input devices and protocols
 - **Extensible**: Custom modules and integrations
@@ -26,7 +27,7 @@ This application is deployed using the [generic-app Helm chart](../../../../../h
 - **Network Ports**:
   - HTTP interface on port 8000
   - Satellite communication on ports 16622 and 16623 (LoadBalancer service)
-  - External LoadBalancer IP: `10.100.1.97`
+  - External LoadBalancer IP: see the Service in `helmrelease.yaml`
 
 See `helmrelease.yaml` for complete deployment configuration.
 
@@ -72,7 +73,7 @@ curl -X GET "https://companion.gateway.services.apocrathia.com/api/v1/buttons"
 
 Companion satellites can connect to the main instance via TCP ports 16622 and 16623:
 
-- **External Access**: `10.100.1.97:16622` or `10.100.1.97:16623` (LoadBalancer IP)
+- **External Access**: the LoadBalancer IP and ports (see `helmrelease.yaml`)
 - **Internal Access**: `bitfocus.bitfocus.svc:16622` or `bitfocus.bitfocus.svc:16623`
 - **Protocol**: TCP
 - **Service Type**: LoadBalancer with Cilium L2 announcement

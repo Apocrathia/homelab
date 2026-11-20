@@ -7,7 +7,7 @@ metadata:
   name: immich-postgres
   namespace: immich
 spec:
-  # Pin major=17 — CNPG in-place major upgrades break Immich/vectorchord.
+  # Pin major=17: CNPG in-place major upgrades break Immich/vectorchord.
   # renovate: datasource=docker depName=ghcr.io/tensorchord/cloudnative-vectorchord versioning=regex:^(?<major>17)-(?<minor>\d+)\.(?<patch>\d+)(?:\.(?<build>\d+))?$
   imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-1.1.1@sha256:bb7eb8442f76b1e74911f28585019a77022911f8cfa2ddcfb166ea6af85abd09
   instances: 1

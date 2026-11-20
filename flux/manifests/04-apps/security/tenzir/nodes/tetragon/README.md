@@ -17,7 +17,7 @@ nodes (core, netflow, investigations) ship), and
 tetragon-attest-verify (the hourly record_integrity walk, the
 verification half of the attestation lane below). The diagnostics
 pair (error-diagnostics-to-mimir, diagnostics-to-loki) ships from
-this node again, restored per-node with the B1 lap after the
+this node again, restored per-node after the
 central poller's retirement. The split exists so the flood's CPU and memory
 behavior cannot starve the detection plane on the core node, and
 the loader is equally decoupled, a slow or failed MMDB fetch never
@@ -49,7 +49,7 @@ flowchart LR
     TR -->|"OCSF map, ~125 schema variants"| ENR["network-activity enrichment<br/>(geo-open context + dns_lookup)"]
     CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -->|"every 24h<br/>geo-open-loader"| ENR
     ENR -->|"geo/ASN/hostname into OCSF<br/>endpoint fields"| WIN["60s event-time window:<br/>sort + record_integrity attest"]
-    WIN -->|"direct to_clickhouse INSERT<br/>(lap 2a-1)"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
+    WIN -->|"direct to_clickhouse INSERT<br/>"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
     CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
 ```
 
@@ -71,7 +71,7 @@ ocsf bus both carry the enriched record.
 The unmapped residue on every mapped event is a selected projection (pod
 identity, kprobe policy name), not the full raw record: re-storing the
 raw tetragon event duplicated every process object at ~4.8 KB per event
-of pure lake cost (measured live, 2026-10-15 rate diagnosis). The
+of pure lake cost (measured live). The
 OCSF-mapped fields carry the process identity, endpoints, files, and
 containers; the residue keeps only what no OCSF field carries.
 
@@ -105,42 +105,34 @@ RAM = max(2,
 ) = 2 GB
 ```
 
-The node keeps its limits (4 cores, 12Gi) well above the formula on
-live-verified burst evidence: the flood working set measured 12.1Gi at
-the ceiling, and a 1-core drain cap once turned flood backpressure into
-memory growth. The formula prices steady state; this node exists for
+The node keeps its limits (4 cores, 12Gi) well above the formula: the
+flood working set has measured 12.1Gi at the ceiling, and a 1-core drain
+cap turns flood backpressure into memory growth. The formula prices
+steady state; this node exists for
 floods.
 
 ## Retention
 
-CH-DIRECT (phase 2, lap 2a-1): the tetragon OCSF classes (Process
+CH-DIRECT: the tetragon OCSF classes (Process
 Activity 1007, File System Activity 1001, Network Activity 4001) ride
 `tetragon-ocsf`'s in-stream leg straight to the per-class
 `ocsf.<Class_Name>` tables, a bounded 60s event-time window sorts
 each batch on (time, uid), stamps the record_integrity attestation,
-and hands the stream to `to_clickhouse`. The 15-minute lake +
-archive rule that used to mediate this died with lap 2a-2, the
-direct leg is production-proven (20h zero-restart at flood rate,
-100% attest coverage, zero tamper findings; ship counts and
-query_log verified live). The Base
-Event fallback for unknown export kinds cannot name a class and never
-reached CH via the rule's types-scoping; the direct leg carries that
-gate in-stream (`where class_uid in [...]`), which also keeps the
-`to_clickhouse` table f-string away from null class_name, the
-archive-era `ocsf.null` f-string leak (27,987 rows pre-bump, the GA
-rollout field note) cannot ride into the direct path. ClickHouse is
-the OCSF record. There is no node storage (lap 2a-2): the state
-volume renders as an emptyDir, platform registration rides the
-1Password token at boot, and the lake PVC with its backup-exclusion
-manifest died with the lake. No raw tetragon JSON
-is kept anywhere past the window (the export-stdout sidecar is gone; the
-ClickHouse OCSF store is the record), and the retired
-`s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs
-bucket as frozen history; deleting it is a separate operator call.
+and hands the stream to `to_clickhouse`. The Base Event fallback for
+unknown export kinds cannot name a class and never reached CH via the
+rule's types-scoping; the direct leg carries that gate in-stream
+(`where class_uid in [...]`), which also keeps the `to_clickhouse`
+table f-string away from null class_name (the archive-era `ocsf.null`
+leak cannot ride into the direct path). ClickHouse is the OCSF
+record. There is no node storage: the state volume renders as an
+emptyDir and platform registration rides the 1Password token at boot. No
+raw tetragon JSON is kept anywhere past the window (the ClickHouse OCSF
+store is the record), and the `s3://tenzir/ocsf/` parquet archive stays
+untouched in the rustfs bucket as frozen history; deleting it is a
+separate operator call.
 
-`to_clickhouse` carries the archive rule's insert shape verbatim
-(the lap's design risk note, watch the first window's insert batch
-sizing on ship): `mode="append"` fails loudly if the DDL is missing,
+`to_clickhouse` carries the archive rule's insert shape verbatim:
+`mode="append"` fails loudly if the DDL is missing,
 and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds the
 insert buffers on the flood classes, the 60s window emits ~48k
 stamped records per flood minute in total, so the sink batches at
@@ -180,7 +172,7 @@ sustained extreme drain live in the clickhouse README's attestation
 section. No scope-down: the full flood stamps, the operator decides if
 that trade ever needs a dial.
 
-Horizon math (flood rate measured 2026-10-12; steady state assumed):
+Horizon math (flood rate measured; steady state assumed):
 
 ```python
 Tetragon flood (measured on-disk rate):
@@ -189,18 +181,16 @@ Tetragon flood (measured on-disk rate):
   3.9 GiB/day / 96 ~ 42 MiB              # 15-minute flood window: ~0.7% of the 6 GiB budget
 
 Tetragon worst case (measured drain): 253 GB/day raw rides the in-memory
-60s window at ~2.6 GB per window worst case — the 12Gi limit carries it
+60s window at ~2.6 GB per window worst case; the 12Gi limit carries it
 with the 20h production window as evidence.
 
 Tetragon steady state (assumed):
   3.9 GiB/day / 96 ~ 42 MiB              # steady-state 15-minute peak footprint
-                                         # egress tcp_connect rides along now: the transport-side
-                                         # drop is gone, Network Activity 4001 archives too
+# egress tcp_connect rides along too: Network Activity 4001 archives as well
 ```
 
-Lap 2a-2 retired the lake-era storage math with the lake: no PVC, no
-compaction corridor, no disk budgets, the emptyDir state volume and
-the in-memory window are the only node-local footprint.
+No PVC, no compaction corridor, no disk budgets: the emptyDir state
+volume and the in-memory window are the only node-local footprint.
 
 ## Known detection noise
 

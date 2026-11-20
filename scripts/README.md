@@ -1,4 +1,4 @@
-# `scripts/` — Operational scripts
+# `scripts/`: Operational scripts
 
 Cluster maintenance and CI helpers: rolling node reboots, Renovate runs
 and regex testing, and chart tag logic tests. Topic subdirectories hold

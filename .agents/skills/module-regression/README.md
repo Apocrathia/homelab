@@ -1,4 +1,4 @@
-# `module-regression` — cross-module regression ledger (skill)
+# `module-regression`: cross-module regression ledger (skill)
 
 `SKILL.md` defines the per-module `REGRESSION.md` ledger audit: each module
 records downstream consumers, an executable acceptance command, and a

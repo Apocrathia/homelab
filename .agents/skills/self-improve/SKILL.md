@@ -16,7 +16,7 @@ disable-model-invocation: true
 first (skim the diagrams; you do not need the whole `.agents/context/` folder).
 
 **Ship model:** hybrid per
-[`development-loop.md`](../../context/development-loop.md#ship-model) —
+[`development-loop.md`](../../context/development-loop.md#ship-model):
 [`ship-work`](../ship-work/SKILL.md) when the lap is authorized to contribute an
 MR (soft ship / `commit` / `push`, or the operator ran `/self-improve` /
 `/ship-work`); otherwise stop at
@@ -58,7 +58,7 @@ flowchart TD
   retro --> clockOut["/clock-out after merge"]
 ```
 
-Each lap traverses its DAG. Laps repeat — that's the loop.
+Each lap traverses its DAG. Laps repeat; that's the loop.
 
 **Context-only brief:** context-only laps (find-work ranks drift):
 `reconcile-context` → `review-loop` → `ship-work` (skip `reconcile-docs`
@@ -66,40 +66,40 @@ unless docs also changed).
 
 ## What one lap is
 
-1. **Discover** — sync main, then run [`find-work`](../find-work/SKILL.md)
+1. **Discover**: sync main, then run [`find-work`](../find-work/SKILL.md)
    (read-only scouts + ranked report + launch briefs).
-2. **Pick** — operator names Launch N, or (when authorized) walk Launch briefs 1→N
+2. **Pick**: operator names Launch N, or (when authorized) walk Launch briefs 1→N
    with clean dedupe and no blockers below.
-3. **Execute** — read the picked brief's copy fence; invoke **Invoke** in
+3. **Execute**: read the picked brief's copy fence; invoke **Invoke** in
    **this session** with that payload (`Source`, `Evidence`, `Acceptance`, `Worktree`,
    `Dedupe`, `Constraints`). Follow the downstream skill through worktree setup
    and subagents.
-4. **Review** — [`review-loop`](../review-loop/SKILL.md) before commit (skip for
+4. **Review**: [`review-loop`](../review-loop/SKILL.md) before commit (skip for
    `watch-mr` maintenance laps and self-contained `autoresearch` laps).
-5. **Reconcile docs** — [`reconcile-docs`](../reconcile-docs/SKILL.md) before
+5. **Reconcile docs**: [`reconcile-docs`](../reconcile-docs/SKILL.md) before
    ship when behavior, plans, or issues moved (skip for context-only and
    `watch-mr` laps; `autoresearch` owns its own ship path).
-6. **Reconcile context** — [`reconcile-context`](../reconcile-context/SKILL.md)
+6. **Reconcile context**: [`reconcile-context`](../reconcile-context/SKILL.md)
    before ship on shipping laps (skip the outer step for `watch-mr` maintenance
    and `autoresearch` laps).
-7. **Ship** — [`ship-work`](../ship-work/SKILL.md) when reviewers are clean
+7. **Ship**: [`ship-work`](../ship-work/SKILL.md) when reviewers are clean
    and the lap is authorized to contribute (see ship model above; otherwise stop
    at [`draft-commit`](../draft-commit/SKILL.md)). Hard-gates
    [`watch-mr`](../watch-mr/SKILL.md) on the shipped MR until merged, dismissed,
    or hard-blocked; do not run a second standalone `watch-mr` lap after
    `ship-work` completes; skip the outer ship path for `watch-mr`-only and
    `autoresearch` laps.
-8. **Retrospective** — [`retrospective`](../retrospective/SKILL.md) after
+8. **Retrospective**: [`retrospective`](../retrospective/SKILL.md) after
    ship-work and before clock-out. Reviews outcomes, mines git history for
    external changes to context surfaces, classifies lessons, and routes
-   improvements. Not a gate — declares "no lessons" when there's nothing to
+   improvements. Not a gate; declares "no lessons" when there's nothing to
    capture. Runs while the worktree still exists (`autoresearch` laps: autoresearch
    runs retrospective as part of its own cleanup path, before deleting worktrees;
    `watch-mr` dismissal laps skip).
-9. **Cleanup** — [`clock-out`](../clock-out/SKILL.md) after merge and
+9. **Cleanup**: [`clock-out`](../clock-out/SKILL.md) after merge and
    retrospective (`autoresearch` waits for merge, runs retrospective, then owns
    cleanup; do not `clock-out` after a `watch-mr` dismissal).
-10. **Loop** — `/find-work` or `/self-improve` again (new session recommended
+10. **Loop**: `/find-work` or `/self-improve` again (new session recommended
     after a full lap; same session OK for another discover-only pass).
 
 This skill orchestrates steps 1–3 and routes to downstream skills. It does not
@@ -203,5 +203,5 @@ exists.
   without a new commit from this skill, and `autoresearch`, which runs review
   inside its own ship path)
 - Use branch names like `plan-03-phase-a-shipped` or platform defaults
-  (`featurehomelab-self-improve-lap-*`); use `type/short-slug` only — see
+  (`featurehomelab-self-improve-lap-*`); use `type/short-slug` only; see
   [`worktrees.md`](../../rules/worktrees.md)

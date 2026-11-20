@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Game VM
 # -----------------------------------------------------------------------------
-# Auth (1Password Connect — no PROXMOX_VE_API_TOKEN in env):
+# Auth (1Password Connect, no PROXMOX_VE_API_TOKEN in env):
 #   OP_CONNECT_HOST / OP_CONNECT_TOKEN + TF_HTTP_*
 #   Item: proxmox-terraform-secrets (credential field)
 

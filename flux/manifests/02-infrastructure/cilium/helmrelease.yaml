@@ -26,7 +26,7 @@ spec:
 
     operator:
       unmanagedPodWatcher:
-        restart: false # Don't restart unmigrated pods during migration
+        restart: false
       enabled: true
       replicas: 1
       # Allow Cilium Operator to run on any node
@@ -44,7 +44,7 @@ spec:
         serviceMonitor:
           enabled: true
 
-    # CNI configuration for migration and Talos compatibility
+    # CNI configuration (Talos compatibility)
     cni:
       install: true
       exclusive: true

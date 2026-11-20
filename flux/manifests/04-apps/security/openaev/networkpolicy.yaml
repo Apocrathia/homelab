@@ -1,6 +1,6 @@
 ---
 # openaev platform egress: default-deny-on-select (prime-agent pattern), allowlist
-# only what the platform verifiably needs — in-namespace dependencies, RustFS
+# only what the platform verifiably needs; in-namespace dependencies, RustFS
 # object storage, and the Authentik OIDC round-trip. Deliberately NO world 443:
 # upstream telemetry (telemetry.oaev.filigran.io) has no opt-out switch and
 # self-disables when its export endpoint is unreachable; XTM hub is disabled via
@@ -92,7 +92,7 @@ spec:
               protocol: TCP
 ---
 # opensearch runs the security plugin DISABLED (plain HTTP, no auth) per
-# official OpenAEV compose parity — this CNP is the compensating control: the
+# official OpenAEV compose parity; this CNP is the compensating control: the
 # openaev-opensearch pod accepts 9200 only from the platform pod and from the
 # kubelet itself (liveness/readiness/startup httpGet probes originate on the
 # host). Everything else is denied by default-deny-on-select.

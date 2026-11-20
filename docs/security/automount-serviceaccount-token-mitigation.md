@@ -10,7 +10,7 @@ The `audit-automount-sa-token` policy audits Pods that don't explicitly disable 
 
 ## Workload Categories
 
-### 1. Generic-App Helm Chart Deployments (~74 HelmReleases)
+### 1. Generic-App Helm Chart Deployments
 
 **Mitigated**: `helm/generic-app` has defaulted
 `app.automountServiceAccountToken: false` since 2026-01
@@ -24,7 +24,7 @@ by the default.
 **Exceptions**: an app that legitimately needs API access sets
 `app.automountServiceAccountToken: true` in its values.
 
-### 2. Authentik Outposts (~50 Deployments)
+### 2. Authentik Outposts
 
 **Examples**: `ak-outpost-*` deployments in the `authentik` namespace
 
@@ -167,7 +167,7 @@ Qdrant StatefulSet doesn't need API access.
 
 1. **Phase 1 - Bulk Fix** (High Impact)
 
-   - Update `helm/generic-app` chart - fixes ~74 deployments
+   - Update `helm/generic-app` chart - fixes all generic-app deployments
    - Add legitimate exceptions to policy exclude list
 
 2. **Phase 2 - Authentik Outposts**

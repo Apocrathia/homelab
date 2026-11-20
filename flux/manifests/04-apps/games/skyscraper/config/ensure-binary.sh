@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build Gemba Skyscraper into the ephemeral /cache emptyDir for this Job pod.
 # Sources build on /tmp; install with PREFIX=/cache (binary + peas.json).
-# Fresh each run by design — no persistent binary/resource cache.
+# Fresh each run by design: no persistent binary/resource cache.
 set -euo pipefail
 
 : "${SKYSCRAPER_VERSION:?SKYSCRAPER_VERSION is required}"

@@ -25,10 +25,8 @@ threat intel.
   on `:5158` for node RPC. All factory work is outbound: the platform
   WebSocket, the OpenCTI TAXII pull, and ClickHouse writes.
 - **Engine line**: the factory's vendored `stix` package's taxii fetch
-  operator needs the 6.20 engine line (entries()): this node ran the
-  `v6.20.0-rc` ahead of GA to land the row early, and the rc pin retired
-  with the fleet-wide `v6.20.0` bump when 6.20 GA shipped (2026-10-26);
-  see [`helmrelease.yaml`](./helmrelease.yaml).
+  operator needs the 6.20 engine line (entries()); see
+  [`helmrelease.yaml`](./helmrelease.yaml).
 - **One factory row, dual-schedule**: `tenzir.pipelines` carries the
   opencti-taxii-factory-walk and opencti-taxii-factory-poll pipelines:
   a daily full walk of the TAXII collection at 07:00 plus
@@ -38,20 +36,18 @@ threat intel.
   The walk is the reconciliation path; the polls keep the table fresh
   between walks. `tenzir.pipelines` also carries the fleet-standard
   diagnostics pair (`diagnostics-to-loki` /
-  `error-diagnostics-to-mimir`) every node ships since B1: the lane
-  runs on this node's own engine, so its diagnostics ship regardless
-  of the fleet's image line, the central poller's cross-version
-  export gap on this node dies with the poller.
-- **Deploys live**: this HelmRelease carries no `spec.suspend`; the
-  factory row is this lap's deliverable. (The fleet's
-  storage-collector nodes are currently suspended
-  cluster-side, out of band; the enrichment and introspection nodes
-  share the no-suspend exception.)
+  `error-diagnostics-to-mimir`) every node ships: the lane runs on this
+  node's own engine, so its diagnostics ship regardless of the fleet's
+  image line (the central poller's cross-version export gap on this node
+  dies with the poller).
+- **Deploys live**: this HelmRelease carries no `spec.suspend`. (The
+  fleet's storage-collector nodes may be suspended cluster-side, out of
+  band; the enrichment and introspection nodes share the no-suspend
+  exception.)
 
 ## The OSINT row's shape contract
 
-Probed offline end-to-end 2026-10-21 (throwaway probe tree under `.scratch/`
-in the primary checkout, since deleted, evidence not shipped):
+Shape contract (probed offline end-to-end):
 
 - The vendored `stix::ocsf::map` emits `osint` as a **one-element
   array** (`$ocsf.osint = [$ocsf.osint]`; never edited, the vendored
@@ -61,9 +57,8 @@ in the primary checkout, since deleted, evidence not shipped):
   so the array's only store is the table's `tenzir:catch_all` `event`
   JSON. The DDL ships exactly that shape
   ([`../../clickhouse/config/10-startup-scripts.xml`](../../clickhouse/config/10-startup-scripts.xml)):
-  the four dotted `osint.*` typed columns the table originally declared
-  (modeled on sibling event-table style) sat NULL on every row
-  (364,447 live rows) and are removed.
+  no dotted `osint.*` typed columns (a dotted column cannot bind the
+  array).
 - The consumer loaders (core and netflow
   [opencti-osint-loader](../core/pipelines/opencti-osint-loader.tql))
   read via **SQL-mode projection**, `JSONExtractArrayRaw` over the
@@ -72,40 +67,35 @@ in the primary checkout, since deleted, evidence not shipped):
   catch-all tables at all, and 6.20 (this node's rc engine) table mode
   reconstructs but re-types IP-shaped indicator values, breaking the
   string keys the vendored operators pin.
-- **Live-table migration (operator note):** `CREATE IF NOT EXISTS`
-  does not alter the running table, so the live table keeps the four
-  dead typed `osint.*` columns until a one-time
-  `ALTER TABLE ocsf.OSINT_Inventory_Info
+- **Live-table migration (operator note):** `CREATE IF NOT EXISTS` does
+  not alter the running table, so removing the dead typed `osint.*`
+  columns needs a one-time `ALTER TABLE ocsf.OSINT_Inventory_Info
 DROP COLUMN "osint.value", DROP COLUMN "osint.type_id",
 DROP COLUMN "osint.risk_score", DROP COLUMN "osint.expiration_time"`
-  (or DROP TABLE + next walk).
-  They are inert (NULL on old rows, ignored by the loaders), so this
-  is hygiene, not function. The old rows themselves need no cleanup:
-  their catch-all JSONs are intact and load correctly post-fix.
+  (or DROP TABLE + next walk). They are inert, so this is hygiene, not
+  function. The old rows themselves need no cleanup: their catch-all
+  JSONs are intact and load correctly.
 
 ## The collection's mass-revoked state
 
-Live-verified 2026-10-21 (read-only queries against the table): of the
-364,447 indicator rows the one full walk recorded, 364,445 carry
-`status_id = 99` (the STIX `revoked: true` flag); exactly two are
-active. The revoked mass is the MISP connector's abuse.ch ThreatFox
-archive backfill content (2022-era file hashes, "ThreatFox IOCs for
-2022-…" MISP events) whose re-import passes during the Oct 18-20
-backfill window (the OOM-retried 4→8Gi operation in the MISP issue)
-created duplicate copies and revoked them, the most-repeated name
-appears as dozens of distinct revoked STIX objects, created and revoked
-in the same import second. The two active rows are noise indicators
-("TCP", "AF_INET") from a Kunai analysis report. So the mass-revoked
-state is real as served by the TAXII collection, not a mapping artifact,
-and the loader's erase semantics handle it by design: post-fix, the
-`ocsf-osint` context holds only the active minority (today: two junk
-entries). The enrichment payoff rides on the opencti/misp lane
-resolving the archive re-import churn; until then this factory
-correctly mirrors whatever OpenCTI serves.
+Read-only queries against the table: of the 364,447 indicator rows the
+one full walk recorded, 364,445 carry `status_id = 99` (the STIX
+`revoked: true` flag); exactly two are active. The revoked mass is the
+MISP connector's abuse.ch ThreatFox archive backfill content (2022-era
+file hashes) whose re-import created duplicate copies and revoked them;
+the most-repeated name appears as dozens of distinct revoked STIX
+objects, created and revoked in the same import second. The two active
+rows are noise indicators ("TCP", "AF_INET") from a Kunai analysis
+report. So the mass-revoked state is real as served by the TAXII
+collection, not a mapping artifact, and the loader's erase semantics
+handle it by design: post-fix, the `ocsf-osint` context holds only the
+active minority. The enrichment payoff rides on the opencti/misp lane
+resolving the archive re-import churn; until then this factory correctly
+mirrors whatever OpenCTI serves.
 
-Until the OpenCTI side resolves, each daily walk re-appends the whole
-(~365k-row) collection as fresh rows, TTL-capped at 400 days of
-indicator age and cold-tiered at 90, a partition-level prune is an
+While OpenCTI serves the full collection, each daily walk re-appends the
+whole (~365k-row) collection as fresh rows, TTL-capped at 400 days of
+indicator age and cold-tiered at 90; a partition-level prune is an
 operator call if the growth bothers.
 
 ## Connectivity
@@ -125,7 +115,7 @@ the handoff.
 
 ## Storage
 
-Stateless (lap 2e): `persistence.enabled: false`, the chart renders
+Stateless: `persistence.enabled: false`, the chart renders
 the state volume as an emptyDir, no PVC. The factory row streams its
 pulls straight to ClickHouse with no lake import; there is no archive
 rule, no transit buffer, and nothing of value on the node. The
@@ -161,7 +151,7 @@ user; no new user needed. The node comes up on apply.
 1. ~~First factory row~~, **done**: the OpenCTI TAXII row is live
    (this node) plus the core-node loader (the consumer half). The
    TAXII 2.1 export surface and collection are the opencti lane's
-   slice-7 handoff
+   SIEM-handoff checklist
    ([opencti-deployment.md](../../../../../../../docs/issues/opencti-deployment.md));
    the collection's indicator volume climbs as the MISP connector
    import finishes.

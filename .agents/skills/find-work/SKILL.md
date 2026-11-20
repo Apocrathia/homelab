@@ -28,7 +28,7 @@ Loop context: [`.agents/context/development-loop.md`](../../context/development-
 | ---------------- | ----------------------------------------------------- |
 | Start of a lap   | Constant-loop / session preamble needs a ranked queue |
 | Operator asks    | "what's next", "find something to do", prioritize     |
-| Unattended scout | Cron / scheduled find — report only, no implement     |
+| Unattended scout | Cron / scheduled find: report only, no implement      |
 
 For **"what's next" / "find something to do"**: load this skill plus the thin
 loop context it points at ([`development-loop.md`](../../context/development-loop.md)).
@@ -69,16 +69,16 @@ Partial scout failure ≠ invent work. Rules:
 
 ## Tiers (debt-first)
 
-| Tier | Class                    | Homelab examples                                                                                                              |
-| ---- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL                                            |
-| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans                                             |
-| 3    | MR maintenance           | **Maintain-eligible** open MRs only — [`watch-mr`](../watch-mr/SKILL.md); see [Maintain-eligible MRs](#maintain-eligible-mrs) |
-| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                                               |
-| 5    | Features                 | Ready feature / roadmap work                                                                                                  |
-| 6    | Scoping                  | Needs alignment; feature plan stubs                                                                                           |
-| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                                                  |
-| 8    | Autoresearch             | Only when 1–7 empty + approved seed / complete contract + budgets ([`autoresearch`](../autoresearch/SKILL.md))                |
+| Tier | Class                    | Homelab examples                                                                                                             |
+| ---- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL                                           |
+| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans                                            |
+| 3    | MR maintenance           | **Maintain-eligible** open MRs only, [`watch-mr`](../watch-mr/SKILL.md); see [Maintain-eligible MRs](#maintain-eligible-mrs) |
+| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                                              |
+| 5    | Features                 | Ready feature / roadmap work                                                                                                 |
+| 6    | Scoping                  | Needs alignment; feature plan stubs                                                                                          |
+| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                                                 |
+| 8    | Autoresearch             | Only when 1–7 empty + approved seed / complete contract + budgets ([`autoresearch`](../autoresearch/SKILL.md))               |
 
 ### FIFO within tier
 
@@ -114,7 +114,7 @@ briefs only for those rows.
 - Explicit changes-requested / blocking review state (when GitLab surfaces it)
 
 **Not maintain-eligible (merge-ready-only):** clean CI, no conflicts, no
-unresolved threads, no blocking review — still list under Open MRs for
+unresolved threads, no blocking review, still list under Open MRs for
 visibility, but they do **not** occupy a tier-3 ranking slot, do **not** gate
 tiers 4–5, and do **not** get a `watch-mr` brief.
 
@@ -148,7 +148,7 @@ Apply after tier sort, severity, and FIFO:
 - If all briefs ineligible or queue empty → one-line empty-queue report and
   **stop** (do not invent busywork).
 - Tier 8 (`autoresearch`) only when tiers 1–7 are empty **and** an approved
-  seed / complete research contract exists — never invent hypotheses.
+  seed / complete research contract exists; never invent hypotheses.
 
 Protected paths (confirm before any future edit; find-work never edits):
 `.agents/**`, `.claude/**`, `AGENTS.md`/`CLAUDE.md`, `talos/**`,
@@ -161,7 +161,7 @@ only after the brief is selected. Find-work does not create worktrees; the
 `Branch:` field is the intended worktree branch for the implement lap.
 
 ```text
-## Launch N — <title>
+## Launch N: <title>
 - Source: <issue path | alert | Flux object | MR !N>
 - Evidence: <paths / queries / links; for MRs include threads/CI/merge>
 - Acceptance: <observable done>  (alignment: use Open questions instead)
@@ -183,8 +183,8 @@ one MR.
 ### Vertical slices
 
 Scout laps **find** work; they do not own remediation end-to-end. Ranked Launch
-briefs are agent-sized vertical slices — docs, review, authoring, plan,
-implement, research, reconcile — not implement-only. Sizing contract:
+briefs are agent-sized vertical slices (docs, review, authoring, plan,
+implement, research, reconcile), not implement-only. Sizing contract:
 [`.agents/context/vertical-slices.md`](../../context/vertical-slices.md).
 
 **Broad findings default to document:** e.g. whole-repo Trivy CRITICAL/HIGH →
@@ -203,7 +203,7 @@ numeric cost thresholds.
 | Plan authoring               | [`project-planner`](../../agents/project-planner/agent.md)                            |
 | One Launch-brief lap         | [`implement-change`](../implement-change/SKILL.md)                                    |
 | Babysit open MR              | [`watch-mr`](../watch-mr/SKILL.md)                                                    |
-| Idle research (tier 8)       | [`autoresearch`](../autoresearch/SKILL.md) — only when 1–7 empty + approved contract  |
+| Idle research (tier 8)       | [`autoresearch`](../autoresearch/SKILL.md): only when 1–7 empty + approved contract   |
 | Constant / unattended parent | [`run-loop`](../run-loop/SKILL.md) (selects briefs; do not invent busywork)           |
 | Local verify / ship handoff  | [`review-loop`](../review-loop/SKILL.md) → [`draft-commit`](../draft-commit/SKILL.md) |
 | Ops / prod signal triage     | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md)        |
@@ -252,7 +252,7 @@ auth) and continue. Note skips in the report.
      `ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor"}`
      (instant). Severity from the `severity` label.
   2. Optional detail: `grafana_api_request` GET
-     `/api/alertmanager/alertmanager/api/v2/alerts` — skip silenced; keep
+     `/api/alertmanager/alertmanager/api/v2/alerts`; skip silenced; keep
      `startsAt` for FIFO age.
   3. Grafana-managed rules: `alerting_manage_rules` `operation=list`
      `states=["firing"]` (then `get` per uid for instances when needed).
@@ -260,7 +260,7 @@ auth) and continue. Note skips in the report.
     configured (this lab's settings API 404s).
   - Deeplink evidence when useful (`generate_deeplink`).
 - **Default tier:** 1 for `critical` / prod-impacting; else map
-  `severity` (`warning` → high/medium, `info` → low — often skip
+  `severity` (`warning` → high/medium, `info` → low, often skip
   `CPUThrottlingHigh`-class noise unless operator-scoped).
 - **Default Invoke:** `site-reliability-engineer` for triage; prefer
   [`file-issue`](../file-issue/SKILL.md) (`source: alert`) when the family is
@@ -292,7 +292,7 @@ auth) and continue. Note skips in the report.
   cluster scan surfaces this session can reach). Keep the full scout catalog,
   including whole-repo scans.
 - **How:** Trivy MCP (`scan_filesystem` / `findings_list` / etc.) or project CI
-  artifacts — read-only. Prefer cheaper/scoped scans first; whole-repo as an
+  artifacts, read-only. Prefer cheaper/scoped scans first; whole-repo as an
   explicit escalate when hunting debt.
 - **Default tier:** 1 (CRITICAL → blocker; HIGH → high).
 - **Default Invoke:** [`file-issue`](../file-issue/SKILL.md) for broad/multi-finding
@@ -331,7 +331,7 @@ auth) and continue. Note skips in the report.
 
 - **Look at:** Open MRs; classify per [Maintain-eligible MRs](#maintain-eligible-mrs)
   (threads, failing CI, conflicts, blocking review vs merge-ready-only).
-- **How:** GitLab MCP MR list / discussions / pipeline status — **light list
+- **How:** GitLab MCP MR list / discussions / pipeline status, **light list
   only**; do not deep-dive here (`watch-mr` owns the babysit lap).
 - **Default tier:** 3 for maintain-eligible only. Merge-ready-only: visibility
   note, no tier-3 slot, no gate on tiers 4–5, no `watch-mr` brief.
@@ -346,7 +346,7 @@ auth) and continue. Note skips in the report.
 - **Look at:** Analysis findings from the in-cluster analyzer.
 - **How:** k8sgpt MCP (`analyze`, `list-*`) read-only; triage → prefer
   `file-issue` over silent implement.
-- **Default tier:** After triage — often 2/4; promote to 1 if prod breakage.
+- **Default tier:** After triage, often 2/4; promote to 1 if prod breakage.
 - **On failure:** Skip if unavailable.
 
 ### Research ledger
@@ -360,18 +360,18 @@ auth) and continue. Note skips in the report.
   `status: seed` rows.
 - **Default tier:** 8 (idle-only).
 - **On failure / no approved seed:** Omit; empty queue if nothing else
-  eligible — do not fabricate research work.
+  eligible; do not fabricate research work.
 
 ## Output format
 
-1. **Ranked list** — tier, severity, age/`found_at`, one-line title, source,
+1. **Ranked list**: tier, severity, age/`found_at`, one-line title, source,
    gate notes / scout skips / `Dedupe` gaps.
-2. **Open MRs (visibility)** — maintain-eligible vs merge-ready-only; thread
+2. **Open MRs (visibility)**: maintain-eligible vs merge-ready-only; thread
    counts and CI/merge when known.
-3. **Launch briefs** — pasteable blocks for eligible rows (template above).
+3. **Launch briefs**: pasteable blocks for eligible rows (template above).
    Default a few top rows; when maintain-eligible MRs exist, reserve at least
    one `watch-mr` brief before tier-4 implement.
-4. **Empty queue** — if nothing eligible:
+4. **Empty queue**: if nothing eligible:
 
 ```text
 find-work: empty queue — no eligible Launch briefs; stopping.
@@ -386,7 +386,7 @@ Then stop.
 - Never cluster-mutate as part of find-work.
 - Never put secrets in briefs or reports.
 - GitOps manifests remain SoT for tunable config; Gateway API only; 1Password
-  Item CRs for secrets — flag violations as candidates, do not "fix" them here.
+  Item CRs for secrets; flag violations as candidates, do not "fix" them here.
 - Advice ≠ implement: consultative operator language → options only until they
   pick a brief.
 - Stop-loss still applies to scout retries (3 identical failures → surface and

@@ -32,9 +32,9 @@ esac
 
 # Grace cutoff as YYYY-MM-DD. Epoch math with the "@seconds" form of date -d:
 # busybox (alpine/kubectl image) and GNU date both support it, and busybox
-# rejects relative specs ("-d 'N days ago'") and has no -v — the previous
-# fallback chain died under set -e before doing any work. This script only runs
-# in the CronJob container, so no per-platform fallbacks.
+# rejects relative specs ("-d 'N days ago'") and has no -v; use the
+# "@seconds" form. This script only runs in the CronJob container, so no
+# per-platform fallbacks.
 CUTOFF="$(date -u -d "@$(( $(date +%s) - GRACE_DAYS * 86400 ))" +%F)"
 echo "Grace window: orphans with a backup newer than $CUTOFF are kept"
 

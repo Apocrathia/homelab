@@ -2,7 +2,7 @@
 # Investigations case list: one row per case over the append-only
 # investigations.records stream (Incident Finding 2005 lifecycle records,
 # latest state via argMax-style aggregation) via the ocsf-clickhouse
-# datasource — the operator's examine surface over the case store. Each
+# datasource: the operator's examine surface over the case store. Each
 # case_uid cell links to the case detail dashboard. JSON rides in ConfigMap
 # tenzir-investigations-cases (generated from investigations-cases.json).
 apiVersion: grafana.integreatly.org/v1beta1

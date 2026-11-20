@@ -192,8 +192,7 @@ done
 # HARD GATES: apply-config restarts the node's apiserver static pod,
 # and kubelet can take 3-5 minutes to finish the recreate - the API
 # may refuse connections in that window. NEVER continue to the next
-# node on a failed or unreachable gate: on 2026-10-17 an ungated
-# loop applied to three nodes while the first apiserver was wedged.
+# node on a failed or unreachable gate.
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
@@ -254,7 +253,7 @@ export TALOSCONFIG="~/.talos/config"
 kubectl get nodes
 ```
 
-> **Note (workload isolation)**: Talos 1.14 generates a `SecurityProfileConfig` document that enables `workloadIsolation` (sandboxd) by default. Our unified patch deliberately deletes that document to preserve current (non-isolated) behavior; the interaction between sandboxd and Longhorn's privileged CSI pods and host iscsid is untested. Opt in later by replacing the delete with `workloadIsolation: true` and testing during a maintenance window; the change needs a reboot to take effect.
+> **Note (workload isolation)**: Talos 1.14 generates a `SecurityProfileConfig` document that enables `workloadIsolation` (sandboxd) by default. The unified patch deliberately deletes that document to preserve current (non-isolated) behavior; the interaction between sandboxd and Longhorn's privileged CSI pods and host iscsid is untested. Opt in later by replacing the delete with `workloadIsolation: true` and testing during a maintenance window; the change needs a reboot to take effect.
 
 ## Upgrading Talos Linux
 

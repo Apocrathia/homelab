@@ -83,7 +83,7 @@ SABnzbd requires hostname whitelist configuration when accessed through a revers
 Gluetun is configured with:
 
 - **Protocol**: OpenVPN over UDP
-- **Firewall**: Allows SABnzbd web UI (port 8080) and service subnet (10.69.0.0/16)
+- **Firewall**: Allows SABnzbd web UI and the VPN service subnet (see the NetworkPolicy)
 - **DNS**: Plaintext DNS (DoT disabled to avoid timeouts) with internal DNS server on 127.0.0.1:53
 - **Health Monitoring**: Automatic VPN connection health checks
 - **Init Container**: Uses `restartPolicy: Always` to maintain VPN connection

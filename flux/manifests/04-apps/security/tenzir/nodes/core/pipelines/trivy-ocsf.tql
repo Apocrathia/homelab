@@ -1,8 +1,8 @@
-// trivy reports → OCSF, CH-direct (phase 2, stateless):
+// trivy reports → OCSF, CH-direct, stateless:
 // the fork { import } lake leg is gone. In-stream attestation stamps
 // records inside a 60s window, upstream of direct to_clickhouse INSERT.
 // Both Vulnerability Finding (2002) and Detection Finding (2004) legs
-// stamp with the attest operator — the findings::stamp operator (uid
+// stamp with the attest operator; the findings::stamp operator (uid
 // stable per finding) runs before the windowed attest.
 subscribe "trivy.raw"
 homelab::trivy::ocsf::map

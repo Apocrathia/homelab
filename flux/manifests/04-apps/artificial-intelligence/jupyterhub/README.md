@@ -8,7 +8,8 @@ Multi-user Jupyter notebook server with Authentik OIDC and shared SMB storage.
 
 Zero to JupyterHub on Kubernetes (z2jh) deployment with:
 
-- **Multi-user Support**: KubeSpawner dynamically creates user notebook pods
+KubeSpawner creates per-user notebook pods; auth is Authentik OIDC; storage is SMB-backed with per-user subdirectories; users choose JupyterLab (PyTorch) or VS Code profiles; idle servers are culled.
+
 - **Authentik OIDC**: Native OAuth integration for SSO
 - **Shared Storage**: SMB-backed persistent storage with per-user subdirectories
 - **Profile Selection**: Users choose between JupyterLab (PyTorch) or VS Code environments

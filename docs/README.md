@@ -1,4 +1,4 @@
-# `docs/` — Reference documentation
+# `docs/`: Reference documentation
 
 Repo-level reference docs: configuration patterns, documentation
 standards, the app README template, OpenSSF Scorecard results, and ZFS

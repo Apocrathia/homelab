@@ -1,7 +1,7 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhouseinstallations.clickhouse.altinity.com.yaml
-# ClickHouse OCSF query store. Altinity operator shape (operator decision
-# 2026-10-17, supersedes the generic-app shape in the old plan draft):
+# ClickHouse OCSF query store. Altinity operator shape (operator
+# decision, supersedes the generic-app shape in the old plan draft):
 # 1 shard x 3 replicas of clickhouse-server behind a Keeper ensemble
 # (keeper.yaml) - ReplicatedMergeTree tables, replication for pod/PVC-loss
 # resilience, rolling updates orchestrated by the operator.
@@ -40,7 +40,7 @@ spec:
     # grants are users.xml-level RBAC (ClickHouse <grants> config): with
     # grants present, access is exactly what is granted.
     users:
-      # Live writer + backfill user (Tenzir to_clickhouse, MR-3/MR-5).
+      # Live writer + backfill user (Tenzir to_clickhouse).
       # SELECT is required by to_clickhouse's table-description refresh
       # (DESCRIBE) and the live-leg validation queries.
       tenzir/password:
@@ -52,11 +52,11 @@ spec:
         - 10.42.0.0/16
       tenzir/grants/query:
         - GRANT INSERT, SELECT ON ocsf.*
-      # Grafana datasource user (MR-2), SELECT-only. ocsf.* serves the
-      # OCSF dashboards; investigations.* (2026-10-19, P-2) extends the
-      # operator's examine surface to the case store — the
-      # investigations-cases / investigations-case-detail dashboards over
-      # investigations.records. Read-only like everything this user holds.
+      # Grafana datasource user, SELECT-only. ocsf.* serves the OCSF
+      # dashboards; investigations.* extends the operator's examine surface
+      # to the case store (the investigations-cases /
+      # investigations-case-detail dashboards over investigations.records).
+      # Read-only like everything this user holds.
       grafana/password:
         valueFrom:
           secretKeyRef:
@@ -82,7 +82,7 @@ spec:
       investigations-writer/networks/ip:
         - 10.42.0.0/16
       # INSERT-only is the design intent, but SELECT rides along for the
-      # same live-verified reason the tenzir user carries it above:
+      # same reason the tenzir user carries it above:
       # to_clickhouse's table-description refresh runs DESCRIBE on the
       # target table. The grant stays scoped to investigations.*, and no
       # read pipeline ever runs with this user - the query lane is the
@@ -126,9 +126,9 @@ spec:
       podTemplate: clickhouse-pod
       dataVolumeClaimTemplate: data
       # The CR-level service renders from the chi-service template
-      # below — without this reference the template exists but nothing
-      # selects it and the operator never renders it (found live
-      # 2026-10-29: the service stayed headless until the reference
+      # below; without this reference the template exists but nothing
+      # selects it and the operator never renders it (found live:
+      # the service stayed headless until the reference
       # landed, then rendered a real ClusterIP with the operator's
       # ready-gated selector within a minute).
       serviceTemplate: chi-service
@@ -199,8 +199,8 @@ spec:
                 # the tenzir-secrets item, rendered in this (tenzir)
                 # namespace by ../secret.yaml - the same render the
                 # Tenzir nodes read (the CHI moved into the tenzir
-                # namespace 2026-10-27; its old clickhouse-namespace
-                # render of the item is gone - one render per item now).
+                # namespace; its old clickhouse-namespace render of the
+                # item is gone - one render per item now).
                 - name: CH_S3_ACCESS_KEY_ID
                   valueFrom:
                     secretKeyRef:
@@ -212,7 +212,7 @@ spec:
                       name: tenzir-secrets
                       key: aws-secret-access-key
               resources:
-                # 2026-10-20 rightsize (was 2Gi/6Gi MR-1 strawman): the big
+                # Rightsized from an earlier 2Gi/6Gi shape: the big
                 # Process_Activity/API_Activity partition merges kept failing
                 # MEMORY_LIMIT_EXCEEDED at the 0.9-ratio server cap (5.4GiB of
                 # the old 6Gi limit), every ~35s, occasionally liveness-
@@ -253,7 +253,7 @@ spec:
               # Hot tier per replica (~7d): each replica holds a full copy
               # of the data (replication), so the cluster reserves 3x this
               # cap; Longhorn grows on demand, so this is a ceiling.
-              # Steady state at the observed ~9.4 GiB/day per replica
-              # (read live 2026-10-27) is ~66 GiB per 7d hot window -
-              # fits on 100Gi with headroom. No resize.
+              # Steady state at the observed ~9.4 GiB/day per replica is
+              # ~66 GiB per 7d hot window - fits on 100Gi with headroom.
+              # No resize.
               storage: 100Gi

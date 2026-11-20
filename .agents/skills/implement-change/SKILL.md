@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 One Launch-brief lap: plan if needed → implementer↔reviewer pair → verifier
 arbiter → domain review when warranted. The parent orchestrates only: frame
-scope, fan out Tasks, gate on results. Do not paste persona/skill bodies here —
+scope, fan out Tasks, gate on results. Do not paste persona/skill bodies here;
 invoke by path and read the target.
 
 Prompt contract (Slice / Goal / Bar / Role / Artifact / Return):
@@ -20,7 +20,7 @@ Prompt contract (Slice / Goal / Bar / Role / Artifact / Return):
 Loop contract:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
 Ship model (hybrid): unauthorized → [`draft-commit`](../draft-commit/SKILL.md);
-authorized MR contribute → [`ship-work`](../ship-work/SKILL.md) — see
+authorized MR contribute → [`ship-work`](../ship-work/SKILL.md); see
 [Ship model](../../context/development-loop.md#ship-model).
 
 ## Preconditions
@@ -40,7 +40,7 @@ authorized MR contribute → [`ship-work`](../ship-work/SKILL.md) — see
   ([`worktrees.md`](../../rules/worktrees.md)). Isolation does not authorize
   ship.
 - Never `git commit` / push directly. Hand off to
-  [`draft-commit`](../draft-commit/SKILL.md) — draft by default, ships only
+  [`draft-commit`](../draft-commit/SKILL.md): draft by default, ships only
   when the operator authorizes
   ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)).
 - Ask before cluster mutate (`kubectl apply` / `delete`, `flux reconcile`,
@@ -127,7 +127,7 @@ whether reviewer / security-analyst / documentation-reviewer / SRE should run.
 ```
 
 A single known file with an obvious edit may skip planner and run in the
-parent — protected paths still need confirm. For non-trivial changes, run
+parent; protected paths still need confirm. For non-trivial changes, run
 [`change-impact`](../change-impact/SKILL.md) first (read-only, optional) and
 feed its blast radius into the plan.
 
@@ -136,7 +136,7 @@ feed its blast radius into the plan.
 After implementers return, run the **acceptance reviewer gap loop**, then any
 applicable **domain reviewers**, then the **verifier arbiter**. When step 4
 launched parallel implementers in the same worktree, wait for **all** of them
-to finish before starting review — and wait for **every** unit's acceptance and
+to finish before starting review, and wait for **every** unit's acceptance and
 applicable domain reviewers to reach `pass` before verification.
 
 #### Reviewer gap loop
@@ -182,15 +182,15 @@ Artifact, re-run **that unit's** acceptance reviewer gap loop (then applicable
 domain reviewers) before verify.
 
 Before any protected-path fix, name the path, summarize the change, wait for
-confirm — else leave **blocked** (still a gap against the Bar).
+confirm, else leave **blocked** (still a gap against the Bar).
 
 #### Verifier arbiter
 
 After **every** unit's acceptance reviewer returns `pass`, and after every
 applicable domain reviewer for those units also returns `pass`, spawn a **new**
 [`manifest-verifier`](../../agents/manifest-verifier/agent.md) Task (fresh
-context) with the **cumulative** Artifact — union of every unit's touched
-paths, including gap-round edits — but **no Slice**, and a distinct Bar: the
+context) with the **cumulative** Artifact (union of every unit's touched
+paths, including gap-round edits) but **no Slice**, and a distinct Bar: the
 brief's named feedback loop / local gates for touched surfaces (not the pair's
 acceptance Bar). Do not start the verifier while any sibling unit is still in a
 gap round.
@@ -214,7 +214,7 @@ that unit's acceptance Bar + Artifact, then re-run **that unit's** reviewer gap
 loop (acceptance, then applicable domain). When every recovered unit has
 returned `pass`, spawn a **new** verifier with the cumulative Artifact. If no
 unit's Artifact overlaps the failing paths, open a **new**
-implementer↔reviewer pair scoped to the failing evidence, or stop / escalate —
+implementer↔reviewer pair scoped to the failing evidence, or stop / escalate;
 do not re-enter verification with an empty affected set. Repeat until `pass` or
 stop-loss / operator stop.
 
@@ -222,12 +222,12 @@ stop-loss / operator stop.
 
 After edits land and verify is green enough to ship-propose:
 
-1. [`review-loop`](../review-loop/SKILL.md) — local gates / fix iters
-2. [`reconcile-docs`](../reconcile-docs/SKILL.md) — behavior docs; delete satisfied issues/plans
-3. [`reconcile-context`](../reconcile-context/SKILL.md) — agent context / links
-4. [`draft-commit`](../draft-commit/SKILL.md) — propose Conventional Commit + optional draft MR; commits/pushes only when the operator authorizes that lap ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship))
+1. [`review-loop`](../review-loop/SKILL.md): local gates / fix iters
+2. [`reconcile-docs`](../reconcile-docs/SKILL.md): behavior docs; delete satisfied issues/plans
+3. [`reconcile-context`](../reconcile-context/SKILL.md): agent context / links
+4. [`draft-commit`](../draft-commit/SKILL.md): propose Conventional Commit + optional draft MR; commits/pushes only when the operator authorizes that lap ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship))
 
-Those sibling skills may not exist yet in the same session — keep the paths;
+Those sibling skills may not exist yet in the same session; keep the paths;
 do not fabricate their procedures here.
 
 ### Report

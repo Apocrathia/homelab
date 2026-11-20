@@ -5,7 +5,7 @@ metadata:
   name: authentik-terraform-token
   namespace: chaos-mesh
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret:
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
@@ -32,7 +32,7 @@ spec:
   # Per-app state args for the module's PARTIAL kubernetes backend: the
   # provider writes this as crossplane.remote.tfbackend and passes it via
   # -backend-config at tofu init. The state Secret is
-  # tfstate-<workspace>-chaos-mesh in this namespace — deliberately
+  # tfstate-<workspace>-chaos-mesh in this namespace: deliberately
   # separate from the CI tofu stack (terraform/, GitLab HTTP backend).
   # Two stacks, two states.
   backendFile: |
@@ -46,11 +46,11 @@ metadata:
   name: chaos-mesh-authentik
   namespace: chaos-mesh
 spec:
-  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # Prune guard: crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,
   # so a GitOps prune of this object can NEVER destroy the live authentik
   # stack (v2-native Orphan). Deliberate decommission therefore requires
-  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # temporarily restoring ["*"] (or a manual tofu destroy): the guard is
   # intentional.
   managementPolicies:
     - Observe
@@ -62,19 +62,18 @@ spec:
   forProvider:
     # Inline module, stitched at kustomize build time: kustomization.yaml's
     # configMapGenerator packages authentik.tf and the replacements rule
-    # copies its bytes into this module field — crossplane.yaml +
+    # copies its bytes into this module field: crossplane.yaml +
     # authentik.tf are the canonical file pair, and the HCL file is the
     # single source of truth (never render this directory outside
-    # kustomize). No varmap: the app values — including the three
+    # kustomize). No varmap: the app values: including the three
     # live-vs-default overrides (internal_host on the dashboard service,
     # intercept_header_auth true, access_token_validity minutes=10,
-    # verified in the authentik DB 2026-09-25) — live in the HCL now.
+    # verified in the authentik DB 2026-09-25): live in the HCL now.
     # ADDRESS PARITY: authentik.tf mirrors terraform/modules/authentik-app
     # exactly, so the live tfstate Secret
     # (tfstate-chaos-mesh-authentik-chaos-mesh) keeps its module-era
-    # addresses and the first plan after this layout swap reads No
-    # changes — no state-mv gate, no recreate, no import ids. If the state
-    # Secret is ever lost, re-adopt via manual tofu import (no import
+    # addresses. No changes: no state-mv gate, no recreate, no import ids.
+    # If the state Secret is ever lost, re-adopt via manual tofu import (no
     # blocks live in git).
     source: Inline
     module: ""

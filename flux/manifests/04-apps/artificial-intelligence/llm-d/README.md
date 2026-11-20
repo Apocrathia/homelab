@@ -22,7 +22,7 @@ llm-d provides several deployment patterns:
 
 ## Prerequisites
 
-- CPU-only deployment: this cluster has no accelerators — `accelerator.type: cpu` in `helmrelease.yaml` keeps the chart from injecting GPU requests
+- CPU-only deployment: this cluster has no accelerators, `accelerator.type: cpu` in `helmrelease.yaml` keeps the chart from injecting GPU requests
 - Hugging Face token for model downloads: `HF_TOKEN` field on the `llm-d-secrets` 1Password item (field name is case-sensitive)
 
 ## Deployment
@@ -30,7 +30,7 @@ llm-d provides several deployment patterns:
 The `llm-d-modelservice` Helm chart runs in the `llm-d` namespace as an
 **inference-sim** simulator:
 
-- `inference-sim` serves the API shape without running models — a development
+- `inference-sim` serves the API shape without running models, a development
   shape, not real inference, and it needs no GPU
 - Model artifacts are pinned in `helmrelease.yaml`
   (`modelArtifacts.name: llm-d/inference-sim`)
@@ -40,7 +40,7 @@ The `llm-d-modelservice` Helm chart runs in the `llm-d` namespace as an
 
 ## Access
 
-Internal only — no Gateway route:
+Internal only, no Gateway route:
 
 - **Service**: `http://llm-d-modelservice.llm-d.svc.cluster.local:8000`
 

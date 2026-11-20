@@ -1,24 +1,17 @@
 {{/*
 Authentik tofu-native stack (provider-opentofu): OnePasswordItem +
 ProviderConfig + Workspace, rendered when authentik.managedBy=terraform.
-The chart GENERATES the per-app HCL inline (source: Inline, NO varmap in
-git, NO module refs, NO chart-tag pins — the Remote+varmap antipattern is
-dead). The HCL is shape-identical to the merged file-pair exemplars
-(gatus/immich/jetkvm): values land inline in the HCL; proxy mode renders
-the per-app OUTPOST (gatus parity — retired-blueprint config parity, the
-outpost provisions its own HTTPRoute so the app fronts a hostname);
-ADOPTION rides for_each-gated imports — the slug-literal application
-import + the generated-id imports (plain variable-id imports are
-BANNED — the jetkvm blink: tofu silently skips an empty-id import and
-plans a duplicate create); the two-way adoption validation fails loudly
-both ways (adoption=true with any id empty; ids set with
-adoption=false). Witness ids NEVER enter git: the gate-time varmap on
-the LIVE Workspace carries them once (recipe §8, born-with-varmap),
-then clears. OUTPOST adoption is the separate render-time
-authentik.outpostAdopt wave key (proxy mode only): no varmap key, no
-uuid in git — an armed import resolves the baked outpost NAME through a
-data-source lookup. managedBy: blueprint is the retired lane (no
-authentik docs render); the values default is terraform.
+The chart generates the per-app HCL inline (source: Inline): no varmap in
+git, no module refs. Proxy mode renders the per-app outpost, which
+provisions its own HTTPRoute so the app fronts a hostname. Imports ride
+for_each gates (default off) with two-way adoption validation (fails
+loudly both ways: adoption=true with any id empty; ids set with
+adoption=false). Witness ids never enter git: the gate-time varmap on
+the live Workspace carries them once, then clears. Outpost adoption is
+the separate render-time authentik.outpostAdopt key (proxy mode only);
+an armed import resolves the baked outpost name through a data-source
+lookup. managedBy: blueprint is the retired lane (no authentik docs
+render); the values default is terraform.
 */}}
 {{- if and .Values.authentik.enabled (eq (default "blueprint" .Values.authentik.managedBy) "terraform") }}
 {{- $a := .Values.authentik }}
@@ -42,12 +35,12 @@ authentik docs render); the values default is terraform.
 {{- if $oidc.redirectUris }}{{ $oidcKeys = append $oidcKeys "authentik.oidc.redirectUris" }}{{ end }}
 {{- if $oidc.customScopeMappings }}{{ $oidcKeys = append $oidcKeys "authentik.oidc.customScopeMappings" }}{{ end }}
 {{- if and (eq $mode "proxy") $oidcKeys }}
-{{- fail (printf "authentik.managedBy=terraform mode %s renders no oauth2 provider - authentik.oidc keys set on a proxy app are a flip miswire: %s" $mode (join ", " $oidcKeys)) }}
+{{- fail (printf "authentik.managedBy=terraform mode %s renders no oauth2 provider - authentik.oidc keys set on a proxy app are a miswire: %s" $mode (join ", " $oidcKeys)) }}
 {{- end }}
 {{- $bkKeys := $oidcKeys }}
 {{- if $a.skipPathRegex }}{{ $bkKeys = append $bkKeys "authentik.skipPathRegex" }}{{ end }}
 {{- if and (eq $mode "bookmark") $bkKeys }}
-{{- fail (printf "authentik.managedBy=terraform mode %s renders no provider (tile shape: application + bindings only) - provider keys set on a bookmark app are a flip miswire: %s" $mode (join ", " $bkKeys)) }}
+{{- fail (printf "authentik.managedBy=terraform mode %s renders no provider (tile shape: application + bindings only) - provider keys set on a bookmark app are a miswire: %s" $mode (join ", " $bkKeys)) }}
 {{- end }}
 {{- if and (eq $mode "oidc") $a.skipPathRegex }}
 {{- fail "authentik.skipPathRegex is a proxy-provider attribute - it does not compose into mode oidc" }}
@@ -62,7 +55,7 @@ authentik docs render); the values default is terraform.
 {{- fail "mode oidc on the tofu lane requires a client_id lane: authentik.oidc.clientId (static literal, fresh creates) or authentik.oidc.clientIdFromSecret.enabled (the file lane) - render fails on neither (client_id is REQUIRED by the goauthentik TF resource)" }}
 {{- end }}
 {{- if not ($oidc.grantTypes | default list) }}
-{{- fail "authentik.oidc.grantTypes must not be empty on the tofu path - the authentik 2026.8 API no longer backfills grant_types and an empty set rejects every authorize request (the MISP lesson); pin the app's live row verbatim" }}
+{{- fail "authentik.oidc.grantTypes must not be empty on the tofu path - the authentik 2026.8 API does not backfill grant_types and an empty set rejects every authorize request; pin the app's live row verbatim" }}
 {{- end }}
 {{- $clientFile = $cidf.enabled }}
 {{- $clientLiteral = $oidc.clientId | default "" }}
@@ -124,7 +117,7 @@ metadata:
   name: authentik-terraform-token
   namespace: {{ $ns }}
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret -
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
@@ -153,7 +146,7 @@ spec:
     # 1Password-backed Secret key the app consumes materializes as the
     # oidc-client-id file in the tofu workdir, so the generated HCL's
     # client_id = trimspace(file("oidc-client-id")) reads the live
-    # blueprint-minted client_id — the value NEVER appears in git, and
+    # blueprint-minted client_id - the value NEVER appears in git, and
     # tofu and the app stay in lockstep on it.
     - filename: oidc-client-id
       source: Secret
@@ -167,7 +160,7 @@ spec:
   # it via -backend-config at tofu init. Without it the backend init fails
   # (the kubernetes backend requires secret_suffix/namespace/in_cluster_config).
   # The state Secret is tfstate-{{ $slug }}-authentik-{{ $ns }} in this
-  # namespace — deliberately separate from the CI tofu stack (terraform/,
+  # namespace - deliberately separate from the CI tofu stack (terraform/,
   # GitLab HTTP backend). Two stacks, two states.
   backendFile: |
     secret_suffix     = "{{ $ns }}"
@@ -180,11 +173,11 @@ metadata:
   name: {{ $slug }}-authentik
   namespace: {{ $ns }}
 spec:
-  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # Prune guard - crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,
   # so a GitOps prune of this object can NEVER destroy the live authentik
   # stack (v2-native Orphan). Deliberate decommission therefore requires
-  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # temporarily restoring ["*"] (or a manual tofu destroy) - the guard is
   # intentional.
   managementPolicies:
     - Observe
@@ -194,24 +187,23 @@ spec:
     kind: ProviderConfig
     name: {{ $slug }}-authentik
   forProvider:
-    # Inline module, CHART-GENERATED per app from the same values the
-    # blueprint templates read: every value lands inline in the HCL (no
-    # module refs, no chart-tag pins). NO varmap in git: the ADOPTION
-    # witness ids (provider pk, binding uuids, custom-mapping pm_uuids)
-    # ride GATED import blocks in the generated HCL that stay inert while
-    # their variables hold the defaults — plan reads No changes forever.
-    # The merge gate (recipe §8, born-with-varmap) patches the witness
-    # varmap ONTO THIS LIVE OBJECT once at the flip gate, confirms "N to
-    # import, 0 to add", then clears it; the ids NEVER appear in git. If
-    # the state Secret is ever lost, re-run the gate with fresh ids from
-    # the live DB.
+    # Inline module, chart-generated per app from the `authentik`
+    # values block: every value lands inline in the HCL (no module
+    # refs, no chart-tag pins). No varmap in git: the adoption witness
+    # ids (provider pk, binding uuids, custom-mapping pm_uuids) ride
+    # gated import blocks that stay inert while their variables hold
+    # the defaults (plan reads No changes forever). The merge gate
+    # patches the witness varmap onto this live object once, confirms
+    # "N to import, 0 to add", then clears it; the ids never appear in
+    # git. If the state Secret is ever lost, re-run the gate with fresh
+    # ids from the live DB.
     source: Inline
     module: |
 {{ include "generic-app.authentik.tofuModule" $t | indent 6 }}
 {{- end }}
 
 
-{{/* hclQuote: HCL-string a value — escapes ${, backslash, double-quote,
+{{/* hclQuote: HCL-string a value - escapes ${, backslash, double-quote,
      newline; wraps in double quotes. */}}
 {{- define "generic-app.authentik.hclQuote" -}}
 {{- $s := toString . -}}
@@ -223,8 +215,9 @@ spec:
 {{- end -}}
 
 {{/* Common header: required_providers + PARTIAL kubernetes backend (the
-     empty block MUST stay — without it -backend-config falls back to the
-     LOCAL backend and the adoption bar dies) + the authentik provider. */}}
+     empty block must stay: without it -backend-config falls back to the
+     LOCAL backend and the adoption gate cannot inject ids) + the
+     authentik provider. */}}
 {{- define "generic-app.authentik.tofuHeader" -}}
 terraform {
   required_providers {
@@ -235,7 +228,7 @@ terraform {
   }
 
   # PARTIAL backend: the per-app args (secret_suffix/namespace/
-  # in_cluster_config) come from the ProviderConfig spec.backendFile — the
+  # in_cluster_config) come from the ProviderConfig spec.backendFile - the
   # provider writes them to crossplane.remote.tfbackend and passes them via
   # -backend-config at tofu init. The empty block MUST stay: -backend-config
   # without a backend block falls back to the LOCAL backend (warning only),
@@ -252,7 +245,7 @@ provider "authentik" {
 {{- end -}}
 
 {{/* Data sources: flows (proxy + oidc; tile renders none) + the admins and
-     users group lookups (all modes — the users data source is declared
+     users group lookups (all modes - the users data source is declared
      unconditionally for module-shape parity; unreferenced data sources are
      fine). */}}
 {{- define "generic-app.authentik.tofuData" -}}
@@ -281,7 +274,7 @@ data "authentik_group" "admins" {
   include_users = false
 }
 
-# Users-group binding source — declared unconditionally (module-shape
+# Users-group binding source - declared unconditionally (module-shape
 # parity); referenced only when shared adds the users binding.
 data "authentik_group" "users" {
   name          = "users"
@@ -289,14 +282,11 @@ data "authentik_group" "users" {
 }
 {{- end -}}
 
-{{/* Proxy provider (mode proxy): gatus exemplar shape — provider plus the
-     per-app outpost in the tofuOutpost define below (blueprint parity
-     restored at 0.0.90: the 0.0.88 tofu lane dropped the outpost and
-     born-tofu apps rendered frontless — no outpost -> no auto-created
-     HTTPRoute -> no DNS). */}}
+{{/* Proxy provider (mode proxy): provider plus the per-app outpost in
+     the tofuOutpost define below. */}}
 {{- define "generic-app.authentik.tofuProxy" -}}
-# Proxy provider — chart-blueprint parity; every value composes from the
-# authentik values, so the flip gate plans zero drift.
+# Proxy provider, chart-blueprint parity; every value composes from the
+# authentik values.
 resource "authentik_provider_proxy" "app" {
   name                = {{ include "generic-app.authentik.hclQuote" (printf "%s-proxy-provider" .app) }}
   mode                = "proxy"
@@ -312,8 +302,8 @@ resource "authentik_provider_proxy" "app" {
   intercept_header_auth = {{ .interceptHeaderAuth }}
 {{- if .skipPathRegex }}
 
-  # skipPathRegex joined with newlines — byte-verbatim, no trailing
-  # newline (the grafana 18-byte lesson); [] = attribute omitted.
+  # skipPathRegex joined with newlines, byte-verbatim, no trailing
+  # newline; [] = attribute omitted.
   skip_path_regex = {{ include "generic-app.authentik.hclQuote" (join "\n" .skipPathRegex) }}
 {{- end }}
 
@@ -323,24 +313,22 @@ resource "authentik_provider_proxy" "app" {
 }
 {{- end -}}
 
-{{/* Outpost (mode proxy): retired-blueprint config parity — every key the
+{{/* Outpost (mode proxy): chart-blueprint config parity; every key the
      blueprint set, values from the same authentik values. The outpost
      provisions its own HTTPRoute from kubernetes_httproute_parent_refs
-     (main-gateway always; tailnet-gateway when tailnet.enabled — the
+     (main-gateway always; tailnet-gateway when tailnet.enabled, the
      shared shape), so ExternalDNS reads the route hostname for DNS and
      proxy apps render no route of their own. */}}
 {{- define "generic-app.authentik.tofuOutpost" -}}
-# The service connection the outpost runs through — the one authentik
-# creates on install (the retired blueprint's !Find on the same name).
+# The service connection the outpost runs through: the one authentik
+# creates on install.
 data "authentik_service_connection_kubernetes" "local" {
   name = {{ include "generic-app.authentik.hclQuote" .serviceConnection }}
 }
 
-# Outpost — retired-blueprint config parity (0.0.88 dropped it and
-# born-tofu apps rendered frontless: no outpost -> no auto-created
-# HTTPRoute -> no DNS). The outpost provisions its own HTTPRoute from
-# kubernetes_httproute_parent_refs — ExternalDNS reads the route
-# hostname for DNS; proxy apps render no route of their own.
+# Outpost, chart-blueprint config parity. The outpost provisions its
+# own HTTPRoute from kubernetes_httproute_parent_refs; ExternalDNS reads
+# the route hostname for DNS; proxy apps render no route of their own.
 resource "authentik_outpost" "app" {
   name               = {{ include "generic-app.authentik.hclQuote" (printf "%s-outpost" .app) }}
   type               = "proxy"
@@ -379,10 +367,10 @@ resource "authentik_outpost" "app" {
 
 {{/* Custom scope mappings (mode oidc, when declared): for_each over the
      declared names; expression verbatim. try(...) keeps description null
-     when a mapping does not set one (null = attribute omitted — the
+     when a mapping does not set one (null = attribute omitted - the
      config must not invent values). */}}
 {{- define "generic-app.authentik.tofuOidcCustom" -}}
-# Custom scope mappings — declared values verbatim; the resource
+# Custom scope mappings - declared values verbatim; the resource
 # for_each-keys over the mapping names, so every mapping's import rides its
 # own keyed block below.
 locals {
@@ -411,7 +399,7 @@ resource "authentik_property_mapping_provider_scope" "custom" {
 }
 {{- end -}}
 
-{{/* OIDC provider (mode oidc): immich exemplar shape — signing lookup,
+{{/* OIDC provider (mode oidc): immich exemplar shape - signing lookup,
      standard scope lookups (custom shadowing), custom mappings when
      declared, the oauth2 provider. */}}
 {{- define "generic-app.authentik.tofuOidc" -}}
@@ -430,22 +418,22 @@ data "authentik_property_mapping_provider_scope" "{{ $s }}" {
 {{ include "generic-app.authentik.tofuOidcCustom" . }}
 
 {{ end }}
-# The OIDC provider — chart-blueprint parity. client_id comes from exactly
+# The OIDC provider - chart-blueprint parity. client_id comes from exactly
 # one lane (the render guard fails on both/neither): the file lane reads
 # the oidc-client-id file the ProviderConfig materializes from the SAME
 # 1Password-backed Secret key the app consumes (the value never enters
 # git), or the static-literal lane pins it inline (misp/opencti style,
 # fresh creates). client_secret is never set here (Sensitive, generated
-# server-side) — tofu must not manage it.
+# server-side) - tofu must not manage it.
 resource "authentik_provider_oauth2" "app" {
   name = {{ include "generic-app.authentik.hclQuote" (printf "%s-oidc-provider" .app) }}
 
-  # No authentication_flow — the chart blueprint omits it too (Optional,
+  # No authentication_flow - the chart blueprint omits it too (Optional,
   # no TF default: null is never sent).
   authorization_flow = data.authentik_flow.provider-authorization.id
   invalidation_flow  = data.authentik_flow.invalidation.id
 
-{{ if .clientFile }}  # The client_id file lane — the ProviderConfig materializes the
+{{ if .clientFile }}  # The client_id file lane - the ProviderConfig materializes the
   # file; the value never appears in git.
   client_id = trimspace(file("oidc-client-id"))
 {{ else }}  client_id = {{ include "generic-app.authentik.hclQuote" .clientLiteral }}
@@ -458,7 +446,7 @@ resource "authentik_provider_oauth2" "app" {
 
 {{- if .customScopeMappings }}
 
-  # Standard (non-shadowed) scope lookups + the custom mappings — chart
+  # Standard (non-shadowed) scope lookups + the custom mappings - chart
   # blueprint parity (a custom mapping with the same scope_name shadows the
   # standard lookup).
   property_mappings = concat(
@@ -473,7 +461,7 @@ resource "authentik_provider_oauth2" "app" {
   )
 {{- else }}
 
-  # Standard scope lookups — chart blueprint parity.
+  # Standard scope lookups - chart blueprint parity.
   property_mappings = [
 {{- range $s := .scopes }}
     data.authentik_property_mapping_provider_scope.{{ $s }}.id,
@@ -492,19 +480,18 @@ resource "authentik_provider_oauth2" "app" {
   ]
 {{- end }}
 
-  # The three validity attrs are always sent explicitly — a TF resource
+  # The three validity attrs are always sent explicitly - a TF resource
   # default must never silently PATCH a live row.
   access_code_validity   = {{ include "generic-app.authentik.hclQuote" .accessCodeValidity }}
   access_token_validity  = {{ include "generic-app.authentik.hclQuote" .oidcAccessTokenValidity }}
   refresh_token_validity = {{ include "generic-app.authentik.hclQuote" .refreshTokenValidity }}
 
-  # grant_types pinned live-verbatim (the MISP lesson): ALWAYS sent
-  # explicitly — the authentik 2026.8 API serializer no longer backfills
-  # it and an empty set rejects every authorize request. The values pin
-  # the app's live row: a declared 2-value list stays 2-value; a live
-  # default-set row reproduces the full seven explicitly in the flip MR.
-  # response_types is NOT in the goauthentik 2026.8.0 TF schema (never
-  # write it); token_validity is dead in authentik 2026.8 (never write it).
+  # grant_types pinned live-verbatim: always sent explicitly (the
+  # authentik 2026.8 API serializer does not backfill it and an empty
+  # set rejects every authorize request). The values pin the app's live
+  # row. response_types is not in the goauthentik 2026.8.0 TF schema
+  # (never write it); token_validity is dead in authentik 2026.8 (never
+  # write it).
   grant_types = [
 {{- range .grantTypes }}
     {{ include "generic-app.authentik.hclQuote" . }},
@@ -517,11 +504,11 @@ resource "authentik_provider_oauth2" "app" {
      the blueprint's provider FK; tile (bookmark) stays provider-less. */}}
 {{- define "generic-app.authentik.tofuApplication" -}}
 {{- if eq .mode "bookmark" -}}
-# Application — chart-blueprint parity. NO protocol_provider: the tile is
+# Application - chart-blueprint parity. NO protocol_provider: the tile is
 # the dashboard launchpad shape (the authentik-bookmark-blueprint parity);
 # the provider-less application stays provider-less.
 {{- else -}}
-# Application — chart-blueprint parity; protocol_provider replaces the
+# Application - chart-blueprint parity; protocol_provider replaces the
 # blueprint's provider FK.
 {{- end }}
 resource "authentik_application" "app" {
@@ -532,8 +519,8 @@ resource "authentik_application" "app" {
   open_in_new_tab = {{ .openInNewTab }}
 {{- if .icon }}
 
-  # Optional metadata: null = attribute omitted — the config must not
-  # invent values (live rows verified field-by-field at the flip gate).
+  # Optional metadata: null = attribute omitted; the config must not
+  # invent values.
   meta_icon = {{ include "generic-app.authentik.hclQuote" .icon }}
 {{- end }}
 {{- if .metaDescription }}
@@ -565,7 +552,7 @@ resource "authentik_policy_binding" "admins" {
 }
 {{- if .shared }}
 
-# Order-20 parity: the users binding IS the shared tag — friends reach the
+# Order-20 parity: the users binding IS the shared tag - friends reach the
 # app through the tailnet door (the render guard requires
 # tailnet.enabled).
 resource "authentik_policy_binding" "users" {
@@ -583,18 +570,19 @@ resource "authentik_policy_binding" "users" {
      (map(string), one key per declared customScopeMappings entry). */}}
 {{- define "generic-app.authentik.tofuAdoption" -}}
 # ---------------------------------------------------------------------------
-# ADOPTION VARIABLES — the generated-id import gate. Defaults (adoption
+# ADOPTION VARIABLES: the generated-id import gate. Defaults (adoption
 # false, ids empty) validate clean and leave the import blocks below
-# inert. The ONLY setter is the merge-gate varmap (recipe §8): injected
-# into the Workspace once, cleared after the adoption apply. The ids
-# themselves NEVER appear in git.
+# inert. The only setter is the gate-time varmap
+# (docs/plans/authentik-chart-tofu-lane.md), injected into the Workspace
+# once and cleared after the adoption apply. The ids never appear in
+# git.
 # ---------------------------------------------------------------------------
 variable "adoption" {
-  description = "Merge-gate switch: adopt the live blueprint-created objects in place via the import blocks below (recipe §8; default off)."
+  description = "Merge-gate switch: adopt live blueprint-created objects in place via the import blocks below (default off)."
   type        = bool
   default     = false
 
-  # Gate 1: adoption=true with any id empty is a miswire — tofu silently
+  # Gate 1: adoption=true with any id empty is a miswire - tofu silently
   # skips an empty-id import and plans a duplicate create, so fail loudly.
   validation {
     condition = !var.adoption || (
@@ -615,10 +603,10 @@ variable "adoption" {
       ])
 {{- end }}
     )
-    error_message = "ADOPTION GATE: adoption=true requires every generated import id for this app's shape. An empty id makes tofu silently skip the import and plan a duplicate create — the blip."
+    error_message = "ADOPTION GATE: adoption=true requires every generated import id for this app's shape. An empty id makes tofu silently skip the import and plan a duplicate create."
   }
 
-  # Gate 2: ids set with adoption=false is a miswire — a stray varmap must
+  # Gate 2: ids set with adoption=false is a miswire - a stray varmap must
   # never half-arm the imports; fail loudly.
   validation {
     condition = var.adoption || (
@@ -633,27 +621,27 @@ variable "adoption" {
       && length(var.import_custom_scope_mapping_ids) == 0
 {{- end }}
     )
-    error_message = "ADOPTION GATE: import ids set with adoption=false is a miswire — clear the ids or set adoption=true."
+    error_message = "ADOPTION GATE: import ids set with adoption=false is a miswire - clear the ids or set adoption=true."
   }
 }
 {{- if ne .mode "bookmark" }}
 
 variable "import_provider_pk" {
-  description = "Live pk of the provider to adopt (proxy or oauth2, per mode). Gate-time varmap only — never in git. 0 = unset (steady state)."
+  description = "Live pk of the provider to adopt (proxy or oauth2, per mode). Gate-time varmap only - never in git. 0 = unset (steady state)."
   type        = number
   default     = 0
 }
 {{- end }}
 
 variable "import_binding_admins_pk" {
-  description = "Live authentik_policy_binding admins uuid for the gated import (bindings import by pk). Gate-time varmap only — never in git. Empty = unset (steady state)."
+  description = "Live authentik_policy_binding admins uuid for the gated import (bindings import by pk). Gate-time varmap only - never in git. Empty = unset (steady state)."
   type        = string
   default     = ""
 }
 {{- if .shared }}
 
 variable "import_binding_users_pk" {
-  description = "Live authentik_policy_binding users uuid for the gated import (bindings import by pk). Gate-time varmap only — never in git. Empty = unset (steady state)."
+  description = "Live authentik_policy_binding users uuid for the gated import (bindings import by pk). Gate-time varmap only - never in git. Empty = unset (steady state)."
   type        = string
   default     = ""
 }
@@ -661,27 +649,26 @@ variable "import_binding_users_pk" {
 {{- if and (eq .mode "oidc") .customScopeMappings }}
 
 variable "import_custom_scope_mapping_ids" {
-  description = "Live pm_uuids of the custom scope mappings to adopt, keyed by mapping name (one key per declared customScopeMappings entry). Gate-time varmap only — never in git; the empty map at steady state leaves the keyed imports at zero ids."
+  description = "Live pm_uuids of the custom scope mappings to adopt, keyed by mapping name (one key per declared customScopeMappings entry). Gate-time varmap only - never in git; the empty map at steady state leaves the keyed imports at zero ids."
   type        = map(string)
   default     = {}
 }
 {{- end }}
 {{- end -}}
 
-{{/* Import blocks: EVERY import rides a for_each gate, default off — the
-     application included: it imports BY SLUG (a static literal), but a
+{{/* Import blocks: every import rides a for_each gate, default off, the
+     application included (it imports by slug, a static literal; a
      born-tofu app has no application yet and an ungated import wedges
-     tofu on "Cannot import non-existent remote object" (nothing can
-     create what the import demands at plan time). Every GENERATED id
-     (provider pk, binding uuids, custom mapping pm_uuids) rides the
-     varmap-era ADOPTION gate: PLAIN variable-id imports are BANNED (the
-     jetkvm blink — an empty id is silently skipped and a fresh create is
-     planned). for_each is a pure on/off gate (toset([\"g\"]) on,
-     toset([]) off) with a STATIC to; adoption=false at steady state
-     yields zero import instances, and after the gate the blocks are
-     inert because state already holds the targets. The outpost import
-     rides its OWN render-time gate (outpostAdopt) instead — a values-key
-     wave, not a varmap switch. */}}
+     tofu on "Cannot import non-existent remote object"). Every
+     generated id (provider pk, binding uuids, custom mapping pm_uuids)
+     rides the adoption gate; plain variable-id imports are banned (an
+     empty id is silently skipped and a duplicate create is planned).
+     for_each is a pure on/off gate (toset([\"g\"]) on, toset([]) off) with
+     a static to; adoption=false at steady state yields zero import
+     instances, and after the gate the blocks are inert because state
+     already holds the targets. The outpost import rides its own
+     render-time gate (outpostAdopt), a values key rather than a varmap
+     switch. */}}
 {{- define "generic-app.authentik.tofuImports" -}}
 import {
   for_each = var.adoption ? toset(["g"]) : toset([])
@@ -721,11 +708,11 @@ import {
 {{- if eq .mode "proxy" }}
 {{- if .outpostAdopt }}
 
-# The live-outpost lookup for the outpostAdopt wave: outposts import by
-# UUID (the authentik outpost pk IS a uuid and the provider retrieves by
-# pk — a name id cannot resolve), so the armed import resolves the baked
-# name literal through this lookup at plan time. Rendered ONLY while
-# outpostAdopt is true — a born-tofu app has no live outpost and this
+# The live-outpost lookup for outpostAdopt: outposts import by UUID
+# (the authentik outpost pk is a uuid and the provider retrieves by pk;
+# a name id cannot resolve), so the armed import resolves the baked name
+# literal through this lookup at plan time. Rendered only while
+# outpostAdopt is true: a born-tofu app has no live outpost and this
 # lookup would fail its plan.
 data "authentik_outpost" "adopt" {
   name = {{ include "generic-app.authentik.hclQuote" (printf "%s-outpost" .app) }}

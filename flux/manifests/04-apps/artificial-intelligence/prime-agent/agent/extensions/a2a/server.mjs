@@ -1,16 +1,16 @@
 /**
- * prime-agent inbound A2A webhook — standalone server, owns port 8080.
+ * prime-agent inbound A2A webhook, standalone server, owns port 8080.
  * Started by the pod boot script (nohup) and respawned by the a2a
  * extension's session_start handler when its health probe fails. Plain
  * ESM, Node stdlib only. Run: node server.mjs
  *
- * Wire: A2A 1.0 JSON-RPC 2.0 over HTTP — message/send and tasks/get only
+ * Wire: A2A 1.0 JSON-RPC 2.0 over HTTP, message/send and tasks/get only
  * (no streaming, no push notifications; the agent card says so). Every
  * message/send runs a stateless one-shot `prime-agent -p "<prompt>"`: a
  * fresh session per message, contextId groups tasks but resumes nothing.
  * Runs past 120s keep running and are polled via tasks/get.
  *
- * Auth: bearer token from A2A_WEBHOOK_TOKEN, fail-closed — unset rejects
+ * Auth: bearer token from A2A_WEBHOOK_TOKEN, fail-closed, unset rejects
  * every POST. The token is never logged. Same token as the broker-side
  * litellm-secrets/prime-a2a-authorization header value (with "Bearer ").
  */
@@ -56,14 +56,14 @@ function authed(req) {
 }
 
 // ---------- task store ----------
-// ponytail: in-memory task store — a server restart orphans running
+// ponytail: in-memory task store, a server restart orphans running
 // prime-agent children (they finish on their own; sessions persist to the
 // PVC) and loses all task history. Upgrade path: a JSONL append log on the
 // PVC keyed by task id.
 const tasks = new Map(); // id -> task record
 const liveChildren = new Set(); // live prime-agent child processes
 const running = new Set(); // task ids holding a concurrency slot
-// ponytail: simple FIFO queue — no priorities, no cap on queue length.
+// ponytail: simple FIFO queue, no priorities, no cap on queue length.
 // Upgrade path: bound the queue and reject overflow with a JSON-RPC
 // server error instead of accepting unbounded work.
 const queued = []; // {task, prompt} waiting for a slot

@@ -68,7 +68,7 @@ create-chart-tag:
       echo "=== Chart Tag Creation Completed ==="
   # Runs on every default-branch pipeline: the job exits 0 when the tag
   # already exists (idempotent), so this self-heals missed tag pushes that
-  # rules:changes can skip (e.g. the 0.0.82 merge) and makes token failures
+  # rules:changes can skip and makes token failures
   # visible instead of hiding behind allow_failure.
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'

@@ -1,4 +1,4 @@
-# `reconcile-context/scripts` — context checkers
+# `reconcile-context/scripts`: context checkers
 
 `check_links.py` (intra-repo markdown link/anchor resolution, the
 `context-links` hook), `check_discovery.py`, `check_frontmatter.py`, and

@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.14.2/pkg/machinery/config/schemas/config.schema.json
-# v1alpha1 remainder — machine.kubelet (extraMounts have NO new-format equivalent,
+# v1alpha1 remainder: machine.kubelet (extraMounts have NO new-format equivalent,
 # see https://docs.siderolabs.com/talos/v1.14/reference/configuration/document-map:
 # ".machine.kubelet.extraMounts ... Deprecated: removed in multi-doc config") and
 # cluster.etcd (not yet migrated to a document in Talos 1.14).
@@ -13,8 +13,7 @@ machine:
     extraConfig:
       maxPods: 250
       # Prune unused images at 50% imagefs usage (down to 40%) instead of the
-      # 85/80 defaults — ~1.3k stale images/node filled the disks past
-      # Longhorn's 25%-free scheduling watermark (2026-10 archisteamfarm RCA).
+      # 85/80 defaults let disks fill past Longhorn's 25%-free scheduling watermark.
       imageGCHighThresholdPercent: 50
       imageGCLowThresholdPercent: 40
     extraMounts:
@@ -34,10 +33,9 @@ machine:
           - bind
           - rshared
           - rw
-    # kept from the previously applied config (live config parity)
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true
-# etcd tuning — .cluster.etcd is not deprecated in 1.14, stays in the v1alpha1 doc
+# etcd tuning: .cluster.etcd is not deprecated in 1.14, stays in the v1alpha1 doc
 # Increased timeouts to handle storage latency and high load
 cluster:
   etcd:
@@ -229,7 +227,7 @@ kind: Layer2VIPConfig
 name: 10.100.1.8
 link: eth0
 ---
-# DNS resolvers (overrides Talos defaults of 1.1.1.1 and 8.8.8.8) (unchanged)
+# DNS resolvers (overrides Talos defaults of 1.1.1.1 and 8.8.8.8)
 apiVersion: v1alpha1
 kind: ResolverConfig
 nameservers:

@@ -1,4 +1,4 @@
-# `review-security` — security review lens (skill)
+# `review-security`: security review lens (skill)
 
 `SKILL.md` defines the read-only security lens for a branch diff or named
 Artifact: security and abuse risk judged proportionately to exploitability

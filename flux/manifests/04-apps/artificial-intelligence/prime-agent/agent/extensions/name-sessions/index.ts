@@ -4,11 +4,11 @@
  * Prime Agent sessions start UUID-only. The operator finds sessions by name
  * in /resume and `prime-agent agents` (Ctrl+N filters to named). A harness
  * prompt note asks agents to name conversations, but a soft prompt rule gets
- * skipped when the agent dives into work — 4 substantive sessions ran after
+ * skipped when the agent dives into work, 4 substantive sessions ran after
  * the note landed and only 1 named itself.
  *
  * Fix, two parts:
- *  1. name_session tool — names the session in-process via pi.setSessionName.
+ *  1. name_session tool, names the session in-process via pi.setSessionName.
  *     Works in every mode (interactive, daemon, -p); no daemon-roster lookup,
  *     unlike `prime-agent rename`, which only works on active daemon sessions.
  *     Hard-validates the 26-character limit: the session-picker title column
@@ -17,8 +17,7 @@
  *  2. While a session is unnamed, every agent turn's system prompt ends with
  *     a naming directive. Clears automatically once named.
  *
- * 2026-09-18 incident (session 01a0b58d-9b5f-72da-ae7a-94e60d790c18):
- * "Count before sending" failed — models cannot count characters reliably
+ * Models cannot count characters reliably
  * ("unifi-os shell prompt setup", 27 chars, and the 1-4-word hint was
  * satisfied yet still over). After the successful retry the agent ended its
  * turn with zero task work. Hardening: word-length heuristic instead of

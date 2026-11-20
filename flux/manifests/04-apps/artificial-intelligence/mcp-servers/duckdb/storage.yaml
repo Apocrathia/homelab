@@ -1,6 +1,6 @@
 ---
 # Persistent storage for the MCP server's local DuckDB file. RWO matches
-# DuckDB's single-writer file-lock model — the MCP process is the only
+# DuckDB's single-writer file-lock model: the MCP process is the only
 # writer of /data/duckdb.db.
 apiVersion: v1
 kind: PersistentVolumeClaim

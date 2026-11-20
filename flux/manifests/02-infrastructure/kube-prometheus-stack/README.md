@@ -45,8 +45,8 @@ Before deploying, create the local account credentials in 1Password:
 
 1. In your 1Password vault, create a new item called `local-account`
 2. Add these fields:
-   - **Field Label**: `username` | **Value**: `admin`
-   - **Field Label**: `password` | **Value**: `your-secure-password`
+   - `username`: `admin`
+   - `password`: (your secure password)
 
 The 1Password Connect Operator will automatically create a Kubernetes secret with these values for Grafana admin access.
 
@@ -218,26 +218,3 @@ kubectl logs -n prometheus-system -l app.kubernetes.io/name=alertmanager
 - **[Kube Prometheus Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)** - Helm chart documentation
 - **[Prometheus](https://prometheus.io/docs/)** - Prometheus documentation
 - **[Grafana](https://grafana.com/docs/)** - Grafana documentation
-
-## Best Practices
-
-### Configuration
-
-1. Pin Helm chart versions
-2. Back up Grafana dashboards regularly
-3. Fine-tune alert thresholds
-4. Organize dashboards by namespace
-
-### Operations
-
-1. Watch the monitoring stack's own resource usage
-2. Set retention periods deliberately
-3. Review and clean up alerts regularly
-4. Optimize slow Prometheus queries
-
-### Security
-
-1. Least-privilege access
-2. Network policies and encryption
-3. Monitor the monitoring stack itself
-4. Apply security updates

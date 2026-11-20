@@ -22,7 +22,7 @@ spec:
     interval: 10m
   kustomize:
     patches:
-      # Keep root sync orphan-safe (same contract as pre-cutover soften).
+      # Keep root sync orphan-safe: prune false, deletionPolicy Orphan.
       - target:
           kind: Kustomization
           name: flux-system

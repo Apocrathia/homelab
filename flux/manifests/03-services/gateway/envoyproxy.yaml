@@ -13,7 +13,7 @@ spec:
       envoyDaemonSet: {}
       envoyService:
         type: LoadBalancer
-        # Cluster (not Local): TAK TCPRoute listeners are plain L4 — the
+        # Cluster (not Local): TAK TCPRoute listeners are plain L4: the
         # backend pod is the only service backend, so with Local every node
         # not hosting the pod refuses connections. Preserves the original
         # Cilium Gateway behavior.

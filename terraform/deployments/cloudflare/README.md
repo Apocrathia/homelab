@@ -1,4 +1,4 @@
-# cloudflare — Cloudflare deployment
+# cloudflare: Cloudflare deployment
 
 The Cloudflare lane: `dns/` manages the public DNS records through the
 cloudflare-dns module.

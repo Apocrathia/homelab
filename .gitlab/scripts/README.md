@@ -1,4 +1,4 @@
-# `.gitlab/scripts/` — CI job scripts
+# `.gitlab/scripts/`: CI job scripts
 
 Two Python helpers for the MR change-summary CI job.
 `mr_change_summary_prompt.py` renders the agent prompt from `CI_*`

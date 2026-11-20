@@ -7,16 +7,16 @@ through the kagent UI.
 
 ## Overview
 
-- `AgentHarness/openclaw` — substrate runtime, OpenClaw backend
-- `ModelConfig/openclaw-model` — LiteLLM (`glm-5.3-prime`)
-- `OnePasswordItem/openclaw-harness-secrets` — gateway token + LiteLLM API key
-- Role/RoleBinding `openclaw-ate-api-env-sources` — lets
+- `AgentHarness/openclaw`, substrate runtime, OpenClaw backend
+- `ModelConfig/openclaw-model`, LiteLLM (`glm-5.3-prime`)
+- `OnePasswordItem/openclaw-harness-secrets`, gateway token + LiteLLM API key
+- Role/RoleBinding `openclaw-ate-api-env-sources`, lets
   `ate-system/ate-api-server` resolve ActorTemplate env `secretKeyRef`s in this
   namespace (same grant kagent's chart installs in `kagent`)
 
 The authentik orphans (`openclaw-proxy-provider`, `openclaw-outpost`) are
 removed by the `openclaw-cleanup` companion blueprint
-(`flux/manifests/03-services/authentik/blueprints/openclaw-cleanup.yaml`) —
+(`flux/manifests/03-services/authentik/blueprints/openclaw-cleanup.yaml`),
 `state: absent` entries; blueprints never garbage-collect. Outpost deletions
 can leave the `ak-outpost-openclaw-outpost` Deployment, Service, metrics
 Service, and retired-hostname HTTPRoute behind in the authentik namespace;
@@ -29,18 +29,18 @@ kubectl get deploy,svc,httproute -n authentik | grep openclaw
 ## Configuration
 
 Defined by kagent CRs: `AgentHarness/openclaw` (substrate runtime) and
-`ModelConfig/openclaw-model` (LiteLLM) — see `agentharness.yaml` and
+`ModelConfig/openclaw-model` (LiteLLM), see `agentharness.yaml` and
 `modelconfig.yaml`.
 
 ## Secrets
 
 1Password item: `vaults/Secrets/items/openclaw-secrets`
 
-| Field             | Used by                                                                                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `token`           | Legacy — kagent 0.10.0 removed `gatewayTokenSecretRef`; the gateway no longer authenticates with a bearer token. Safe to drop from the 1Password item |
-| `gateway-token`   | Legacy/generic-app; keep in sync with `token` if both exist                                                                                           |
-| `litellm-api-key` | ModelConfig / ActorTemplate `OPENAI_API_KEY`                                                                                                          |
+| Field             | Used by                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `token`           | Unused: the gateway does not authenticate with a bearer token (no `gatewayTokenSecretRef` in CRD v1alpha2). Safe to drop from the 1Password item |
+| `gateway-token`   | Legacy/generic-app; keep in sync with `token` if both exist                                                                                      |
+| `litellm-api-key` | ModelConfig / ActorTemplate `OPENAI_API_KEY`                                                                                                     |
 
 ## Access
 
@@ -48,7 +48,7 @@ Defined by kagent CRs: `AgentHarness/openclaw` (substrate runtime) and
 - **Authentik dashboard**: `authentik-blueprint.yaml` publishes a bookmark
   application pointing straight at the harness gateway
   (`https://kagent.gateway.services.apocrathia.com/api/agentharnesses/openclaw/openclaw/gateway`).
-  It carries no provider — SSO comes from the kagent proxy provider that already
+  It carries no provider, SSO comes from the kagent proxy provider that already
   covers `kagent.gateway.services.apocrathia.com`.
 
 ## Worker pool

@@ -1,4 +1,4 @@
-# `manifest-implementer` — GitOps manifest editor (persona)
+# `manifest-implementer`: GitOps manifest editor (persona)
 
 `agent.md` charters the implementer role for Flux/Helm/Kustomize changes:
 careful, minimal edits to workloads, HelmReleases, and values, with local

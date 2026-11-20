@@ -25,11 +25,11 @@ replacements:
   # ConfigMap's authentik.tf data into the Workspace's module field.
   # authentik.tf stays the single source of truth for the HCL; the rendered
   # module must stay byte-identical to it (the Workspace adopts live
-  # authentik objects — a drift here would fight the state).
+  # authentik objects: a drift here would fight the state).
   #
   # The intermediate ConfigMap cannot be dropped from the render: kustomize
   # applies patches and transformers before replacements, so a $patch:
-  # delete would remove the source before this rule consumes it (verified on
+  # delete would remove the source before this rule consumes it. No
   # kustomize v5.8.1; no deletions-transformer builtin exists). The
   # ConfigMap is harmless in-cluster (no authentik_blueprint label) and
   # keeps a stable name (disableNameSuffixHash), so authentik.tf edits

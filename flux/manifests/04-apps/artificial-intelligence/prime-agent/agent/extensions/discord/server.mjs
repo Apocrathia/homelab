@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * prime-agent discord bot — standalone sidecar, owns the Discord gateway
+ * prime-agent discord bot, standalone sidecar, owns the Discord gateway
  * connection and the loopback control port (default 8790). Respawned
  * detached by the beacon (index.ts) from any prime-agent session when its
  * health probe fails; or run standalone: node server.mjs
  *
  * Plain ESM, Node stdlib only (native WebSocket + fetch; Node >= 22).
- * Zero npm deps — the cluster mirror stays two flat ConfigMap keys
+ * Zero npm deps, the cluster mirror stays two flat ConfigMap keys
  * (design D2; ponytail: swap to discord.js only if the bot outgrows
  * single-guild/low-rate usage, and only after solving node_modules-in-ConfigMap).
  *
@@ -14,7 +14,7 @@
  *   - control port (loopback, token-gated): /healthz, /internal/register,
  *     /internal/event, /internal/unregister, /internal/thread (agent-decided
  *     threading: the beacon's discord_thread tool promotes a channel
- *     conversation to a thread, same session) — the beacon contract (D1/D8)
+ *     conversation to a thread, same session), the beacon contract (D1/D8)
  *   - zero-dep gateway client: IDENTIFY, heartbeat+ACK liveness (2 missed
  *     ACKs -> reconnect+RESUME), exit classification (auth non-retryable),
  *     message-id dedup (RESUME replays events) (D2)
@@ -28,26 +28,26 @@
  *     preview creates retry bounded with deltas parked (never one POST per
  *     delta), finalize paces splits, rejected references degrade to fresh sends
  *   - reaction ack on the trigger message (deferred hermes "reactions"): 👀 at
- *     turn start, ✅ on delivery, ⚠️ when nothing lands — fire-and-forget,
+ *     turn start, ✅ on delivery, ⚠️ when nothing lands, fire-and-forget,
  *     reaction failures never touch reply delivery. Reliability (production
- *     2026-09-26): ⚠️ means DELIVERY failure only — a textless assistant
+ *     2026-09-26): ⚠️ means DELIVERY failure only, a textless assistant
  *     message end (every tool-call message) never acks, the swap paces its
  *     ops (a stale ⚠️ is removed before ✅ lands), and a failed reaction op
  *     gets ONE delayed retry, never a delivery verdict. Finality (production
- *     2026-09-27 ⚠️-beside-✅): the verdict is TERMINAL — a delivered trigger
+ *     2026-09-27 ⚠️-beside-✅): the verdict is TERMINAL, a delivered trigger
  *     is never downgraded; late settles/timeouts/failTurns are logged no-ops,
  *     and every ackFinal/failTurn logs its provenance + streamer state.
  *     Turn tokens (production 2026-09-28 under-ack): every dispatch bumps a
  *     per-streamer turn token; turn-scoped writers (finalize's tail, the
  *     settles, failTurn, failPending, /reset) capture it at entry and skip
- *     their writes on a bump — a dispatch landing mid-finalize can never have
+ *     their writes on a bump, a dispatch landing mid-finalize can never have
  *     its fresh pending ack clobbered by the old turn's late tail
  *   - slash commands /ping /status /reset over the gateway, guild-scoped (D7)
  *   - internal token: constant-time compare, fail-closed (D9)
  *
  * Fail-closed: empty allowlists deny (+ one-time warning naming the fix).
  * No secrets in logs: the bot token and the internal token are never
- * printed — only their source. allowed_mentions {parse: []} rides EVERY
+ * printed, only their source. allowed_mentions {parse: []} rides EVERY
  * outbound send, so LLM output can never mass-ping (transport deny, D5).
  */
 import * as http from "node:http";
@@ -118,8 +118,8 @@ const LEGACY_ALIASES = {
   allowed_channel_ids: "allowed_channels",
 };
 
-// presence v1 (bot self-presence; presence-plan §6): sub-key deep-merged inside
-// loadConfig — deliberately NOT a flat DEFAULTS key, so config.example.json
+// presence v1 (bot self-presence): sub-key deep-merged inside
+// loadConfig, deliberately NOT a flat DEFAULTS key, so config.example.json
 // (and its smoke key-set check) stays untouched
 const PRESENCE_DEFAULTS = {
   enabled: false, // feature gate: disabled = zero op-3 sends, no timers
@@ -274,7 +274,7 @@ function loadConfig() {
   cfg.default_cwd = String(cfg.default_cwd ?? "~") || "~";
   // presence v1: defaults < config.json < env per sub-key (a partial presence
   // object never silently loses defaults); a non-object block, like type/status,
-  // fails config load loud — never silently disabled
+  // fails config load loud, never silently disabled
   if (
     cfg.presence !== undefined &&
     cfg.presence !== null &&
@@ -327,9 +327,9 @@ function loadConfig() {
   return cfg;
 }
 
-// ---------- internal beacon<->bot token (D9; identical chain in index.ts — keep in sync) ----------
+// ---------- internal beacon<->bot token (D9; identical chain in index.ts, keep in sync) ----------
 // chain (webui-beacon alignment, 2026-09-28): env DISCORD_EXT_TOKEN ->
-// config.json ext_token -> token file (discord-token, 0600 — read fallback +
+// config.json ext_token -> token file (discord-token, 0600, read fallback +
 // one-time migration source only, never written again) -> auto-generate +
 // persist to config. Never logged (only the source is).
 const TOKEN_FILE =
@@ -357,7 +357,7 @@ function writeExtTokenToConfig(token, configFile) {
   fs.renameSync(tmp, configFile);
 }
 // one-time migration (pre-reorder installs): the machine token lived in the
-// discord-token file — fold it into config.json ext_token, then delete the
+// discord-token file, fold it into config.json ext_token, then delete the
 // file. Idempotent + atomic: the bot AND the beacon may both run it;
 // last-write-wins carries the same value. A failed config write keeps the
 // file (the token never exists in zero places).
@@ -374,7 +374,7 @@ function migrateTokenFileToConfig(token, tokenFile, configFile) {
   return true;
 }
 // the chain, parameterized for the smoke's config twin (production entry:
-// resolveToken, live paths). Identical in index.ts — keep both in sync.
+// resolveToken, live paths). Identical in index.ts, keep both in sync.
 function resolveTokenFor(tokenFile, configFile) {
   if (process.env.DISCORD_EXT_TOKEN)
     return { token: process.env.DISCORD_EXT_TOKEN, source: "env" };
@@ -398,7 +398,7 @@ function resolveTokenFor(tokenFile, configFile) {
   try {
     writeExtTokenToConfig(token, configFile);
   } catch (e) {
-    // generated: config is the canonical store — the file path is never written again
+    // generated: config is the canonical store, the file path is never written again
     log("token persist failed:", e?.message ?? e);
   }
   return { token, source: "generated" };
@@ -466,7 +466,7 @@ function loadLedger() {
 }
 const ledger = loadLedger(); // convKey -> {sessionId, cwd, channel_id, created, lastActive, name?}
 function reapLedger() {
-  // 2026-09-23 operator: "(none) down" rows never reap — a null-session row past LEDGER_REAP_MS drops from display AND file at save time; id'd rows stay (their sessions may resume)
+  // 2026-09-23 operator: "(none) down" rows never reap, a null-session row past LEDGER_REAP_MS drops from display AND file at save time; id'd rows stay (their sessions may resume)
   const cut = Date.now() - LEDGER_REAP_MS;
   for (const [k, v] of ledger) {
     if (v?.sessionId != null) continue;
@@ -499,10 +499,10 @@ function dedupAdd(id) {
 // ---------- durable recovery (hermes-catalog #2 + #7): missed-message ledger + delivery-obligation ledger ----------
 // Hermes' gateway closes two crash windows with durable ledgers (SQLite there:
 // plugins/platforms/discord/recovery.py:55-80 + gateway/delivery_ledger.py:1-11);
-// here they are zero-dep append-only JSONL — the shapes the single-writer bot needs:
+// here they are zero-dep append-only JSONL, the shapes the single-writer bot needs:
 //  1. INBOUND (crash between admit and dispatch acceptance): every ADMITTED message
 //     appends a pending row to recovery/<convKey>.jsonl BEFORE dispatch; the row
-//     flips to done (a done-marker row — append is the atomic commit) once a session
+//     flips to done (a done-marker row, append is the atomic commit) once a session
 //     accepts the dispatch. On boot (gateway READY, once per process) pending rows
 //     written before the boot REPLAY through the normal dispatch path (claim and
 //     self-heal included), the CURRENT admission gates re-check each row (config
@@ -511,16 +511,16 @@ function dedupAdd(id) {
 //  2. OUTBOUND (failure between finalize and the Discord ACK): a reply whose REST
 //     delivery failed TERMINALLY (every split path AND the consolidated fallback)
 //     persists to recovery/<convKey>.delivery.jsonl and is retried on the next
-//     dispatch to that conversation or by the 60s sweep — at-least-once, with the
+//     dispatch to that conversation or by the 60s sweep, at-least-once, with the
 //     visible ♻️ marker hermes uses (delivery_ledger.py:37-49: an ambiguous send
 //     may duplicate; the marker says so honestly). The delivered message id is
 //     recorded on the done row; a delivered row never re-posts.
-// Text storage decision: RAW dispatch text is stored — re-dispatch needs the exact
+// Text storage decision: RAW dispatch text is stored, re-dispatch needs the exact
 // bytes (a hash could only detect pending-ness, not replay the message); privacy
 // is bounded by 0600 files, a 0700 dir, gitignore, and the boot prune.
 // Everything here is fail-soft: a ledger failure NEVER blocks message flow
 // (hermes recovery.py:35-53). ponytail: the caps below are enforced at boot-prune
-// only — a long-lived boot can grow a file past 1k rows between restarts; the
+// only, a long-lived boot can grow a file past 1k rows between restarts; the
 // next boot compacts it.
 const RECOVERY_DIR = SMOKE
   ? path.join(HERE, "recovery.smoke")
@@ -548,7 +548,7 @@ function recoveryAppend(file, row) {
   }
 }
 function recoveryRows(file) {
-  // read the append-only log, reduce to the LATEST row per id (a done marker shadows its pending row — that shadow IS the bot-side durable dedup by message id)
+  // read the append-only log, reduce to the LATEST row per id (a done marker shadows its pending row, that shadow IS the bot-side durable dedup by message id)
   let raw;
   try {
     raw = fs.readFileSync(file, "utf-8");
@@ -586,7 +586,7 @@ function recoveryMarkDone(convKey, ids) {
       state: "done",
     });
 }
-// (2) the finalize-failure hook: the reply is OWED — persist it before anything else can lose it
+// (2) the finalize-failure hook: the reply is OWED, persist it before anything else can lose it
 function recoveryPersistDelivery(convKey, channelId, text, cfg) {
   if (!recoveryEnabled(cfg)) return false;
   const id = `d-${Date.now().toString(36)}-${Math.random()
@@ -642,7 +642,7 @@ function recoveryRemap(oldKey, newKey) {
     try {
       if (!fs.existsSync(from)) continue;
       if (fs.existsSync(to)) {
-        // unexpected (the new key is fresh) — merge, never clobber
+        // unexpected (the new key is fresh), merge, never clobber
         fs.appendFileSync(to, fs.readFileSync(from, "utf-8"), { mode: 0o600 });
         fs.rmSync(from);
       } else fs.renameSync(from, to);
@@ -670,7 +670,7 @@ async function recoveryDrainDelivery(convKey) {
           deliveredMessageId: deliveredId,
           doneAt: nowIso(),
         });
-      // a failed redelivery leaves the row pending — the next dispatch or sweep retries
+      // a failed redelivery leaves the row pending, the next dispatch or sweep retries
     }
   } finally {
     deliveryDraining.delete(convKey);
@@ -698,10 +698,10 @@ if (!SMOKE)
   ); // owed-reply retry while the bot lives (recovery ledger #2)
 // boot prune (hermes recovery.py:59-80's retention sweep, JSONL shape): compact
 // every ledger file to one row per id, drop rows past the 30-day horizon
-// (pending too — the conversation is long past them), cap at 1k rows per
+// (pending too, the conversation is long past them), cap at 1k rows per
 // conversation (done rows evicted first), then hand the replayable pending
 // rows (written before THIS boot) to the scan. The prune is SYNCHRONOUS by
-// design — no awaits inside — so the event loop cannot interleave an append
+// design, no awaits inside, so the event loop cannot interleave an append
 // between the read and the rename (a concurrent recoveryAdmit lands before
 // or after the whole block, never on the replaced inode)
 let recoveryScanned = false;
@@ -763,9 +763,9 @@ function recoveryPrune() {
   return out;
 }
 // the replay gate re-check: the row replays only if it STILL passes the CURRENT
-// ladder (config may have changed during downtime — a denial drops the row with a log)
+// ladder (config may have changed during downtime, a denial drops the row with a log)
 async function recoveryReplayCheck(row, cfg) {
-  // the synthetic msg: identity gates only — mention tokens are already stripped
+  // the synthetic msg: identity gates only, mention tokens are already stripped
   // from the stored text, so a bot-authored row replays only under allow_bots=all
   // ("mentions" needs the raw <@bot> token: honestly dropped + logged, never re-admitted)
   const synthetic = {
@@ -777,7 +777,7 @@ async function recoveryReplayCheck(row, cfg) {
   const adm = await evaluateAdmission(synthetic, cfg); // gate 1 claims the id in the dedup LRU — a later gateway replay of the same id drops
   if (!adm.ok) return { ok: false, drop: `${adm.gate}: ${adm.reason}` };
   if (row.guildId) {
-    // shared surfaces re-check the mention gate; DMs skip it (allow_dm was the gate — handleMessage parity)
+    // shared surfaces re-check the mention gate; DMs skip it (allow_dm was the gate, handleMessage parity)
     const keys = CHANNEL_KEYS(await channelInfo(row.channelId));
     if (!passesMentionGate(keys, row.convKey, cfg, !!row.mentioned))
       return {
@@ -915,7 +915,7 @@ class RestError extends Error {
   }
 }
 // rate-limit state (production 2026-09-25, thread 1552402301740654662): retry-once
-// honored retry_after only for the failed request — every OTHER request kept
+// honored retry_after only for the failed request, every OTHER request kept
 // POSTing into the saturated channel bucket, so it never drained and the whole
 // reply died. Now a 429 parks ALL requests to that route bucket until
 // retry_after (+margin) passes. In-process map + timestamps, no deps.
@@ -993,7 +993,7 @@ const rest = {
         bucketCooldowns.set(k, Math.max(bucketCooldowns.get(k) ?? 0, until));
       }
       if (!retried429) {
-        // honor retry_after once — with the bucket parked, the retry lands on a drained bucket
+        // honor retry_after once, with the bucket parked, the retry lands on a drained bucket
         log(`429 on ${apiPath} — retrying after ${s}s`);
         return rest.request(method, apiPath, body, true);
       }
@@ -1023,7 +1023,7 @@ const rest = {
       const m = await post();
       return m && m.id ? m : null;
     } catch (e) {
-      // production 2026-09-25: a type-0 reference resolves in-channel only — the
+      // production 2026-09-25: a type-0 reference resolves in-channel only, the
       // auto-thread trigger lives in the PARENT channel, so every preview create
       // 400ed MESSAGE_REFERENCE_UNKNOWN and the reply died. A fresh send beats a dead reply.
       if (payload.message_reference && isUnknownReferenceError(e)) {
@@ -1138,15 +1138,15 @@ const rest = {
 // A ROUTED session's registered name mirrors onto its thread (PATCH
 // /channels/{threadId} {name}). Only-if-changed guard: beacons re-register
 // every ~15s heartbeat, and the per-conversation cache skips the PATCH unless
-// the name CHANGED at the source — one PATCH per rename, never one per
+// the name CHANGED at the source, one PATCH per rename, never one per
 // heartbeat. The cache holds the last name WE set, never the thread's
 // current name: this path reads nothing (no GET, no gateway intent), so a
-// manual operator rename is never detected — and never fought either. The
+// manual operator rename is never detected, and never fought either. The
 // heartbeats keep carrying the unchanged session name, which still equals
 // the cache, so the manual name survives until the session's name changes
 // at the source; the next change re-asserts then (README caveat). The cache
 // is set EAGERLY (before the PATCH): a failing rename warns once and is not
-// retried — the next attempt rides the next name change or a bot restart
+// retried, the next attempt rides the next name change or a bot restart
 // (a restart re-asserts once per routed thread). Fire-and-forget by
 // contract: a rename can never block or fail a register.
 const THREAD_NAME_MAX = 100; // Discord caps thread names at 100 chars (the auto-thread create path clamps 80 — stricter by design for trigger text)
@@ -1184,13 +1184,13 @@ function maybeRenameThread(convKey, name) {
 // ---------- conversation surface names (discord-visibility feedback lap) ----------
 // A convKey resolves to a name the BOT knows: the channel's Discord name, the
 // thread's title, or the DM recipient's display name. The name feeds the spawn
-// env (DISCORD_CONV_NAME -> the beacon names the session — "discord channel
+// env (DISCORD_CONV_NAME -> the beacon names the session, "discord channel
 // 9967911148" garbage dies) and the /status table's conversation column. Two
-// contracts: cache-first (a lookup NEVER blocks on a fetch — dispatch resolves
+// contracts: cache-first (a lookup NEVER blocks on a fetch, dispatch resolves
 // what is cached, spawns unnamed when unknown, the beacon falls back) and
 // prime-async (an unresolved key triggers ONE fire-and-forget getChannel
 // through the bucket-aware REST helper; the NEXT spawn/render carries the
-// name). Fetch failures never cache — every spawn retries until a name lands.
+// name). Fetch failures never cache, every spawn retries until a name lands.
 const CONV_NAME_MAX = 26; // the operator's session-picker limit — the same clamp the beacon enforces on DISCORD_CONV_NAME
 const convNames = new Map(); // convKey -> resolved surface name (real names only — failures and the "dm" fallback stay out)
 const convNameFetching = new Set(); // in-flight fetches — a dispatch burst primes a key once, not once per message
@@ -1204,13 +1204,13 @@ function convNameSlice(raw) {
     .slice(0, CONV_NAME_MAX);
 }
 function rememberConvName(convKey, raw) {
-  // createThread paths call this eagerly — the chosen title IS the surface name
+  // createThread paths call this eagerly, the chosen title IS the surface name
   const clean = convNameSlice(raw);
   if (convKey && clean) convNames.set(convKey, clean);
   return clean || null;
 }
 function convNameFor(convKey) {
-  // sync, cache-first — NEVER fetches
+  // sync, cache-first, NEVER fetches
   if (!convKey || !convKey.includes(":")) return null;
   const hit = threadNameLastSet.get(convKey) ?? convNames.get(convKey); // threads: the rename mirror holds the freshest title we set; everything else: remembered create-thread/fetch names
   if (hit) return convNameSlice(hit);
@@ -1472,7 +1472,7 @@ async function dispatchGatewayEvent(t, d) {
     log(`gateway: READY as ${d?.user?.username ?? "?"} (${botUserId})`);
     const cfg = loadConfig();
     if (!homeNotified && cfg.home_channel) {
-      // one-time startup notice (reconnects do not re-notify — spam guard)
+      // one-time startup notice (reconnects do not re-notify, spam guard)
       homeNotified = true;
       rest
         .sendMessage(cfg.home_channel, "discord bot online", {})
@@ -1503,13 +1503,13 @@ async function dispatchGatewayEvent(t, d) {
   }
 }
 
-// ---------- presence v1: bot self-presence via gateway op-3 (presence-plan §2-§9) ----------
-// v2 (2026-09-27, operator UX): the activity NAME — the visible member-list
-// line — is the active conversation's session name. v3 (2026-09-28): at idle
+// ---------- presence: bot self-presence via gateway op-3 ----------
+// v2 (2026-09-27, operator UX): the activity NAME, the visible member-list
+// line, is the active conversation's session name. v3 (2026-09-28): at idle
 // the NAME mirrors the idle STATE text; `name` is the deep fallback (README).
 // TEXT-ONLY by protocol: bots may set only name/state/type (+status) on their own
-// activity — no assets, details, timestamps, party, buttons, or emoji, ever.
-// Harness-extracted region BEGIN — .scratch/discord-rpc-assets/presence-harness.mjs
+// activity, no assets, details, timestamps, party, buttons, or emoji, ever.
+// Harness-extracted region BEGIN, .scratch/discord-rpc-assets/presence-harness.mjs
 // evals exactly this block: keep it self-contained (outer module state only
 // arrives through createPresence's parameters).
 const PRESENCE_WINDOW_MS = 20000; // Discord limit: 5 presence updates / 20s
@@ -1518,8 +1518,8 @@ const PRESENCE_MAX_LEN = 128; // legacy name/state field limit (activity Info bo
 
 const presenceSlice = (s) => String(s ?? "").slice(0, PRESENCE_MAX_LEN);
 
-// render rule (§4): replace placeholders, drop empty segments together with
-// their " · " separator, trim — a single working session renders to just the task
+// render rule: replace placeholders, drop empty segments together with
+// their " · " separator, trim, a single working session renders to just the task
 function renderStateTemplate(tpl, task, children) {
   return String(tpl ?? "")
     .split(" · ")
@@ -1531,7 +1531,7 @@ function renderStateTemplate(tpl, task, children) {
     .trim();
 }
 
-// status mapping (§5): auto = online whenever the bot is listening or working —
+// status mapping (§5): auto = online whenever the bot is listening or working,
 // a live gateway listener answers instantly, never the AFK mark; the activity
 // line carries what it's working on. A forced "dnd"|"invisible" override wins.
 // "offline" is never sent.
@@ -1539,7 +1539,7 @@ function presenceStatus(pcfg, auto) {
   return pcfg.status === "auto" ? auto : pcfg.status;
 }
 
-// desired (state, status) from the working registry rows (pure; §4) — task is
+// desired (state, status) from the working registry rows (pure; §4), task is
 // the most recent busy:true row (lastBusyAt, lastSeen fallback)
 function derivePresence(workingRows, pcfg) {
   if (!workingRows.length)
@@ -1565,12 +1565,12 @@ function derivePresence(workingRows, pcfg) {
 }
 
 // v2 (operator UX, 2026-09-27): the visible member-list line (the activity NAME)
-// reads the ACTIVE conversation — the most-recently-active ROUTED working row's
+// reads the ACTIVE conversation, the most-recently-active ROUTED working row's
 // registered session name (the beacon carries it; heartbeats keep it fresh).
 // v3 (2026-09-28, idle-name consistency): at idle the NAME mirrors the idle
-// STATE text (pcfg.idle_state) — both lines read "listening"; the product name
+// STATE text (pcfg.idle_state), both lines read "listening"; the product name
 // next to the account name was redundant. pcfg.name stays the deep fallback
-// when idle_state is empty. Status/state stay machine-wide — untouched.
+// when idle_state is empty. Status/state stay machine-wide, untouched.
 function deriveActiveName(workingRows, pcfg) {
   const routed = workingRows.filter((r) => r && r.routed === true);
   if (!routed.length)
@@ -1585,10 +1585,10 @@ function deriveActiveName(workingRows, pcfg) {
   return presenceSlice(String(task.name ?? "") || pcfg.name);
 }
 
-// op-3 payload shape (§2/§7): since/afk constants; type 4 forces "Custom Status";
+// op-3 payload shape: since/afk constants; type 4 forces "Custom Status";
 // v2: the activity name is the desired visible line (active-conversation name;
 // the idle state text at idle), falling back to the configured `name` when
-// unset — no click-to-see
+// unset, no click-to-see
 function presencePayload(desired, pcfg) {
   return {
     since: 0,
@@ -1609,7 +1609,7 @@ function presencePayload(desired, pcfg) {
 const presenceKey = (p) =>
   `${p.activities[0].name}|${p.activities[0].type}|${p.activities[0].state}|${p.status}`;
 
-// desired state in, debounced op-3 out (§3/§9): change detection first, trailing
+// desired state in, debounced op-3 out: change detection first, trailing
 // debounce, sliding-window hard cap; sends only on a connected gateway
 function createPresence({
   wsSend,
@@ -1634,9 +1634,9 @@ function createPresence({
       name: presenceSlice(name),
     }; // name: "" = no active conversation -> payload falls back to the idle name
     if (presenceKey(presencePayload(desired, pcfg)) === lastSent) {
-      // identical to what's sent — no timer, no slot (§9)
+      // identical to what's sent, no timer, no slot (§9)
       if (!pending?.forced) {
-        // a queued older pair is stale (flip-flip back to the sent state) — drop it, or the live truth went stale
+        // a queued older pair is stale (flip-flip back to the sent state), drop it, or the live truth went stale
         pending = null;
         if (timer) {
           cancel(timer);
@@ -1660,8 +1660,8 @@ function createPresence({
     update(state, status, deriveActiveName(working, pcfg)); // v2: the visible name rides the same refresh (15s heartbeat worst case)
   }
 
-  // READY path (§8.3): bypass debounce + change detection once — a fresh gateway
-  // session resets client presence — but still consume a rate slot
+  // READY path (§8.3): bypass debounce + change detection once, a fresh gateway
+  // session resets client presence, but still consume a rate slot
   function forceSync() {
     const pcfg = getConfig()?.presence;
     if (!pcfg || !pcfg.enabled) return;
@@ -1700,7 +1700,7 @@ function createPresence({
     const t = now();
     while (window.length && t - window[0] >= PRESENCE_WINDOW_MS) window.shift();
     if (window.length >= PRESENCE_MAX_SENDS) {
-      // hard cap — re-fire when the oldest send exits the window
+      // hard cap, re-fire when the oldest send exits the window
       timer = schedule(firePending, PRESENCE_WINDOW_MS - (t - window[0]) + 1);
       return;
     }
@@ -1734,7 +1734,7 @@ const mentionTokenPresent = (content, botId) =>
   !!botId && new RegExp(`<@!?${botId}>`).test(content ?? "");
 function isMentioned(msg, botId) {
   // humans: mentions array is fine (a human reply-ping to the bot IS addressing it);
-  // bots: raw <@id> token scan happens in the bot gate (reply-pings pollute message.mentions — HH gotcha 2)
+  // bots: raw <@id> token scan happens in the bot gate (reply-pings pollute message.mentions, HH gotcha 2)
   if (mentionTokenPresent(msg.content, botId)) return true;
   return (
     Array.isArray(msg.mentions) && msg.mentions.some((m) => m?.id === botId)
@@ -1743,15 +1743,15 @@ function isMentioned(msg, botId) {
 const reject = (gate, reason) => ({ ok: false, gate, reason });
 
 async function evaluateAdmission(msg, cfg) {
-  // gate 1 — dedup: Discord RESUME replays events; pre-seed also covers the
+  // gate 1, dedup: Discord RESUME replays events; pre-seed also covers the
   // create_thread starter-message replay (id == thread id, HH gotcha 9)
   if (!dedupAdd(String(msg.id)))
     return reject("dedup", "replayed or duplicate message id");
-  // gate 2 — self-drop (other bots wait for gate 6 so allow_bots can admit them)
+  // gate 2, self-drop (other bots wait for gate 6 so allow_bots can admit them)
   if (botUserId && String(msg.author?.id) === botUserId)
     return reject("self", "own message");
   const isDm = !msg.guild_id;
-  // gate 3 — guild (fail-closed: empty allowlist denies; a fresh bot would otherwise answer the whole server)
+  // gate 3, guild (fail-closed: empty allowlist denies; a fresh bot would otherwise answer the whole server)
   if (isDm) {
     if (!cfg.allow_dm) return reject("dm", "allow_dm is off");
   } else {
@@ -1762,7 +1762,7 @@ async function evaluateAdmission(msg, cfg) {
       );
       return reject("guild", "guild not allowlisted");
     }
-    // gate 4 — channel whitelist then blacklist; thread messages match by parent channel too
+    // gate 4, channel whitelist then blacklist; thread messages match by parent channel too
     const info = await channelInfo(msg.channel_id);
     const keys = CHANNEL_KEYS(info);
     if (cfg.allowed_channels.length === 0) {
@@ -1777,7 +1777,7 @@ async function evaluateAdmission(msg, cfg) {
     if (keys.some((k) => listHas(cfg.ignored_channels, k)))
       return reject("channel", "channel blacklisted");
   }
-  // gate 5 — user (fail-closed; username/role allowlists are deferred — IDs only)
+  // gate 5, user (fail-closed; username/role allowlists are deferred, IDs only)
   const userId = String(msg.author?.id ?? "");
   if (!cfg.allow_all_users && !listHas(cfg.allowed_users, userId)) {
     warnOncePer(
@@ -1786,7 +1786,7 @@ async function evaluateAdmission(msg, cfg) {
     );
     return reject("user", "user not allowlisted");
   }
-  // gate 6 — bot policy (raw token scan for bots: reply-pings silently add you to message.mentions)
+  // gate 6, bot policy (raw token scan for bots: reply-pings silently add you to message.mentions)
   if (msg.author?.bot) {
     if (cfg.allow_bots === "none")
       return reject("bots", "bot author, allow_bots=none");
@@ -1799,7 +1799,7 @@ async function evaluateAdmission(msg, cfg) {
   return { ok: true, isDm };
 }
 
-// gate 7 — mention: required in shared channels/threads unless free-response
+// gate 7, mention: required in shared channels/threads unless free-response
 // or the conversation is already mapped (thread-participation semantics, HH #6)
 function passesMentionGate(keys, convKey, cfg, mentioned) {
   if (!cfg.require_mention) return true;
@@ -1821,10 +1821,10 @@ function threadNameFrom(content) {
   return (s || "discord conversation").slice(0, 80);
 }
 // PRODUCTION 2026-09-23: every auto-thread came back PRIVATE (type 12) with
-// bot-only membership — the operator could not see the thread or any reply in
+// bot-only membership, the operator could not see the thread or any reply in
 // it, while delivery itself worked. From-message creates ignore the requested
 // type, so the trigger author is PUT into the members right after creation.
-// Visibility is the feature: retry once (house pattern), then say it loudly —
+// Visibility is the feature: retry once (house pattern), then say it loudly,
 // the thread is invisible to its author until a member-add succeeds.
 async function ensureThreadMember(threadId, userId, parentId) {
   if (!threadId || !userId) return;
@@ -1855,12 +1855,12 @@ async function ensureThreadMember(threadId, userId, parentId) {
 
 // ---------- inbound attachments (hermes-catalog #3 slice 1: text-doc injection ≤100KB) ----------
 // An admitted message's text-compatible attachments inline INTO the dispatch
-// text — the agent simply sees the content, zero agent-side changes. Only the
+// text, the agent simply sees the content, zero agent-side changes. Only the
 // first ATTACHMENT_INLINE_MAX attachments fetch; everything else (non-text,
 // over-cap, beyond the limit, failed fetch) becomes a one-line placeholder in
 // the same spot. Fetches are sequential, ride a dedicated bucket key (a slow
 // CDN never parks message sends), and never block dispatch: a failure is a
-// placeholder, not a lost message. The inflated text IS the dispatch text —
+// placeholder, not a lost message. The inflated text IS the dispatch text,
 // the recovery ledger stores it, so a replay re-dispatches the content.
 const ATTACHMENT_INLINE_MAX = 3; // per-message inline cap — beyond that, placeholders only
 const ATTACHMENT_BUCKET_KEY = "attachments"; // dedicated bucket: a 429ing/slow CDN parks only attachment fetches
@@ -1900,9 +1900,9 @@ const attachmentIsTextual = (att) => {
   return dot >= 0 && ATTACHMENT_TEXT_EXTS.has(name.slice(dot));
 };
 const fmtCapBytes = (n) => (n === 102400 ? "100KB" : `${n}-byte`); // the placeholder reads the CONFIGURED cap
-// CDN GET with the bot token — same REST discipline (dedicated bucket wait,
+// CDN GET with the bot token, same REST discipline (dedicated bucket wait,
 // bounded 429 retry, per-fetch AbortSignal). Reads at most cap+1 bytes and
-// cancels the stream the moment the cap is crossed — never fetch-and-discard.
+// cancels the stream the moment the cap is crossed, never fetch-and-discard.
 async function fetchAttachment(att, cfg, retried429 = false) {
   const url = String(att?.proxy_url || att?.url || "");
   if (!/^https?:\/\//.test(url)) throw new Error("no fetchable url"); // transport-level failures are not HTTP verdicts — the placeholder reason reads its message
@@ -1947,7 +1947,7 @@ async function fetchAttachment(att, cfg, retried429 = false) {
     over = false;
   const chunks = [];
   if (res.body) {
-    // stream-read with the cap — the backstop for a lying/absent payload size
+    // stream-read with the cap, the backstop for a lying/absent payload size
     const reader = res.body.getReader();
     for (;;) {
       const { done, value } = await reader.read();
@@ -1964,7 +1964,7 @@ async function fetchAttachment(att, cfg, retried429 = false) {
   if (over) return { tooLarge: true, bytes: total };
   return { text: Buffer.concat(chunks).toString("utf-8") };
 }
-// sequential fetches, bounded — returns the inline suffix ("" when nothing to say)
+// sequential fetches, bounded, returns the inline suffix ("" when nothing to say)
 async function inlineAttachments(atts, cfg) {
   let out = "";
   let fetched = 0; // fetch attempts — the per-message bound that keeps a fetch storm out of admission
@@ -2047,7 +2047,7 @@ async function handleMessage(msg) {
         String(msg.channel_id),
       );
     } catch (e) {
-      // auto-thread failure is fatal-for-the-message and VISIBLE — dumping the task back into a shared channel is worse (HH #7)
+      // auto-thread failure is fatal-for-the-message and VISIBLE, dumping the task back into a shared channel is worse (HH #7)
       log("auto-thread failed:", e?.message ?? e);
       await rest
         .sendMessage(
@@ -2067,8 +2067,8 @@ async function handleMessage(msg) {
   }
   const content = stripBotMentions(msg.content, botUserId);
   if (!content) return log("admit: bare mention with no text — dropped");
-  // inbound attachments (hermes-catalog #3 slice 1): text-compatible
-  // attachments inline INTO the dispatch text — the agent simply sees the
+  // inbound attachments: text-compatible
+  // attachments inline INTO the dispatch text, the agent simply sees the
   // content, zero agent changes. Fetched BEFORE the recovery row lands, so
   // the ledger stores the inflated text (a replay re-dispatches the content);
   // a failure is a placeholder, never a lost message.
@@ -2079,7 +2079,7 @@ async function handleMessage(msg) {
   const text = `Discord message from ${
     msg.author?.username ?? "unknown"
   }: ${content}${attSuffix}`;
-  // durable recovery (hermes-catalog #2): the pending row lands BEFORE dispatch —
+  // durable recovery (hermes-catalog #2): the pending row lands BEFORE dispatch,
   // a crash anywhere from here to dispatch acceptance replays this message on the
   // next boot (the raw dispatch text is what re-dispatch needs; files are 0600, gitignored)
   recoveryAdmit(
@@ -2097,7 +2097,7 @@ async function handleMessage(msg) {
     },
     cfg,
   );
-  // the trigger lives in msg.channel_id — policy "always" re-points channelId at the
+  // the trigger lives in msg.channel_id, policy "always" re-points channelId at the
   // thread, and the reaction ack must hit the trigger where the operator sees it;
   // the trigger author rides along so the discord_thread promotion can add them to the new thread's members
   enqueueForDispatch(
@@ -2168,7 +2168,7 @@ const beaconSendTimeoutMs = () => {
 // the beacon's per-session traffic credential (2026-09-24 hardening lap):
 // present the session token the beacon registered with; fall back to the
 // machine token ONLY for beacons that registered without one (pre-hardening
-// instances — their old /send gate accepts it, so live conversations survive
+// instances, their old /send gate accepts it, so live conversations survive
 // the lap; hardening #1's window note lives in the README).
 const beaconAuthHeaders = (route) => {
   const t = route?.sessionToken ?? TOKEN;
@@ -2176,12 +2176,12 @@ const beaconAuthHeaders = (route) => {
 };
 async function beaconSend(route, text) {
   // Returns { ok, unreachable }. ok = the beacon answered 200. unreachable = the
-  // port is GONE (refused/reset before any response — respawn is safe, nothing was
-  // delivered). A TIMEOUT is NOT unreachable — production 2026-09-26 double-reply
+  // port is GONE (refused/reset before any response, respawn is safe, nothing was
+  // delivered). A TIMEOUT is NOT unreachable, production 2026-09-26 double-reply
   // (thread 1552441595486408829): the 8s /send HAD reached the worker (its turn ran
   // and delivered) but the late response read as "dead", the self-heal respawn parked
   // the same text, the original's heartbeat re-claimed the id-matched route, and the
-  // register flush re-delivered — two bot replies to one follow-up. On loopback a
+  // register flush re-delivered, two bot replies to one follow-up. On loopback a
   // dead port refuses instantly, so a timeout means the beacon was REACHABLE and the
   // /send is queued: treat as delivered, never respawn.
   try {
@@ -2212,10 +2212,10 @@ async function beaconSend(route, text) {
 // in the daemon's worker for up to 30s more (it may still complete and burn tokens).
 // /stop posts to the conversation's beacon, whose ctx.abort() is the REAL stop: it
 // cancels the LLM stream + in-flight turn actions + child runs, PARKS queue-visible
-// turns (the next message resumes them — agent-session requestAbort semantics), and
+// turns (the next message resumes them, agent-session requestAbort semantics), and
 // agent_end still fires on abort, so the EXISTING busy:false settle resolves the ack
-// (⚠️ if nothing landed — the operator stopped it; the provenance line reads via
-// busy-settle, the same path a tool-only turn takes — no new ack path). The session,
+// (⚠️ if nothing landed, the operator stopped it; the provenance line reads via
+// busy-settle, the same path a tool-only turn takes, no new ack path). The session,
 // route, and wrapper all stay live. beaconSend's transport twin: token-gated loopback
 // POST, never a signal to a worker (daemon workers are the operator's).
 async function beaconStop(route) {
@@ -2263,7 +2263,7 @@ async function dispatchToConversation(
   authorId,
 ) {
   // dispatch-admission dedupe (2026-09-24 dm duplicate pairs): one message id,
-  // one dispatch — ever. Any re-entry (a double flushBatch, a replay, a future
+  // one dispatch, ever. Any re-entry (a double flushBatch, a replay, a future
   // re-dispatch path) drops here with one audit line, before anything sends.
   const dedupeId = String(triggerMessageId ?? "");
   if (dedupeId && !dispatchAdmit(convKey, dedupeId)) {
@@ -2291,13 +2291,13 @@ async function dispatchToConversation(
     if (!sent.unreachable) {
       // 200 = the live session accepted the turn; a TIMEOUT on a reachable
       // beacon = the /send queued there (2026-09-26 lesson). Either way the
-      // turn is the live session's obligation — no parked copy, no respawn.
+      // turn is the live session's obligation, no parked copy, no respawn.
       ackedByLiveSession = true;
     } else {
       // dead beacon (production 2026-09-24, thread 1552418888795291728: the daemon
       // recycled the worker mid-turn, the wrapper lived on as a zombie holding a
       // dead rpc, and the route kept pointing at the dead worker's port): SIGTERM
-      // the stale wrapper WE spawned (never a daemon worker — those are the
+      // the stale wrapper WE spawned (never a daemon worker, those are the
       // operator's) and drop the stale route; spawnForConv below resumes the
       // session and the parked text re-dispatches on the new register.
       stalePort = route.controlPort; // the pre-heal beacon: if it is merely wedged (not dead), its later heartbeat must never re-claim the respawn's id-matched claim — the register flush would re-deliver (2026-09-26 double-reply guard)
@@ -2311,7 +2311,7 @@ async function dispatchToConversation(
         }
       }
       // a prior turn that never resolved (the dead worker's turn) fails visibly
-      // BEFORE the re-anchor — the ⚠️ lands on the stalled turn's own trigger
+      // BEFORE the re-anchor, the ⚠️ lands on the stalled turn's own trigger
       const stalled = streamers.get(convKey);
       if (
         stalled &&
@@ -2336,7 +2336,7 @@ async function dispatchToConversation(
   armTurnTimer(convKey); // the owed turn gets its watchdog at dispatch: a session that never starts streaming fails visibly after the window — no stranded 👀
   startTyping(convKey, loadConfig()); // dispatch-time typing (production 2026-09-27 "never is typing"): busy events are NOT a reliable start signal — the first agent_start races the register flush (the beacon's registered flag flips only after the register 200 resolves, and the flush's /send starts the turn inside that window — probe-confirmed 2026-09-24), and a wedged turn emits nothing at all. The bot DISPATCHED this turn, so the indicator starts here. Idempotent: a late busy:true re-entering startTyping is a no-op.
   if (!routing.get(convKey)) {
-    // loud-warn (production 2026-09-27 stuck-👀): a live tagged session for THIS conversation registered display-only — no route means its events can never drive the streamer, exactly the silent state that strands a 👀. The register-reason line is already in server.log; this says where to look.
+    // loud-warn (production 2026-09-27 stuck-👀): a live tagged session for THIS conversation registered display-only, no route means its events can never drive the streamer, exactly the silent state that strands a 👀. The register-reason line is already in server.log; this says where to look.
     for (const [sid, r] of sessions) {
       if (r.convKey === convKey) {
         log(
@@ -2439,7 +2439,7 @@ async function spawnForConv(
   // the causal claim (webui /internal/register pattern): a NEW spawn snapshots
   // SESSIONS_DIR before spawning and adopts the first register with a session
   // file absent from the snapshot, on this cwd, created after the spawn; a
-  // RESUME spawn links by its preset sessionId. pid matching is unusable —
+  // RESUME spawn links by its preset sessionId. pid matching is unusable,
   // prime-agent delegates to the operator's daemon, so the beacon registers
   // the daemon-tree worker pid, never the wrapper pid we spawned (production
   // 2026-09-24: our own conversation registered display-only and timed out).
@@ -2494,7 +2494,7 @@ async function spawnForConv(
   }
 }
 // the claim's pre-spawn snapshot (webui diskSessions shape): session files
-// already on disk are NOT claimable — only files the spawn itself creates
+// already on disk are NOT claimable, only files the spawn itself creates
 function diskSessions() {
   const out = [];
   try {
@@ -2585,21 +2585,21 @@ function streamerOf(convKey) {
   return st;
 }
 // ---------- turn tokens (production 2026-09-28 under-ack): every dispatch bumps
-// st.turnToken (a per-streamer counter — monotonic, so a "(N vs M)" anomaly line
+// st.turnToken (a per-streamer counter, monotonic, so a "(N vs M)" anomaly line
 // reads as "turn M superseded N" instead of two opaque ids). Turn-scoped writers
 // capture the token at ENTRY and skip their streamer writes when a newer dispatch
 // owns it. The bug: finalize's tail `pendingAck = false` runs after EVERY delivery
-// await — a dispatch(N+1) landing mid-finalize(N) had its fresh pendingAck=true
+// await, a dispatch(N+1) landing mid-finalize(N) had its fresh pendingAck=true
 // clobbered, stranding the new turn's 👀 (under-ack only, never over-ack).
 // Machine-scoped state (typing timer, the channel/trigger anchor) is NOT
 // token-gated: the next dispatch's own re-anchor owns that, per the existing
-// anchor semantics. Sync paths gate as belt-and-braces — the await-spanning
+// anchor semantics. Sync paths gate as belt-and-braces, the await-spanning
 // writers (finalize's tail, the preview writes) are the ones the guard lives for.
 function turnTokenOf(st) {
   return st?.turnToken ?? 0;
 }
 function staleTurnSkip(what, tok, st) {
-  // ONE anomaly line per skipped write set — the captured anchor's own ack still fires; only the SHARED state is left to the newer turn
+  // ONE anomaly line per skipped write set, the captured anchor's own ack still fires; only the SHARED state is left to the newer turn
   log(
     `ANOMALY: stale turn token — ${what} write skipped (${tok} vs ${turnTokenOf(
       st,
@@ -2615,7 +2615,7 @@ function splitChunks(text, size) {
     let cut = s.lastIndexOf("\n", size);
     let skip = 0; // a whitespace cut consumes the separator so the next chunk starts AT a token; the newline cut keeps the "\n" head (existing behavior)
     if (cut < size * 0.5) {
-      // no newline in the back half: prefer a whitespace boundary — a hard cut lands mid-token and breaks a URL (2026-09-24 sizing defect, the agent-path twin of the /status fix)
+      // no newline in the back half: prefer a whitespace boundary, a hard cut lands mid-token and breaks a URL (2026-09-24 sizing defect, the agent-path twin of the /status fix)
       const floor = Math.ceil(size * 0.5);
       let ws = -1;
       for (let i = size; i >= floor; i--)
@@ -2635,27 +2635,26 @@ function splitChunks(text, size) {
   return chunks.filter((c) => c.length);
 }
 // ---------- reaction ack (deferred hermes "reactions"): turn lifecycle on the TRIGGER ----------
-// The reply lands in the thread (or the channel) — the trigger needs its own signal:
+// The reply lands in the thread (or the channel), the trigger needs its own signal:
 // 👀 when the turn starts, ✅ when it lands, ⚠️ when nothing does. Every op is
 // fire-and-forget: a failed reaction logs and never touches reply delivery.
 // Reliability (production 2026-09-26 ⚠️-on-a-delivered-turn):
 //  - ⚠️ means DELIVERY failure only. It is put by finalize(delivered=0), failTurn,
-//    failPending, /reset, and the busy:false resolution of a textless turn — never
-//    by a mid-turn textless assistant message end (every tool-call message used to
-//    ack ⚠️ before the reply even existed) and never by a reaction failure.
+//    failPending, /reset, and the busy:false resolution of a textless turn, never
+//    by a mid-turn textless assistant message end and never by a reaction failure.
 //  - The swap is paced: reactions get their own per-message bucket, but back-to-back
 //    ops on one trigger still 429 together (the incident's 👀 PUT and ✅ PUT both
 //    429'd). rest.request's bucketWait re-checks the margin on every op; the pace
 //    below just keeps the two ops from racing the same window.
-//  - A failed reaction op gets ONE delayed retry — after that it logs and gives up;
+//  - A failed reaction op gets ONE delayed retry, after that it logs and gives up;
 //    the delivered verdict (✅) is already decided and never downgraded.
 //  - The verdict is TERMINAL (production 2026-09-27 ⚠️-beside-✅): once a trigger
-//    resolves delivered, a later ackFinal(false) on it is a logged NO-OP — no
+//    resolves delivered, a later ackFinal(false) on it is a logged NO-OP, no
 //    event (late agent_end settle, watchdog, unregister, self-heal) may downgrade
 //    it. The fail swap also strips a stale ✅ before ⚠️ lands, so a trigger can
 //    never end with both marks even in the pre-resolution window.
 //  - Provenance: every ackFinal/failTurn call logs its path + the streamer state
-//    it fired on — the round logs verdicts, this names WHO decided them.
+//    it fired on, the round logs verdicts, this names WHO decided them.
 const REACTION_EYES = "👀",
   REACTION_OK = "✅",
   REACTION_FAIL = "⚠️";
@@ -2670,7 +2669,7 @@ const reactionRetryMs = () => {
   return Number.isFinite(v) && v >= 0 ? v : REACTION_RETRY_MS;
 };
 async function ackOp(op, what) {
-  // one attempt + one delayed retry; failures log and stop — never a delivery verdict
+  // one attempt + one delayed retry; failures log and stop, never a delivery verdict
   try {
     await op();
     return;
@@ -2736,7 +2735,7 @@ async function ackFinal(
   }
   if (!loadConfig().reactions || !triggerChannelId || !triggerMessageId) return;
   // the swap removes stale marks BEFORE the verdict lands: a stale ⚠️ must never sit
-  // beside a ✅ (the delivered incident trigger ended with BOTH) — a never-added
+  // beside a ✅ (the delivered incident trigger ended with BOTH), a never-added
   // emoji DELETE 404s harmlessly
   await ackOp(
     () =>
@@ -2802,7 +2801,7 @@ function stopTyping(convKey) {
 }
 
 // ---------- mid-turn death visibility (production 2026-09-24 worker recycle: a
-// turn died silently and the thread went permanently mute — no self-heal, no
+// turn died silently and the thread went permanently mute, no self-heal, no
 // failure notice, a zombie wrapper leaked). A turn that can never complete
 // (worker death, unregister mid-turn, stream silence past the window) must
 // fail VISIBLY: ⚠️ on the stalled turn's trigger + a short channel notice. ----------
@@ -2842,12 +2841,12 @@ async function failTurn(convKey, why) {
       st?.resolved ? (st.resolved.ok ? "delivered" : "failed") : "none"
     }, previewId: ${st?.previewId ?? null} }`;
   if (tok !== turnTokenOf(st)) {
-    // a newer dispatch owns the streamer — failing HERE would ack and clear the CURRENT turn's state on the wrong anchor (belt: sync-fresh today, the guard holds if an await ever lands above)
+    // a newer dispatch owns the streamer, failing HERE would ack and clear the CURRENT turn's state on the wrong anchor (belt: sync-fresh today, the guard holds if an await ever lands above)
     staleTurnSkip("failTurn", tok, st);
     return;
   }
   if (st && st.finalizing > 0) {
-    // (#2) finalize owns the verdict while it delivers — a mid-delivery watchdog/unregister can never ⚠️ a delivering turn
+    // (#2) finalize owns the verdict while it delivers, a mid-delivery watchdog/unregister can never ⚠️ a delivering turn
     log(
       `failTurn no-op (${why}) — finalize is in flight and owns the verdict; ${stLine()}`,
     );
@@ -2858,7 +2857,7 @@ async function failTurn(convKey, why) {
     !st.channelId ||
     !(st.pendingAck || st.busy || st.previewId != null)
   ) {
-    // nothing in flight (or never anchored to a channel) — nothing to fail visibly
+    // nothing in flight (or never anchored to a channel), nothing to fail visibly
     if (st?.resolved)
       log(
         `ANOMALY: late failTurn (${why}) on a turn already resolved (${
@@ -2916,7 +2915,7 @@ async function previewEdit(convKey, st, cfg, text) {
   )
     return;
   if (!st.previewId) {
-    // preview-create resilience (production 2026-09-25): a failed create used to re-POST on EVERY delta — now deltas park and one bounded retry chain runs
+    // preview-create resilience (production 2026-09-25): a failed create used to re-POST on EVERY delta, now deltas park and one bounded retry chain runs
     if (tok !== turnTokenOf(st)) {
       staleTurnSkip("preview park", tok, st);
       return;
@@ -2939,7 +2938,7 @@ async function previewEdit(convKey, st, cfg, text) {
     st.lastEditAt = now;
   } catch (e) {
     if (isUnknownMessageError(e)) {
-      // the preview was deleted mid-stream — start a fresh one instead of dying on every delta
+      // the preview was deleted mid-stream, start a fresh one instead of dying on every delta
       log(`preview ${st.previewId} is gone — recreating`);
       if (tok !== turnTokenOf(st)) {
         staleTurnSkip("preview recreate", tok, st);
@@ -3012,7 +3011,7 @@ async function finalize(convKey, st, cfg, fullText) {
     const maxSplits = cfg.max_splits;
     let chunks = splitChunks(fullText, SPLIT_THRESHOLD);
     if (chunks.length > maxSplits) {
-      // flood cap — beyond it a truncation notice replaces the tail (hermes :2805-2825)
+      // flood cap, beyond it a truncation notice replaces the tail (hermes :2805-2825)
       chunks = chunks.slice(0, maxSplits);
       const notice =
         "\n\n*(output truncated — full text is in the agent session)*";
@@ -3024,7 +3023,7 @@ async function finalize(convKey, st, cfg, fullText) {
       cfg.reply_to_mode !== "off" ? st.triggerMessageId : undefined; // reply_to_mode governs chunk 1's reference to the trigger ("all" is rejected at config load — not implemented)
     // first-response deeplink (2026-09-24 operator feedback, delivery-UX round 2):
     // the FIRST finalized reply of a conversation appends the webui "view this
-    // conversation" line — later replies stay clean; /status keeps its links row.
+    // conversation" line, later replies stay clean; /status keeps its links row.
     // Reserved on the ledger BEFORE delivery (a concurrent finalize never
     // double-appends); a zero-delivery turn un-reserves below so the next reply
     // carries the one-shot instead.
@@ -3052,7 +3051,7 @@ async function finalize(convKey, st, cfg, fullText) {
         await st.creating;
       } catch {}
     } // an in-flight create chain settles first — a late create must never land next to the reply as a duplicate
-    // detach + reset BEFORE the awaited REST calls (review finding 3): a turn N+1
+    // detach + reset BEFORE the awaited REST calls: a turn N+1
     // update arriving mid-finalize must never edit turn N's chunk-1, and the new
     // preview it creates mid-flight must survive finalize's settles
     let previewId = st.previewId;
@@ -3061,12 +3060,12 @@ async function finalize(convKey, st, cfg, fullText) {
     st.lastEditAt = null; // next text-bearing assistant message starts a fresh preview — UNGATED on purpose: the detach IS the anti-clobber for a mid-flight N+1 preview (finding 3); a stale token here means no N+1 preview exists yet, and detaching still frees the bookkeeping for the one it will create
     if (tok !== turnTokenOf(st)) staleTurnSkip("finalize busy settle", tok, st);
     // this turn's settle must not clear the NEW turn's busy (its busy:true may already be landed)
-    else st.busy = false; // turn-end settle (production 2026-09-26): busy cleared only by agent_end left a completed turn looking in-flight — a lost agent_end made the next self-heal failTurn (⚠️) a DELIVERED trigger
+    else st.busy = false; // turn-end settle: busy cleared only by agent_end left a completed turn looking in-flight — a lost agent_end made the next self-heal failTurn (⚠️) a DELIVERED trigger
     let delivered = 0;
     try {
       if (previewId) {
         if (shownBefore === chunks[0]) {
-          // (#4) short replies: the last preview delta IS the final text — an edit with identical bytes is a no-op Discord renders as "(edited)" (production UX nit); the preview message simply stays
+          // (#4) short replies: the last preview delta IS the final text, an edit with identical bytes is a no-op Discord renders as "(edited)" (production UX nit); the preview message simply stays
           log(
             "finalize: the preview already shows the final text — skipping the chunk-1 edit",
           );
@@ -3099,7 +3098,7 @@ async function finalize(convKey, st, cfg, fullText) {
         delivered++;
       }
       if (firstLinkRsv && !firstLinkInChunk) {
-        // the last chunk had no room — the link posts as one final paced message of this block
+        // the last chunk had no room, the link posts as one final paced message of this block
         await sleep(sendPaceMs());
         const m = await rest.sendMessage(st.channelId, firstLinkLine, {});
         if (m) delivered++;
@@ -3112,7 +3111,7 @@ async function finalize(convKey, st, cfg, fullText) {
     if (!delivered)
       recoveryPersistDelivery(convKey, st.channelId, fullText, cfg); // TERMINAL failure (every split path + the fallback): the finalized reply is now a durable delivery obligation — the drain retries it on the next dispatch / the 60s sweep (hermes delivery_ledger.py:37-49 at-least-once)
     if (!delivered && firstLinkRsv) {
-      // the reply never landed — un-reserve the one-shot so the NEXT delivered reply carries the link instead
+      // the reply never landed, un-reserve the one-shot so the NEXT delivered reply carries the link instead
       const lrow = ledger.get(convKey);
       if (lrow) {
         lrow.firstLinkShown = false;
@@ -3120,7 +3119,7 @@ async function finalize(convKey, st, cfg, fullText) {
       }
     }
     // turn-token guard (production 2026-09-28 under-ack): this tail runs after
-    // EVERY delivery await — a dispatch(N+1) that landed mid-delivery owns the
+    // EVERY delivery await, a dispatch(N+1) that landed mid-delivery owns the
     // streamer now, and clearing ITS fresh pendingAck=true here is what stranded
     // the new turn's 👀. The verdict still lands: ackFinal below fires on the
     // CAPTURED anchor, so this turn's ✅/⚠️ resolves its own trigger regardless.
@@ -3156,9 +3155,9 @@ async function consolidatedFallback(st, fullText) {
 
 // ---------- beacon events -> streamer ----------
 async function onBeaconEvent(sessionId, event, data) {
-  // presence rows track busy for EVERY registered session — untagged included:
+  // presence rows track busy for EVERY registered session, untagged included:
   // agent_start/agent_end flips are instant, the 15s register heartbeat is the
-  // fallback (presence-plan §8.2). Above the routing scope guard on purpose —
+  // fallback (presence-plan §8.2). Above the routing scope guard on purpose,
   // presence derives machine-wide and never routes Discord traffic.
   if (event === "busy") {
     const prow = sessions.get(sessionId);
@@ -3168,7 +3167,7 @@ async function onBeaconEvent(sessionId, event, data) {
       presence.refreshFromSessions(sessions);
     }
   }
-  // scope guard: only conversations this bot spawned and routed are driven —
+  // scope guard: only conversations this bot spawned and routed are driven,
   // the operator's interactive sessions never receive Discord traffic
   let convKey = null;
   for (const [k, r] of routing)
@@ -3183,7 +3182,7 @@ async function onBeaconEvent(sessionId, event, data) {
   if (event === "busy") {
     if (data?.busy) {
       if (tok !== turnTokenOf(st)) staleTurnSkip("busy start", tok, st);
-      // belt: sync-fresh today — a stale flip would mark the NEW turn busy
+      // belt: sync-fresh today, a stale flip would mark the NEW turn busy
       else {
         st.busy = true;
         startTyping(convKey, cfg);
@@ -3191,7 +3190,7 @@ async function onBeaconEvent(sessionId, event, data) {
       }
     } else {
       if (tok !== turnTokenOf(st)) staleTurnSkip("busy settle", tok, st);
-      // belt: sync-fresh today — a stale settle must never touch the NEW turn's ack state
+      // belt: sync-fresh today, a stale settle must never touch the NEW turn's ack state
       else {
         st.busy = false;
         stopTyping(convKey);
@@ -3200,24 +3199,20 @@ async function onBeaconEvent(sessionId, event, data) {
           st.finalizing > 0 &&
           (st.finalizingToken ?? turnTokenOf(st)) === tok
         ) {
-          // token-aware: the window is TURN-scoped — a finalize of an OLDER turn never stands this settle down (the tool-only N+1 witness acked late, or never)
+          // token-aware: the window is TURN-scoped, a finalize of an OLDER turn never stands this settle down (the tool-only N+1 witness acked late, or never)
           // (#2, production 2026-09-27 ⚠️-beside-✅) the agent_end raced finalize's
           // delivery awaits: pendingAck is still true (finalize clears it only after
           // them), so the OLD code fired ackFinal(false) CONCURRENTLY with finalize's
-          // own delivered swap — the paced stale-mark cleanups crossed (the delivered
-          // swap's DELETE ⚠️ ran before the fail swap's PUT ⚠️) and the ⚠️ landed
-          // beside the ✅ (the PUT even 429'd into a 5s-delayed retry landing AFTER
-          // the ✅ settled). Finalize owns the verdict while in flight; the settle
-          // stands down — no second verdict can cross it.
+          // own delivered swap, the paced stale-mark cleanups crossed (the delivered
+          // swap's DELETE ⚠️ ran before the fail swap's PUT ⚠️). Finalize owns the verdict while in flight; the settle
+          // stands down, no second verdict can cross it.
           log(
             `conv ${convKey}: busy:false while finalize is in flight — finalize owns the verdict, the settle stands down`,
           );
         } else if (st.pendingAck) {
           // turn-end settle (production 2026-09-26): pendingAck still set here means the
-          // whole turn produced no text message_end (a tool-only turn) — nothing landed,
-          // resolve the trigger now (⚠️), never strand its 👀 (reviewer finding,
-          // relocated from the textless message_end branch that used to misfire ⚠️
-          // mid-turn on every tool-call message before the reply even existed)
+          // whole turn produced no text message_end (a tool-only turn), nothing landed,
+          // resolve the trigger now (⚠️), never strand its 👀
           st.previewId = null;
           st.previewShown = null;
           st.lastEditAt = null;
@@ -3261,8 +3256,8 @@ async function onBeaconEvent(sessionId, event, data) {
       st.resolved.ch === st.triggerChannelId &&
       st.resolved.mid === st.triggerMessageId
     ) {
-      // (#2) a textless end AFTER the verdict (a stale replay landing on the
-      // resolved turn's anchor): the verdict is final — no state reset, no ack,
+      // a textless end AFTER the verdict (a stale replay landing on the
+      // resolved turn's anchor): the verdict is final, no state reset, no ack,
       // and now it is VISIBLE instead of another silent late event
       log(
         `ANOMALY: late textless message_end on a turn already resolved (${
@@ -3271,13 +3266,13 @@ async function onBeaconEvent(sessionId, event, data) {
       );
     } else {
       // textless assistant message end = a tool-call message (thinking+toolCall, no
-      // text block). Mid-turn state reset ONLY — production 2026-09-26: this branch
+      // text block). Mid-turn state reset ONLY, production 2026-09-26: this branch
       // acked ⚠️ on the trigger for EVERY textless end, so a delivered turn whose
       // first assistant message was a tool call ended with BOTH ⚠️ and ✅ on its
       // trigger. Nothing landed YET ≠ nothing will land: the ack resolves at
-      // finalize, at busy:false (tool-only turn), or at failTurn — never here.
+      // finalize, at busy:false (tool-only turn), or at failTurn, never here.
       if (tok !== turnTokenOf(st)) staleTurnSkip("textless end reset", tok, st);
-      // belt: sync-fresh today — a stale reset would null the NEW turn's preview
+      // belt: sync-fresh today, a stale reset would null the NEW turn's preview
       else {
         st.previewId = null;
         st.previewShown = null;
@@ -3355,7 +3350,7 @@ function webuiLink(sessionId, cfg) {
   return `${cfg.webui_base_url}#/s/${encodeURIComponent(String(sessionId))}`;
 }
 const relAge = (ms) => {
-  // compact age for /status rows: 45s | 30m | 2h | 3d (floor — stable between render and assert)
+  // compact age for /status rows: 45s | 30m | 2h | 3d (floor, stable between render and assert)
   if (!Number.isFinite(ms) || ms < 0) return "?";
   const s = Math.floor(ms / 1000);
   if (s < 60) return `${s}s`;
@@ -3366,7 +3361,7 @@ const relAge = (ms) => {
   return `${Math.floor(h / 24)}d`;
 };
 function otherSessions() {
-  // /status aggregate (2026-09-23 operator: the operator cares about their CONVERSATIONS, not every prime-agent session on the box) — non-conversation rows: count + working count
+  // /status aggregate (2026-09-23 operator: the operator cares about their CONVERSATIONS, not every prime-agent session on the box), non-conversation rows: count + working count
   const convSids = new Set();
   for (const r of routing.values()) convSids.add(r.sessionId);
   let n = 0,
@@ -3380,19 +3375,19 @@ function otherSessions() {
 }
 // /status fit-aware sizing (2026-09-24 review gap: at today's production size the
 // 1900-char slice silently cut the deeplink line MID-URL, and at >=22 rows it cut
-// inside the fenced table — unterminated fence, whole reply broken; the root
+// inside the fenced table, unterminated fence, whole reply broken; the root
 // trap: padEnd column math let ONE wide legacy session-name cell inflate every
 // row). The reply is rendered to a budget INSIDE SPLIT_THRESHOLD so neither
 // knife (the trailing slice below, the type-4 callback slice in
 // rest.interactionCallback) can ever fire. Two caps make any ledger fit, both
 // losses EXPLICIT:
-//  - conversations cap: most-recent-first priority (lastActive/created) — shown
+//  - conversations cap: most-recent-first priority (lastActive/created), shown
 //    rows keep ledger order, and the table ends with a "+N more conversations"
 //    row INSIDE the fence; the fence and the aggregate line are structural and
 //    never sacrificed;
 //  - links cap: deeplinks ride the remaining budget, trimmed from the end with
 //    a "(+N more)" tail.
-// Column widths are computed over the SHOWN rows only — a dropped wide row
+// Column widths are computed over the SHOWN rows only, a dropped wide row
 // re-narrows its column for everyone.
 const STATUS_BUDGET = SPLIT_THRESHOLD - 200; // 200 = slack between the fit target and the hard knives — the render measures itself exactly, the margin is insurance
 function statusText(cfg) {
@@ -3432,7 +3427,7 @@ function statusText(cfg) {
   const { n: other, w } = otherSessions();
   const agg = `${other} other sessions on this box (${w} working)`; // ONE aggregate line — no per-session row dump (2026-09-23 operator: a 39-row "(untagged) idle" wall was unreadable, and UUIDv7 ids born in the same ~65.5s window truncated to identical prefixes — the witnessed "duplicates")
   const tableLines = (sel) => {
-    // widths over the SHOWN rows only — the subset recomputes its own columns
+    // widths over the SHOWN rows only, the subset recomputes its own columns
     const rows = [header, ...sel.map((e, i) => [String(i + 1), ...e.cells])];
     const widths = header.map((_, c) =>
       Math.max(...rows.map((r) => r[c].length)),
@@ -3457,7 +3452,7 @@ function statusText(cfg) {
   let sel = entries,
     moreRow = null;
   if (render(sel, null, null).length > STATUS_BUDGET) {
-    // conversations cap: drop the least-recent row one at a time — exact strings, no estimates
+    // conversations cap: drop the least-recent row one at a time, exact strings, no estimates
     const byRecent = [...entries].sort((a, b) => b.recent - a.recent); // stable — ties keep ledger order
     for (let keep = entries.length - 1; keep >= 1; keep--) {
       const keepSet = new Set(byRecent.slice(0, keep));
@@ -3524,7 +3519,7 @@ async function resetConv(inter, cfg) {
   const tok = turnTokenOf(st); // captured at entry — /reset resolves the turn anchored when it read the streamer; a newer dispatch's ack debt is the watchdog's, not this ⚠️'s (belt: sync-fresh today)
   if (st && (st.pendingAck || st.busy || st.previewId != null)) {
     // reviewer finding: /reset cleared routing/ledger without resolving the
-    // in-flight turn's trigger — the turn dies with the wrapper, so swap its 👀
+    // in-flight turn's trigger, the turn dies with the wrapper, so swap its 👀
     // for ⚠️ (the interaction reply carries the explanation; no extra notice)
     if (tok !== turnTokenOf(st)) staleTurnSkip("/reset settle", tok, st);
     else {
@@ -3605,8 +3600,8 @@ async function handleInteraction(inter) {
 // ---------- agent-decided threading (thread_policy "agent"): the discord_thread tool's server side ----------
 // The beacon's discord_thread tool (registered in discord-tagged sessions) POSTs
 // /internal/thread; the bot promotes the LIVE channel conversation to a thread
-// created from its current trigger message — public type 11 + trigger-author
-// member-add, exactly like the auto-thread path — and re-keys every map under
+// created from its current trigger message, public type 11 + trigger-author
+// member-add, exactly like the auto-thread path, and re-keys every map under
 // thread:<newId>. SAME session: no respawn, transcript continuity preserved.
 function remapConversationToThread(oldKey, threadId, st) {
   const newKey = `thread:${threadId}`;
@@ -3626,7 +3621,7 @@ function remapConversationToThread(oldKey, threadId, st) {
     claims.set(newKey, claim);
   }
   // deleting the old claim is the point: the beacon's env tag (DISCORD_CONV_KEY) is
-  // frozen at spawn time, so its heartbeats keep registering under channel:<id> —
+  // frozen at spawn time, so its heartbeats keep registering under channel:<id>,
   // with the old claim gone they stay display-only and cannot resurrect the old
   // route. Events still drive the conversation: the scope guard matches by sessionId.
   const b = batchers.get(oldKey);
@@ -3718,17 +3713,17 @@ async function onThreadPromote(body) {
 // A conversation session is shared: the operator can talk to it through the
 // TUI / any daemon client while the conversation is also live on Discord. The
 // REPLY to such a turn already lands on the surface (the beacon's message_end
-// finalize path) — but the question itself was invisible there: the surface
+// finalize path), but the question itself was invisible there: the surface
 // saw an answer to an unseen question. The beacon relays exactly that input
 // (the pi `input` event minus everything that arrived via the bot's own /send
-// — that text IS a Discord message already) to /internal/relay, and this
+//, that text IS a Discord message already) to /internal/relay, and this
 // handler posts it on the conversation's surface attributed to the speaker.
 // Payload contract: { sessionId: string, text: string, source?: string,
-// speaker?: string } — `speaker?` is forward-compat for a future agent-origin
+// speaker?: string }, `speaker?` is forward-compat for a future agent-origin
 // relay path (e.g. A2A); the beacon never sends it today, and a missing
 // speaker renders as "the operator".
 // The agent transcript keeps exactly ONE copy (the session's own write):
-// this path never dispatches — the relay handler holds no dispatch call, and
+// this path never dispatches, the relay handler holds no dispatch call, and
 // the bot's own surface posts are dropped by the admission ladder's self gate
 // (gate 2) even if the gateway echoed them back.
 const SOURCE_LABELS = { interactive: "tui", rpc: "cli", extension: "webui" }; // pi input sources -> the client the surface reader knows
@@ -3777,7 +3772,7 @@ async function onRelayExternal(body) {
     log(
       `relay: conv ${convKey}: ${delivered} message(s) landed on the surface (via ${label})`,
     );
-  // never the text — the audit discipline
+  // never the text, the audit discipline
   else
     log(
       `WARN: relay: conv ${convKey}: nothing landed (via ${label}) — the text stays in the agent session`,
@@ -3785,8 +3780,8 @@ async function onRelayExternal(body) {
   return { code: 200, body: { ok: true, relayed: delivered > 0 } };
 }
 // the finalize split discipline, minus the ack/preview machinery: chunked,
-// flood-capped, paced, reference-free (2026-09-24 operator rule). Display-only — never dispatches.
-// Relay shape (relay-quoting lap): the speaker's words, never the agent's own —
+// flood-capped, paced, reference-free (2026-09-24 operator rule). Display-only, never dispatches.
+// Relay shape (relay-quoting lap): the speaker's words, never the agent's own,
 // a bold attribution header + the text as a Discord blockquote. The RAW text
 // splits first and the "> " prefix applies per chunk (the header rides chunk 1
 // only), so every chunk of a long relay reads as quoted speech.
@@ -3799,7 +3794,7 @@ function quoteRelay(raw) {
 function relayQuotePieces(text, header) {
   const out = [];
   for (const raw of splitChunks(String(text), SPLIT_THRESHOLD - 300)) {
-    // 300 = quote budget: the "> " prefix costs <= 2/line and chunk 1 rides the header — a normal chunk fits under the cap with room to spare
+    // 300 = quote budget: the "> " prefix costs <= 2/line and chunk 1 rides the header, a normal chunk fits under the cap with room to spare
     let rest = raw;
     while (rest) {
       const head = out.length ? "" : header + "\n";
@@ -3808,7 +3803,7 @@ function relayQuotePieces(text, header) {
         out.push(head + quoted);
         break;
       }
-      // a blank-line wall quotes to ~2x its raw size — hard-fit the rest at the worst-case bound and quote on
+      // a blank-line wall quotes to ~2x its raw size, hard-fit the rest at the worst-case bound and quote on
       const cut = Math.max(
         1,
         Math.floor((SPLIT_THRESHOLD - head.length - 1) / 2),
@@ -3823,7 +3818,7 @@ async function postRelayChunks(channelId, text, speaker, label, cfg) {
   const header = `**From ${speaker} (via ${label}):**`;
   let chunks = relayQuotePieces(text, header);
   if (chunks.length > cfg.max_splits) {
-    // the finalize flood cap — same discipline, same notice
+    // the finalize flood cap, same discipline, same notice
     chunks = chunks.slice(0, cfg.max_splits);
     const notice =
       "\n\n*(output truncated — full text is in the agent session)*"; // its own unquoted line AFTER the quote block — the bot's own speech, never the speaker's
@@ -3871,12 +3866,12 @@ async function readJson(req) {
 // One line per /internal/* request: who called (source socket/port), which
 // session, which credential class authenticated (never the value), the
 // verdict, the outcome, payload bytes. Never the token value, never the
-// message text — bytes + timestamp correlate with the receiving transcript.
+// message text, bytes + timestamp correlate with the receiving transcript.
 // 401s log ALWAYS (a wrong-token probe on the loopback port is the
-// highest-signal event the pre-audit build swallowed — the 2026-09-23
+// highest-signal event the pre-audit build swallowed, the 2026-09-23
 // invisible /send mystery was invisible for exactly this reason).
 // Heartbeat registers SAMPLE (first-seen per session, then at most one line
-// per ~10 min) — the register spam-guard's lesson: N live sessions
+// per ~10 min), the register spam-guard's lesson: N live sessions
 // re-register every 15s; per-request lines would bury the log.
 const REG_AUDIT_SAMPLE_MS = 10 * 60 * 1000;
 const regAuditAt = new Map(); // sessionId -> ms of the last emitted register audit line (pruned with the sessions row)
@@ -3920,13 +3915,13 @@ async function onRegister(body) {
   presence.refreshFromSessions(sessions); // presence v1: heartbeat name/status changes + row expiry, 15s worst case (§8.1)
   // scope guard: routing only for the session this conversation's spawn CLAIMED.
   // prime-agent delegates to the operator's daemon, so the beacon registers the
-  // DAEMON-TREE worker pid — never the wrapper pid we spawned (production
+  // DAEMON-TREE worker pid, never the wrapper pid we spawned (production
   // 2026-09-24: our own conversation registered "tagged pid … not spawned
   // here", waited for a register that already happened, and timed out).
   // The webui-proven causal claim replaces pid matching: a new spawn adopts
   // the first register with a NEW session file (absent from the pre-spawn
   // snapshot) on the spawn's cwd, created after the spawn; a resume spawn
-  // links by its preset sessionId. DISCORD_CONV_KEY tags the conversation —
+  // links by its preset sessionId. DISCORD_CONV_KEY tags the conversation,
   // a subagent that inherits the tag registers a DIFFERENT sessionId (after
   // the claim) and stays display-only; an untagged session never enters here.
   let routed = false;
@@ -3934,7 +3929,7 @@ async function onRegister(body) {
   const claim = row.convKey ? claims.get(row.convKey) : null;
   // 2026-09-26 double-reply guard: a self-heal respawn claims by its preset
   // sessionId, and the ORIGINAL (merely wedged) worker's heartbeat registers the
-  // SAME sessionId — without the stale-port check it re-claims the route and the
+  // SAME sessionId, without the stale-port check it re-claims the route and the
   // register flush re-delivers the parked text (two replies to one follow-up).
   const staleBeacon = !!(
     claim?.stalePort && row.controlPort === claim.stalePort
@@ -3958,7 +3953,7 @@ async function onRegister(body) {
   else if (claim && claim.sessionId === sessionId)
     routed = true; // claimed/resumed earlier — heartbeats keep the route
   else if (claim && claim.sessionId && causalPass) {
-    // worker-recovery hand-over (probe-proven 2026-09-24): a crashed worker's daemon recovery resumes the conversation as a NEW session id — the claim still holds the DEAD id and this register would go display-only, stranding the turn on 👀 with no route (the production 01a0d0fb incident). A NEW session file on the claim's cwd, created after the spawn, IS the conversation's continuation: hand the claim over. Same-tag subagents stay excluded (their session files live outside SESSIONS_DIR and fail causalPass); the wedged pre-heal beacon is already stopped by the stale-port guard above.
+    // worker-recovery hand-over (probe-proven 2026-09-24): a crashed worker's daemon recovery resumes the conversation as a NEW session id, the claim still holds the DEAD id and this register would go display-only, stranding the turn on 👀 with no route (the production 01a0d0fb incident). A NEW session file on the claim's cwd, created after the spawn, IS the conversation's continuation: hand the claim over. Same-tag subagents stay excluded (their session files live outside SESSIONS_DIR and fail causalPass); the wedged pre-heal beacon is already stopped by the stale-port guard above.
     const deadId = claim.sessionId;
     claim.sessionId = sessionId;
     routed = true;
@@ -3981,7 +3976,7 @@ async function onRegister(body) {
     claim.sessionId = sessionId;
     routed = true;
   } else if (claim) {
-    // the causal claim failed — name the failing leg on reject
+    // the causal claim failed, name the failing leg on reject
     if (!file) reason = "the beacon sent no session file (degraded getter)";
     else if (!file.startsWith(SESSIONS_DIR + path.sep))
       reason = "the session file lives outside SESSIONS_DIR";
@@ -3993,7 +3988,7 @@ async function onRegister(body) {
       reason = "the register carried no created timestamp";
     else reason = "the session was created before the spawn";
   } else if (row.convKey) {
-    // no claim at all: failPending (register timeout / failed spawn) or /reset dropped it. A RECOVERED session re-registering within the grace still claims (production 2026-09-27: the worker died on the name_session unhandled rejection, the daemon recovered it, but the claim was gone — the recovered session went display-only and the turn stuck on 👀 with no route and no events). The grace matches the ledger's known session id and cwd; the route (if any) must point at this session or nowhere — a route held by a DIFFERENT session is never stolen.
+    // no claim at all: failPending (register timeout / failed spawn) or /reset dropped it. A RECOVERED session re-registering within the grace still claims (production 2026-09-27: the worker died on the name_session unhandled rejection, the daemon recovered it, but the claim was gone, the recovered session went display-only and the turn stuck on 👀 with no route and no events). The grace matches the ledger's known session id and cwd; the route (if any) must point at this session or nowhere, a route held by a DIFFERENT session is never stolen.
     const l = ledger.get(row.convKey);
     const lastActiveMs = l ? Date.parse(l.lastActive ?? "") : NaN;
     const route = routing.get(row.convKey);
@@ -4065,7 +4060,7 @@ async function onRegister(body) {
     maybeRenameThread(row.convKey, row.name); // hermes-catalog #10: the routed thread mirrors the registered session name — fire-and-forget, a rename can never block or fail the register
     const pending = pendingByConv.get(row.convKey);
     if (pending) {
-      // queued dispatches ride the register — EXACTLY-ONCE (production 2026-09-27 triple-delivery): the pending is consumed BEFORE any send, so no later register (a worker recovery, a re-spawn) can ever flush the same text again
+      // queued dispatches ride the register, EXACTLY-ONCE (production 2026-09-27 triple-delivery): the pending is consumed BEFORE any send, so no later register (a worker recovery, a re-spawn) can ever flush the same text again
       pendingByConv.delete(row.convKey);
       const route = routing.get(row.convKey);
       for (const it of pending.texts) {
@@ -4078,7 +4073,7 @@ async function onRegister(body) {
           await failPending(row.convKey, "delivery after register failed");
           break;
         } // port refused/reset: nothing reached the beacon — fail visibly
-        // !ok && !unreachable: the /send TIMED OUT on a reachable beacon — the turn is already queued there (the 2026-09-26 double-reply lesson): treated as delivered; never re-dispatched, never falsely failed
+        // !ok && !unreachable: the /send TIMED OUT on a reachable beacon, the turn is already queued there (the 2026-09-26 double-reply lesson): treated as delivered; never re-dispatched, never falsely failed
       }
     }
     if (firstRegister)
@@ -4102,7 +4097,7 @@ async function onRegister(body) {
       ); // the 2026-09-27 triple-delivery anomaly made visible: same-id registers from different workers
   } else {
     // claim-reject diagnostics (production 2026-09-27): the first register AND every
-    // route flip log the verdict — a display-only register was silent before, and the
+    // route flip log the verdict, a display-only register was silent before, and the
     // silent display-only state is exactly how stuck 👀 happen (witnessed 01a0d0fb:
     // the register rejected with no reason and no route, so no events ever arrived)
     if (firstRegister)
@@ -4248,7 +4243,7 @@ const control = http.createServer(async (req, res) => {
         const r = convKey ? routing.get(convKey) : null;
         if (r && r.sessionId === sessionId) {
           routing.delete(convKey);
-          // reviewer finding: unregister used to clear the route silently — a
+          // reviewer finding: unregister used to clear the route silently, a
           // turn in flight on the dead session must fail visibly (⚠️ + notice);
           // the idle case stays silent (nothing to strand, no spam)
           await failTurn(convKey, "session unregistered mid-turn");
@@ -4325,7 +4320,7 @@ async function main() {
   }
   log(`token source: ${TOKEN_SOURCE}`); // webui-beacon alignment: same wording as the webui bot/beacon pair
   // the control port is the single-instance lock (D8): bind failure means
-  // another bot owns it — exit 0, the existing instance keeps running
+  // another bot owns it, exit 0, the existing instance keeps running
   await new Promise((resolve, reject) => {
     control.once("error", (e) => {
       if (e?.code === "EADDRINUSE") {
@@ -4350,7 +4345,7 @@ async function main() {
 // ---------- smoke mode (node server.mjs --smoke) ----------
 // Local checks WITHOUT connecting to Discord's live gateway and without
 // spawning real prime-agent children. Exercises: config schema, the
-// admission ladder, credential presence (booleans only — values never
+// admission ladder, credential presence (booleans only, values never
 // printed), the beacon contract over real loopback HTTP (control port +
 // index.ts beacon factory with a mock pi), and the streaming discipline
 // against a recorded REST layer.
@@ -4365,7 +4360,7 @@ async function smoke() {
       log(`SMOKE FAIL: ${name}${detail ? " — " + detail : ""}`);
     }
   };
-  // ackFinal is async AND paced (the swap sleeps ~0.35s between ops) — settle-poll
+  // ackFinal is async AND paced (the swap sleeps ~0.35s between ops), settle-poll
   // instead of reading reaction arrays the instant an event handler returns
   const until = async (cond, ms = 3000) => {
     const end = Date.now() + ms;
@@ -4561,7 +4556,7 @@ async function smoke() {
     legacyMerged.require_mention === true,
     `require_mention=${legacyMerged.require_mention}`,
   );
-  // reply_to_mode validation (review finding 2): "all" is not implemented — it must
+  // reply_to_mode validation (review finding 2): "all" is not implemented, it must
   // fail loud at config load, never silently behave as "first"; off/first load clean
   process.env.DISCORD_REPLY_TO_MODE = "all";
   let allErr = "";
@@ -4754,7 +4749,7 @@ async function smoke() {
     chanPatches = [];
   const realRequest = rest.request; // the production request (bucket cooldowns live inside it) — the pause test swaps it back in
   let scripted = []; // 429/failure simulation: FIFO of {match?(method,p,body), error} — consumed on the first matching call AFTER recording, so POST counts stay honest
-  // hermetic: the base request becomes a fail-loud loopback backend — modeled
+  // hermetic: the base request becomes a fail-loud loopback backend, modeled
   // paths are recorded WITH the payload the real sendMessage/editMessage/
   // interactionCallback builders produced (so allowed_mentions assertions hit
   // the true transport shape); un-modeled paths throw, so nothing can ever
@@ -4861,7 +4856,7 @@ async function smoke() {
   // convNameFor is cache-first and NEVER fetches; primeConvName is the
   // fire-and-forget getChannel populating the cache. The spawn-record checks
   // assert exactly what DISCORD_CONV_NAME would carry (spawnForConv's SMOKE
-  // branch records it — the real env line is production-only).
+  // branch records it, the real env line is production-only).
   {
     const stubGetChannel = rest.getChannel;
     // (a) channel path: nothing before priming (dispatch never blocks), the fetched name caches
@@ -4927,7 +4922,7 @@ async function smoke() {
       await until(() => convNameFor("dm:u9") === "Recipient Name"),
       JSON.stringify(convNames.get("dm:u9")),
     );
-    // (d) fetch failure: nothing caches — the fallback stays, the next spawn retries
+    // (d) fetch failure: nothing caches, the fallback stays, the next spawn retries
     rest.getChannel = async () => {
       throw new RestError(403, "forbidden");
     };
@@ -5160,7 +5155,7 @@ async function smoke() {
   );
 
   // end-to-end: mention in a shared channel -> (policy "always") auto-thread -> dispatch queued
-  // (spawn guarded in smoke). handleMessage reads live config — inject the synthetic
+  // (spawn guarded in smoke). handleMessage reads live config, inject the synthetic
   // allowlists through the documented env overrides (which also proves the env
   // precedence chain). Under the default policy "agent" NO thread is created: the
   // conversation maps to channel:<id> and the AGENT decides (discord_thread tool).
@@ -5200,7 +5195,7 @@ async function smoke() {
       smokeSpawns[0]?.text,
     );
     // thread visibility (production 2026-09-23: every auto-thread came back PRIVATE
-    // type 12, bot-only — the operator could not see the thread or any reply)
+    // type 12, bot-only, the operator could not see the thread or any reply)
     check(
       "e2e: auto-thread create payload requests a PUBLIC thread (type 11) — belt-and-braces with the member-add",
       threads.length === 1 && threads[0].type === 11,
@@ -5213,7 +5208,7 @@ async function smoke() {
         memberAdds[0].userId === "u1",
       JSON.stringify(memberAdds),
     );
-    // reaction ack gate: the checks follow the resolved setting — a DISCORD_REACTIONS=false
+    // reaction ack gate: the checks follow the resolved setting, a DISCORD_REACTIONS=false
     // run proves the off path here (zero reaction calls) instead of asserting the on path
     if (loadConfig().reactions) {
       check(
@@ -5233,7 +5228,7 @@ async function smoke() {
       );
     }
   } else {
-    // policy "agent" (the NEW default): a channel mention does NOT auto-thread —
+    // policy "agent" (the NEW default): a channel mention does NOT auto-thread,
     // the conversation is channel:<id>, replies post to the channel, and the agent
     // promotes a substantial topic via the discord_thread tool (checked below)
     check(
@@ -5362,7 +5357,7 @@ async function smoke() {
   );
 
   // DM interaction authz matrix (review finding 1): the gate-5 user mirror runs for DM
-  // interactions too — allow_dm alone must never be an implicit allow-all (fail-closed)
+  // interactions too, allow_dm alone must never be an implicit allow-all (fail-closed)
   const dmInter = (name, userId) => ({
     id: `i-${name}-${userId}`,
     token: "tk",
@@ -5519,7 +5514,7 @@ async function smoke() {
   streamers.delete("conv:s");
 
   // inter-turn race (review finding 3): a turn N+1 preview arriving mid-finalize must
-  // edit nothing of turn N — chunk-1 keeps its finalized text, and the mid-flight
+  // edit nothing of turn N, chunk-1 keeps its finalized text, and the mid-flight
   // preview survives finalize instead of being wiped after the awaited REST calls
   routing.set("conv:r", { sessionId: "sr", controlPort: 0, pid: 222 });
   const stR = streamerOf("conv:r");
@@ -5581,7 +5576,7 @@ async function smoke() {
         global: false,
       }),
     );
-  // (a) flood: the first creates 429 — deltas park, ONE bounded chain retries
+  // (a) flood: the first creates 429, deltas park, ONE bounded chain retries
   routing.set("conv:rl", { sessionId: "s-rl", controlPort: 0, pid: 331 });
   const stRl = streamerOf("conv:rl");
   stRl.channelId = "chan-rl";
@@ -5648,7 +5643,7 @@ async function smoke() {
       sent.filter((s) => s.channelId === "chan-rl2").map((s) => s.content),
     ),
   );
-  // (b) bucket pause: a 429 parks EVERY request to the bucket — concurrent calls wait out the cooldown (real request, fake fetch)
+  // (b) bucket pause: a 429 parks EVERY request to the bucket, concurrent calls wait out the cooldown (real request, fake fetch)
   {
     const realFetch = globalThis.fetch;
     const calls = [];
@@ -5773,7 +5768,7 @@ async function smoke() {
   // preview lifecycle across the reference-reject retry (sibling-observed "empty
   // preview" 2026-09-23, 21:01:04Z): the 400'd reference attempt throws BEFORE
   // any message exists, sendMessage returns the retried fresh send, and
-  // ensurePreview points previewId at the LANDED id — later edits must target
+  // ensurePreview points previewId at the LANDED id, later edits must target
   // exactly that message, never a dead/never-landed one
   {
     routing.set("conv:pvretry", {
@@ -5948,7 +5943,7 @@ async function smoke() {
       JSON.stringify(okSwap.map((r) => r.path)),
     );
     // the swap paces its ops (production 2026-09-26: the eyes PUT and the ok PUT both
-    // 429'd on one trigger — back-to-back reaction ops race the same per-message bucket)
+    // 429'd on one trigger, back-to-back reaction ops race the same per-message bucket)
     const okDel = okSwap.find((r) => r.op === "DELETE" && r.emoji === "👀"),
       okPut = okSwap.find((r) => r.op === "PUT" && r.emoji === "✅");
     check(
@@ -5956,9 +5951,9 @@ async function smoke() {
       okDel && okPut && okPut.at - okDel.at >= 300,
       `gap=${okDel && okPut ? okPut.at - okDel.at : "?"}ms`,
     );
-    // the NEXT turn on this conversation (a NEW trigger — dispatch re-anchors and
+    // the NEXT turn on this conversation (a NEW trigger, dispatch re-anchors and
     // clears resolved; the old ✅ verdict is final on ITS trigger): its delivery
-    // dies on both paths -> ⚠️ with the stale marks stripped FIRST — a genuine
+    // dies on both paths -> ⚠️ with the stale marks stripped FIRST, a genuine
     // failure never ends with both marks (#3), and the delivered trigger keeps
     // its ✅ untouched (#2)
     stRe.triggerMessageId = "trig-react-2";
@@ -6011,7 +6006,7 @@ async function smoke() {
     );
     routing.delete("conv:react");
     streamers.delete("conv:react");
-    // degraded delivery still counts as delivered — the consolidated send acks ✅, not ⚠️
+    // degraded delivery still counts as delivered, the consolidated send acks ✅, not ⚠️
     routing.set("conv:react2", {
       sessionId: "s-react2",
       controlPort: 0,
@@ -6112,8 +6107,7 @@ async function smoke() {
       streamers.delete("conv:reactfail");
     }
     // (T2 regression, the actual incident path) a tool-call assistant message end is
-    // TEXTLESS — mid-turn it must ack NOTHING: the old code put ⚠️ on the trigger
-    // before the reply even existed, and the delivered trigger ended with BOTH ⚠️ and ✅
+    // TEXTLESS, mid-turn it must ack NOTHING (the delivered trigger must never end with BOTH ⚠️ and ✅)
     {
       routing.set("conv:tl", { sessionId: "s-tl", controlPort: 0, pid: 348 });
       const stTl = streamerOf("conv:tl");
@@ -6122,7 +6116,7 @@ async function smoke() {
       stTl.triggerMessageId = "trig-tl";
       stTl.pendingAck = true;
       await onBeaconEvent("s-tl", "busy", { busy: true });
-      // the incident shape: the turn's FIRST assistant message is a tool call — its
+      // the incident shape: the turn's FIRST assistant message is a tool call, its
       // stream is textless and its message end carries no text block
       await onBeaconEvent("s-tl", "message_update", { text: "" }); // tool-call streaming: no text block, no preview
       await onBeaconEvent("s-tl", "message_end", { text: "" }); // the tool-call message end
@@ -6172,9 +6166,8 @@ async function smoke() {
       routing.delete("conv:tl");
       streamers.delete("conv:tl");
     }
-    // (T2 completion) a tool-ONLY turn (no text message at all): nothing landed — the
-    // ack resolves at busy:false with ⚠️, never a stranded 👀 (reviewer finding,
-    // relocated from the textless message_end branch that used to misfire mid-turn)
+    // (T2 completion) a tool-ONLY turn (no text message at all): nothing landed, the
+    // ack resolves at busy:false with ⚠️, never a stranded 👀
     {
       routing.set("conv:tlo", { sessionId: "s-tlo", controlPort: 0, pid: 349 });
       const stTo = streamerOf("conv:tlo");
@@ -6213,8 +6206,7 @@ async function smoke() {
   // a turn resolves, NO later event may downgrade or re-resolve it. The incident: the
   // agent_end (busy:false) raced finalize's delivery awaits, the settle fired
   // ackFinal(false) CONCURRENTLY with finalize's delivered swap (pendingAck clears
-  // only after the awaits), the paced stale-mark cleanups crossed, and the ⚠️ PUT
-  // 429'd into its 5s delayed retry — landing BESIDE the ✅. Finalize now owns the
+  // only after the awaits). Finalize now owns the
   // verdict while in flight, the resolved verdict is inert-proof, and every late
   // event is a logged no-op. ----
   {
@@ -6297,7 +6289,7 @@ async function smoke() {
           ),
         );
       }
-      // (a2) late events on the RESOLVED turn — each a logged no-op, the verdict inert-proof
+      // (a2) late events on the RESOLVED turn, each a logged no-op, the verdict inert-proof
       const t4ReactBefore = reactions.length;
       await onBeaconEvent("s-term", "busy", { busy: false }); // a late/duplicate agent_end after the verdict
       await onBeaconEvent("s-term", "message_end", { text: "" }); // a stale textless message_end replay
@@ -6355,7 +6347,7 @@ async function smoke() {
       streamers.delete("conv:term");
     }
     // (c) identical-preview finalize skip (#4): a short reply whose last preview
-    // delta is byte-identical to the final text — the chunk-1 edit is skipped
+    // delta is byte-identical to the final text, the chunk-1 edit is skipped
     // (production UX nit: "edited the message for no reason"); the preview message
     // simply stays, and the delivered verdict still resolves
     {
@@ -6402,8 +6394,8 @@ async function smoke() {
     }
   }
   // ---- 4c-ter. turn tokens (production 2026-09-28 under-ack): dispatch(N+1)
-  // landing mid-finalize(N) bumps the turn token; finalize(N)'s tail — parked
-  // behind its delivery awaits — used to clobber the fresh pendingAck=true,
+  // landing mid-finalize(N) bumps the turn token; finalize(N)'s tail, parked
+  // behind its delivery awaits, used to clobber the fresh pendingAck=true,
   // stranding the new turn's 👀 (under-ack only, never over-ack). Three orderings:
   // (a) the tail resuming AFTER the dispatch, (b) a tool-only N+1 settling
   // DURING the older finalize, (c) the normal single-turn flow unchanged. ----
@@ -6543,7 +6535,7 @@ async function smoke() {
       ledger.delete("conv:tok");
     }
     // (b) the witness ordering: N+1 is tool-only and its busy:false lands WHILE
-    // finalize(N) still delivers — the settle must NOT stand down behind an
+    // finalize(N) still delivers, the settle must NOT stand down behind an
     // OLDER turn's finalize (the ownership window is turn-scoped now)
     {
       routing.set("conv:tok2", {
@@ -6716,7 +6708,7 @@ async function smoke() {
       }
     }
   }
-  // the env gate kills the ack without touching delivery — exercised in both the on and off runs
+  // the env gate kills the ack without touching delivery, exercised in both the on and off runs
   const reactionsEnvPrev = process.env.DISCORD_REACTIONS;
   process.env.DISCORD_REACTIONS = "false";
   routing.set("conv:react-off", {
@@ -6751,7 +6743,7 @@ async function smoke() {
   // feedback): the FIRST finalized reply of a conversation appends the webui
   // "view this conversation" line once; later replies stay clean; the knob and
   // an unset webui_base_url gate it. The runner's webui_on variant is overridden
-  // and restored — both variants prove the same behavior.
+  // and restored, both variants prove the same behavior.
   {
     const wuiPrevF = process.env.DISCORD_WEBUI_BASE_URL;
     process.env.DISCORD_WEBUI_BASE_URL = "http://127.0.0.1:8788"; // deterministic — the live config may differ per variant
@@ -6847,7 +6839,7 @@ async function smoke() {
     );
     // webui_base_url unset -> nothing, even on the very first reply. Ambient like
     // the session-death notice gate: the live config may carry a base the runner's
-    // env does not override — both states prove their half deterministically.
+    // env does not override, both states prove their half deterministically.
     delete process.env.DISCORD_WEBUI_BASE_URL; // the deterministic checks above used the override; this one reads whatever the live run resolves
     const f3BaseSet = !!loadConfig().webui_base_url;
     ledger.set("conv:flink3", {
@@ -7114,7 +7106,7 @@ async function smoke() {
     });
   const sFile = (n) => path.join(SESSIONS_DIR, n);
   // production shape 2026-09-24: the wrapper pid we spawn (4242) is NEVER the
-  // beacon's pid (36904 — the daemon-tree worker) and routing must still happen
+  // beacon's pid (36904, the daemon-tree worker) and routing must still happen
   claimFor("thread:smoke"); // fresh new-session spawn: snapshot empty, cwd /tmp, wrapper 4242
   resp = await ctl("/internal/register", {
     method: "POST",
@@ -7281,7 +7273,7 @@ async function smoke() {
     "conv:nofile",
   ])
     claims.delete(k);
-  // resume spawn: the claim links by its preset sessionId — no file needed, any pid
+  // resume spawn: the claim links by its preset sessionId, no file needed, any pid
   claimFor("conv:s5", { known: null, sessionId: "s5-session", spawnPid: 5353 });
   resp = await ctl("/internal/register", {
     method: "POST",
@@ -7355,7 +7347,7 @@ async function smoke() {
     "control: unregister clears routing",
     routing.has("thread:smoke") === false,
   );
-  // heartbeat spam guard (review finding 4): beacons re-register every ~15s —
+  // heartbeat spam guard (review finding 4): beacons re-register every ~15s,
   // only the first register of a session may log; heartbeats stay silent
   {
     const origErr = console.error;
@@ -7580,10 +7572,10 @@ async function smoke() {
         sessions.delete(s);
     }
   }
-  // ---- 5b. /status summary (2026-09-23 operator: "lol what is this nonsense" —
+  // ---- 5b. /status summary (2026-09-23 operator: "lol what is this nonsense",
   // a 39-row untagged dump, apparent duplicate ids, stale rows that never reap) ----
   {
-    // registry dedup: the sessions map is keyed by sessionId — re-registers REPLACE
+    // registry dedup: the sessions map is keyed by sessionId, re-registers REPLACE
     await onRegister({
       sessionId: "dup-1",
       controlPort: 1500,
@@ -7607,7 +7599,7 @@ async function smoke() {
     // the witnessed "same id 7x" was a DISPLAY collision, not a registry append:
     // UUIDv7's first 8 hex chars carry only ~65.5s of timestamp, so distinct
     // sessions born in the same minute truncate to identical row prefixes. The
-    // summary prints no per-session rows at all — the aggregate is the only trace.
+    // summary prints no per-session rows at all, the aggregate is the only trace.
     const pfx = "01a0d10b";
     const aggBefore = otherSessions();
     await onRegister({
@@ -7819,7 +7811,7 @@ async function smoke() {
   }
   // ---- 5b2. /status fit-aware sizing (2026-09-24 review gap: the 1900-slice cut the
   // deeplink line MID-URL at today's 14-row production size and killed the fence at
-  // >=22 rows — the padEnd column trap let one wide legacy name inflate every row) ----
+  // >=22 rows, the padEnd column trap let one wide legacy name inflate every row) ----
   {
     const savedLedger = [...ledger]; // this section owns the ledger exclusively — snapshot, clear, restore
     ledger.clear();
@@ -7850,7 +7842,7 @@ async function smoke() {
         linksLine: tl.find((l) => /^\[\d+\]\(|^\(\+\d+ more\)/.test(l)) ?? "",
       };
     };
-    // (a) 30 rows, uuid session ids, 26-char legacy names (the column trap), webui on — BOTH caps fire
+    // (a) 30 rows, uuid session ids, 26-char legacy names (the column trap), webui on, BOTH caps fire
     for (let i = 0; i < 30; i++)
       addRow("a", i, 5 + i, ("discord channel legacy " + String(i)).padEnd(26));
     const ta = statusText({ webui_base_url: wui });
@@ -7893,7 +7885,7 @@ async function smoke() {
         droppedLinksA,
       }),
     );
-    // (c) webui off — the table cap still fires, no deeplink line at all
+    // (c) webui off, the table cap still fires, no deeplink line at all
     const tc = statusText({ webui_base_url: "" });
     const sc = shapeOf(tc);
     check(
@@ -7907,7 +7899,7 @@ async function smoke() {
         !tc.includes("]("),
       JSON.stringify({ len: sc.len, budget: STATUS_BUDGET }),
     );
-    // (b) today's production COUNT (14 rows, 12 with session ids) renders COMPLETE — no gratuitous caps
+    // (b) today's production COUNT (14 rows, 12 with session ids) renders COMPLETE, no gratuitous caps
     ledger.clear();
     for (let i = 0; i < 14; i++)
       addRow("b", i, 5 + i, null, i < 12 ? undefined : null);
@@ -7924,7 +7916,7 @@ async function smoke() {
         !/\(\+\d+ more\)/.test(sb.linksLine),
       JSON.stringify({ len: sb.len, budget: STATUS_BUDGET, linksB }),
     );
-    // (d) the exact budget boundary: the last fitting ledger renders marker-free; the first overflow caps cleanly — both sides hold every invariant
+    // (d) the exact budget boundary: the last fitting ledger renders marker-free; the first overflow caps cleanly, both sides hold every invariant
     ledger.clear();
     let lastFit = null,
       firstCap = null;
@@ -7977,7 +7969,7 @@ async function smoke() {
   }
   // ---- claim diagnostics + worker-recovery hand-over (production 2026-09-27 stuck-👀 fixes) ----
   // probe-proven 2026-09-24: a crashed worker's daemon recovery resumes the
-  // conversation as a NEW session id (new file, same conv tag, same cwd) — the
+  // conversation as a NEW session id (new file, same conv tag, same cwd), the
   // claim still holds the dead id and the recovered session went display-only,
   // stranding the turn. The hand-over + grace + reason logs below are the fix.
   {
@@ -7985,7 +7977,7 @@ async function smoke() {
     const captured = [];
     console.error = (...a) => captured.push(a.join(" "));
     // F1 (pre-existing harness bug, reviewer finding 1): the content resets below
-    // erased check lines pushed inside this window — 8 SMOKE PASS lines never
+    // erased check lines pushed inside this window, 8 SMOKE PASS lines never
     // printed (the printed count silently dropped). Erase ONLY log traffic; the
     // check lines ride to the finally re-emission like the second window's do.
     const resetCaptured = () => {
@@ -8021,7 +8013,7 @@ async function smoke() {
       );
       resetCaptured(); // F1: keep check lines — erase only the log traffic
       // claim the conversation with a live session, then crash it: the recovered
-      // branch registers with a NEW id + NEW session file — the hand-over must route it
+      // branch registers with a NEW id + NEW session file, the hand-over must route it
       await onRegister({
         sessionId: "rcvr-live",
         controlPort: 2,
@@ -8082,7 +8074,7 @@ async function smoke() {
           routing.get("conv:rcvr")?.sessionId === "rcvr-branch",
         JSON.stringify(dr3.body),
       );
-      // (b) the ledger grace: failPending dropped the claim (register timeout) — the
+      // (b) the ledger grace: failPending dropped the claim (register timeout), the
       // conversation's OWN session re-registering within 2x the pending window re-claims
       claims.delete("conv:rcvr");
       ledger.set("conv:rcvr", {
@@ -8197,7 +8189,7 @@ async function smoke() {
   }
   // (c) the dispatch loud-warn + the stuck-👀 visible-timeout proof: a live tagged
   // session registered display-only (no route -> its events can never drive the
-  // streamer) — dispatch over it warns loudly, and the turn it dispatched FAILS
+  // streamer), dispatch over it warns loudly, and the turn it dispatched FAILS
   // VISIBLY at the watchdog window instead of stranding its 👀 forever
   {
     const origErr = console.error;
@@ -8290,11 +8282,11 @@ async function smoke() {
     streamers.delete("conv:warn");
   }
   // ---- exactly-once parked delivery across worker recovery (production 2026-09-27 triple-reply) ----
-  // One parked text, a wedged-but-reachable first beacon (the /send times out — the
+  // One parked text, a wedged-but-reachable first beacon (the /send times out, the
   // turn is queued), a RECOVERED worker re-registering: the flush must deliver the
   // text exactly once, never falsely fail it, and the same-id re-register from a new
   // pid must stay routed (the recovery keeps the conversation) while logging the
-  // route flip — three of those in a minute is the duplicate-gateway signature.
+  // route flip, three of those in a minute is the duplicate-gateway signature.
   {
     const hangHits = [];
     const hangSrv2 = http.createServer((req) => {
@@ -8400,7 +8392,7 @@ async function smoke() {
     }
   }
   // register timeout must SIGTERM the wrapper it spawned (production leak 2026-09-24:
-  // the wrapper outlived the timeout by minutes) — observable here via a spawn stub
+  // the wrapper outlived the timeout by minutes), observable here via a spawn stub
   {
     const killed = [];
     spawned.set(9101, { kill: (sig) => killed.push(sig) }); // the stub wrapper handle — only the wrapper is fair game, never a daemon worker
@@ -8456,7 +8448,7 @@ async function smoke() {
   claims.delete("thread:smoke");
   claims.delete("conv:s5");
 
-  // /internal/thread route (thread_policy "agent" — the discord_thread tool's
+  // /internal/thread route (thread_policy "agent", the discord_thread tool's
   // server side): token-gated like every /internal route, fail-closed on unknown
   // sessions; the full promotion flow runs in section 6c through the real beacon
   resp = await ctl("/internal/thread", {
@@ -8489,7 +8481,7 @@ async function smoke() {
     resp.status === 409,
   );
 
-  // beaconSend round trip against a fake beacon + a dead port — the outcome shape:
+  // beaconSend round trip against a fake beacon + a dead port, the outcome shape:
   // { ok } for delivery, { unreachable } for "the port is GONE" (the only heal trigger)
   const fakeBeacon = http.createServer((req, res) => {
     res.writeHead(200, { "content-type": "application/json" });
@@ -8510,7 +8502,7 @@ async function smoke() {
   );
   // (T3 regression, production 2026-09-26 double-reply) a beacon that ACCEPTS the
   // connection but never answers is NOT dead: the /send reached it (the queued turn
-  // runs on the live session) — a timeout must never trigger the respawn path
+  // runs on the live session), a timeout must never trigger the respawn path
   {
     const hangSrv = http.createServer(() => {}); // accepts, never responds
     const hangPort = await new Promise((resolve) =>
@@ -8533,12 +8525,12 @@ async function smoke() {
   // the daemon recycled the conversation worker mid-turn; the wrapper lived on as
   // a zombie holding a dead rpc, the route kept pointing at the dead worker's port,
   // and the thread went permanently mute). Hermetic: the dead worker is a dead
-  // port + a stubbed wrapper handle — the smoke never spawns a real child and
+  // port + a stubbed wrapper handle, the smoke never spawns a real child and
   // never signals anything but its own spawn stubs. ----
   const noticesCount = () =>
     sent.filter((s) => String(s.content).includes("session died")).length;
   // (a) dead-beacon dispatch self-heal: SIGTERM the stale wrapper, drop the stale
-  // route, respawn with --resume, re-dispatch the parked text — and NO visible
+  // route, respawn with --resume, re-dispatch the parked text, and NO visible
   // failure when no prior turn was left hanging (a clean hand-off, not a funeral)
   {
     const killed = [];
@@ -8604,7 +8596,7 @@ async function smoke() {
     stopTyping("conv:heal"); // the new dispatch's typing loop (dispatch-time start) — stop it before the streamer cleanup
   }
   // (b) mid-turn beacon death: a stalled turn (👀 dispatched, typing active, agent_end
-  // never coming — the incident shape) plus a dead beacon on the NEXT dispatch fails
+  // never coming, the incident shape) plus a dead beacon on the NEXT dispatch fails
   // the stalled turn VISIBLY, then the self-heal respawn still runs
   {
     const killed = [];
@@ -8663,7 +8655,7 @@ async function smoke() {
       JSON.stringify(sent.slice(-1)),
     );
     {
-      // webui: the same notice — ambient-conditional like the reactions gates: the injected run proves the link ON, the default run proves it OFF
+      // webui: the same notice, ambient-conditional like the reactions gates: the injected run proves the link ON, the default run proves it OFF
       const base = loadConfig().webui_base_url;
       check(
         "webui: the session-death notice matches the webui knob (ui link line when enabled, none when off)",
@@ -8774,7 +8766,7 @@ async function smoke() {
     streamers.delete("conv:tto");
   }
   // (d) textless message_end mid-turn (production 2026-09-26): the reviewer's
-  // stranded-👀 protection MOVED to busy:false — a textless end is a tool-call
+  // stranded-👀 protection MOVED to busy:false, a textless end is a tool-call
   // message end, mid-turn state reset only; the tool-only turn's trigger resolves
   // (⚠️) at the agent_end, never a stuck 👀 and never a mid-turn ⚠️
   {
@@ -8822,7 +8814,7 @@ async function smoke() {
     streamers.delete("conv:tle");
   }
   // (e) unregister mid-turn (the beacon's session_shutdown): the route clears AND
-  // the in-flight turn fails visibly — not just a silent routing drop
+  // the in-flight turn fails visibly, not just a silent routing drop
   {
     claims.set("conv:unreg", {
       at: Date.now(),
@@ -8893,7 +8885,7 @@ async function smoke() {
   }
   // (f) thread-visibility fallback (production 2026-09-23: every auto-thread was
   // born PRIVATE type 12, bot-only): when the member-add fails, it retries once,
-  // then tells the parent channel the thread may be hidden — never silent
+  // then tells the parent channel the thread may be hidden, never silent
   {
     const addsBefore = memberAdds.length;
     scripted.push({
@@ -8925,7 +8917,7 @@ async function smoke() {
       }),
     );
   }
-  // (g) T2 regression — a completed turn whose agent_end was LOST (worker died
+  // (g) T2 regression, a completed turn whose agent_end was LOST (worker died
   // between message_end and agent_end): busy was settled at message_end, so the
   // next dispatch's dead-beacon self-heal must NOT failTurn the delivered turn
   // (the old code left busy stale and ⚠️'d + noticed a DELIVERED trigger)
@@ -8961,7 +8953,7 @@ async function smoke() {
           s.content === "delivered before the worker died",
       ),
     );
-    // NO busy:false — the worker died between message_end and agent_end
+    // NO busy:false, the worker died between message_end and agent_end
     const noticesBefore = noticesCount();
     await dispatchToConversation(
       "conv:lostend",
@@ -9013,11 +9005,11 @@ async function smoke() {
     streamers.delete("conv:lostend");
     routing.delete("conv:lostend"); // stopTyping FIRST — the re-anchored dispatch left a live interval; deleting the streamer alone leaks an 8s tick into every later timing window (surfaced by round 2's longer schedule)
   }
-  // (h) T3 regression — dead-beacon self-heal re-delivers the parked text EXACTLY
+  // (h) T3 regression, dead-beacon self-heal re-delivers the parked text EXACTLY
   // ONCE: the pre-heal beacon's heartbeat (same sessionId, same stale port) stays
   // display-only (stale-port claim guard), and only the RESPAWN's register flushes
   // (production 2026-09-26: the original worker's id-matched heartbeat re-claimed
-  // the resume claim and the flush re-delivered — two replies to one follow-up)
+  // the resume claim and the flush re-delivered, two replies to one follow-up)
   {
     const sendsToNew = []; // the respawn target beacon — counts its /send calls
     const newBeacon = http.createServer((req, res) => {
@@ -9059,7 +9051,7 @@ async function smoke() {
         killed.length === 1,
       JSON.stringify({ spawns: smokeSpawns.slice(dblSpawnsBefore), killed }),
     );
-    // smoke mode records the spawn instead of building it — mirror the production
+    // smoke mode records the spawn instead of building it, mirror the production
     // spawnForConv state by hand: the resume claim (with the pre-heal port marked
     // stale) and the parked text waiting for the respawn's register
     claims.set("conv:dbl", {
@@ -9079,7 +9071,7 @@ async function smoke() {
       spawnAt: Date.now(),
       pid: null,
     });
-    // the ORIGINAL beacon comes back on its SAME port (wedged, not dead — the residual
+    // the ORIGINAL beacon comes back on its SAME port (wedged, not dead, the residual
     // path): its heartbeat re-registers with the SAME sessionId the resume claim preset
     const hb = await onRegister({
       sessionId: "sess-dbl",
@@ -9099,7 +9091,7 @@ async function smoke() {
         sends: sendsToNew.length,
       }),
     );
-    // the RESPAWN's beacon registers (a NEW port) — the claim routes and the flush delivers
+    // the RESPAWN's beacon registers (a NEW port), the claim routes and the flush delivers
     const rs = await onRegister({
       sessionId: "sess-dbl",
       controlPort: newPort,
@@ -9128,11 +9120,8 @@ async function smoke() {
     newBeacon.close();
   }
   // (i) dispatch exactly-once (2026-09-24 dm duplicate pairs, operator live
-  // feedback — the ROOT CAUSE regression check): a beaconSend the live session
-  // ACKS is the dispatch's end — no parked copy, no respawn, no second /send.
-  // Production witness (dm:231106026479288320): every message after the first
-  // ran as TWO turns (live /send + the unconditional resume spawn's register
-  // flush re-sending the parked text), three duplicate pairs, gaps 4-51s.
+  // feedback, the ROOT CAUSE regression check): a beaconSend the live session
+  // ACKS is the dispatch's end, no parked copy, no respawn, no second /send.
   {
     const liveHits = [];
     const liveBeacon = http.createServer((req, res) => {
@@ -9212,7 +9201,7 @@ async function smoke() {
     streamers.delete("conv:live");
     liveBeacon.close();
   }
-  // (j) the timeout twin: a REACHABLE-but-wedged beacon never respawns either —
+  // (j) the timeout twin: a REACHABLE-but-wedged beacon never respawns either,
   // the 2026-09-26 comment ("no respawn, no parked re-dispatch") is finally the
   // code; before round 2 the fall-through spawned + the register flush re-sent.
   {
@@ -9271,7 +9260,7 @@ async function smoke() {
   {
     // the respawn env contract (production 2026-09-27 triple-delivery): a beacon whose
     // BOT_PORT points at a dead non-canonical port must NEVER gift that free port to a
-    // second live bot — the respawned bot always targets the 8790 lock port instead
+    // second live bot, the respawned bot always targets the 8790 lock port instead
     const prevBp = process.env.DISCORD_BOT_PORT;
     process.env.DISCORD_BOT_PORT = "60280"; // a dead probe-stub port — the exact incident shape
     let envOk = false,
@@ -9299,9 +9288,9 @@ async function smoke() {
   // ---- 6ts. token chain reorder + file->config migration (2026-09-28 webui-beacon alignment) ----
   // chain: env DISCORD_EXT_TOKEN -> config.json ext_token -> discord-token file
   // (read fallback + one-time migration source) -> generate + persist to
-  // config. Twin paths only — no check writes the live config.json (the
+  // config. Twin paths only, no check writes the live config.json (the
   // module-scope production resolve already performed the one-time live
-  // migration, idempotently, before the smoke started).
+  // migration, idempotently).
   {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "discord-token-smoke-"));
     const twinCfg = path.join(dir, "config.json");
@@ -9319,7 +9308,7 @@ async function smoke() {
       else process.env.DISCORD_EXT_TOKEN = v;
     };
     try {
-      // (a) precedence env > config > file — both sides (the bot's chain and the beacon's must stay in sync)
+      // (a) precedence env > config > file, both sides (the bot's chain and the beacon's must stay in sync)
       fs.writeFileSync(
         twinCfg,
         JSON.stringify(
@@ -9493,7 +9482,7 @@ async function smoke() {
   process.env.DISCORD_BOT_PORT = String(ctlPort);
   process.env.DISCORD_CONV_KEY = "thread:smoke-e2e";
   // the production indirection: the wrapper pid the bot spawned (999999) is
-  // never the beacon's pid (process.pid here) — the causal claim routes anyway
+  // never the beacon's pid (process.pid here), the causal claim routes anyway
   claims.set("thread:smoke-e2e", {
     at: Date.now(),
     cwd: "/tmp",
@@ -9529,9 +9518,9 @@ async function smoke() {
     ),
     JSON.stringify(registeredTools.map((t) => t?.name)),
   );
-  // (tool-description hardening, 2026-09-28: live failure evidence — two shared-channel
+  // (tool-description hardening, 2026-09-28: live failure evidence, two shared-channel
   // TASKS narrated in-channel, never threaded. The trigger must ride the TOOL-CHOICE
-  // surface — the registered description + guidelines — not just the injected prompt.)
+  // surface, the registered description + guidelines, not just the injected prompt.)
   const threadToolDef = registeredTools.find(
     (t) => t?.name === "discord_thread",
   );
@@ -9754,7 +9743,7 @@ async function smoke() {
     JSON.stringify(edits),
   );
   // hygiene sweep (delivery-UX round 2): dispatch-armed typing intervals from
-  // sections whose turns never settled (dbl/recd/recovery replays — the streamer
+  // sections whose turns never settled (dbl/recd/recovery replays, the streamer
   // deletes in their cleanups predate dispatch-time typing) must never tick into
   // the exact typings-count windows below
   for (const [k, st] of streamers) if (st.typingTimer) stopTyping(k);
@@ -9810,7 +9799,7 @@ async function smoke() {
       timerFirst != null,
     );
     // the worker-death guard: name_session's pi.setSessionName is fire-and-forget in the
-    // name-sessions extension — a supervisor name-collision rejection escapes as an
+    // name-sessions extension, a supervisor name-collision rejection escapes as an
     // unhandled rejection and KILLS the session worker (witnessed + probe-reproduced).
     const blockRes = await handlers.tool_call({
       type: "tool_call",
@@ -9886,7 +9875,7 @@ async function smoke() {
         abortCalls.length === abortsAfterRoute + 1,
       stopIdle,
     );
-    // (c2) busy: the production path — a dispatched turn (pendingAck) with agent_start's busy flip, then /stop POSTs to the beacon and replies in-channel
+    // (c2) busy: the production path, a dispatched turn (pendingAck) with agent_start's busy flip, then /stop POSTs to the beacon and replies in-channel
     stStop.channelId = "chan-stop";
     stStop.triggerChannelId = "chan-stop";
     stStop.triggerMessageId = "trig-stop";
@@ -9910,7 +9899,7 @@ async function smoke() {
       }),
     );
     // (d) the settle: agent_end still fires after ctx.abort, and the EXISTING busy-settle
-    // resolves the stopped turn — no new ack path (⚠️ if nothing landed: the operator
+    // resolves the stopped turn, no new ack path (⚠️ if nothing landed: the operator
     // stopped it; the provenance line names via busy-settle, the tool-only-turn path)
     const origErrStop = console.error;
     const capStop = [];
@@ -9967,11 +9956,11 @@ async function smoke() {
   // ---- 6r. TUI relay (discord-visibility lap): external user input lands on the surface ----
   // The beacon's input handler is the extraction point: the pi `input` event
   // carries the turn's raw user text + its source. Everything the bot's /send
-  // injected is ALREADY the user's own Discord message — the pending-match
+  // injected is ALREADY the user's own Discord message, the pending-match
   // consumes it, never relays. Everything else (the operator's TUI / daemon
   // client) POSTs /internal/relay; the bot posts it on the conversation's
   // surface with a provenance tag WITHOUT dispatching (zero spawn records,
-  // zero batchers — the relay handler holds no dispatch call, and the
+  // zero batchers, the relay handler holds no dispatch call, and the
   // admission ladder's self gate would drop the bot's own post anyway).
   {
     const capRelay = [];
@@ -10031,7 +10020,7 @@ async function smoke() {
           batchers: [...batchers.keys()],
         }),
       );
-      // (b) /send-sourced input: the text is already the user's own Discord message — never relayed
+      // (b) /send-sourced input: the text is already the user's own Discord message, never relayed
       await beaconSend(
         routing.get("thread:smoke-e2e"),
         "discord already shows this one",
@@ -10100,7 +10089,7 @@ async function smoke() {
           delete process.env.DISCORD_RELAY_EXTERNAL;
         else process.env.DISCORD_RELAY_EXTERNAL = relayEnvPrev;
       }
-      // (e) the blockquote shape: multi-line input renders ONE continuous quote — a blank line keeps the block alive as a bare ">"
+      // (e) the blockquote shape: multi-line input renders ONE continuous quote, a blank line keeps the block alive as a bare ">"
       await handlers.input({
         text: "quote line one\n\nquote line two",
         source: "interactive",
@@ -10174,7 +10163,7 @@ async function smoke() {
             .map((s) => s.content),
         }),
       );
-      // (h) max_splits truncation: the notice lands OUTSIDE the quote block — its own unquoted line, the bot's own speech
+      // (h) max_splits truncation: the notice lands OUTSIDE the quote block, its own unquoted line, the bot's own speech
       const trNotice =
         "*(output truncated — full text is in the agent session)*";
       const pacePrevTr = process.env.DISCORD_SEND_PACE_MS;
@@ -10247,7 +10236,7 @@ async function smoke() {
         respRelay.status === 409 &&
           typeof (await respRelay.json())?.error === "string",
       );
-      // (d) long input -> chunked, paced, reply-chained — the finalize split discipline without the ack machinery
+      // (d) long input -> chunked, paced, reply-chained, the finalize split discipline without the ack machinery
       const pacePrev = process.env.DISCORD_SEND_PACE_MS;
       process.env.DISCORD_SEND_PACE_MS = "10"; // keep the paced chunk chain fast — the pacing mechanism itself is finalize's 4b check
       const postsBeforeLong = sent.filter(
@@ -10313,7 +10302,7 @@ async function smoke() {
       "inject: beacon subscribes before_agent_start",
       typeof handlers.before_agent_start === "function",
     );
-    // (a) tagged + defaults: live-context block + the guidelines file, appended — never replacing
+    // (a) tagged + defaults: live-context block + the guidelines file, appended, never replacing
     const inj = await handlers.before_agent_start({ systemPrompt: BASE_SP });
     check(
       "inject: tagged session gains the live-surface line and the guidelines title in its system prompt",
@@ -10335,7 +10324,7 @@ async function smoke() {
       offInj === undefined,
       JSON.stringify(offInj),
     );
-    // (d) missing guidelines file: degrade — context block still injects, file content absent, ONE warn per session
+    // (d) missing guidelines file: degrade, context block still injects, file content absent, ONE warn per session
     process.env.DISCORD_GUIDELINES_FILE = path.join(
       HERE,
       "no-such-discord-guidelines.md",
@@ -10426,7 +10415,7 @@ async function smoke() {
   // execute POSTs the bot's /internal/thread; the bot creates a PUBLIC thread from
   // the conversation's current trigger (type 11 + author member-add, exactly like
   // the auto-thread path), re-keys ledger/routing/claim/streamer to thread:<id>
-  // (SAME session — no respawn), and the tool result carries the thread id. The
+  // (SAME session, no respawn), and the tool result carries the thread id. The
   // next message_end then finalizes INTO the thread.
   {
     const toolsBeforeUntagged = registeredTools.length;
@@ -10436,7 +10425,7 @@ async function smoke() {
       registeredTools.length === toolsBeforeUntagged,
       JSON.stringify(registeredTools.map((t) => t?.name)),
     );
-    // section 6 closed the bot's control server — re-bind it (ephemeral, never 8790):
+    // section 6 closed the bot's control server, re-bind it (ephemeral, never 8790):
     // the 6c beacon registers and the tool POSTs through it
     const ctlPortTool = await new Promise((resolve) =>
       control.listen(0, "127.0.0.1", () => resolve(control.address().port)),
@@ -10511,7 +10500,7 @@ async function smoke() {
       JSON.stringify({ thread: toolThread, toolText }),
     );
     {
-      // webui: ambient-conditional — the injected run proves the tool result carries the link, the default run proves it does not
+      // webui: ambient-conditional, the injected run proves the tool result carries the link, the default run proves it does not
       const base = loadConfig().webui_base_url;
       check(
         "webui: the discord_thread tool result matches the webui knob (conversation ui link when enabled, none when off)",
@@ -10557,7 +10546,7 @@ async function smoke() {
       }),
     );
     // the beacon's env tag is frozen at spawn time: its heartbeats keep registering
-    // under the OLD key — with the old claim gone they stay display-only (no resurrection)
+    // under the OLD key, with the old claim gone they stay display-only (no resurrection)
     const hbTool = await onRegister({
       sessionId: "smoke-tool-1",
       controlPort: routing.get("thread:t-m-tool")?.controlPort ?? 0,
@@ -10619,12 +10608,12 @@ async function smoke() {
   }
 
   // ---- 6d. presence v2/v3: the visible member-list line reads the active conversation; idle mirrors the state text ----
-  // Operator ask (2026-09-27, witnessed live): the activity NAME — the visible
-  // "Playing …" line — must show the ACTIVE conversation's session name.
+  // Operator ask (2026-09-27, witnessed live): the activity NAME, the visible
+  // "Playing …" line, must show the ACTIVE conversation's session name.
   // v3 (2026-09-28, idle-name consistency): at idle the NAME mirrors the idle
   // STATE text (both lines read "listening"); `name` is the deep fallback when
   // idle_state is empty. A LOCAL presence instance (fake clock + recording
-  // wsSend, the harness pattern) drives the module contract — the live
+  // wsSend, the harness pattern) drives the module contract, the live
   // instance defers while the gateway is down (smoke = gateway down).
   {
     const pcfg = {
@@ -10801,7 +10790,7 @@ async function smoke() {
   }
   // ---- 6e. presence v2: the beacon register payload carries the session's name ----
   // The beacon (index.ts) sends `name: safe(() => sessionManager.getSessionName())`
-  // on every register/heartbeat — the bot's row keeps the freshest name; the row
+  // on every register/heartbeat, the bot's row keeps the freshest name; the row
   // (name + routed + busy stamps) is exactly what deriveActiveName picks above.
   {
     process.env.DISCORD_CONV_KEY = "thread:presence-v2";
@@ -10943,13 +10932,13 @@ async function smoke() {
     delete process.env.DISCORD_CONV_KEY;
   }
 
-  // ---- 6o. assert-at-register + the session_topic tool (discord-visibility round 2) ----
-  // Operator feedback, two parts: (1) legacy sessions (spawned before the
-  // naming code) registered name=null forever — the naming lived behind the
+  // ---- 6o. assert-at-register + the session_topic tool ----
+  // assert-at-register: legacy sessions (spawned before the
+  // naming code) registered name=null forever, the naming lived behind the
   // first-register-only guard, so presence fell back to the product name
   // ("prime-agent"); every register (heartbeats included) must now ASSERT a
-  // falsy name and never touch a session that has one. (2) the initial
-  // surface name is accurate at spawn but goes stale as the work evolves —
+  // falsy name and never touch a session that has one. The initial
+  // surface name is accurate at spawn but goes stale as the work evolves,
   // the agent renames via the session_topic tool and the whole visibility
   // chain (register payload -> row/presence -> thread title) follows.
   {
@@ -11021,7 +11010,7 @@ async function smoke() {
     await handlers.session_shutdown({ reason: "quit" }, assertCtx);
     claims.delete("thread:drift");
     routing.delete("thread:drift");
-    // (a2) a session that HAS a name (any name — an agent topic-rename included)
+    // (a2) a session that HAS a name (any name, an agent topic-rename included)
     // is never touched by the register-path assert
     process.env.DISCORD_CONV_KEY = "thread:kept";
     claimFor("thread:kept");
@@ -11225,8 +11214,8 @@ async function smoke() {
     await handlers.session_shutdown({ reason: "quit" }, collideCtx);
     claims.delete("thread:topic-collide");
     routing.delete("thread:topic-collide");
-    // (b2) unavailable: both attempts fail — sync-throw on the base leg,
-    // promise-rejection on the suffix leg — the execute still answers, never a crash
+    // (b2) unavailable: both attempts fail, sync-throw on the base leg,
+    // promise-rejection on the suffix leg, the execute still answers, never a crash
     process.env.DISCORD_CONV_KEY = "thread:topic-unavail";
     claimFor("thread:topic-unavail");
     const unavailCalls = [];
@@ -11443,7 +11432,7 @@ async function smoke() {
         owed7c[0].channelId === "chan-recd",
       JSON.stringify(owed7c),
     );
-    // the drain needs a real delivered message id back — the stub's POST returns {}
+    // the drain needs a real delivered message id back, the stub's POST returns {}
     // (finalize's consolidated-fallback semantics rely on that); fix up THIS channel only
     const realReq7c = rest.request;
     rest.request = async (me, p, b) => {
@@ -11587,10 +11576,10 @@ async function smoke() {
 
   {
     // (7f) inbound attachments (hermes-catalog #3 slice 1): text-doc injection
-    // ≤100KB. The inflated text IS the dispatch text — the recovery row stores
+    // ≤100KB. The inflated text IS the dispatch text, the recovery row stores
     // it and the spawn carries it. Hermetic: fetchAttachment is stubbed for the
     // e2e dispatch checks, then RESTORED for the fetch-helper checks (global
-    // fetch swapped there — the section-4b pattern); nothing reaches discord.com.
+    // fetch swapped there, the section-4b pattern); nothing reaches discord.com.
     process.env.DISCORD_RECOVERY = "true";
     process.env.DISCORD_ALLOWED_GUILDS = "g1"; // handleMessage reads live config — the 7a env-injection pattern
     process.env.DISCORD_ALLOWED_USERS = "u1";
@@ -11796,12 +11785,12 @@ async function smoke() {
       cleanupAtt(m7f6);
     }
     // the REAL fetch helper: hermetic via a swapped global fetch (the section-4b
-    // pattern) — the stream cap, the per-fetch timeout, and the dedicated bucket
+    // pattern), the stream cap, the per-fetch timeout, and the dedicated bucket
     fetchAttachment = realFetchAttachment;
     const realFetch7f = globalThis.fetch;
     try {
       {
-        // stream cap backstop: the payload size lies — the read stops at the cap
+        // stream cap backstop: the payload size lies, the read stops at the cap
         // and the stream is cancelled (never fetch-and-discard)
         let cancelled7f = false;
         const bigBody = new ReadableStream({
@@ -11831,7 +11820,7 @@ async function smoke() {
         process.env.DISCORD_ATTACHMENT_FETCH_TIMEOUT_MS = "30";
         globalThis.fetch = (_url, opts) =>
           new Promise((resolve, reject) => {
-            // a REAL fetch rejects on signal abort — the fake must honor it too, or the case can't happen
+            // a REAL fetch rejects on signal abort, the fake must honor it too, or the case can't happen
             const timer = setTimeout(
               () => resolve({ status: 200, body: null }),
               200,
@@ -11909,7 +11898,7 @@ async function smoke() {
   }
 
   // transport-level ping deny (D5; review finding 8): the real payload builders ran
-  // for every recorded send, edit, and interaction callback — assert the deny rides each
+  // for every recorded send, edit, and interaction callback, assert the deny rides each
   const amOk = (b) =>
     b !== null &&
     typeof b === "object" &&
@@ -11932,7 +11921,7 @@ async function smoke() {
   );
 
   // whole-run gate proof: a reactions-off run (DISCORD_REACTIONS=false) must end
-  // with ZERO reaction calls recorded across every section — not just the gated ones
+  // with ZERO reaction calls recorded across every section, not just the gated ones
   check(
     "reack: a reactions-off run ends with zero recorded reaction calls",
     loadConfig().reactions || reactions.length === 0,

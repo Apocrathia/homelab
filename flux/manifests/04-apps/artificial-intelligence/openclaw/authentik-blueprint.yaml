@@ -17,7 +17,6 @@ entries:
       name: "OpenClaw"
       slug: "openclaw"
       group: "Artificial Intelligence"
-      # Explicitly unset - the retired generic-app proxy provider no longer exists
       provider: null
       meta_launch_url: "https://kagent.gateway.services.apocrathia.com/api/agentharnesses/openclaw/openclaw/gateway"
       open_in_new_tab: true

@@ -11,18 +11,18 @@ This deployment includes:
 - `mcp-server-motherduck` installed from PyPI at pod startup
 - Backing DuckDB file at `/data/duckdb.db` on a Longhorn RWO volume
 - Shared SMB mount at `/shared` (`//storage.services.apocrathia.com/Library/Databases/DuckDB`) for cross-process Parquet/CSV/JSON exchange with the UI deployment
-- kmcp (`kagent.dev/v1alpha1` MCPServer) with `transportType: http` — `mcp-server-motherduck` runs its native streamable-http transport as one long-running process on port 8080, fronted by agentgateway as a plain reverse proxy
+- kmcp (`kagent.dev/v1alpha1` MCPServer) with `transportType: http`, `mcp-server-motherduck` runs its native streamable-http transport as one long-running process on port 8080, fronted by agentgateway as a plain reverse proxy
 - Read-write enabled against `/data/duckdb.db`; concurrency is handled by ephemeral connections (see _Concurrency_ below)
 
 ## Configuration
 
 ### Transport
 
-`transportType: http` with `httpTransport: { targetPort: 8080, path: /mcp }`. The server runs `--transport http --host 0.0.0.0 --port 8080` as a single long-running process; agentgateway fronts it as a plain HTTP reverse proxy, so the per-session process respawn that applies to `stdio` targets does not apply here.
+`transportType: http` (fields in `mcpserver.yaml`). The server runs as a single long-running process; agentgateway fronts it as a plain HTTP reverse proxy, so the per-session process respawn that applies to `stdio` targets does not apply here.
 
 ### Endpoint
 
-- **Service**: `http://duckdb.mcp-duckdb.svc.cluster.local:8080/mcp` (in-cluster only — no Gateway route; the `mcp-server-isolation` CiliumClusterwideNetworkPolicy gates ingress)
+- **Service**: `http://duckdb.mcp-duckdb.svc.cluster.local:8080/mcp` (in-cluster only, no Gateway route; the `mcp-server-isolation` CiliumClusterwideNetworkPolicy gates ingress)
 - **LiteLLM**: `mcp_servers.duckdb` (alias `duckdb`)
 - **kubectl**: `kubectl get mcpserver.kagent.dev -n mcp-duckdb`, `kubectl logs -n mcp-duckdb deploy/duckdb`
 
@@ -32,13 +32,13 @@ One long-running HTTP process multiplexes all MCP sessions. `ephemeral_connectio
 
 ### Persistence
 
-`/data` is a Longhorn RWO PVC owned exclusively by this MCP process. `/shared` is an SMB RWX mount of the same path mounted by the [`duckdb` UI deployment](../../duckdb/) — agents can `read_parquet('/shared/...')` files the UI exported, and write Parquet back for the UI to consume. The two pods cannot share the `.duckdb` file directly (DuckDB single-process lock); they exchange data via files on the SMB mount instead.
+`/data` is a Longhorn RWO PVC owned exclusively by this MCP process. `/shared` is an SMB RWX mount of the same path mounted by the [`duckdb` UI deployment](../../duckdb/), agents can `read_parquet('/shared/...')` files the UI exported, and write Parquet back for the UI to consume. The two pods cannot share the `.duckdb` file directly (DuckDB single-process lock); they exchange data via files on the SMB mount instead.
 
 ### Security
 
 - **Container**: `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, `seccompProfile: RuntimeDefault`; root filesystem stays writable for the PyPI install at startup
 - **Egress**: unrestricted (needed for DuckDB extension downloads and any S3/HTTP attached sources)
-- **Authentication**: None — restricted to the AI namespaces by the `mcp-server-isolation` CiliumClusterwideNetworkPolicy
+- **Authentication**: None, restricted to the AI namespaces by the `mcp-server-isolation` CiliumClusterwideNetworkPolicy
 
 ## Available MCP Tools
 

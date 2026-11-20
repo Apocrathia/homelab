@@ -15,14 +15,11 @@ configMapGenerator:
   # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
   # so the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (authentik.tf); the replacements
-  # fieldPath bracket-escapes it: data.[authentik.tf]. The retired
-  # authentik-blueprint ConfigMap stopped rendering with this migration —
-  # the blueprint CM prunes and the live objects survive for this
-  # Workspace to adopt. Intentionally NOT labeled authentik_blueprint
-  # (the blanket label died with the blueprint retirement): authentik
-  # ignores this ConfigMap as a blueprint source.
+  # fieldPath bracket-escapes it: data.[authentik.tf]. The blueprint CM
+  # prunes and the live objects survive for this Workspace to adopt.
+  # Intentionally NOT labeled authentik_blueprint: authentik ignores this
+  # ConfigMap as a blueprint source.
   #
-  # (Retired the authentik-blueprint-fleetdm CM from fleet/.)
   - name: fleetdm-authentik-module
     namespace: authentik
     files:
@@ -33,7 +30,7 @@ replacements:
   # ConfigMap's authentik.tf data into the Workspace's module field.
   # authentik.tf stays the single source of truth for the HCL; the rendered
   # module must stay byte-identical to it (the Workspace adopts live
-  # authentik objects — a drift here would fight the state).
+  # authentik objects: a drift here would fight the state).
   #
   # The intermediate ConfigMap cannot be dropped from the render: kustomize
   # applies patches and transformers before replacements, so a $patch:

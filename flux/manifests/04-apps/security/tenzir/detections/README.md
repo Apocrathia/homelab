@@ -83,5 +83,4 @@ it joins the class gate's allowlist.
 [`yara/`](./yara/README.md) holds a vendored subset of the
 signature-base ruleset. No pipeline consumes it yet: the tenzir `yara`
 operator needs a finite byte source and none exists. The scaffold is a
-pinned submodule plus nine byte-identical rules, ready for the consumer
-MR.
+pinned submodule plus a vendored rule subset.

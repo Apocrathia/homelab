@@ -25,7 +25,7 @@ CronJob template for scheduled multi-turn A2A agent invocation.
 
 - Migrate to LiteLLM A2A gateway:
   `http://litellm.litellm.svc.cluster.local:4000/a2a/homelab-agent/message/send`
-- LiteLLM now serves A2A routes (inbound A2A is deployed — see the
+- LiteLLM now serves A2A routes (inbound A2A is deployed, see the
   `hermes-a2a-authorization` / `prime-a2a-authorization` secrets in
   `litellm/README.md` and the agent registration flow in `agents/README.md`);
   the migration itself remains the operator's call.

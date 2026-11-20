@@ -1,7 +1,7 @@
 ---
 # Join auth key: reusable, pre-authorized, tag-scoped key generated in the
 # Tailscale admin console and stored in 1Password (vault Secrets, item
-# "tailscale-ansible-authkey", field "credential" — API Credential item).
+# "tailscale-ansible-authkey", field "credential"; API Credential item).
 # Never a default: CI injects it via ci/fetch_op_secrets.py (-e
 # @op_secrets.json); local runs pass -e tailscale_authkey=...
 tailscale_authkey: ""
@@ -10,13 +10,13 @@ tailscale_authkey: ""
 # in terraform/deployments/tailscale/tailnet/policy.hujson.
 tailscale_tags: []
 
-# No subnet routes, ever (A-prime architecture decision: zero LAN routes).
+# No subnet routes, ever: zero LAN routes.
 tailscale_advertise_routes: []
 tailscale_advertise_exit_node: false
 
 # Keep the host's default (LAN) resolver. accept-dns=true would route all
 # DNS through MagicDNS (100.100.100.100), whose upstream is the tailnet's
-# global resolver — it cannot resolve LAN-only names (broke kopia's
-# storage.services.apocrathia.com endpoint). This host is a LAN citizen
-# and an inbound-reachable server; it needs LAN DNS, not MagicDNS names.
+# global resolver; it cannot resolve LAN-only names. This host is a LAN
+# citizen and an inbound-reachable server; it needs LAN DNS, not MagicDNS
+# names.
 tailscale_accept_dns: false

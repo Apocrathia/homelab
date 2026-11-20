@@ -1,4 +1,4 @@
-# `review-fit` — design-fit review lens (skill)
+# `review-fit`: design-fit review lens (skill)
 
 `SKILL.md` defines the read-only design-fit lens for a branch diff or named
 Artifact: boundaries, scope, and coupling against existing architecture.

@@ -35,7 +35,7 @@ spec:
         name: rabbitmq
         port: 5672
         env:
-          # Same keys the platform's OPENAEV_RABBITMQ_USER/PASS read — the
+          # Same keys the platform's OPENAEV_RABBITMQ_USER/PASS read; the
           # entrypoint creates this user on boot.
           - name: RABBITMQ_DEFAULT_USER
             valueFrom:

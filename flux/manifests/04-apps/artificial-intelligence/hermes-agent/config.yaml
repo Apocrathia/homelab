@@ -1,8 +1,8 @@
 ---
-# Static config — reconciled into /opt/data/config.yaml on every pod start.
+# Static config: reconciled into /opt/data/config.yaml on every pod start.
 # Keys defined here are enforced; additional runtime keys (UI/CLI) are preserved.
 # LiteLLM model id must match litellm.yml model_name.
-# Dashboard OIDC is env-driven (see helmrelease) — same pattern as other generic-app OIDC apps.
+# Dashboard OIDC is env-driven (see helmrelease): same pattern as other generic-app OIDC apps.
 #
 # Bare provider: custom ignores OPENAI_API_KEY unless base_url is openai.com (#28660).
 # Named custom_providers + key_env is required for cluster LiteLLM.
@@ -11,7 +11,7 @@
 #   main  = glm-5.3-prime          (default agent thinking)
 #   hard  = kimi-k3-prime          (/model hard or /model hard --once)
 #   smol  = llama3.1-8b-prime      (auxiliary side-jobs + /model smol)
-# Hermes does not auto-route by difficulty — escalate hard with /model.
+# Hermes does not auto-route by difficulty: escalate hard with /model.
 model:
   provider: litellm
   default: glm-5.3-prime
@@ -20,7 +20,7 @@ custom_providers:
   - name: litellm
     base_url: http://litellm.litellm.svc.cluster.local:4000/v1
     key_env: OPENAI_API_KEY
-    # Curated catalog for the dashboard picker — skip live /v1/models dump.
+    # Curated catalog for the dashboard picker: skip live /v1/models dump.
     discover_models: false
     models:
       - glm-5.3-prime
@@ -35,7 +35,7 @@ model_aliases:
     model: llama3.1-8b-prime
     provider: litellm
 
-# Cheap side-jobs — titles, compression, approval, etc. Vision stays auto
+# Cheap side-jobs: titles, compression, approval, etc. Vision stays auto
 # (Llama 3.1 8B is text-only; escalate vision via a multimodal model later).
 auxiliary:
   title_generation:
@@ -63,7 +63,7 @@ auxiliary:
     provider: litellm
     model: llama3.1-8b-prime
 
-# Error/capacity fallback for the main agent — not the same as /model hard.
+# Error/capacity fallback for the main agent: not the same as /model hard.
 fallback_providers:
   - provider: litellm
     model: kimi-k3-prime
@@ -78,7 +78,7 @@ mcp_servers:
       x-mcp-gitlab-private-token: "${GITLAB_TOKEN}"
     timeout: 180
   musicassistant:
-    # No in-cluster Service — Music Assistant runs on the HA host.
+    # No in-cluster Service: Music Assistant runs on the HA host.
     url: "http://home.services.apocrathia.com:8095/mcp/v1"
     headers:
       Authorization: "Bearer ${MA_TOKEN}"
@@ -94,9 +94,8 @@ mcp_servers:
     url: "https://mcp.context7.com/mcp"
 
 # ── A2A (Agent-to-Agent) ──────────────────────────────────────────────
-# Native Hermes A2A plugin — peers are kagent agents registered in
-# litellm.yml under top-level `agents:`. The old MCP bridge
-# (`mcp_servers.a2a`) was removed; prefer these native peers.
+# Native Hermes A2A plugin: peers are kagent agents registered in
+# litellm.yml under top-level `agents:`.
 # Docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a
 a2a_agents:
   homelab-agent:

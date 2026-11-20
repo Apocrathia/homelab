@@ -12,9 +12,7 @@ Enables OIDC-based authentication to the Kubernetes cluster using Authentik as t
 | `icon.svg`  | The application icon served through the CDN (referenced by the tofu-managed application's `meta_icon`) |
 
 The Authentik OIDC objects (provider, groups, scope mappings,
-application, admins binding) are tofu-managed in `../system/kubernetes/`;
-the retired blueprint ConfigMap pruned away and the live objects were
-adopted by that Workspace.
+application, admins binding) are tofu-managed in `../system/kubernetes/`.
 
 ## Authentik Groups
 

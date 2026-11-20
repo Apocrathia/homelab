@@ -1,4 +1,4 @@
-# Windows configuration profiles — OMA-DM SyncML fragments
+# Windows configuration profiles: OMA-DM SyncML fragments
 
 Empty slot: only the `.keep` placeholder lives here. Profiles are XML fragments
 (no XML declaration, no root element) listed under

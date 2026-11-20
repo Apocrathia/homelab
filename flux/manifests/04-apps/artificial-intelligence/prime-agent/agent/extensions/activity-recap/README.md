@@ -1,4 +1,4 @@
-# activity-recap — one-line recaps for the session list
+# activity-recap: one-line recaps for the session list
 
 `index.ts` records a one-line summary of each agent turn (the
 last-activity shown by the session picker).

@@ -4,7 +4,7 @@
 
 ## Overview
 
-CADCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+CADCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://cadcraft.gateway.services.apocrathia.com`
 

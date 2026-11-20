@@ -30,7 +30,7 @@ host on one release or roll it back; the value is passed to `install.sh`
 as `OLLAMA_VERSION` in bare form only; a `"v"` prefix 404s the script's
 pin.
 
-## RPM consolidation (operator decision 2026-09-26)
+## Fedora RPM removal
 
 Fedora ships a community ollama RPM (`ollama`, `ollama-base`,
 `ollama-rocm`, `ollama-vulkan`) that goes stale in the distro repo and
@@ -41,7 +41,7 @@ task is idempotent and leaves exactly one install.
 ## Models are off-limits
 
 The role never writes inside `/usr/share/ollama`, never sets
-`OLLAMA_MODELS`, and never pulls or deletes models; the 137 GB store on
+`OLLAMA_MODELS`, and never pulls or deletes models; the models store on
 `ians-gaming-pc` is operator-owned. A pre/post stat pair asserts the
 models directory survives every run.
 

@@ -32,13 +32,13 @@ triage findings per [`subagents.md`](../../rules/subagents.md).
 
 If Macroscope or Codex CLI are available, you may run them as **extra**
 reviewers after local gates are green. They are optional. Without them, do not
-invent a Macroscope/Codex loop — hand off to
+invent a Macroscope/Codex loop; hand off to
 [`draft-commit`](../draft-commit/SKILL.md). Harnesses without subagent
 orchestration run the local checks directly in the shell.
 
 ## Hard rules
 
-- **This skill does not ship.** Never `git commit` / push here — hand off to
+- **This skill does not ship.** Never `git commit` / push here; hand off to
   [`draft-commit`](../draft-commit/SKILL.md) (ships only when authorized; see
   [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)).
 - **Never** cluster-mutate (`kubectl apply` / `delete`, `flux reconcile`,
@@ -47,7 +47,7 @@ orchestration run the local checks directly in the shell.
   surface (repo stop-loss). Do not burn the 5-iter budget on the same broken
   command.
 - Cap **5** review iterations (fix → re-check cycles). On the 5th miss, stop
-  with blockers — do not invent a 6th pass.
+  with blockers; do not invent a 6th pass.
 
 ## When to run
 
@@ -69,8 +69,8 @@ proposal.
 ```
 
 Classify a blocking failure **before** touching code (step 3): **stale
-assertion** — the test lags the intended behavior → fix the test; **real
-bug** — the product actually regressed → fix the product. State which class
+assertion**: the test lags the intended behavior → fix the test; **real
+bug**: the product actually regressed → fix the product. State which class
 in the report.
 
 ## Checks (run what applies)
@@ -81,7 +81,7 @@ in the report.
 | Touched YAML                                   | yamllint on touched YAML                                                                                     |
 | Touched `AGENTS.md` / `.agents/` / discovery   | `python3 .agents/skills/reconcile-context/scripts/check_links.py` + `check_discovery.py`                     |
 | Touched Helm / Flux / Kustomize manifests      | `helm template` and/or `kustomize build` (or `kubectl kustomize`) into `.scratch/`                           |
-| Touched manifests or package deps              | Trivy (or project scanner) on **changed paths** — fix only scanner-desired versions for _this_ change        |
+| Touched manifests or package deps              | Trivy (or project scanner) on **changed paths**; fix only scanner-desired versions for _this_ change         |
 | Touched a module with a `REGRESSION.md` ledger | Run that module's acceptance commands from the ledger ([`module-regression`](../module-regression/SKILL.md)) |
 
 Skip rows that do not match the diff. Tool missing / unavailable → note skip;
@@ -129,8 +129,8 @@ Cosmetic flag tweaks on the same failing command count as the same approach.
 ## Homelab constraints
 
 - This skill does not ship (no commit/push). Ship via `draft-commit` when
-  authorized — [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
+  authorized; [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Never cluster-mutate as part of review-loop.
-- Fail loud on scanner/tool errors or timeouts — do not assume success.
+- Fail loud on scanner/tool errors or timeouts; do not assume success.
 - Security: after dep/manifest changes, scan changed paths; apply only
   scanner-recommended fixes scoped to this change; re-scan after fixes.

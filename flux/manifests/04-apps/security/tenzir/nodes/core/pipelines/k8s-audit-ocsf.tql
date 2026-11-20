@@ -1,14 +1,14 @@
-// k8s audit → OCSF API Activity (6003), CH-direct (phase 2, stateless):
+// k8s audit → OCSF API Activity (6003), CH-direct, stateless:
 // the fork { import } lake leg is gone. In-stream record_integrity
 // attestation stamps records inside a 60s event-time window, upstream of
 // the direct to_clickhouse INSERT. ClickHouse is the record; the lake
 // rides empty until its teardown.
 //
-// fork: the durable CH leg (attest + INSERT) rides a fork branch —
-// sink-only, so a fork_merge arm would be a parse error — and the
+// fork: the durable CH leg (attest + INSERT) rides a fork branch;
+// sink-only, so a fork_merge arm would be a parse error; and the
 // main flow publishes to the ocsf bus after it: sigma's subscription
 // is this publish's ONLY consumer (Grafana reads ClickHouse), so this
-// publish is load-bearing and must stay — the bus dies with its
+// publish is load-bearing and must stay; the bus dies with its
 // publisher intact only on sigma's side of the loop (see
 // sigma-detect.tql for why sigma never publishes back).
 subscribe "k8s-audit.raw"

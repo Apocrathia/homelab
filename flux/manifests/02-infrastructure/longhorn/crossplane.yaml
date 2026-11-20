@@ -5,7 +5,7 @@ metadata:
   name: authentik-terraform-token
   namespace: longhorn-system
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret -
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
@@ -32,7 +32,7 @@ spec:
   # Per-app state args for the module's PARTIAL kubernetes backend: the
   # provider writes this as crossplane.remote.tfbackend and passes it via
   # -backend-config at tofu init. The state Secret is
-  # tfstate-longhorn-authentik-longhorn in this namespace — deliberately
+  # tfstate-longhorn-authentik-longhorn in this namespace: deliberately
   # separate from the CI tofu stack (terraform/, GitLab HTTP backend).
   # Two stacks, two states.
   backendFile: |
@@ -46,11 +46,11 @@ metadata:
   name: longhorn-authentik
   namespace: longhorn-system
 spec:
-  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # Prune guard: crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,
   # so a GitOps prune of this object can NEVER destroy the live authentik
   # stack (v2-native Orphan). Deliberate decommission therefore requires
-  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # temporarily restoring ["*"] (or a manual tofu destroy); the guard is
   # intentional.
   managementPolicies:
     - Observe
@@ -62,13 +62,12 @@ spec:
   forProvider:
     # Inline module, stitched at kustomize build time: kustomization.yaml's
     # configMapGenerator packages authentik.tf and the replacements rule
-    # copies its bytes into this module field — crossplane.yaml +
+    # copies its bytes into this module field: crossplane.yaml +
     # authentik.tf are the canonical file pair, and the HCL file is the
     # single source of truth (never render this directory outside
-    # kustomize). No varmap in git — ever: the app values live in the HCL,
-    # and the ADOPTION varmap (recipe §8, born-with-varmap) exists only as
-    # a gate-time patch on the applied Workspace. The live objects are
-    # blueprint-created and ride in tofu state only after the gate imports
-    # them; the first reconcile of the unsuspended tree plans No changes.
+    # kustomize). No varmap in git, ever: the app values live in the HCL,
+    # and the ADOPTION varmap exists only as
+    # a gate-time patch on the applied Workspace. The live objects ride in
+    # tofu state only after the gated imports adopt them.
     source: Inline
     module: ""

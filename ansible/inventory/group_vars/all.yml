@@ -7,7 +7,7 @@ github_username: Apocrathia
 username: ianyoung
 
 # CI/automation connects as the managed service account (deploy-key auth,
-# NOPASSWD sudo — no become password). Provisioned by roles/common.
+# NOPASSWD sudo; no become password). Provisioned by roles/common.
 ansible_user: ansible
 
 # Dedicated automation account (roles/common, user tag): locked password,
@@ -33,7 +33,7 @@ common_packages:
   - zsh
 
 # roles/hardening (devsec.hardening) site-policy overrides. The role is not
-# wired to any playbook yet (first target: the unifi-os host); these
+# wired to any playbook yet; these
 # stage policy so any future assignment works out of the box.
 # Nothing here uses chrooted SFTP; the devsec default (true) requires
 # root-owned home dirs and would break plain scp/sftp.

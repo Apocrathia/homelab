@@ -8,9 +8,9 @@ Open Cyber Threat Intelligence platform: threat-intel knowledge graph, STIX 2.1 
 
 Deployed from the community chart
 [`devops-ia/helm-opencti`](https://github.com/devops-ia/helm-opencti) (chart
-pinned at `3.0.18`, app `7.261008.0`). Slices 4 + 5 + 6 of the MISP + OpenCTI
-lap: deploy, Authentik OIDC SSO ("Login with Authentik"), and the MISP
-external-import connector; local admin login is kept as break-glass.
+pinned in `helmrelease.yaml`). Deployed with Authentik OIDC SSO ("Login with
+Authentik") and the MISP external-import connector; local admin login is kept
+as break-glass.
 
 Stack layout (all in the `opencti` namespace):
 
@@ -26,29 +26,25 @@ Stack layout (all in the `opencti` namespace):
                     │
                     ▼
         http://storage.services.apocrathia.com:9009
-        rustfs bucket `opencti-files` (NAS, slice 1)
+        rustfs bucket `opencti-files` (NAS)
 ```
 
-- **Platform**: `NODE_OPTIONS --max-old-space-size=4096` (tuned down from the
-  8 GB default).
+- **Platform**: `NODE_OPTIONS --max-old-space-size` tuned below the platform
+  default; live values in `helmrelease.yaml`.
 - **OpenSearch**: single-node subchart, 3g heap, `vm.max_map_count=262144` set
   by the chart's privileged busybox initContainer (operator decision, no
   Talos patch).
-- **RabbitMQ**: `max_message_size=536870912`, `consumer_timeout=86400000` per
-  the OpenCTI docker stack's `rabbitmq.conf`.
+- **RabbitMQ**: limits per the OpenCTI docker stack's `rabbitmq.conf` (values
+  in the manifests).
 - **Dragonfly** (redis): password-gated. The chart's default
   `--cache_mode=true` is dropped, because LRU eviction would silently drop
   stream and task state. The platform caps `stream.opencti` at 50k entries
-  via `REDIS__TRIMMING` (`helmrelease.yaml`). Incident note (2026-10-29):
-  without the cap, the MISP abuse.ch backlog ingest filled Dragonfly's 819MiB
-  maxmemory (`noeviction`) with ~281k fat live-feed events (~3KB each). The
-  platform default trim point (2M events) was still far away. The server's
-  `platform_init_lock` SET was rejected at boot, and the platform
-  hard-crashed in a `LOCK_ERROR` CrashLoopBackOff until the stream was
-  hand-flushed.
-- **S3**: NAS rustfs bucket `opencti-files` (slice 1 keypair). No in-cluster
+  via `REDIS__TRIMMING` (`helmrelease.yaml`); the cap must stay below
+  Dragonfly's maxmemory or the platform hard-crashes in a `LOCK_ERROR`
+  CrashLoopBackOff at boot.
+- **S3**: NAS rustfs bucket `opencti-files` . No in-cluster
   S3 subchart.
-- **MISP connector** (slice 6): `opencti-misp-connector` Deployment (chart
+- **MISP connector** : `opencti-misp-connector` Deployment (chart
   `connectors:` values) polls MISP every 5 minutes over its gateway URL and
   imports events as reports/indicators/observables, one-way MISP → OpenCTI.
 - **MITRE ATT&CK connector**: `opencti-mitre-connector` Deployment (chart
@@ -57,10 +53,11 @@ Stack layout (all in the `opencti` namespace):
   a 7-day interval.
 - **AlienVault OTX connector**: `opencti-alienvault-connector` Deployment
   (chart `connectors:` values) pulls OTX Pulses on the default PT30M
-  cadence, pulse start pinned ~6 weeks back (2026-09-01) to avoid the
-  2020-default historical backlog; API key from `opencti-secrets`/`otx-api-key`. First run on deploy seeds ATT&CK into the graph, the
-  platform version here has no built-in dataset-import UI anymore, so the
-  connector is the seeding mechanism (2026-10-18 lap note).
+  cadence; pulse start is pinned back from the 2020 default to avoid the
+  historical backlog (value in `helmrelease.yaml`); API key from
+  `opencti-secrets`/`otx-api-key`.
+  connector seeds ATT&CK into the graph: the platform has no built-in
+  dataset-import UI, so the connector is the seeding mechanism.
 - **TAXII2 connector**: `opencti-taxii2-connector` Deployment (chart
   `connectors:` values) polls the OpenTAXII staging hub in-cluster, TAXII
   2.1 discovery at
@@ -84,30 +81,24 @@ sensitive is stored in this repo.
 
 ### 1Password secrets
 
-Item `vaults/Secrets/items/opencti-secrets` (created in slice 1):
+Item `vaults/Secrets/items/opencti-secrets` :
 
-| Field                             | Used for                                                                                                                                                                 |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `APP__ADMIN__EMAIL`               | bootstrap admin account                                                                                                                                                  |
-| `APP__ADMIN__PASSWORD`            | bootstrap admin account                                                                                                                                                  |
-| `APP__ADMIN__TOKEN`               | admin API token (worker + health gate)                                                                                                                                   |
-| `APP__ENCRYPTION_KEY`             | at-rest crypto for sensitive config                                                                                                                                      |
-| `RABBITMQ__PASSWORD`              | RabbitMQ auth (app + subchart)                                                                                                                                           |
-| `REDIS__PASSWORD`                 | dragonfly auth (app + subchart)                                                                                                                                          |
-| `MINIO__ACCESS_KEY`               | rustfs `opencti-files` keypair                                                                                                                                           |
-| `MINIO__SECRET_KEY`               | rustfs `opencti-files` keypair                                                                                                                                           |
-| `OIDC_CLIENT_SECRET`              | Authentik OIDC provider client secret                                                                                                                                    |
-| `APP__ENTERPRISE_EDITION_LICENSE` | OpenCTI EE license (PEM); provider login (SSO) is EE-gated on 7.26 CE, wired as `APP__ENTERPRISE_EDITION_LICENSE` env which takes precedence over a UI-pasted DB license |
-| `misp-key`                        | MISP auth key (read), consolidated from the former `opencti-misp-connector` item; feeds the connector's `MISP_KEY` env via `envFromSecrets`                              |
-| `otx-api-key`                     | AlienVault OTX API key (free registration), feeds the connector's `ALIENVAULT_API_KEY` env via `envFromSecrets`                                                          |
+| Field                             | Used for                                                                                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `APP__ADMIN__EMAIL`               | bootstrap admin account                                                                                                                                             |
+| `APP__ADMIN__PASSWORD`            | bootstrap admin account                                                                                                                                             |
+| `APP__ADMIN__TOKEN`               | admin API token (worker + health gate)                                                                                                                              |
+| `APP__ENCRYPTION_KEY`             | at-rest crypto for sensitive config                                                                                                                                 |
+| `RABBITMQ__PASSWORD`              | RabbitMQ auth (app + subchart)                                                                                                                                      |
+| `REDIS__PASSWORD`                 | dragonfly auth (app + subchart)                                                                                                                                     |
+| `MINIO__ACCESS_KEY`               | rustfs `opencti-files` keypair                                                                                                                                      |
+| `MINIO__SECRET_KEY`               | rustfs `opencti-files` keypair                                                                                                                                      |
+| `OIDC_CLIENT_SECRET`              | Authentik OIDC provider client secret                                                                                                                               |
+| `APP__ENTERPRISE_EDITION_LICENSE` | OpenCTI EE license (PEM); provider login (SSO) is EE-gated in CE; wired as `APP__ENTERPRISE_EDITION_LICENSE` env which takes precedence over a UI-pasted DB license |
+| `misp-key`                        | MISP auth key (read); feeds the connector's `MISP_KEY` env via `envFromSecrets`                                                                                     |
+| `otx-api-key`                     | AlienVault OTX API key (free registration), feeds the connector's `ALIENVAULT_API_KEY` env via `envFromSecrets`                                                     |
 
-The former separate item `opencti-misp-connector` was consolidated into
-`opencti-secrets` (field `misp-key`, kebab-style; 2026-10-19), the
-`envFromSecrets` indirection maps it to the connector's `MISP_KEY` env
-name, so only the vault field label changed. The standalone item and its
-`OnePasswordItem` CR are gone.
-
-Wiring notes (verified against the chart templates):
+Wiring notes (chart templates):
 
 - `envFromSecrets` entries take precedence over chart-default plaintext env.
 - **Health key**: the vault item has no dedicated health field, and upstream
@@ -119,7 +110,7 @@ Wiring notes (verified against the chart templates):
 - **RabbitMQ erlang cookie**: left empty so bitnami generates a random cookie
   into the managed secret instead of shipping the chart-default `ChangeMe`.
 
-### Authentik OIDC SSO (slice 5)
+### Authentik OIDC SSO
 
 - **Provider**: the canonical file pair; `crossplane.yaml` carries the
   Crossplane objects, `authentik.tf` is the single source of truth for the
@@ -129,10 +120,10 @@ Wiring notes (verified against the chart templates):
   (rendered module byte-identical to the file, never render this
   directory outside kustomize). It creates the `opencti-oidc-provider`
   (OIDC, confidential) and the OpenCTI application tile in the `Security`
-  dashboard category. Fresh create (MR unmerged, no import blocks, no
-  adoption ids; the first plan after merge MUST read as a clean create-set:
-  a read-only plan against live authentik is the authorized post-merge
-  check, not run now); the scoped authentik API token rides the
+  dashboard category. Fresh create: no import blocks, no adoption ids; the
+  first plan after merge must read as a clean create-set (a read-only plan
+  against live authentik is the authorized post-merge check); the scoped
+  authentik API token rides the
   `authentik-terraform-token` Secret (1Password item
   `crossplane-terraform-secrets` via a namespace-local OnePasswordItem),
   and the tofu state lives in the `tfstate-opencti-authentik-opencti`
@@ -164,37 +155,29 @@ Wiring notes (verified against the chart templates):
 
 The connector's cursor (`last_event_date`, platform-side state) tracks MISP's
 `timestamp` field. That is the **source event's last-modified time**, not
-local creation. Two consequences (live-verified 2026-10-18):
+local creation. Two consequences:
 
-- The 2026-10-16 CIRCL archive import bulk-touched the maltrail events, so the
-  connector's first boot (10-day lookback default) imported only the touched
-  tail and stranded ~2.1k archive events below the cursor.
 - Feed-imported events (abuse.ch backfill) carry historical `timestamp`s and
   always land below the cursor.
 
 That stranding is why the connector bootstraps from a floor date:
 `MISP_IMPORT_FROM_DATE` (epoch in `helmrelease.yaml`) becomes the initial
 cursor when the connector state resets (UI: Data → Ingestion → Connectors →
-MISP → state reset). Under the 90-day intel window (operator doctrine,
-2026-11-01) the epoch floor just means "import whatever MISP holds". MISP
-prunes events older than 90 days at source (the misp `misp-event-prune`
-CronJob; see [Intel retention](#intel-retention-90-day-window)), so a state
-reset re-imports a bounded ≤ 90-day set on the next PT5M run. The former
-backlog re-import objective, sweeping the 2026-10 abuse.ch strand, is
-retired: the drain is abandoned under the doctrine. The expired 2022-era
-indicators it kept re-surfacing are dead IOCs the operator does not want.
-Their re-import via the fat stream is what took the platform down; see the
-Dragonfly note in Overview.
+MISP → state reset). Under the 90-day intel window (operator doctrine) the
+epoch floor just means "import whatever MISP holds". MISP prunes events
+older than 90 days at source (the misp `misp-event-prune` CronJob; see
+[Intel retention](#intel-retention-90-day-window)), so a state reset
+re-imports a bounded ≤ 90-day set on the next PT5M run.
 
-### MISP → OpenCTI connector (slice 6)
+### MISP → OpenCTI connector
 
-The official Filigran-verified external-import connector
+The official external-import connector
 ([OpenCTI-Platform/connectors](https://github.com/OpenCTI-Platform/connectors/tree/master/external-import/misp))
 runs as its own Deployment via the chart's first-class `connectors:` values
 surface. It pulls MISP events/attributes over the MISP REST API (PyMISP),
 converts them to STIX 2.1, and pushes them into OpenCTI, one-way.
 
-Wiring (verified against the chart's connector template + connector source):
+Wiring (chart connector template + connector source):
 
 - **Deployment** `opencti-misp-connector` in this namespace; `OPENCTI_URL`
   is auto-built by the chart to `http://opencti-server:80` (in-cluster
@@ -212,8 +195,8 @@ Wiring (verified against the chart's connector template + connector source):
   default; pinned because the slice acceptance is worded on it).
   `CONNECTOR_LOG_LEVEL=info` (default `error`, imports stay visible).
   Reports/indicators/observables creation is pinned `true` (also defaults).
-  Everything else trusts connector defaults, verified against the connector
-  source: `CONNECTOR_ID` ships a built-in UUID, type/scope default
+  Everything else trusts connector defaults (connector source):
+  `CONNECTOR_ID` ships a built-in UUID, type/scope default
   `EXTERNAL_IMPORT`/`misp`, filters import everything the key can see.
 - **Secrets**: `MISP_KEY` from the `opencti-misp-connector` vault item via
   the OnePasswordItem in `secret.yaml`; `OPENCTI_TOKEN` from
@@ -252,7 +235,7 @@ platform/worker images ride the chart's `appVersion` (digest-pinning split
 Merge chart-bump MRs on purpose; the LTS-vs-rolling cadence call is tracked
 in `docs/issues/opencti-deployment.md`.
 
-## Backups (slice 8)
+## Backups
 
 No database lives in this stack, the knowledge graph is OpenSearch, queues
 are RabbitMQ, cache is dragonfly, and file storage is already the rustfs
@@ -268,7 +251,7 @@ are RabbitMQ, cache is dragonfly, and file storage is already the rustfs
   queue state is in-flight work, not durable knowledge; dragonfly (no PVC,
   in-memory by design). Losing them costs pending jobs only.
 
-RPO honesty (research risk 6): the volume snapshot is crash-consistent:
+RPO honesty: the volume snapshot is crash-consistent:
 Lucene translog replay recovers the index on restore, and restoring the
 platform means PVC restore with up to ~24 h of graph loss accepted. Anything
 the MISP connector imported is replayable from MISP (which has its own
@@ -276,7 +259,7 @@ backups); analyst-created work beyond the last kopia snapshot is not.
 
 ## Intel retention (90-day window)
 
-Doctrine (operator call, 2026-11-01): only ~90 days of threat intel lives
+Doctrine (operator call): only ~90 days of threat intel lives
 anywhere. MISP is the retention authority and prunes at source. OpenCTI
 keeps only active intel via its native retention policy plus a bounded Redis
 stream.
@@ -298,7 +281,7 @@ stream.
   before flipping it Active: deletion is permanent (no trash), and an object
   is eligible once it has **not been updated** within the window. Use the
   rule's **Verify** button to preview the match count first. Retention
-  policies are available in CE (verified against 7.261008.0: no EE gate on
+  policies are available in CE (no EE gate on
   the settings menu or the GraphQL mutations). The EE license stays wired
   from the vault as `APP__ENTERPRISE_EDITION_LICENSE` (see the secrets
   table) for the SSO provider, independent of this rule. Creating the rule is
@@ -341,12 +324,12 @@ argument.
   CIRCL archive import). If retro research becomes a real need, the revisit
   lever is making MISP the permanent archive and keeping only OpenCTI tight.
 
-## Export surfaces (slice 7: Tenzir/SIEM handoff)
+## Export surfaces (Tenzir/SIEM handoff)
 
-Documentation only, no infrastructure lands in this slice. OpenCTI ships
-three built-in export surfaces, all configured in the UI under
+Documentation only; no infrastructure lands here. OpenCTI ships three
+built-in export surfaces, all configured in the UI under
 **Data → Data sharing** with uniform filter + access-control parameters
-(verified against the platform feeds doc and the platform source routes):
+(platform feeds doc and platform source routes):
 public feeds impersonate a chosen user, so data visibility is that user's
 markings/organizations.
 
@@ -356,8 +339,7 @@ markings/organizations.
 | Live streams          | STIX 2.1 create/update/delete events (SSE), resolves relationships and dependencies beyond the filter, can be public                                                          | `https://opencti.gateway.services.apocrathia.com/stream/<stream-id>` (raw authed platform stream: `/stream`) |
 | CSV feeds             | rolling-interval CSV of created/updated entities, relationship columns supported, 5000-entry default cap                                                                      | `https://opencti.gateway.services.apocrathia.com/feeds/<feed-id>`                                            |
 
-Recorded intake rows for the sibling SIEM funnel (Tenzir; research §3.4/3.5:
-their acceptance, not ours):
+Recorded intake rows for the sibling SIEM funnel (Tenzir):
 
 1. **`from_http` pull** against a TAXII 2.1 collection URL (STIX 2.1 JSON
    over HTTP; pagination + token handled by their pipeline/package), or a
@@ -367,19 +349,18 @@ their acceptance, not ours):
    file-drop row).
 
 The sibling lane owns the intake row + the OCSF mapping package
-(`MISP → OpenCTI → TAXII/stream/export file → Tenzir funnel`). Tenzir's old
-STIX distribution layer (threatbus) is archived with no native TAXII
-connector in the current platform, the sibling lane confirms the row on
-their side.
+(`MISP → OpenCTI → TAXII/stream/export file → Tenzir funnel`). The current
+platform has no native TAXII connector (the old threatbus distribution layer
+is archived); the sibling lane confirms the row on their side.
 
 Stream/collection tokens are minted in the OpenCTI UI **post-merge** when
 creating the collection/stream (shown on creation; nothing to pre-provision
 in Git). Operator step when the SIEM lane asks: create a dedicated
 **read-only OpenCTI user**, then a TAXII collection or stream scoped with
-filters, and hand over the URL + token, see the slice-7 checklist in
+filters, and hand over the URL + token, see the handoff checklist in
 [`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md).
 
-## Post-merge live acceptance (slice 4)
+## Post-merge live acceptance (deploy)
 
 1. Pods healthy: `kubectl get pods -n opencti` (server, worker, opensearch,
    rabbitmq, dragonfly; OpenSearch first boot takes a few minutes, the
@@ -391,13 +372,13 @@ filters, and hand over the URL + token, see the slice-7 checklist in
    `opencti-mitre-connector` completes its first run (7-day interval; first
    run starts on deploy). The 7.x platform has no built-in dataset-import
    UI, the connector is the only seeding mechanism.
-4. File storage smoke test (research §2.6): import a file via the UI
+4. File storage smoke test: import a file via the UI
    (Data → Import), then confirm the object landed in the rustfs
    `opencti-files` bucket (multipart upload is the point of the test).
 5. Websockets: leave the UI open with a background import running:
    broadcast/live views update through the Cilium gateway without reconnect.
 
-## Post-merge live acceptance (slice 5)
+## Post-merge live acceptance (SSO)
 
 0. Copy the generated OIDC client secret: authentik UI → Applications →
    Providers → `opencti-oidc-provider` → copy the Client secret into the
@@ -413,14 +394,13 @@ filters, and hand over the URL + token, see the slice-7 checklist in
    stays live).
 4. Break-glass check: local admin login still works alongside OIDC.
 
-## Post-merge live acceptance (slice 6)
+## Post-merge live acceptance (MISP connector)
 
 0. Copy the MISP auth key into 1Password: in the MISP UI create a dedicated
    read-only user (org `Apocrathia`), open its profile → Auth Keys → Add key
    (label `opencti-connector`), and copy the key into a new 1Password item
-   `opencti-misp-connector`, field `MISP_KEY` (the item is slice-1-deferred
-   to this step). Until the item exists the connector pod waits on the
-   missing Secret (CreateContainerConfigError), intended step-0 ordering.
+   `opencti-misp-connector`, field `MISP_KEY`. Until the item exists the
+   connector pod waits on the missing Secret (CreateContainerConfigError).
    After the OnePasswordItem syncs, the connector starts; restart it if it
    had exhausted backoff (Troubleshooting has the restart command).
 1. Create a test MISP event with indicators (default distribution is
@@ -449,7 +429,7 @@ kubectl logs -n opencti sts/opensearch-cluster-master -c sysctl
 # RabbitMQ limits applied (max_message_size / consumer_timeout)
 kubectl exec -n opencti sts/opencti-rabbitmq -- rabbitmqctl environment | grep -E "max_message_size|consumer_timeout"
 
-# MISP connector (slice 6) — polls MISP every PT5M
+# MISP connector: polls MISP every PT5M
 kubectl logs -n opencti deployment/opencti-misp-connector -f
 
 # Restart the connector once the MISP_KEY Secret has synced

@@ -1,4 +1,4 @@
-# `cnpg-logical-database-restore` — CNPG dump/restore runbook (skill)
+# `cnpg-logical-database-restore`: CNPG dump/restore runbook (skill)
 
 `SKILL.md` is the runbook for a logical CloudNativePG restore: suspend Flux,
 `pg_dump` from PGDATA on the instance PVC via the `cnpg-data-extract` chart,

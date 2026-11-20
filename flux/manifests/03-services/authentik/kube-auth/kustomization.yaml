@@ -8,8 +8,7 @@ metadata:
 resources:
   - rbac.yaml
 # The authentik OIDC objects (provider, groups, scope mappings,
-# application, admins binding) are tofu-managed now — the pair lives in
-# system/kubernetes/ (the retired authentik-blueprint-kubernetes CM
-# stopped rendering with this migration and the live objects survive for
-# that Workspace to adopt). rbac.yaml below is plain k8s RBAC and stays
-# put.
+# application, admins binding) are tofu-managed now: the pair lives in
+# system/kubernetes/ (the blueprint CM prunes and the live objects
+# survive for that Workspace to adopt). rbac.yaml below is plain k8s RBAC
+# and stays put.

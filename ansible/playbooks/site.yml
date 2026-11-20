@@ -1,14 +1,14 @@
 ---
-# Aggregator — import thinner playbooks. Prefer targeting a single playbook
+# Aggregator: import thinner playbooks. Prefer targeting a single playbook
 # or `--limit` from CI when touching one host class.
-- name: Site — common baseline
+- name: "Site: common baseline"
   ansible.builtin.import_playbook: common.yml
 
-- name: Site — kopia backups
+- name: "Site: kopia backups"
   ansible.builtin.import_playbook: kopia.yml
 
-- name: Site — game host
+- name: "Site: game host"
   ansible.builtin.import_playbook: game.yml
 
-- name: Site — ollama hosts
+- name: "Site: ollama hosts"
   ansible.builtin.import_playbook: ollama.yml

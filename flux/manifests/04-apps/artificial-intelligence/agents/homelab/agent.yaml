@@ -127,7 +127,7 @@ spec:
             - ci-cd
             - pull-requests
     tools:
-      # System agents: same namespace as this Agent (kagent) — required for controller acceptance
+      # System agents: same namespace as this Agent (kagent): required for controller acceptance
       # Other agents: dedicated agent-* namespaces
       - type: Agent
         agent:

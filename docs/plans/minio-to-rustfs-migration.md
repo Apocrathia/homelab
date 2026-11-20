@@ -120,7 +120,7 @@ credentials):
       rclone config create minio type s3 endpoint http://localhost:9000 force_path_style true
       rclone config create rustfs type s3 endpoint http://localhost:9009 force_path_style true
 
-      # per bucket — pull creds from 1Password (loki/mimir/tempo items)
+      # per bucket: pull creds from 1Password (loki/mimir/tempo items)
       export RCLONE_S3_ACCESS_KEY_ID=…
       export RCLONE_S3_SECRET_ACCESS_KEY=…
       rclone copy -P --transfers 16 minio:loki rustfs:loki

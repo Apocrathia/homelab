@@ -33,14 +33,14 @@ them deliberately.
 ## Authentication
 
 Uses Authentik proxy provider for SSO. Cantinarr also has its own connect-link /
-passkey / password auth for household devices — set **Settings > External
+passkey / password auth for household devices, set **Settings > External
 Address** to the gateway URL after first login so invite links resolve correctly.
 
 ### MCP
 
 Endpoint: `https://cantinarr.gateway.services.apocrathia.com/mcp`. Authentik
 skips `/.well-known/`, `/oauth/`, `/passkeys/`, and `/mcp` so clients can run
-Cantinarr's inbound OAuth. There is no static API key — the client registers,
+Cantinarr's inbound OAuth. There is no static API key, the client registers,
 opens the authorize URL, and stores the issued tokens. Enable a password or
 passkey on the Cantinarr user used for MCP login.
 

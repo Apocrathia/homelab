@@ -13,7 +13,7 @@ Backup policies live with their apps, not here.
   `KOPIA_PASSWORD` repo-encryption passphrase) into `kopiur-system`. The S3 key
   is bucket-scoped: policy `kopia` on the RustFS instance grants
   read/write/list/delete on the `kopia` bucket only (cross-bucket access and
-  bucket creation return 403; verified 2026-09-11)
+  bucket creation return 403)
 - `clusterrepository.yaml`: `ClusterRepository/nas-rustfs`, kopia repository
   in the `kopia` bucket at `storage.services.apocrathia.com:9009`
   (plain HTTP, path-style), CEL identity defaults, maintenance

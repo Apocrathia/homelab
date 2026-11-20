@@ -1,4 +1,4 @@
-# templates — cnpg-data-restore chart renders
+# templates: cnpg-data-restore chart renders
 
 The Job that runs pg_restore against a CNPG cluster from an SMB-mounted dump
 (the chart fails closed unless `backupSmb.enabled` is true), the read-only SMB

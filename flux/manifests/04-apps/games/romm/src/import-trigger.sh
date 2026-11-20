@@ -16,7 +16,7 @@ fi
 
 echo "using pod ${POD}"
 # Pipe the importer into the romm container so it runs with RomM's Python env
-# and filesystem handlers — no HTTP auth, same trust model as the scan trigger.
+# and filesystem handlers: no HTTP auth, same trust model as the scan trigger.
 kubectl exec -i -n romm -c romm "${POD}" -- \
   env \
     PLATFORMS="${PLATFORMS:-}" \

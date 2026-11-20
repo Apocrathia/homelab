@@ -5,7 +5,7 @@ metadata:
   name: authentik-terraform-token
   namespace: openhands
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret,
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
@@ -37,11 +37,11 @@ metadata:
   name: openhands-authentik
   namespace: openhands
 spec:
-  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # Prune guard: crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,
   # so a GitOps prune of this object can NEVER destroy the live authentik
   # stack (v2-native Orphan). Deliberate decommission therefore requires
-  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # temporarily restoring ["*"] (or a manual tofu destroy): the guard is
   # intentional.
   managementPolicies:
     - Observe

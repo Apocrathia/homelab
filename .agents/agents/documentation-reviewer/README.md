@@ -1,4 +1,4 @@
-# `documentation-reviewer` — doc quality auditor (persona)
+# `documentation-reviewer`: doc quality auditor (persona)
 
 `agent.md` charters a doc quality auditor for the homelab repo: voice,
 structure, and link health across `docs/`, manifest READMEs, and chart docs.

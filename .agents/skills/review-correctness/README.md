@@ -1,4 +1,4 @@
-# `review-correctness` — correctness review lens (skill)
+# `review-correctness`: correctness review lens (skill)
 
 `SKILL.md` defines the read-only correctness lens for a branch diff or named
 Artifact: logic, behavior, and failure modes. Returns `pass` or numbered

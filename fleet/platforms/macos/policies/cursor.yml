@@ -1,8 +1,8 @@
-# Cursor: keep the Fleet-maintained version current — update only, never
+# Cursor: keep the Fleet-maintained version current; update only, never
 # install. Requires cursor/darwin under software.fleet_maintained_apps on the
 # same fleet.
 #
-# The patch policy only fails when the app is installed and outdated — missing
+# The patch policy only fails when the app is installed and outdated; missing
 # hosts pass, so Fleet never installs it.
 ---
 - name: macOS - Cursor up to date

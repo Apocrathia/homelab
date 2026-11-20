@@ -102,7 +102,7 @@ scorecard:
 
           {
             echo "<details>"
-            echo "<summary><strong><a href=\"https://${REPO}\">${REPO}</a></strong> — ${SCORE}/10</summary>"
+            echo "<summary><strong><a href=\"https://${REPO}\">${REPO}</a></strong>: ${SCORE}/10</summary>"
             echo ""
             echo "| Check | Score |"
             echo "|-------|-------|"
@@ -120,12 +120,12 @@ scorecard:
           {
             echo "<details>"
             if [ "$EXIT_CODE" -eq 124 ]; then
-              echo "<summary><strong>${REPO}</strong> — :hourglass: Timeout</summary>"
+              echo "<summary><strong>${REPO}</strong>: :hourglass: Timeout</summary>"
               echo ""
               echo "Scan exceeded 90 seconds."
             else
               ERROR_MSG=$(head -1 "$ERROR_FILE" | cut -c1-80)
-              echo "<summary><strong>${REPO}</strong> — :warning: Scan failed</summary>"
+              echo "<summary><strong>${REPO}</strong>: :warning: Scan failed</summary>"
               echo ""
               echo "Error: ${ERROR_MSG:-Unknown error}"
             fi

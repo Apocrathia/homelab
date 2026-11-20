@@ -1,6 +1,6 @@
 ---
 # One domain per host (this role is single-site; nginx_site consumes the
-# output). Empty fails loudly — see tasks.
+# output). Empty fails loudly; see tasks.
 acme_sh_domain: ""
 
 # Extra SANs on the issued certificate (the cert file/key stay named
@@ -9,14 +9,14 @@ acme_sh_san_domains: []
 
 # Issuer + account
 acme_sh_account_email: ""
-# acme.sh defaults to ZeroSSL since v3.0 — pin Let's Encrypt (operator rule).
+# acme.sh's default CA is ZeroSSL; pin Let's Encrypt (operator rule).
 acme_sh_server: letsencrypt
 
 # DNS-01 provider (acme.sh dnsapi script name without the dns_ prefix;
 # the role adds it: --dns dns_cf).
 
 # Fixed sleep before CA validation, skipping acme.sh's public TXT check
-# (cloudflare-dns.com DoH is blocked on this network — see tasks/main.yml).
+# (cloudflare-dns.com DoH is blocked on this network; see tasks/main.yml).
 acme_sh_dnssleep: 120
 acme_sh_dns_provider: cf
 

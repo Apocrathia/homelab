@@ -10,7 +10,7 @@ native desktop client required.
 - Unofficial web Moonlight client (`moonlight-web-stream`)
 - Authentik proxy SSO with trusted-header user mapping
 - Longhorn volume for `config.json` / `data.json` (users, hosts, pairings)
-- No LoadBalancer — stream over WebSocket through the Authentik HTTPS path
+- No LoadBalancer, stream over WebSocket through the Authentik HTTPS path
 
 ## Access
 
@@ -20,7 +20,7 @@ native desktop client required.
 
 Server knobs that matter here are env vars in `helmrelease.yaml`
 (`BIND_ADDRESS`, `FORWARDED_HEADER`). Hosts and pairing live in the web UI and
-persist on the Longhorn volume — they are not ConfigMap/env seedable.
+persist on the Longhorn volume, they are not ConfigMap/env seedable.
 
 ### Streaming
 

@@ -1,4 +1,4 @@
-# `alignment` — requirement interview (skill)
+# `alignment`: requirement interview (skill)
 
 `SKILL.md` defines a read-only interview that runs until the operator and
 the agent share an understanding of the work: gated branches one at a time,

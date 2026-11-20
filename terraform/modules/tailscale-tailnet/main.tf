@@ -6,7 +6,7 @@
 # truth. Do not mix tailscale_dns_configuration with the legacy dns_* resources.
 #
 # Global DNS resolver: ControlD legacy resolvers (premium profile, source-IP
-# authorized via DDNS — the resolver IPs are non-secret and safe to commit).
+# authorized via DDNS; the resolver IPs are non-secret and safe to commit).
 
 locals {
   controld_nameservers = [
@@ -49,8 +49,8 @@ resource "tailscale_dns_configuration" "this" {
 }
 
 resource "tailscale_tailnet_settings" "this" {
-  # Wave 1 manages only the ACL lockout toggle; leave remaining settings
-  # unset until the client has the settings scope and values are imported.
+  # Manages only the ACL lockout toggle; leave remaining settings unset until
+  # the client has the settings scope and values are imported.
   acls_externally_managed_on = var.acls_externally_managed_on
   acls_external_link         = var.acls_external_link
 }

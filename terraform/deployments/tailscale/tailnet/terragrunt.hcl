@@ -3,19 +3,19 @@
 # -----------------------------------------------------------------------------
 # Policy file, DNS, and tailnet settings for taila8ef8c.ts.net.
 #
-# Auth (1Password Connect — no TAILSCALE_* tokens in env):
-#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
-#   OP_CONNECT_TOKEN — Connect API token with read on the vault
-#   TF_HTTP_*        — state backend
+# Auth (1Password Connect, no TAILSCALE_* tokens in env):
+#   OP_CONNECT_HOST  - http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN - Connect API token with read on the vault
+#   TF_HTTP_*       ; state backend
 #
 # Item: tailscale-terraform-secrets (API Credential: username = OAuth client
 # ID, credential = client secret). Do NOT commit vault UUIDs.
 #
 # Global DNS resolver: ControlD legacy resolvers (premium profile, source-IP
-# authorized via DDNS) — hardcoded in modules/tailscale-tailnet/main.tf.
+# authorized via DDNS), hardcoded in modules/tailscale-tailnet/main.tf.
 #
-# policy.hujson is imported verbatim from the live tailnet policy; keep it
-# byte-identical to intent — tailscale_acl overwrites the WHOLE policy file.
+# Keep policy.hujson byte-identical to intent: tailscale_acl overwrites the
+# WHOLE policy file.
 
 include "root" {
   path = find_in_parent_folders("root.hcl")
@@ -37,20 +37,17 @@ inputs = {
 
   dns_magic_dns          = true
   dns_override_local_dns = true
-  # No search paths: the tailnet search domain only resolved via the retired
-  # public wildcard record.
+  # No search paths: the tailnet search domain has no backing DNS record.
   dns_search_paths = []
-  # Split DNS for the homelab zones (tailnet split DNS plan, slice 3,
-  # broadened from gateway.services.apocrathia.com to the LAN zones):
+  # Split DNS for the homelab zones (tailnet split DNS plan):
   # restricted nameserver -> the tailnet-dns resolver device
   # (flux/manifests/03-services/tailnet-dns). CoreDNS serves the app zone
   # (gateway.services...) from etcd via longest-suffix match and forwards
   # LAN-only names - services names to the services VLAN resolver
   # (10.100.1.1), the access zone to the access VLAN resolver (10.100.0.1).
-  # Device IP read post-rollout via
-  # `kubectl -n tailscale-system exec sts/<ts-tailnet-dns-*> -- tailscale ip -4`.
-  # The IP is stable across restarts (operator-persisted proxy state), so
-  # this is one-time. Admin-console equivalent: DNS -> Add nameserver ->
+  # Device IP: `kubectl -n tailscale-system exec sts/<ts-tailnet-dns-*> -- tailscale ip -4`.
+  # The IP is stable across restarts (operator-persisted proxy state).
+  # Admin-console equivalent: DNS -> Add nameserver ->
   # Custom -> one entry per zone (services.apocrathia.com,
   # access.apocrathia.com, game.apocrathia.com, matrix.apocrathia.com)
   # + device IP.

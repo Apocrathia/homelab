@@ -4,7 +4,7 @@
 
 ## Overview
 
-Web-based painting tool powering Kleki.com. Layers, brushes, filters — built at deploy time from source.
+Web-based painting tool powering Kleki.com. Layers, brushes, filters, built at deploy time from source.
 
 **URL:** `https://klecks.gateway.services.apocrathia.com`
 

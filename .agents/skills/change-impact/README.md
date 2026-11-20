@@ -1,4 +1,4 @@
-# `change-impact` — blast-radius analysis (skill)
+# `change-impact`: blast-radius analysis (skill)
 
 `SKILL.md` defines a read-only analysis for non-trivial changes: list every
 consumer with a citation, mark unproven claims `unverified`, then after

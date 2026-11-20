@@ -1,4 +1,4 @@
-# `eli5` — plain-language pass (skill)
+# `eli5`: plain-language pass (skill)
 
 `SKILL.md` defines a read-only decomposition and explanation of a handed
 artifact (PR, diff, doc, webpage, dense output) in plain language for a

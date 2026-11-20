@@ -82,7 +82,7 @@ after merge. Alignment itself is read-only; later implement laps use worktrees
 
 ## Routed from
 
-- Issue and plan authoring — before [`file-issue`](../file-issue/SKILL.md) or a
+- Issue and plan authoring: before [`file-issue`](../file-issue/SKILL.md) or a
   new plan when scope is still fuzzy
 - [`implement-change`](../implement-change/SKILL.md): alignment gate before worktree
 - [`find-work`](../find-work/SKILL.md): Launch brief for vague or multi-path items

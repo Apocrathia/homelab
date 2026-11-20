@@ -37,9 +37,9 @@ The authentik side needs the shared `crossplane-terraform-secrets` item (field
 
 OpenHands has no local user accounts. Authentik's proxy provider gates the whole
 app (admins and users groups). Tofu owns the authentik objects, running in the
-Crossplane workspace here — state in the `tfstate-default-openhands` Secret,
+Crossplane workspace here, state in the `tfstate-default-openhands` Secret,
 logs in the opentofu provider pod (crossplane-system). Past the proxy, the app
-asks for the session API key on first browser use — paste it once. The key is
+asks for the session API key on first browser use, paste it once. The key is
 not baked into served HTML; that mode stays off, and the app must never sit on
 a bare route.
 
@@ -71,7 +71,7 @@ kubectl get pvc -n openhands
 ```
 
 Agent streams ride WebSockets on `/sockets`. If sessions drop around a minute
-of idle time, the gateway is timing them out — a BackendTrafficPolicy with a
+of idle time, the gateway is timing them out, a BackendTrafficPolicy with a
 longer idle timeout would fix it. Nothing here tunes that yet.
 
 ## References

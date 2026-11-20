@@ -119,7 +119,7 @@ Creates Git tags when `helm/generic-app/Chart.yaml` version changes. Tag format:
 
 ### Chart OCI Publish
 
-Publishes `helm/generic-app` to the project container registry (`oci://registry.gitlab.com/apocrathia/homelab/generic-app`) on every default-branch pipeline; schedule pipelines skip it. Release flow: a `Chart.yaml` version bump merges to main, CI packages and pushes the chart as an OCI tag (tag = version, immutable — chart edits without a bump never reach the cluster), then Renovate opens one grouped MR bumping the version pins on every `generic-app` HelmRelease. The job is idempotent (exits 0 when the tag already exists) and orders after `tofu-apply` (optional), which enables the registry on first landing.
+Publishes `helm/generic-app` to the project container registry (`oci://registry.gitlab.com/apocrathia/homelab/generic-app`) on every default-branch pipeline; schedule pipelines skip it. Release flow: a `Chart.yaml` version bump merges to main, CI packages and pushes the chart as an OCI tag (tag = version, immutable; chart edits without a bump never reach the cluster), then Renovate opens one grouped MR bumping the version pins on every `generic-app` HelmRelease. The job is idempotent (exits 0 when the tag already exists) and orders after `tofu-apply` (optional), which enables the registry on first landing.
 
 Registry login uses the pipeline's built-in `CI_REGISTRY_USER`/`CI_REGISTRY_PASSWORD`; no extra CI variables.
 

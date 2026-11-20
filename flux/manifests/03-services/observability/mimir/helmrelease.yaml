@@ -214,7 +214,7 @@ spec:
         limits:
           cpu: 1000m
           memory: 1Gi
-      # Aggressive retention — Kafka is a short buffer; ingesters should consume quickly.
+      # Aggressive retention. Kafka is a short buffer; ingesters should consume quickly.
       # mimir-distributed 6.x uses logRetentionHours + env (extraConfig/extraEnv are ignored).
       # log.retention.bytes is per-partition; 8Gi keeps two hot partitions under the 20Gi PVC.
       logRetentionHours: 1

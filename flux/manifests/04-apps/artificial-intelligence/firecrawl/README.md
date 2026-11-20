@@ -14,7 +14,7 @@ This deployment includes multiple generic-app HelmReleases:
 - `firecrawl-postgres` - PostgreSQL with pg_cron
 - `firecrawl-playwright` - Headless browser service
 
-**Note**: Official images only publish `latest` tag — no versioned releases.
+**Note**: Official images only publish `latest` tag, no versioned releases.
 
 ### Architecture
 

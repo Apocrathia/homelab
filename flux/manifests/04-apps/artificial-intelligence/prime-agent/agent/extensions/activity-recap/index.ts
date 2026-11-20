@@ -1,5 +1,5 @@
 /**
- * Activity-recap writer — populates the agents-view "Activity" column without
+ * Activity-recap writer, populates the agents-view "Activity" column without
  * Prime Inference (operator decision 2026-09-17: no prime-inference auth, ever).
  *
  * Why: the built-in daemon summarizer (daemon-session-summarizer.ts) is the
@@ -15,7 +15,7 @@
  *     instance is the full SessionManager, so appendAgentStatus exists.
  *  2. Sweep every 5 min (lock-guarded): backfill one `agent_status` line per
  *     saved session file under ~/.prime/agent/sessions/. Entries chain
- *     parentId to the file's last entry — the same entry type the native
+ *     parentId to the file's last entry, the same entry type the native
  *     summarizer persists, so the scanner and agents view pick them up.
  *  3. /activity-recap: run the sweep immediately.
  *
@@ -26,7 +26,7 @@
  *  - Live agents-view rows read daemon in-memory summaryState, which only the
  *    native summarizer writes. A fresh recap surfaces in live rows after a
  *    worker re-seed (restart/reopen); saved rows update immediately.
- *  - taskState is always needs_input — the same verdict the native no-auth
+ *  - taskState is always needs_input, the same verdict the native no-auth
  *    fallback would settle, and what unjudged idle sessions default to.
  *  - basedOnMessageCount counts file-wide message entries (what the
  *    saved-session scanner counts), not the daemon's branch-based count; the
@@ -58,7 +58,7 @@ import type {
 const SWEEP_INTERVAL_MS = 5 * 60_000;
 const SWEEP_START_DELAY_MS = 15_000;
 const LIVE_APPEND_MIN_INTERVAL_MS = 10_000;
-/** Skip session files touched this recently — a live worker owns them. */
+/** Skip session files touched this recently, a live worker owns them. */
 const LIVE_FILE_MAX_AGE_MS = 2 * 60_000;
 /** Sweep claim lifetime; stale claims are reclaimed by any worker. */
 const LOCK_MAX_AGE_MS = 10 * 60_000;
@@ -135,7 +135,7 @@ export function deriveRecap(text: string | undefined): string | undefined {
     .replace(/\*\*?([^*]*)\*\*?/g, "$1");
   // Skip header lines (ending ":"), ack/short fillers, and one-word lines
   // BEFORE picking the recap source: a rhetorical header or an "ok" ack
-  // must not become the recap (S1, 2026-09-19 — activity-recap review).
+  // must not become the recap (S1, 2026-09-19, activity-recap review).
   const ACK_RE =
     /^(recorded|understood|noted|applying|done|working|ok)[.!\s]*$/i;
   const lines = cleaned
@@ -186,9 +186,9 @@ export async function scanSessionFile(path: string): Promise<SessionFileScan> {
     }
     // The entry id is the only "id" immediately followed by "parentId":
     // every runtime entry serializes as {…, id, parentId, timestamp}. A
-    // bare first-"id" match misreads harness refinement entries — nested
+    // bare first-"id" match misreads harness refinement entries, nested
     // ids (data.id = "refine_…", details.edits[].id = memory names like
-    // "opentakserver_deploy_state") precede the entry's own id — and the
+    // "opentakserver_deploy_state") precede the entry's own id, and the
     // sweep then chains agent_status.parentId to a memory name: a dangling
     // id that broke the chain walk (13 real sessions rendered empty).
     const idMatch = trimmed.match(/"id":"([^"]+)","parentId":/);

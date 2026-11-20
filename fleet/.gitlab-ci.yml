@@ -1,19 +1,19 @@
-# Fleet GitOps — apply org/team YAML via fleetctl gitops.
+# Fleet GitOps: apply org/team YAML via fleetctl gitops.
 # Included from the repo root .gitlab-ci.yml.
 #
 # Triggers:
 #   - MR touching this config tree → dry-run
 #   - Push to default branch touching this tree → apply
-#   - Pipeline schedule with FLEET_GITOPS_SCHEDULE=true → apply (hourly)
+#   - Pipeline schedule with FLEET_GITOPS_SCHEDULE=true → apply (scheduled pipeline)
 #
 # CI/CD variables (Settings → CI/CD → Variables, mask secrets):
-#   FLEET_URL                  — https://fleet.gateway.services.apocrathia.com
-#   FLEET_API_TOKEN            — API-only user token (GitOps role / admin on Free)
-#   FLEET_GLOBAL_ENROLL_SECRET — global enroll secret referenced in default.yml
-#   FLEET_HOME_ENROLL_SECRET   — Home fleet enroll secret referenced in fleets/home.yml
-#   FLEET_GITOPS_SCHEDULE      — set to "true" on the Fleet hourly schedule only
+#   FLEET_URL                  : https://fleet.gateway.services.apocrathia.com
+#   FLEET_API_TOKEN            : API-only user token (GitOps role / admin on Free)
+#   FLEET_GLOBAL_ENROLL_SECRET : global enroll secret referenced in default.yml
+#   FLEET_HOME_ENROLL_SECRET   : Home fleet enroll secret referenced in fleets/home.yml
+#   FLEET_GITOPS_SCHEDULE      : set to "true" on the Fleet hourly schedule only
 #
-# Runner note: in-cluster Kubernetes executor is non-root — no apt-get.
+# Runner note: in-cluster Kubernetes executor is non-root: no apt-get.
 # fleetctl is installed to a job-local npm prefix; version via Node fetch.
 ---
 .fleet-gitops-base:

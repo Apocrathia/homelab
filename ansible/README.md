@@ -6,11 +6,8 @@ inventory/compliance plane; this tree owns package/user/system desired state.
 `roles/common` branches on `ansible_os_family` (Debian apt /
 unattended-upgrades vs RedHat dnf / dnf-automatic).
 
-Archaeology: earlier patterns lived in `homelab.gh/Ansible/` (compose-era docker
-roles, k3s bootstrap, vaulted local `secrets`). Do **not** port those; compose
-and Ansible-managed k8s are gone. Keep the useful bits: purpose groups,
-`common` tags (`packages` / `system` / `user`), `requirements.yml`, GitHub
-`authorized_keys`.
+Do **not** port patterns from the retired `homelab.gh/Ansible/` tree
+(compose-era docker roles, k3s bootstrap, vaulted local `secrets`).
 
 ## Layout
 
@@ -70,12 +67,12 @@ Connect (same `OP_CONNECT_*` bootstrap as tofu).
 | Optional | `ansible_gitops_ed25519.pub`                                                |
 
 GitLab only needs `OP_CONNECT_TOKEN` (already used by tofu). `OP_CONNECT_HOST`
-defaults to `http://onepassword-connect.onepassword-system.svc:8080`.
+defaults to the in-cluster Connect Service (see `ansible/.gitlab-ci.yml`).
 
 Check/apply connect as the `ansible` service account (deploy key, NOPASSWD
 sudo); no become password is fetched. Jobs use
-`mcr.microsoft.com/devcontainers/python:3.12` so uid 1000 has a
-passwd entry (`vscode`) and OpenSSH can start under the non-root runner.
+the devcontainers python image pinned in `ansible/.gitlab-ci.yml` so uid 1000
+has a passwd entry (`vscode`) and OpenSSH can start under the non-root runner.
 Runner `HOME` stays `/home/gitlab-runner` (writable emptyDir); ansible gets
 absolute `IdentityFile` / `UserKnownHostsFile` under that path.
 

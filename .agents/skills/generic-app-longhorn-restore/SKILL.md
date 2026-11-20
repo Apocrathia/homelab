@@ -21,14 +21,14 @@ This prompt is for **operators and other AI agents**. It does not replace readin
 
 # Inputs (collect before acting)
 
-| Variable             | Description                                                                             |
-| -------------------- | --------------------------------------------------------------------------------------- |
-| `[APP_NAME]`         | `values.app.name` (e.g. `plex`) — Longhorn volume names are `{APP_NAME}-{VOL_KEY}`.     |
-| `[NAMESPACE]`        | App namespace (often same as `[APP_NAME]`).                                             |
-| `[HELMRELEASE_NAME]` | Flux `HelmRelease` `metadata.name` in `[NAMESPACE]`.                                    |
-| `[HELMRELEASE_PATH]` | Path to the HelmRelease YAML in Git (e.g. `flux/manifests/.../helmrelease.yaml`).       |
-| `[LONGHORN_VOL]`     | Longhorn volume CR name — for a volume `config` in values, this is `[APP_NAME]-config`. |
-| `[VOL_KEY]`          | The `storage.longhorn.volumes[].name` entry (e.g. `config`).                            |
+| Variable             | Description                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `[APP_NAME]`         | `values.app.name` (e.g. `plex`); Longhorn volume names are `{APP_NAME}-{VOL_KEY}`.     |
+| `[NAMESPACE]`        | App namespace (often same as `[APP_NAME]`).                                            |
+| `[HELMRELEASE_NAME]` | Flux `HelmRelease` `metadata.name` in `[NAMESPACE]`.                                   |
+| `[HELMRELEASE_PATH]` | Path to the HelmRelease YAML in Git (e.g. `flux/manifests/.../helmrelease.yaml`).      |
+| `[LONGHORN_VOL]`     | Longhorn volume CR name: for a volume `config` in values, this is `[APP_NAME]-config`. |
+| `[VOL_KEY]`          | The `storage.longhorn.volumes[].name` entry (e.g. `config`).                           |
 
 Confirm from Git:
 
@@ -37,12 +37,12 @@ Confirm from Git:
 
 # Principles
 
-1. **Desired state lives in Git** — tunable replica counts and storage sizes are in the HelmRelease; do not duplicate them in this prompt.
-2. **Static PV/PVC are chart-shaped** — After deleting PVC, PV, and/or the Longhorn `Volume` CR, **waiting passively for a PVC to “reappear” is unreliable**. A **`helm template` of `helm/generic-app` using the HelmRelease’s values, followed by `kubectl apply` of the right documents** for the target volume(s) is the deterministic fix when objects are missing or not binding.
-3. **Cluster access** — Use `kubectl` forms your environment allows (e.g. `kubectl get pvc --namespace [NAMESPACE]` or `kubectl scale deployment [NAME] --namespace [NAMESPACE] --replicas=0`).
-4. **Replica count vs Git** — Scaling with `kubectl scale` while `spec.values.app.replicas` in Git still says `1` creates drift: the next successful Helm reconcile can reset replicas. During maintenance, either set **`app.replicas: 0`** in the HelmRelease and reconcile, **`flux suspend helmrelease`** for that app, or after recovery **`kubectl scale`** back up and confirm Git matches what you want.
-5. **Symptoms** — A **faulted** or not-ready Longhorn volume often surfaces as **`FailedAttachVolume`** / _volume … is not ready for workloads_ and pods stuck in **`ContainerCreating`**. **Scale the workload to 0** before deleting PVCs or kicking restores so nothing keeps trying to attach.
-6. **Scale-up order** — After a Longhorn restore, **Kubernetes needs the static PV and PVC before the workload**. Longhorn data can be healthy while **`[APP_NAME]-config`-style objects are still absent**; scaling the Deployment first creates pods that cannot bind storage. **Apply PV/PVC (rendered from `helm/generic-app`), confirm PVC `Bound`, then scale up** (or delete a pod that was created too early so the ReplicaSet creates a new one).
+1. **Desired state lives in Git**: tunable replica counts and storage sizes are in the HelmRelease; do not duplicate them in this prompt.
+2. **Static PV/PVC are chart-shaped**: After deleting PVC, PV, and/or the Longhorn `Volume` CR, **waiting passively for a PVC to “reappear” is unreliable**. A **`helm template` of `helm/generic-app` using the HelmRelease’s values, followed by `kubectl apply` of the right documents** for the target volume(s) is the deterministic fix when objects are missing or not binding.
+3. **Cluster access**: Use `kubectl` forms your environment allows (e.g. `kubectl get pvc --namespace [NAMESPACE]` or `kubectl scale deployment [NAME] --namespace [NAMESPACE] --replicas=0`).
+4. **Replica count vs Git**: Scaling with `kubectl scale` while `spec.values.app.replicas` in Git still says `1` creates drift: the next successful Helm reconcile can reset replicas. During maintenance, either set **`app.replicas: 0`** in the HelmRelease and reconcile, **`flux suspend helmrelease`** for that app, or after recovery **`kubectl scale`** back up and confirm Git matches what you want.
+5. **Symptoms**: A **faulted** or not-ready Longhorn volume often surfaces as **`FailedAttachVolume`** / _volume … is not ready for workloads_ and pods stuck in **`ContainerCreating`**. **Scale the workload to 0** before deleting PVCs or kicking restores so nothing keeps trying to attach.
+6. **Scale-up order**: After a Longhorn restore, **Kubernetes needs the static PV and PVC before the workload**. Longhorn data can be healthy while **`[APP_NAME]-config`-style objects are still absent**; scaling the Deployment first creates pods that cannot bind storage. **Apply PV/PVC (rendered from `helm/generic-app`), confirm PVC `Bound`, then scale up** (or delete a pod that was created too early so the ReplicaSet creates a new one).
 
 # Preconditions
 
@@ -56,14 +56,14 @@ Confirm from Git:
 2. **Delete PVC** for each target Longhorn volume (only those names; **not** CNPG or SMB PVCs in the namespace).
 3. **Delete PV** when needed:
    - Chart static PVs use **reclaim policy `Retain`**. After the PVC is gone, the PV moves to **`Released`** and must be **deleted** before you can recreate a same-named static PV.
-   - If you still had a **dynamically provisioned** Longhorn PV (PVC `volumeName` like `pvc-<uid>`), reclaim is often **`Delete`** and the PV may disappear with the PVC—nothing extra to delete.
+   - If you still had a **dynamically provisioned** Longhorn PV (PVC `volumeName` like `pvc-<uid>`), reclaim is often **`Delete`** and the PV may disappear with the PVC; nothing extra to delete.
 4. **Restore** the Longhorn volume from backup (UI, or patch `volumes.longhorn.io/[LONGHORN_VOL]` with `spec.fromBackup` to the backup URL, per Longhorn docs for your version).
 5. **Wait** until the Longhorn volume can attach (healthy / restored per your cluster).
 6. **Re-create Kubernetes objects** from the chart:
    - **Preferred long-term**: `flux reconcile helmrelease --namespace [NAMESPACE] [HELMRELEASE_NAME] --with-source`, then verify Longhorn `Volume` + PV + PVC exist and PVC is `Bound`.
    - **If PV/PVC are missing or wrong**: render from **Git** (see **Render command**) and apply **only** what you need. When the Longhorn **`Volume` CR already exists** from restore, apply **only `PersistentVolume` + `PersistentVolumeClaim`** so you do not overwrite in-progress restore state on the Volume CR.
    - Right after apply, the PVC may show **`Pending`** briefly, then **`Bound`** once the volume is ready for attachment.
-7. **Gate before scale-up** — Do **not** raise replicas until **`PersistentVolume` and `PersistentVolumeClaim` exist** and the PVC is **`Bound`** to the correct PV (`spec.csi.volumeHandle` = `[LONGHORN_VOL]`). If the workload scaled up while the PVC was missing or **`Pending`**, fix storage first, wait for **`Bound`**, then **delete the stuck pod** if needed so a new one schedules.
+7. **Gate before scale-up**: Do **not** raise replicas until **`PersistentVolume` and `PersistentVolumeClaim` exist** and the PVC is **`Bound`** to the correct PV (`spec.csi.volumeHandle` = `[LONGHORN_VOL]`). If the workload scaled up while the PVC was missing or **`Pending`**, fix storage first, wait for **`Bound`**, then **delete the stuck pod** if needed so a new one schedules.
 8. **Scale up** (Git and/or `kubectl scale` per your drift strategy). **Verify** pod running, PVC `Bound`, app healthy.
 
 # Render command (reference)
@@ -96,7 +96,7 @@ helm template [HELMRELEASE_NAME] helm/generic-app -f .scratch/[APP_NAME]-helm-va
       and (.metadata.name == "bazarr-config" or .metadata.name == "bazarr-models"))' - \
 ```
 
-**Backup URL from the cluster** (when you need the `fromBackup` string for `kubectl patch`—**`lastBackup` is not always the backup you want**):
+**Backup URL from the cluster** (when you need the `fromBackup` string for `kubectl patch`; **`lastBackup` is not always the backup you want**):
 
 ```bash
 bid=$(kubectl get volumes.longhorn.io [LONGHORN_VOL] --namespace longhorn-system -o jsonpath='{.status.lastBackup}')
@@ -110,9 +110,9 @@ Notes:
 
 # Related repository assets
 
-- `helm/generic-app/templates/storage-longhorn.yaml` — canonical PV/PVC/Longhorn Volume shape.
-- `scripts/longhorn/bulk-restore-from-backup.sh` — bulk candidate restore; **waits for PVC to reappear** after delete without reconciling Helm. For `generic-app` static PV/PVC, use **Helm reconcile + render/apply** as above instead of relying on that wait alone.
-- `scripts/longhorn/README.md` — other Longhorn maintenance scripts.
+- `helm/generic-app/templates/storage-longhorn.yaml`: canonical PV/PVC/Longhorn Volume shape.
+- `scripts/longhorn/bulk-restore-from-backup.sh`: bulk candidate restore; **waits for PVC to reappear** after delete without reconciling Helm. For `generic-app` static PV/PVC, use **Helm reconcile + render/apply** as above instead of relying on that wait alone.
+- `scripts/longhorn/README.md`: other Longhorn maintenance scripts.
 
 # Checklist for handoff to another agent
 

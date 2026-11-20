@@ -83,7 +83,7 @@ def main() -> int:
     client = Client(url=host, token=token)
     try:
         vault = client.get_vault_by_title(vault_name)
-    except Exception as exc:  # noqa: BLE001 — surface Connect ACL/name mistakes
+    except Exception as exc:  # noqa: BLE001 (surface Connect ACL/name mistakes)
         print(f"vault {vault_name!r} not readable via Connect: {exc}", file=sys.stderr)
         return 1
 
@@ -121,7 +121,7 @@ def main() -> int:
     known_path.write_text(_normalize_multiline(known_hosts), encoding="utf-8")
     known_path.chmod(0o644)
 
-    # Never print secret material — lengths only for operator debug.
+    # Never print secret material; lengths only for operator debug.
     print(
         f"wrote {private_path} ({private_path.stat().st_size} bytes), "
         f"{known_path} ({known_path.stat().st_size} bytes) "

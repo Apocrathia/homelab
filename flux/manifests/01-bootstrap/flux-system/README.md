@@ -31,7 +31,7 @@ The Status UI is available at
 
 The Authentik objects live in the canonical file pair (`crossplane.yaml` +
 `authentik.tf`): a Crossplane opentofu Workspace manages both gates and
-adopts the retired blueprint's live objects in place; `kustomization.yaml`
+adopts the existing live objects in place; `kustomization.yaml`
 stitches the HCL into the Workspace at build time.
 
 ## Secrets

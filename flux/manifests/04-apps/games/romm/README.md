@@ -60,7 +60,7 @@ Create a 1Password item:
 
 `romm-nightly-metadata-scan` runs at 03:00 America/Denver and enqueues **Unmatched** then **Update** scans (fill gaps, then refresh already-matched metadata). Built-in scheduled rescans use Quick mode and only pick up new files.
 
-Scans run in **rotation** (`SCAN_ROTATION=7`): each night enqueues one job per platform whose `id % 7 == weekday`, so every platform gets one bounded night per week instead of a single 4h job that can never walk the ~36k-rom library. Each job gets its own `SCAN_TIMEOUT` (a slow platform only burns its own job), and the queue drains serially (`SCAN_WORKERS=1`). Big platforms (mame ≈ 13.5k roms) converge over several rotations — each pass drops newly matched roms from the next. `SCAN_SKIP_PENDING=40` skips a night while the previous night's jobs are still draining. Manual whole-library runs still work by unsetting the rotation envs.
+Scans run in **rotation** (`SCAN_ROTATION=7`): each night enqueues one job per platform whose `id % 7 == weekday`, so every platform gets one bounded night per week instead of a single 4h job that can never walk the ~36k-rom library. Each job gets its own `SCAN_TIMEOUT` (a slow platform only burns its own job), and the queue drains serially (`SCAN_WORKERS=1`). Big platforms (mame ≈ 13.5k roms) converge over several rotations, each pass drops newly matched roms from the next. `SCAN_SKIP_PENDING=40` skips a night while the previous night's jobs are still draining. Manual whole-library runs still work by unsetting the rotation envs.
 
 The CronJob uses a namespaced ServiceAccount to `kubectl exec` into the romm pod and enqueue the scan on RomM's local RQ/Valkey queue. No HTTP/OIDC credentials required.
 
@@ -75,7 +75,7 @@ kubectl logs -n romm job/romm-nightly-metadata-scan-manual
 `romm-esde-media-import` runs Thursday 05:00 America/Denver, after
 `esde-media-scraper` refreshes ES-DE media on the Games share
 (`Emulation/media/<platform>/<type>/<rom>.png`). It fills **missing** RomM
-assets only — miximages become rom covers, and covers/3dboxes/physicalmedia/
+assets only, miximages become rom covers, and covers/3dboxes/physicalmedia/
 screenshots/titlescreens/manuals/wheels land as RomM media types. Existing
 assets are never overwritten. The scan trigger also gets `gamelist` in its
 metadata sources; skyscraper copies each gamelist to
@@ -89,7 +89,7 @@ kubectl exec -i -n romm deploy/romm -c romm -- \
 
 # Segmented backfill: platform → letter shards (~CAP roms each, oversized
 # letters recurse to a second filename character), 2 lanes, per-segment
-# retries. 3 lanes OOM-kill the pod via CIFS dirty pages — keep --lanes ≤ 2.
+# retries. 3 lanes OOM-kill the pod via CIFS dirty pages: keep --lanes ≤ 2.
 python3 flux/manifests/04-apps/games/romm/src/import-backfill.py --platforms nes,nds
 python3 .../src/import-backfill.py --dry-run          # report only
 kubectl exec -i -n romm deploy/romm -c romm -- env CAP=1200 \

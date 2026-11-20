@@ -51,7 +51,7 @@ SubGen is pre-configured with:
 
 - **Model**: `base` (balanced accuracy and performance)
 - **Device**: CPU (for GPU support, change `TRANSCRIBE_DEVICE` to `cuda` and use GPU image)
-- **Concurrent Transcriptions**: 2
+- **Concurrent Transcriptions**: set in `helmrelease.yaml`
 - **Port**: 9000 (internal to pod)
 - **Model Storage**: Persistent volume for downloaded Whisper models
 

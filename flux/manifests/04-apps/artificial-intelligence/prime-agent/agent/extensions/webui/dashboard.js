@@ -48,8 +48,8 @@ function linkify(text) {
   return frag;
 }
 
-// --- 7ac: path links — file paths in feed text become clickable .plink
-// anchors; the CLICK opens the viewer overlay (fetch on click ONLY — render
+// --- 7ac: path links, file paths in feed text become clickable .plink
+// anchors; the CLICK opens the viewer overlay (fetch on click ONLY, render
 // never fetches). Detection: /Users/... absolutes, ~/ home paths, the
 // .scratch/.worktrees repo-relative patterns (the corpus shapes: paths ride
 // 42% of spawn briefs / 47% of agent replies / 78% of child replies / 84
@@ -96,7 +96,7 @@ function pathify(n) { // 7ac: one text node -> before/anchor/after (multiple mat
   n.remove();
 }
 
-// ---- feed markdown (7e): minimal hand-rolled renderer — copy the TUI, no deps.
+// ---- feed markdown (7e): minimal hand-rolled renderer, copy the TUI, no deps.
 // ALL text lands via createTextNode/textContent (never innerHTML), so markup
 // is escaped BY CONSTRUCTION; link hrefs are scheme-validated below.
 const MD_SAFE_URL_RE = /^(https?:\/\/|www\.)/; // http(s) only — javascript: etc render literal
@@ -140,7 +140,7 @@ const MD_QUOTE_RE = /^\s*>/;
 const MD_UL_RE = /^\s*[-*+]\s+(.*)$/;
 const MD_OL_RE = /^\s*\d+[.)]\s+(.*)$/;
 function mdRender(text, depth) { // -> DocumentFragment of block elements
-  // 7ad: vendored marked + DOMPurify when both loaded (tables — the live
+  // 7ad: vendored marked + DOMPurify when both loaded (tables, the live
   // defect); typeof-guards so a lib-less boot or node harness falls through
   // to the hand-rolled renderer below (escaped by construction, as before).
   if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined' && DOMPurify.isSupported) {
@@ -206,12 +206,12 @@ function mdRenderHouse(text, depth) { // in-house fallback — copy the TUI, no 
   pathLinks(frag); // 7ac: same walk for the house renderer (idempotent — nested quote renders pass twice)
   return frag;
 }
-// 7ab-b/cell-kind: in-house CODE tokenizers — the jsonHighlight regex family
+// 7ab-b/cell-kind: in-house CODE tokenizers, the jsonHighlight regex family
 // extended (no vendored dep, ~30 lines). Two dialects share one scanner:
 // python (comments/strings/def-names/keywords/numbers) and bash (strings/
 // $vars/comments/keywords/operators/numbers). Fenced ```python blocks in
 // rendered markdown + the ipython toolcard's code cells render through it;
-// every token lands via createTextNode/textContent — escaped by
+// every token lands via createTextNode/textContent, escaped by
 // construction, like the rest of the renderer family.
 const PY_RE = /(#[^\n]*)|([rRbBuUfF]{0,3}(?:'''[\s\S]*?'''|"""[\s\S]*?"""|'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"))|(\b(?:def|class)\s+\w+)|(\b(?:and|as|assert|async|await|break|case|continue|def|del|elif|else|except|False|finally|for|from|global|if|import|in|is|lambda|match|None|nonlocal|not|or|pass|raise|return|True|try|while|with|yield)\b)|(\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)/g;
 const SH_RE = /(\$\{[^}]*\}|\$[#?$!@*]|\$\w+)|(#[^\n]*)|('(?:\\.|[^'])*'|"(?:\\.|[^"\\])*")|(\b(?:if|then|elif|else|fi|for|while|until|do|done|case|esac|function|select|in|time|return|exit|export|local|source|set|unset|echo|cd)\b)|(2>&\d|\d?>{1,2}|\d?<&?\d+|\|\||&&|[|;&])|(\b\d+(?:\.\d+)?\b)/g;
@@ -256,12 +256,12 @@ function mdToPlain(t) { // 7ax: the LIST subtitle renders md-free — links -> t
 }
 feed.addEventListener('scroll', () => { if (feedGap() < PIN) { pillMute = false; pillHide(); } else if (!pillMute) pillShow(); }); // 7ao-b: the return-to-latest pill shows WHENEVER the feed sits above the bottom (any unpinned scroll, not just growth) — reaching the bottom re-hides it + clears the click-flight mute
 // 7ao scroll-fight fix: pinned-bottom-only autoscroll. The old nearBottom
-// flag (80px, recomputed ONLY on scroll events) was stale by construction —
+// flag (80px, recomputed ONLY on scroll events) was stale by construction,
 // appends below the fold fire no scroll event, so the flag kept saying
 // "pinned" while every delta's scrollTo yanked the operator's wheel back
-// down (the fight). Now every feed-appending site measures the gap BEFORE
+// every feed-appending site measures the gap BEFORE
 // its DOM update: <40px = pinned (follow the new bottom after the append),
-// else NO scrollTo at all — the browser preserves scrollTop across appends —
+// else NO scrollTo at all, the browser preserves scrollTop across appends,
 // and new content lights the grey "↓ latest" pill instead.
 let pill = null, pillMute = false; // pillMute: the click's own smooth-scroll flight — the pill never flickers mid-animation (pinned clears it)
 function pillHide() { if (pill) pill.style.display = 'none'; }
@@ -278,7 +278,7 @@ function pillShow() {
   pill.style.bottom = (((comp && comp.offsetHeight) || 0) + ((qb && qb.offsetHeight) || 0) + 12) + 'px';
   pill.style.display = 'block';
 }
-// 7ad: vendored md libs — script tags injected here (the html template lives
+// 7ad: vendored md libs, script tags injected here (the html template lives
 // in server.mjs); a missing /static route or offline boot just 404s and the
 // in-house fallback above keeps rendering. onload chain: purify after marked.
 (function loadMdLibs() {
@@ -291,7 +291,7 @@ function pillShow() {
 })();
 const toolStatus = {}; let liveNode = null, liveTextSeen = 0; // liveTextSeen: 7ap typewriter gate — the live stream carried text for THIS message (lives HERE so the applyItem batteries inherit the declaration)
 // 7ao pin state: PIN px from the bottom still counts as pinned; feedGap is
-// the pre-measure (call it BEFORE the DOM update — after an append the gap
+// the pre-measure (call it BEFORE the DOM update, after an append the gap
 // already grew). || 0 guards: a dimension-less feed (headless boards) is
 // always "pinned", never scrolls, never pills.
 const PIN = 40;
@@ -329,12 +329,12 @@ function renderAssistant(item, streaming) {
   if (streaming) { c = document.createElement('span'); c.className = 'cursor'; seatCursor(body, mdTail, c); } // 7(z)-b: the cursor rides INLINE at the md output's text tail — one element, moved per delta, never re-created
   return { node: n, body, time: tm, cursor: c };
 }
-// 7ab: ipython cells split CODE vs OUTPUT — the args JSON carries the input
+// 7ab: ipython cells split CODE vs OUTPUT, the args JSON carries the input
 // code; the card renders it as a mono code block (tcode, grey-1 bg) instead
 // of the raw args blob, and the result rides its own preformatted block
 // (tout, distinct bg via the .ipy card class). Non-code tools keep the
 // plain targs treatment. A keyword-extended highlighter for code is a stretch
-// goal — the SPLIT is the fix; the code stays plain mono here.
+// goal, the SPLIT is the fix; the code stays plain mono here.
 function ipyCell(args) { // {code, rest, kind, command} when the args parse and carry a code string; null otherwise. kind: python | bash
   if (typeof args !== 'string' || !args) return null;
   let a; try { a = JSON.parse(args); } catch (e) { return null; }
@@ -343,14 +343,14 @@ function ipyCell(args) { // {code, rest, kind, command} when the args parse and 
   const command = ipyBashKind(a.code);
   return command !== null ? { code: a.code, rest, kind: 'bash', command } : { code: a.code, rest, kind: 'python' };
 }
-// cell-kind detection — the payload verdict (617/617 this session, 3,429/3,429
+// cell-kind detection, the payload verdict (617/617 this session, 3,429/3,429
 // fleet-wide): ipython toolCall args ALWAYS carry a python-source .code; NO
-// command field, NO sub-kind marker — shell commands ride INSIDE the code as
+// command field, NO sub-kind marker, shell commands ride INSIDE the code as
 // `h = bash('cmd')` wrappers (59 here). Detection is therefore code-text
 // shaped: the bash()-wrapper pattern (first statement an optional-assignment
-// [await] bash('...') with only trivial tail statements — output prints,
+// [await] bash('...') with only trivial tail statements, output prints,
 // handle awaits, sleeps); the command string extracts and unescapes. A
-// raw-shell fallback (shebang / lead-word + shell operators — 0 in the wild,
+// raw-shell fallback (shebang / lead-word + shell operators, 0 in the wild,
 // cheap insurance) covers hand-shaped payloads. Everything else = python.
 const IPY_BASH_HEAD = /^[ \t]*(?:[A-Za-z_]\w*\s*=\s*)?(?:await\s+)?bash\s*\(\s*/;
 function ipyStrLit(s, i) { // -> index just past the closing quote of the literal at s[i], or -1 (escapes honored)
@@ -410,12 +410,12 @@ function tcArgs(t, args) { // cell-kind: code cells render tokenized (python cel
   } else { t.ar.className = 'targs'; txt(t.ar, args); }
   pathLinks(t.ar); // 7ac: spawn-brief/edit paths inside args open the viewer too
 }
-// 7ab: in-house JSON highlight — NO vendored dep, a ~30-line regex tokenizer.
+// 7ab: in-house JSON highlight, NO vendored dep, a ~30-line regex tokenizer.
 // The agentmsg body often carries an A2A envelope as a one-line blob; when the
 // text parses as JSON we pretty-print (2-space) and color the tokens: keys
 // grey-3, strings a green-grey, numbers/bools/null distinct. Non-JSON text
 // keeps the plain render (the caller falls back to txt()). All text lands via
-// createTextNode/textContent — escaped by construction, like the md renderer.
+// createTextNode/textContent, escaped by construction, like the md renderer.
 function jsonHighlight(t) { // a fragment of .j-* spans + text nodes, or null when not JSON
   let v;
   try { v = JSON.parse(t); } catch (e) { return null; }
@@ -436,12 +436,12 @@ function jsonHighlight(t) { // a fragment of .j-* spans + text nodes, or null wh
   if (last < src.length) frag.appendChild(document.createTextNode(src.slice(last)));
   return frag;
 }
-// 7ab-b: EMBEDDED JSON — the operator re-report: agent messages embed JSON
+// 7ab-b: EMBEDDED JSON, the operator re-report: agent messages embed JSON
 // INSIDE prose (verdict lines + the blob), so the whole-text parse gate above
 // misses it. Detection: fenced ```json blocks + brace-balanced spans within
 // the prose; each candidate parses, pretty-prints (2-space) + highlights IN
 // PLACE (.j-* spans); non-JSON prose stays plain; unparseable/overlapping
-// candidates fall back to raw text. All output via text nodes — escaped by
+// candidates fall back to raw text. All output via text nodes, escaped by
 // construction, like the rest of the family.
 function spanClose(t, i) { // index of the bracket closing t[i] (string-aware), or -1 — the brace-balance scan
   const open = t[i], close = open === '{' ? '}' : ']';
@@ -490,7 +490,7 @@ function jsonEmbedRender(text) { // the agentmsg body: whole-JSON keeps the 7ab 
   }
   return frag;
 }
-// --- 7(r): per-item timestamps — grey, non-accent; HH:MM today, MMM DD HH:MM
+// --- 7(r): per-item timestamps, grey, non-accent; HH:MM today, MMM DD HH:MM
 // across a day boundary. Items without ts (data absent) render no time. ---
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const two0 = (n) => String(n).padStart(2, '0');
@@ -511,7 +511,7 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
       // optimistic-echo reconcile: the first FIFO-matching pending node is
       // consumed by the real server item (exact text, one per send); the
       // cmdparity rider: a directive-annotated delivery (/skill:NAME,
-      // commands, /fork — the annotation is a PREFIX) ends with the raw
+      // commands, /fork, the annotation is a PREFIX) ends with the raw
       // echo text, so an exact miss falls back to the suffix match
       const pe = pendingEchoes.findIndex((x) => x.text === item.text);
       const ae = pe >= 0 ? pe : (item.text ? pendingEchoes.findIndex((x) => item.text.endsWith(x.text)) : -1); // exact beats suffix, FIFO within each pass — the echo never lingers on command sends
@@ -525,7 +525,7 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
         for (const tc of item.toolCalls || []) if (!toolStatus[tc.id]) toolCard(tc.id, tc.name, 'done', tc.args);
         // 7ap-2.0 typewriter dump gate (operator re-report: "i'm still seeing
         // text instantly appear"): the emulation fires for live-path FINAL
-        // items whose text arrived as a DUMP SHAPE — <=1 text-bearing live
+        // items whose text arrived as a DUMP SHAPE, <=1 text-bearing live
         // event (0 = the silent class: a wait + one burst, no partial text
         // ever existed upstream; 1 = the provider-buffered class: one
         // full-text delta, ~19% of glm-5.3-prime completions). Both reveal
@@ -541,7 +541,7 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
       break;
     case 'notice': endLive(); const nn = el('item notice' + (item.boundary ? ' boundary' : '')); txt(nn, item.text); itemTime(nn, item.ts); break; // G2: the compaction strip carries the boundary class
     case 'custom': endLive();
-      // 7ag-c: harness-digest entries get the SYSTEM-BLOCK treatment — a
+      // 7ag-c: harness-digest entries get the SYSTEM-BLOCK treatment, a
       // HARNESS micro-label (never the raw customType), the dim hairline
       // container, and the details/summary mode respect (collapsed in
       // Collapsed/Details, open in Expanded): the injected preamble is
@@ -556,7 +556,7 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
         pathLinks(bd); // 7ac: paths inside the digest linkify like everywhere else
         dd.appendChild(bd);
       }
-      // 7ag: refinement boxes — TUI special-box parity. Refinements
+      // 7ag: refinement boxes, TUI special-box parity. Refinements
       // (refinement_notice/refinement_outcome custom messages) get their OWN
       // accented treatment: hairline frame + lime label/edge, body stays grey
       // (the accent law: no lime flood). Distinct from plain notices and the
@@ -567,7 +567,7 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
         const rs = document.createElement('div'); txt(rs, item.text || ''); rn.appendChild(rs);
         if (item.ts) itemTime(rn, item.ts);
       }
-      // 7(s): subagent replies collapse like thinking/toolcards — summary =
+      // 7(s): subagent replies collapse like thinking/toolcards, summary =
       // label + first-line preview, body = full text; applyDetailMode opens
       // them only in Expanded (no toolcard class).
       else if (item.label === 'agent_message' || (item.text || '').startsWith('[agent-message')) {
@@ -589,15 +589,15 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
   const last = feed.lastElementChild; // 7ah: the Copy-text hook — the node this call just appended (the pinned user line stays untouched)
   if (last && last !== prev && item.text != null) cmText.set(last, item.text);
   if (feed.scrollHeight > h0) { if (wasPinned) feed.scrollTop = feed.scrollHeight; else pillShow(); } // 7ao: pinned follows the new bottom; unpinned stays put + the pill lights (no growth = no scroll, no pill)
-  // 47-bench P0#2: no per-item detail-mode sweep — details are born mode-correct
+  // 47-bench P0#2: no per-item detail-mode sweep, details are born mode-correct
   // (construction sites below) and the replay loops apply it once after the
   // batch (showSession). The old querySelectorAll-per-item was the O(n^2)
   // behind the ~112ms open freeze; it also stomped manually-opened blocks on
   // every arriving item. Single SSE items (one per event) need no sweep.
 }
-// 7ap-2.0 fast-forward: the typewriter emulation's skip button — lazy like
+// 7ap-2.0 fast-forward: the typewriter emulation's skip button, lazy like
 // the pill, the bottom-LEFT mirror (grey-4 glyph + hairline, subtle). Shows
-// ONLY during an active emulation — and only when it's long enough to be
+// ONLY during an active emulation, and only when it's long enough to be
 // skippable (>= TW_FF_MS; a sub-second reveal flashing a button is noise,
 // not signal). Click = jump-to-full + hide; completion auto-hides.
 let ffBtn = null;
@@ -615,17 +615,17 @@ function ffShow() {
   ffBtn.style.bottom = (((comp && comp.offsetHeight) || 0) + ((qb && qb.offsetHeight) || 0) + 12) + 'px';
   ffBtn.style.display = 'inline-block';
 }
-// 7ap typewriter 2.0 — ponytail: PURE COSMETIC client-side smoothing for
+// 7ap typewriter 2.0, ponytail: PURE COSMETIC client-side smoothing for
 // gateway-buffered arrivals (the upstream never streamed partial text, so
-// nothing real is being faked — the dump just gets paced). 2.0 (operator
+// nothing real is being faked, the dump just gets paced). 2.0 (operator
 // design): the dump gate extends to the SINGLE-DELTA class (the message's
-// text arrived in <=1 text-bearing live event — the liveTextSeen counter
+// text arrived in <=1 text-bearing live event, the liveTextSeen counter
 // decides; silent AND single-delta finals both reveal, a real stream never
-// emulates), and the reveal PACES at the OBSERVED rate — the burst strip's
+// emulates), and the reveal PACES at the OBSERVED rate, the burst strip's
 // rolling tok/s median (duration = tokens/rate, capped so huge dumps don't
-// crawl) — while the fast-forward button floats bottom-left (skip if you're
+// crawl), while the fast-forward button floats bottom-left (skip if you're
 // in a rush). window.__TW_FAST (tests) completes on the first tick. Upgrade
-// path if this ever reads as fake: drop it — the fix for the bimodal gateway
+// path if this ever reads as fake: drop it, the fix for the bimodal gateway
 // is upstream (LiteLLM router config), not here.
 let tw = null; // the running reveal: { iv, body, text, time }
 const TW_STEP_MS = 30, TW_MIN_MS = 300, TW_CAP_MS = 4500, TW_FALLBACK_MS = 720, TW_FF_MS = 1000; // 30ms frames; duration floor/cap; no rate samples -> the flat legacy ~720ms; the FF button shows only for reveals >= 1s (shorter = a flash of noise)
@@ -681,7 +681,7 @@ let busyStart = null, busyTick = null, turn = null; // TUI turn strip (TUI-META-
 const BURST_GAP = 2000; // >2s of live-delta silence = the inference burst is over
 // 7ap-2.0 rate window: a finished inference burst folds its tok/s into the
 // rolling sample set the typewriter paces at (the observed-rate median).
-// Dump bursts never qualify — a single full-text delta has a zero-elapsed
+// Dump bursts never qualify, a single full-text delta has a zero-elapsed
 // window; tiny/sub-half-second windows are noise. Once per burst (done flag).
 const burstRates = []; // declared HERE (next to its writer) — the busy-region slices carry it; the fn-region batteries stub it
 function commitBurst() {
@@ -767,7 +767,7 @@ async function showList() { // sidebar refresh: rows render ONLY in the sidebar;
 }
 // 7an sidebar search: a hairline input at the top of the list filters the
 // cached rows LIVE (client-side; the sessions array is in memory post-refresh).
-// Match fields per the corpus finding: name + cwd + id + the activity recap —
+// Match fields per the corpus finding: name + cwd + id + the activity recap,
 // names exist on ~24% of sessions, so the recap carries the content-ish recall.
 let searchQ = '', listData = null;
 let hbActive = new Map(); // 7bc-2: the ACTIVE-target set — sessionId -> interval; hbTargets() rebuild it each hbTick (the 7bc block), renderRow paints the lime pulse glyph for members, renderHbPane paints the open pane's chip
@@ -776,7 +776,7 @@ const rowMatch = (s, qy) => [s.name, s.cwd, s.id, s.activity].some((f) => typeof
 const treeMatch = (s, qy) => rowMatch(s, qy) || (s.children || []).some((c) => treeMatch(c, qy)); // a matching child keeps its ancestor chain visible
 searchEl.addEventListener('input', () => { searchQ = searchEl.value; renderList(); });
 searchEl.addEventListener('keydown', (e) => { if (e.key === 'Escape') { searchEl.value = ''; searchQ = ''; renderList(); searchXVis(); } }); // clear-on-Escape (the X hides with it)
-// 7an clear-X: the search input's own clear affordance — a hairline × on the
+// 7an clear-X: the search input's own clear affordance, a hairline × on the
 // input's right, VISIBLE ONLY while text is present; a click clears the query,
 // re-renders the full list, and keeps focus in the input.
 const searchX = document.createElement('button');
@@ -816,7 +816,7 @@ function renderRow(s, box, depth, keep) { // keep: 7an search predicate (undefin
   if (depth) { row.classList.add('child'); row.style.paddingLeft = (20 + depth * 24) + 'px'; }
   const main = document.createElement('div'); main.className = 'row-main'; row.appendChild(main);
   const kids = s.children || [];
-  // line 1 — the narrow-column read: live badge + title + age, nothing else inline
+  // line 1, the narrow-column read: live badge + title + age, nothing else inline
   if (s.live) { const b = document.createElement('span'); b.className = s.status === 'working' ? 'badge' : 'badge idle'; txt(b, 'live'); main.appendChild(b); } // 7w: two-tier — lime stays working-only; live-but-idle wears the grey-3 outline (the subs bar keeps its own ●/◐/○ tiers)
   if (hbActive.has(s.id)) { const hb = document.createElement('span'); hb.className = 'hbglyph'; txt(hb, '\u2665\uFE0E'); hb.title = 'active heartbeat' + (hbActive.get(s.id) ? ' \u2014 ' + hbActive.get(s.id) : ''); main.appendChild(hb); } // 7bc-2: the per-session heartbeat pulse glyph — lime (a heartbeat IS live activity; the accent law holds), the status-dot dialect at the subs-glyph scale; hover = the job's interval
   const shell = s.count === 0; // row-state: header-only ghost (zero-message shell, 38-corpus) — dimmed + the '(empty)' recap
@@ -935,9 +935,9 @@ async function showSession(id, restore, force) { // selection model: one click l
   ctxPanePaint(s); // 7au: the chip's first paint rides the row's own context fields; the 30s poll refines live
 }
 // 7as per-chat drafts: every session owns its unsent composer text in its own
-// localStorage slot — `webui-draft-<sessionId>` (empty string = none). The
+// localStorage slot, `webui-draft-<sessionId>` (empty string = none). The
 // draft is the UNSENT text ONLY: a send clears the slot the moment the text
-// leaves the composer (idle echo or busy queue — the queue strip is server
+// leaves the composer (idle echo or busy queue, the queue strip is server
 // truth and never mirrors into drafts), a send failure re-saves the restored
 // text (growInput's autosave), and the showSession chokepoint above saves the
 // leaving chat's composer before the entering chat's draft loads. Autosave
@@ -1064,7 +1064,7 @@ function send() {
   const h0 = feed.scrollHeight, wasPinned = feedGap() < PIN; // 7ao: pre-measured before the echo
   if (busyNow) { pendingQueue.push(t); renderQueueStrip(); } // 7(y): a queued steer shows in the strip ONLY — the feed block waits for delivery (no double render)
   else { // optimistic echo: the message is in the feed NOW; the real item event
-    // reconciles it (FIFO dedupe by exact text) — idle sends only
+    // reconciles it (FIFO dedupe by exact text), idle sends only
     const node = el('item user pending md-body'); youLabel(node); node.appendChild(mdRender(t)); // 7ak/7al: the echo mirrors the real user item's render shape
     pendingEchoes.push({ text: t, node });
   }
@@ -1100,8 +1100,8 @@ input.addEventListener('input', growInput);
 
 // --- input pickers: "/" slash-command palette + "@" file references ---
 // Both insert RAW TEXT: session/extension commands execute only when sent
-// while IDLE (a busy send queues as a steer and never executes — the palette
-// disables them); @refs stay literal — the model reads the file with tools.
+// while IDLE (a busy send queues as a steer and never executes, the palette
+// disables them); @refs stay literal, the model reads the file with tools.
 const SLASH_SESSION = { // runtime-parsed built-ins, sendable as raw text when idle
   compact: 'compact context [instructions]',
   refine: 'refine memories/notes',
@@ -1209,7 +1209,7 @@ async function refreshFiles(tok, start) {
   pop.tok = tok; pop.start = start;
   const q = tok.startsWith('@"') ? tok.slice(2) : tok.slice(1);
   if (q.startsWith('/') || q.startsWith('~')) {
-    // fd feeds from the session cwd — absolute/~/ tokens complete only as the
+    // fd feeds from the session cwd, absolute/~/ tokens complete only as the
     // typed literal (spec: ~/ and absolute paths supported)
     pop.note = ''; pop.fail = false; // a stale failure hint must not ride along
     pop.rows = [{ path: q, isDir: false }];
@@ -1284,7 +1284,7 @@ function popAccept() {
     input.selectionStart = input.selectionEnd = at;
     return;
   }
-  // files: replace the typed @-token with the RAW path — nobody expands it
+  // files: replace the typed @-token with the RAW path, nobody expands it
   let p = r.path;
   if (r.isDir && !p.endsWith('/')) p += '/'; // directories insert with trailing "/" + space
   const body = p.includes(' ') ? '@"' + p + '"' : p; // quoted form for spaces
@@ -1346,7 +1346,7 @@ input.addEventListener('blur', () => closePop());
 stopBtn.onclick = async () => { const r = await post('/abort', { session: sid }); if (!r.ok) sendError('abort failed \u2014 ' + (r.err || 'request failed')); };
 // new conversation: collector spawns an rpc agent; its beacon registers it
 // live (~1-3s), then we select it in the pane. ponytail: we take the
-// first NEW live row — an unrelated agent registering in the same window
+// first NEW live row, an unrelated agent registering in the same window
 // would be mistaken for ours; upgrade path is a spawn->sessionId handshake
 // in the beacon protocol. The "+" click opens a small cwd form first; the
 // POST body carries {cwd} only when the input is non-empty (empty = home).
@@ -1425,15 +1425,15 @@ if (savedW) applySidebarWidth(savedW); // persisted width survives refresh
 if (lsGet('webuiSidebarCollapsed') === '1') setCollapsed(true); // so does the collapse state
 
 // --- session menu (27-settings parity, sparse by directive): the beacon's 7
-// session endpoints ONLY — model, thinking, rename, context usage, compact,
+// session endpoints ONLY, model, thinking, rename, context usage, compact,
 // shutdown + the info line. NO harness-config surfaces (MCP servers, skills,
 // memories, subagents): the harness configures itself (operator directive).
 // The collector proxies /api/s/<id>/<endpoint> (settings need the session
-// LIVE — the button hides on past panes). Mouse-first, no keybinds; Escape +
+// LIVE, the button hides on past panes). Mouse-first, no keybinds; Escape +
 // outside-click close; one menu at a time. Busy behavior follows the beacon
 // contracts: model/thinking/rename are accepted anytime (the echo confirms
 // inline, the header updates without a reload); compact surfaces its 409 as
-// "busy — try when idle"; compact + shutdown carry inline confirm rows.
+// "busy, try when idle"; compact + shutdown carry inline confirm rows.
 let menu = null; // live menu: {el, mode, models, usage, note, err, confirm}
 let paneMeta = null; // the loaded session's API row — the header bits and the menu read it
 const menuBtn = $('#menuBtn'), resumeBtn = $('#resumeBtn'), shead = document.querySelector('.session-head');
@@ -1626,17 +1626,17 @@ document.addEventListener('mousedown', (e) => {
 });
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu) closeMenu(); }); // Escape closes (the sash-drag Escape listener is untouched)
 
-// --- context menu (7ah v1): right-click actions — sidebar session rows,
+// --- context menu (7ah v1): right-click actions, sidebar session rows,
 // child rows, feed items. ONE singleton panel wearing the menu's own chrome
 // (grey-2, hairline, square); lime on hover only. Native menu suppressed
 // inside the app chrome (main/sidebar panes) EXCEPT input/textarea (native
 // paste/spell survives); Escape + outside-click close. Session rows: Open /
-// Rename (the hamburger's own flow — the row's pane loads first; the form
+// Rename (the hamburger's own flow, the row's pane loads first; the form
 // posts to the pane's sid) / Copy ID / Shutdown (confirm row). Archive:
-// the arch BADGE landed with the row-state slice; the archive ACTION is
-// still unpaved — the item is HIDDEN until the action exists (the
+// the archive ACTION is
+// still unpaved, the item is HIDDEN until the action exists (the
 
-// roadmap). Child rows: Copy ID / Stop (live children — the 409 remedy) /
+// roadmap). Child rows: Copy ID / Stop (live children, the 409 remedy) /
 // Delete (row-state: confirm row -> POST /api/delete-agent; a still-live
 // child 409s -> "stop it first"; the ledger flips, the transcript persists).
 // Feed items: Copy text (the RAW source). Clipboard writes toast; headless
@@ -1715,14 +1715,14 @@ async function cmRename(id) {
   if (sid === id && live) openMenuAt('rename');
   else toast('rename needs a live session');
 }
-// --- 7bc-3 S2 (HBCFG): the heartbeat write affordances, the cm dialect —
+// --- 7bc-3 S2 (HBCFG): the heartbeat write affordances, the cm dialect,
 // the registry rows' menu (the state-dependent Pause/Resume + Delete w/ the
 // Shutdown-precedent confirm) + the live session row's schedule form (the
 // rename-form dialect). Every write rides the S1 endpoints; the 503
 // daemon-down posture disables the affordances until the next successful
 // read; ANY failed write re-reads the registry BEFORE the retry re-arms
 // (a 503-after-success duplicate is visible + deletable, never blindly
-// re-created). NO prompt prefill — the operator's directive: the form is
+// re-created). NO prompt prefill, the operator's directive: the form is
 // a picker + an EMPTY field, placeholder hints only. ---
 const HB_INTERVALS = [1, 5, 10, 15, 30, 60]; // the picker's offer — the operator's usage bracket; the API takes 1..1440 (the free-form knob stays conversational)
 async function hbReq(method, url, body) { // the write tier: status + json, never a throw (the cmPost dialect)
@@ -1899,7 +1899,7 @@ document.addEventListener('contextmenu', (e) => {
 document.addEventListener('mousedown', (e) => { if (cm && !cm.el.contains(e.target)) closeCm(); }); // outside-click (the menu's own listener is untouched)
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cm) closeCm(); }); // Escape closes (the sash-drag listener is untouched)
 
-// --- 7ac: file viewer — the .plink click target. ONE singleton overlay
+// --- 7ac: file viewer, the .plink click target. ONE singleton overlay
 // (the menu's chrome: grey-2 panel, hairline, square; no lime), mono text,
 // pre-wrap; header = path + Copy + Close; the FETCH happens here (the
 // standard authed header fetch), never at render. Escape + scrim click +
@@ -1953,11 +1953,11 @@ document.addEventListener('click', (e) => { // 7ac: delegated — anchors carry 
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && viewer) closeViewer(); }); // Esc closes the viewer (menu + sash listeners untouched)
 
 // --- 7bc: heartbeats section (the registry view) + 7bc-3 S2 (the write
-// affordances) — the daemon's scheduled-jobs store (scheduled-jobs.json
+// affordances), the daemon's scheduled-jobs store (scheduled-jobs.json
 // under the session-artifacts dirs) surfaced in the sidebar under the
 // sessions, grey + collapsible. S2: the rows' context menu carries the
 // write affordances (Pause/Resume + Delete) and a LIVE session row's menu
-// carries the schedule form — every write rides the S1 endpoints; the
+// carries the schedule form, every write rides the S1 endpoints; the
 // conversation keeps its own path (the agent runs rlm_heartbeat).
 // Active + paused render; cancelled/completed are history, hidden as
 // noise. ---
@@ -2005,7 +2005,7 @@ async function hbTick() { // fetches the registry; a failed read keeps the last 
   }
 }
 
-// --- 7au: the context chip — a CTX N% chip in the header next to the
+// --- 7au: the context chip, a CTX N% chip in the header next to the
 // sysmeter; ALWAYS visible while a live session is open (pinned by default,
 // solving the disappearing problem); polls the same /api/s/<id>/context-usage
 // the hamburger's usage item reads (the item stays the quick glance) every
@@ -2078,8 +2078,8 @@ if (deep) showSession(decodeURIComponent(deep[1]));
 else { const kept = lsGet('webuiSelected'); if (kept) showSession(kept, true); } // no deep link: restore the persisted selection
 setInterval(() => { if (!document.hidden) { showList(); hbTick(); } }, 15000); // sidebar refreshes every 15s while the page is visible (7bc: the heartbeats registry rides the same tick)
 
-// --- 7bc-2: the pane heartbeat chip — the open pane's status line carries
-// the same pulse glyph + a 'heartbeat' label (hover: 'active heartbeat —
+// --- 7bc-2: the pane heartbeat chip, the open pane's status line carries
+// the same pulse glyph + a 'heartbeat' label (hover: 'active heartbeat,
 // <interval>'). A DEDICATED element: every subBits write wipes #sSub's
 // textContent, a sibling survives; created lazily into the session-head
 // between #sSub and #sSubs, removed when the open conversation has no active
@@ -2101,7 +2101,7 @@ function renderHbPane() {
 // 7aa system meter: two stacked hairline tracks in the top bar (CPU over
 // MEM), grey fills ONLY (lime stays working-only), tiny mono % labels; hover
 // tooltips carry cores/load + GB. Polls /api/system every 5s; hidden until
-// it answers, hidden again on any error (graceful — an old collector 404s
+// it answers, hidden again on any error (graceful, an old collector 404s
 // and the meter just never shows).
 const sysmeter = $('#sysmeter'), cpuRow = $('#cpuRow'), memRow = $('#memRow'),
       cpuFill = $('#cpuFill'), memFill = $('#memFill'), cpuPctEl = $('#cpuPct'), memPctEl = $('#memPct');
@@ -2120,28 +2120,28 @@ sysTick(); // first paint without waiting the interval
 setInterval(() => { if (!document.hidden) sysTick(); }, 5000); // meter polls every 5s while the page is visible
 
 
-// --- 54-cmdk: the search palette (Cmd-K / Ctrl-K) — the deep transcript
+// --- 54-cmdk: the search palette (Cmd-K / Ctrl-K), the deep transcript
 // search surface over GET /api/search (the frozen slice-1 endpoint: the
 // singleton in-process scan, the 20x3 cap, the honest partial flag).
-// CHORD VERDICT (verified this slice): the chord is NEW — no Cmd-K/Ctrl-K
+// CHORD VERDICT (verified this slice): the chord is NEW, no Cmd-K/Ctrl-K
 // binding existed anywhere (the composer's Cmd-Enter/Ctrl-Enter send chord
 // is the house's only platform chord; every other keydown listener is
 // Escape-scoped), so it registers here per the design, MAC_UI picking the
 // modifier exactly like the send chord.
 // While open the palette OWNS its keys: a CAPTURE-phase handler consumes
 // Escape/arrows/Enter before any bubble-phase listener (the menu/cm/viewer/
-// ctxPop/sash/collapse Escape hatches never fire under it — capture beats
+// ctxPop/sash/collapse Escape hatches never fire under it, capture beats
 // their registration order; no guard-list edits needed).
 // Two result tiers per the design: the LOCAL row matches (the 7an sidebar
-// predicate — name/cwd/id/recap over the cached listData, instant, no fetch,
+// predicate, name/cwd/id/recap over the cached listData, instant, no fetch,
 // deduped against the server results once they land) render FIRST; the
 // SERVER content results (250ms debounce, seq-guarded fetch) render under
 // them. THE SNIPPET LAW (the pentest directive): raw transcript text renders
-// via createTextNode ONLY — the highlight is a string-split + a styled span,
+// via createTextNode ONLY, the highlight is a string-split + a styled span,
 // never innerHTML; BOTH payload shapes ride: {pre,hit,post} (three clean
-// text fields — the next server slice) and the legacy raw string with
+// text fields, the next server slice) and the legacy raw string with
 // <b></b> marks (split on the first marker pair; no clean pair = one plain
-// text node — a transcript that itself contains '<b>' can at worst mis-place
+// text node, a transcript that itself contains '<b>' can at worst mis-place
 // a cosmetic highlight, never execute). ---
 let cmdk = null; // the open palette: {root, input, body, foot, q, sel, rows, seq, timer, search, err, server, last, prevFocus, smap}
 const CMDK_DEBOUNCE_MS = 250;

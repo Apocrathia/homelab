@@ -7,7 +7,7 @@ Background service that syncs iCloud Photos to local NAS storage.
 ## Overview
 
 - **Sync Mode**: Copy (download only, no iCloud deletion)
-- **Interval**: Hourly checks for new photos
+- **Interval**: photo-sync schedule (see the CronJob)
 - **Folder Structure**: `YYYY/MM/DD`
 - **Content**: All photos, videos, and live photos
 

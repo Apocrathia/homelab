@@ -410,17 +410,17 @@ spec:
           # renovate: datasource=github-releases depName=mamba-org/micromamba-releases
           - name: MICROMAMBA_VERSION
             value: "2.9.0-0"
-          # GitLab token: rides the workspace clone/pull fetch — and so
+          # GitLab token: rides the workspace clone/pull fetch: and so
           # the payload source too (the payload copies from that clone).
           # Authenticated requests draw GitLab's separate authenticated
           # budget; the anonymous per-IP pool (the whole homelab shares
           # ONE egress IP) exhausts transiently, which is what killed
           # the tokenless archive pull. optional: true in manifest
-          # semantics — the repo is public, an unset token still
+          # semantics: the repo is public, an unset token still
           # clones/pulls and the boot WARN-degrades instead of
-          # crashlooping — but the field is practically required for
+          # crashlooping: but the field is practically required for
           # reliable payload sync. The credential rides the fetch/clone-
-          # time process args (http.extraheader) — never the remote URL,
+          # time process args (http.extraheader): never the remote URL,
           # never .git/config, never on disk.
           - name: GITLAB_TOKEN
             valueFrom:
@@ -431,7 +431,7 @@ spec:
           # Discord gateway (agent/extensions/discord) go-live wiring. The
           # beacon factory gates on this env (or config bot_token) before
           # registering anything; the gateway resolves it via the same
-          # env->config chain. Same token fields the local Mac instance uses —
+          # env->config chain. Same token fields the local Mac instance uses,
           # scope-split (DISCORD_ALLOWED_*) or instance retirement is the
           # operator's cutover call, not wired here.
           - name: DISCORD_BOT_TOKEN
@@ -447,8 +447,8 @@ spec:
                 key: discord-app-id
           # Default cwd for discord-spawned conversations: the extension's
           # env override for config default_cwd (which otherwise resolves to
-          # ~ = HOME = /opt/data). Session cwd is harness-owned — the
-          # container workingDir never reaches spawned sessions — so the
+          # ~ = HOME = /opt/data). Session cwd is harness-owned: the
+          # container workingDir never reaches spawned sessions: so the
           # default is pinned at each spawn surface: this env var (discord),
           # the webui config defaultCwd (already /opt/data/workspace), and
           # --cwd on TUI attach (README). resolveNewCwd fails on a missing
@@ -463,7 +463,7 @@ spec:
       # Inbound A2A webhook: litellm.yml's agents: entry targets
       # http://prime-agent.prime-agent.svc.cluster.local:8080, so the
       # webhook port rides an extra Service port next to the webui primary
-      # above — ClusterIP-only, no Gateway route.
+      # above: ClusterIP-only, no Gateway route.
       extraServicePorts:
         - name: a2a-webhook
           port: 8080
@@ -492,7 +492,7 @@ spec:
             mountPath: /tmp
         # webui dashboard token: single field from the 1Password-synced
         # secret, subPath-mounted read-only; the boot script copies it to
-        # HERE/webui-token (mode 0400) — the token-file default both
+        # HERE/webui-token (mode 0400): the token-file default both
         # index.ts and server.mjs resolve.
         secret:
           - name: webui-token
@@ -506,7 +506,7 @@ spec:
 
       # The collector answers /healthz (200, pre-auth) from boot, so kubelet
       # probes restart a crashed collector instead of a human noticing dead
-      # air. Probes hit pod loopback — fine with PRIME_WEBUI_HOST=0.0.0.0.
+      # air. Probes hit pod loopback: fine with PRIME_WEBUI_HOST=0.0.0.0.
       healthChecks:
         livenessProbe:
           enabled: true
@@ -536,10 +536,10 @@ spec:
       itemPath: "vaults/Secrets/items/prime-agent-secrets"
 
     # SSO in front on both doors (LAN + tailnet): the Authentik proxy
-    # outpost owns the hostname — no straight route to the app service
+    # outpost owns the hostname: no straight route to the app service
     # (httproute stays off below; the outpost dials the app's ClusterIP
     # directly). The webui trusts the outpost (trustedCidrs = the cluster
-    # pod CIDR in the payload config.json — no env surface; the operator's
+    # pod CIDR in the payload config.json: no env surface; the operator's
     # gate decision), so SSO is the front door and the webui token is the
     # break-glass layer for anything the pod CIDR does not cover. NEVER
     # enable the shared/friends tier on this app: it would put SSO in

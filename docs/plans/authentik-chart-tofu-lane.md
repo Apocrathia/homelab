@@ -121,7 +121,7 @@ authentik:
   managedBy: blueprint # blueprint | terraform  ← THE SWITCH
   mode:
     proxy # proxy | oidc | bookmark; missing = proxy (the
-    #   chart default — the tofu template reads it the
+    #   chart default: the tofu template reads it the
     #   same way the blueprint templates do, so the
     #   modeless fleet flips as proxy parity)
   displayName: "…"
@@ -170,7 +170,7 @@ authentik:
       key: oidc-client-id # house convention (komga/immich/cryptpad)
     # clientId: ""               # static literal lane for fresh creates (misp/
     #   opencti style); mutually exclusive with
-    #   clientIdFromSecret.enabled — render fails if both/neither
+    #   clientIdFromSecret.enabled: render fails if both/neither
 ```
 
 Dead keys on the tofu path: `serviceConnection`, `replicas`, `namespace`,
@@ -231,7 +231,7 @@ terraform {
     authentik = { source = "goauthentik/authentik", version = "2026.8.0" }
   }
   # PARTIAL kubernetes backend; per-app args come from ProviderConfig.backendFile.
-  # The empty block MUST stay — without it -backend-config falls back to the
+  # The empty block MUST stay: without it -backend-config falls back to the
   # LOCAL backend and the adoption bar dies (empty state ⇒ full duplicate set).
   backend "kubernetes" {}
 }
@@ -270,7 +270,7 @@ variable "adoption" {
 Import blocks (generated per app):
 
 ```hcl
-# Application: UNGATED by design — applications import BY SLUG, a static literal.
+# Application: UNGATED by design: applications import BY SLUG, a static literal.
 import { to = authentik_application.app, id = "<app-slug>" }
 
 # Generated ids: for_each-gated, default off. PLAIN variable-id imports are

@@ -7,7 +7,7 @@
 # Chart edits are immutable per version: an edit without a Chart.yaml version
 # bump does NOT reach the cluster (same contract as the generic-app-* git
 # tags). Runs on every default-branch pipeline and exits 0 when the version
-# tag already exists — idempotent, self-heals missed pushes.
+# tag already exists: idempotent, self-heals missed pushes.
 publish-generic-app-chart:
   stage: deploy
   # renovate: datasource=docker depName=alpine/helm
@@ -53,13 +53,13 @@ publish-generic-app-chart:
         if helm push "/tmp/generic-app-${CHART_VERSION}.tgz" "${CHART_REF}"; then
           exit 0
         fi
-        echo "push failed (attempt ${attempt}/5) — registry may still be enabling; retrying in 30s"
+        echo "push failed (attempt ${attempt}/5): registry may still be enabling; retrying in 30s"
         [ "${attempt}" -lt 5 ] && sleep 30
       done
       echo "ERROR: could not push ${CHART_REF}:${CHART_VERSION}."
       echo "Is the container registry enabled? Check tofu-apply for the"
       echo "gitlab/homelab stack (container_registry_access_level = private)"
-      echo "— a failed apply leaves the registry off until it succeeds."
+      echo "- a failed apply leaves the registry off until it succeeds."
       exit 1
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'

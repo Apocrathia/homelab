@@ -54,5 +54,4 @@ Long-term endgame (operator aware, separate lap): migrate the 9 raw-CR
 databases into `generic-app` postgres blocks so all Postgres backup wiring
 goes through the chart toggle.
 
-Reference: MR !5139 (pattern source), lap log
-`.scratch/cluster-triage-2026-10-09/STATE.md`.
+Reference: MR !5139 (pattern source).

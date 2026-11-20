@@ -6,7 +6,7 @@ face. Is it a real CDN? No. Does it technically count? The operator has
 ruled that it does: "this is such a makeshift shitty cdn, but it
 technically counts."
 
-It exists for a real reason: dashboard tiles used to pull repo bytes
+It exists for a real reason: GitLab's raw endpoint rate-limits unauth per-IP requests
 straight off GitLab's raw endpoint, whose unauth-per-IP rate limiter 429s
 icon fetches at scale. Now no browser touches raw GitLab URLs - problem
 closed by construction.
@@ -32,7 +32,7 @@ https://cdn.gateway.services.apocrathia.com/homelab/<repo-relative-path>
   registry, no CDN features - just the tree, with a rate limit.
 
 Readiness/gatus probe: repo-root file (`/homelab/README.md`), never a
-lane-owned path — lane-owned files can disappear with their lane and 404 the
+lane-owned path, lane-owned files can disappear with their lane and 404 the
 probe.
 
 The `/homelab` prefix is deliberate, not indecision: it names the synced
@@ -59,11 +59,11 @@ content delivery architecture you can draw on a napkin:
    namespace: `/homelab/<repo path>`. That's the trick. That's the whole
    trick.
 
-Replicas: 2. Safe because each pod clones independently (per-pod git-sync
+Multiple replicas are safe: each pod clones independently (per-pod git-sync
 plus its own emptyDir - no shared volume) and chart anti-affinity spreads
 the pods across nodes - even a CDN that is a `git clone` gets redundancy.
 
-Icons land within roughly one git-sync period (180s) of hitting `main`.
+Icons land within roughly one git-sync period of hitting `main`.
 The pods serve straight off `main`, bypassing the flux apply gate - fine
 for public bytes. The cache-invalidation story is "wait three minutes."
 
@@ -117,4 +117,4 @@ curl -fsSI https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03
 ## References
 
 - **[git-sync](https://github.com/kubernetes/git-sync)** - the "edge" of
-  this CDN (v4, `--period=180s`)
+  - **[git-sync](https://github.com/kubernetes/git-sync)** - the "edge" of this CDN (args in the HelmRelease)

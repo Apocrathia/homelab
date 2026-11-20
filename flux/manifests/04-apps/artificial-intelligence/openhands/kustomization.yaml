@@ -33,8 +33,8 @@ replacements:
   #
   # The intermediate ConfigMap cannot be dropped from the render: kustomize
   # applies patches and transformers before replacements, so a $patch: delete
-  # would remove the source before this rule consumes it (verified on
-  # kustomize v5.8.1; no deletions-transformer builtin exists). The ConfigMap
+  # would remove the source before this rule consumes it. No
+  # deletions-transformer builtin exists. The ConfigMap
   # is harmless in-cluster (no authentik_blueprint label) and keeps a stable
   # name (disableNameSuffixHash), so authentik.tf edits update it in place.
   - source:

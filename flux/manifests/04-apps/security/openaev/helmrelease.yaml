@@ -25,7 +25,7 @@ spec:
       # Filigran's Adversarial Exposure Validation platform (formerly OpenBAS):
       # Spring Boot monolith serving API + embedded React SPA + websockets on one
       # port, plus headless Chromium for report rendering (world-readable
-      # /ms-playwright so arbitrary UIDs work). Upstream ships no chart — image only.
+      # /ms-playwright so arbitrary UIDs work). Upstream ships no chart; image only.
       # renovate: datasource=docker depName=docker.io/openaev/platform
       image: docker.io/openaev/platform:3.261116.0@sha256:b9d4e66604c5a763a2f806e33c78fc3368a0b16f955c595c8576a518f15c7f43
       # Single replica: Quartz jobs + queue consumers assume a single writer;
@@ -35,7 +35,7 @@ spec:
       container:
         name: openaev
         port: 8080
-        # Env names mirror the upstream docs/compose verbatim — the hyphens are
+        # Env names mirror the upstream docs/compose verbatim; the hyphens are
         # correct (documented rule: uppercase, dots to underscores, keep hyphens,
         # e.g. openaev.base-url -> OPENAEV_BASE-URL).
         env:
@@ -82,7 +82,7 @@ spec:
                 name: openaev-secrets
                 key: password
           # S3-compatible object storage: NAS RustFS instance (bucket `openaev`,
-          # operator-created scoped keys) — no in-cluster MinIO per house rule.
+          # operator-created scoped keys); no in-cluster MinIO per house rule.
           - name: MINIO_ENDPOINT
             value: "storage.services.apocrathia.com"
           - name: MINIO_PORT
@@ -119,7 +119,7 @@ spec:
                 name: openaev-secrets
                 key: rabbitmq-pass
           # Engine: single-node OpenSearch release in this namespace
-          # (opensearch.yaml), security plugin off per official compose parity —
+          # (opensearch.yaml), security plugin off per official compose parity;
           # the openaev-opensearch-ingress CNP locks it to this pod.
           - name: ENGINE_URL
             value: "http://openaev-opensearch:9200"
@@ -132,7 +132,7 @@ spec:
           - name: OPENAEV_COOKIE-SECURE
             value: "true"
           # Protects /api/health; UUID. Referenced by the exec probes via the
-          # container env — the value never appears in a manifest.
+          # container env; the value never appears in a manifest.
           - name: OPENAEV_HEALTHCHECK_KEY
             valueFrom:
               secretKeyRef:
@@ -143,7 +143,7 @@ spec:
           - name: JAVA_TOOL_OPTIONS
             value: "-Xmx3g"
           # Decision #2 (locked egress): the hub connector catalog would call
-          # https://hub.filigran.io — unreachable and disabled by policy.
+          # https://hub.filigran.io; unreachable and disabled by policy.
           - name: OPENAEV_XTM_HUB_ENABLE
             value: "false"
           # Decision #1 (OIDC mode): native Spring Security OAuth2 client,
@@ -203,7 +203,7 @@ spec:
       # Exec probes use the official compose healthcheck pattern (wget ships in
       # the image): the key resolves from container env, never from a manifest
       # path. /api/health returns 401 on key mismatch, 503 while a required
-      # dependency (DB/RabbitMQ/S3) is down — deps must be up to pass.
+      # dependency (DB/RabbitMQ/S3) is down; deps must be up to pass.
       # Startup window is generous: Java boot + Flyway migrations on first run.
       healthChecks:
         livenessProbe:
@@ -284,7 +284,7 @@ spec:
           - "refresh_token"
         clientIdFromSecret:
           enabled: true
-        # Confidential + PKCE — same pattern as other generic-app OIDC apps.
+        # Confidential + PKCE; same pattern as other generic-app OIDC apps.
         # Copy Authentik Client ID / Secret into 1Password after blueprint apply.
         redirectUris:
           - url: "https://openaev.gateway.services.apocrathia.com/login/oauth2/code/authentik"
@@ -292,7 +292,7 @@ spec:
 
     gatus:
       enabled: true
-      # SPA index returns 200 without auth — listener-level check only; the
+      # SPA index returns 200 without auth; listener-level check only; the
       # dependency-aware /api/health needs the secret-sourced key, which cannot
       # ride a gatus annotation.
       path: /

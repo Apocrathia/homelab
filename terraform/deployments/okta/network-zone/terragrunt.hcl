@@ -6,10 +6,10 @@
 # Home egress IP is dynamic: home-egress gets it from the plan-time probe
 # (egress_probe_url default https://icanhazip.com), never hardcoded here.
 #
-# Auth (1Password Connect — no OKTA_API_TOKEN in env):
-#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
-#   OP_CONNECT_TOKEN — Connect API token with read on the vault
-#   TF_HTTP_*        — state backend
+# Auth (1Password Connect, no OKTA_API_TOKEN in env):
+#   OP_CONNECT_HOST  - http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN - Connect API token with read on the vault
+#   TF_HTTP_*       ; state backend
 #
 # Do NOT export OKTA_API_TOKEN. Do NOT commit vault UUIDs.
 

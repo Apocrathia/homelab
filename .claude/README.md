@@ -1,4 +1,4 @@
-# `.claude/` — Claude Code adapter
+# `.claude/`: Claude Code adapter
 
 Claude Code reads [`CLAUDE.md`](../CLAUDE.md) (symlink to [`AGENTS.md`](../AGENTS.md))
 and discovers skills/agents under this directory.
@@ -21,7 +21,7 @@ copy skill or persona bodies into `.claude/`. This tree is discovery symlinks.
 ## Adding a skill
 
 Create under [`.agents/skills/<id>/`](../.agents/skills/). Claude picks it up
-via the `skills/` directory symlink — no per-skill link here.
+via the `skills/` directory symlink: no per-skill link here.
 
 ## Rules
 

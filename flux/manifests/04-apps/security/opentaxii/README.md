@@ -56,7 +56,7 @@ Any `OPENTAXII_*` env var overrides config keys (`__` separates nesting). See `h
 
 ## Authentication
 
-One account exists: the non-admin `opencti-taxii2` service account (created 2026-10-19) for the OpenCTI taxii2 connector's authenticated pull. That account cannot be declared in `data-configuration.yml` (its password must not land in git), and `opentaxii-sync-data` prunes accounts not declared there on every boot - so accounts created out-of-band die on the next container restart. A postStart lifecycle hook in `helmrelease.yaml` re-ensures the account after sync-data completes, using the `taxii2-username` / `taxii2-password` fields of the `opentaxii-secrets` 1Password item. The public collection is not enough for that client: the connector's requests-based client always sends a basic-auth header (`HTTPBasicAuth(None, None)` with no credentials configured), and OpenTAXII 401s well-formed basic auth against a missing account. Anonymous headerless access still applies to the public TAXII 2.1 collection and the TAXII 1.x services - `authentication_required: no` on the 1.x side grants anonymous full access (fine while the service is reachable only inside the cluster), and `stix-feed` keeps public read + public write. Accounts stay optional for every other feeder.
+One account exists: the non-admin `opencti-taxii2` service account for the OpenCTI taxii2 connector's authenticated pull. That account cannot be declared in `data-configuration.yml` (its password must not land in git), and `opentaxii-sync-data` prunes accounts not declared there on every boot - so accounts created out-of-band die on the next container restart. A postStart lifecycle hook in `helmrelease.yaml` re-ensures the account after sync-data completes, using the `taxii2-username` / `taxii2-password` fields of the `opentaxii-secrets` 1Password item. The public collection is not enough for that client: the connector's requests-based client always sends a basic-auth header (`HTTPBasicAuth(None, None)` with no credentials configured), and OpenTAXII 401s well-formed basic auth against a missing account. Anonymous headerless access still applies to the public TAXII 2.1 collection and the TAXII 1.x services - `authentication_required: no` on the 1.x side grants anonymous full access (fine while the service is reachable only inside the cluster), and `stix-feed` keeps public read + public write. Accounts stay optional for every other feeder.
 
 When a feeder needs real auth, create accounts out-of-band:
 
@@ -78,7 +78,7 @@ kubectl exec -n opentaxii deploy/opentaxii -- \
   opentaxii-add-collection --rootid <api-root-id> --title "stix-feed" --public
 ```
 
-Bootstrap performed (2026-10-18, live state):
+Live bootstrap state:
 
 - api root `9d2329b4-6a06-4f01-9c94-a2c3e6d1a501` - title "Default", default + public
 - collection `952c801c-e4c8-4316-a565-5f97221e799f` - title "stix-feed", public read + public write

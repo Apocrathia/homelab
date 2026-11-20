@@ -27,7 +27,7 @@ spec:
       # We start it with the UI extension loaded and start_ui_server() called.
       # The UI HTTP server runs in a background thread on 127.0.0.1:4213.
       # `stdin: true` keeps the duckdb process alive after the -cmd SQL
-      # completes — without it, duckdb hits stdin EOF and exits, killing
+      # completes: without it, duckdb hits stdin EOF and exits, killing
       # the UI server thread along with it.
       command: ["/duckdb"]
       args:

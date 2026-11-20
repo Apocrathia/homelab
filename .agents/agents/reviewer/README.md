@@ -1,4 +1,4 @@
-# `reviewer` — acceptance-Bar judge (persona)
+# `reviewer`: acceptance-Bar judge (persona)
 
 `agent.md` charters the read-only pair partner of `manifest-implementer`:
 judge an Artifact against a Bar and return `pass` or `gap` (the single

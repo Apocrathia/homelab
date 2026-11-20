@@ -4,7 +4,7 @@
 
 ## Overview
 
-Craft Anything — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+Craft Anything, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://craft-anything.gateway.services.apocrathia.com`
 

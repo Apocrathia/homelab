@@ -10,7 +10,7 @@ variable "project_path" {
 
 variable "manage_terraform_label" {
   type        = bool
-  description = "When true, create/manage the managed-by-terraform project label. Leave false for the read-only auth spike."
+  description = "When true, create/manage the managed-by-terraform project label."
   default     = false
 }
 
@@ -74,7 +74,7 @@ variable "branch_protection_allow_force_push" {
 
 variable "container_registry_access_level" {
   type        = string
-  description = "Container registry visibility: enabled (on, public read), private (on, members only), disabled (off). Optional-only in provider v19 — pin explicitly so applies don't null it."
+  description = "Container registry visibility: enabled (on, public read), private (on, members only), disabled (off). Optional-only in provider v19; pin explicitly so applies don't null it."
   default     = "disabled"
 
   validation {

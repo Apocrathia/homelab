@@ -4,7 +4,7 @@
 
 ## Overview
 
-LightCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+LightCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://lightcraft.gateway.services.apocrathia.com`
 

@@ -1,4 +1,4 @@
-# `implement-change` — one Launch-brief lap (skill)
+# `implement-change`: one Launch-brief lap (skill)
 
 `SKILL.md` defines the orchestrator for a single Launch-brief lap: plan if
 needed, implementer↔reviewer pair, verifier arbiter, domain review when

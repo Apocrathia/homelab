@@ -1,5 +1,5 @@
 {
-  "note": "symlink-owned vs script-owned: Claude reads CLAUDE.md -> AGENTS.md. Script-owned output is append_system at .prime/agent/APPEND_SYSTEM.md. always_on is SoT for alwaysApply:true frontmatter (humanizer stays glob-only). rules matches always_on as a set; order in rules is concat order. AGENTS.md Always in force omits general and links context/voice.md instead (intentional).",
+  "note": "symlink-owned vs script-owned: Claude reads CLAUDE.md -> AGENTS.md. Script-owned output is append_system at .prime/agent/APPEND_SYSTEM.md. always_on is SoT for alwaysApply:true frontmatter. rules matches always_on as a set; order in rules is concat order. AGENTS.md Always in force omits general and links context/voice.md instead (intentional).",
   "mirrors": {
     "claude": {
       "enabled": false,
@@ -21,7 +21,6 @@
       "context-management",
       "general",
       "ground-before-asking",
-      "i-have-adhd",
       "merge-authorization",
       "ontology-framework",
       "ponytail",
@@ -34,7 +33,9 @@
       "subagents",
       "surgical-edits",
       "untrusted-content",
-      "worktrees"
+      "worktrees",
+      "i-have-adhd",
+      "humanizer"
     ],
     "always_on": [
       "ambiguity-goes-back-to-source",
@@ -42,6 +43,7 @@
       "context-management",
       "general",
       "ground-before-asking",
+      "humanizer",
       "i-have-adhd",
       "merge-authorization",
       "ontology-framework",

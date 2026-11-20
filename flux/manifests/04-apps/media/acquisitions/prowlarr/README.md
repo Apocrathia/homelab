@@ -36,7 +36,7 @@ The deployment follows the LinuxServer.io standard pattern:
 
 This deployment includes a Flaresolverr sidecar container for CloudFlare proxy bypass:
 
-- **Image**: `ghcr.io/flaresolverr/flaresolverr`
+- Flaresolverr sidecar (image, port, env): configured in `helmrelease.yaml`
 - **Port**: 8191 (internal pod communication only)
 - **Purpose**: Bypass CloudFlare protection on indexer sites
 - **Access**: Available to Prowlarr at `localhost:8191`
@@ -67,7 +67,7 @@ Prowlarr is the central indexer manager for:
 - **Download clients**: Centralized indexer configuration
 - **Indexer providers**: Unified management of torrent trackers and usenet indexers
 
-Indexers sync automatically to the \*arr applications — configure them once
+Indexers sync automatically to the \*arr applications, configure them once
 here, not per app. Indexer health and stats show in the web UI.
 
 ## Troubleshooting

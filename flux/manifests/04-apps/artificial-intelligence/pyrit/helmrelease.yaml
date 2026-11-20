@@ -39,7 +39,7 @@ spec:
 
       command: ["/opt/venv/bin/pyrit_backend"]
       # pyrit_backend CLI (1.x): --host --port --config-file --log-level [--reload]
-      # --database was removed upstream; passing it CrashLoops the container.
+      # --database is not accepted by the CLI; passing it CrashLoops the container.
       args:
         - "--host"
         - "0.0.0.0"

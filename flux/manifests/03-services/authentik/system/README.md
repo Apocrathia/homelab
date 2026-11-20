@@ -2,8 +2,7 @@
 
 Tofu-managed authentik-internal state (not app tiles): the access-tier
 groups, the default login flow's MFA stages, the tofu tier's own service
-account, and the kube-apiserver's OIDC issuer. All of it migrated off the
-retired `blueprints/` ConfigMaps onto the canonical file pair: one folder
+account, and the kube-apiserver's OIDC issuer. One folder per unit:
 per unit, `crossplane.yaml` (ProviderConfig + Workspace, ns authentik) +
 `authentik.tf` (the module), stitched by each unit's `kustomization.yaml`.
 Every unit ADOPTS its live blueprint-created or upstream-shipped objects

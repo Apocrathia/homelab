@@ -1,4 +1,4 @@
-# macOS policies — osquery checks for Macs
+# macOS policies: osquery checks for Macs
 
 Thirteen app policies that install or update the Fleet-maintained apps declared
 under `software:` in `fleets/home.yml`, plus `cis-macos-26-l1.yml` for CIS

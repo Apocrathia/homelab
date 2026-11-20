@@ -1,5 +1,5 @@
 ---
-# ponytail: ufw/Debian path only — `game` (Debian) is the sole opt-in today.
+# ponytail: ufw/Debian path only; current opt-ins are Debian hosts.
 # If a RedHat host ever sets hardening_firewall_manage, add firewalld
 # branching here.
 - name: Install ufw (Debian)
@@ -10,7 +10,7 @@
     cache_valid_time: 3600
   when: ansible_facts["os_family"] == "Debian"
 
-# Rules first, then enable — a half-configured firewall must never cut the
+# Rules first, then enable; a half-configured firewall must never cut the
 # SSH session running this playbook.
 - name: Set incoming policy to deny
   community.general.ufw:

@@ -4,7 +4,7 @@
 
 ## Overview
 
-EffectCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+EffectCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://effectcraft.gateway.services.apocrathia.com`
 

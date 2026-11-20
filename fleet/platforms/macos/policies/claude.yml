@@ -1,8 +1,8 @@
-# Claude: keep the Fleet-maintained version current — update only, never
+# Claude: keep the Fleet-maintained version current; update only, never
 # install. Requires claude/darwin under software.fleet_maintained_apps on the
 # same fleet.
 #
-# The patch policy only fails when the app is installed and outdated — missing
+# The patch policy only fails when the app is installed and outdated; missing
 # hosts pass, so Fleet never installs it.
 ---
 - name: macOS - Claude up to date

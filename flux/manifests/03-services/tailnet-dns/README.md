@@ -124,7 +124,7 @@ kubectl -n tailnet-dns run -it --rm dig --image=busybox --restart=Never --   nsl
   `game.apocrathia.com`, `matrix.apocrathia.com`) are served; everything
   else is REFUSED.
 - **Records missing after etcd restart**: ExternalDNS rebuilds on its next
-  sync (interval 1m / on event).
+  sync.
 
 ## References
 

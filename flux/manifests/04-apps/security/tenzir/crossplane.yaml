@@ -5,7 +5,7 @@ metadata:
   name: authentik-terraform-token
   namespace: tenzir
 spec:
-  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # Scoped Authentik service-account token. Never a bare managed Secret;
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
@@ -32,7 +32,7 @@ spec:
   # Per-app state args for the module's PARTIAL kubernetes backend: the
   # provider writes this as crossplane.remote.tfbackend and passes it via
   # -backend-config at tofu init. The state Secret is
-  # tfstate-tenzir-authentik-tenzir in tenzir — deliberately
+  # tfstate-tenzir-authentik-tenzir in tenzir; deliberately
   # separate from the CI tofu stack (terraform/, GitLab HTTP backend).
   # Two stacks, two states.
   backendFile: |
@@ -46,11 +46,11 @@ metadata:
   name: tenzir-authentik
   namespace: tenzir
 spec:
-  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # Prune guard: crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,
   # so a GitOps prune of this object can NEVER destroy the live authentik
   # objects (v2-native Orphan). Deliberate decommission therefore requires
-  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # temporarily restoring ["*"] (or a manual tofu destroy); the guard is
   # intentional.
   managementPolicies:
     - Observe
@@ -62,11 +62,11 @@ spec:
   forProvider:
     # Inline module, stitched at kustomize build time: kustomization.yaml's
     # configMapGenerator packages authentik.tf and the replacements rule
-    # copies its bytes into this module field — crossplane.yaml +
+    # copies its bytes into this module field; crossplane.yaml +
     # authentik.tf are the canonical file pair, and the HCL file is the
     # single source of truth (never render this directory outside
     # kustomize). No varmap: the app values live in the HCL.
-    # FRESH CREATE, NO PARITY: the state Secret starts empty — the retired
+    # FRESH CREATE, NO PARITY: the state Secret starts empty; the retired
     # blueprint lane kept no tofu state, and nothing is imported. The first
     # apply creates the role, permission, user, and token in authentik.tf;
     # the blueprint-imported duplicates stay inert until the operator prunes

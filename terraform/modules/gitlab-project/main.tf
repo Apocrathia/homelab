@@ -31,8 +31,6 @@ resource "gitlab_project" "this" {
   }
 }
 
-# One-time adoption of the existing project (id 67295640). Only valid while
-# manage_project = true; delete this block after the first successful apply.
 import {
   to = gitlab_project.this[0]
   id = "67295640"
@@ -81,9 +79,6 @@ resource "gitlab_branch_protection" "main" {
   }
 }
 
-# One-time adoption of the existing protection on main (project id 67295640).
-# Only valid while manage_branch_protection = true; delete this block after
-# the first successful apply.
 import {
   to = gitlab_branch_protection.main[0]
   id = "67295640:main"

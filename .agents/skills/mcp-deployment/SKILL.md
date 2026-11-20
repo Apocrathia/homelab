@@ -11,10 +11,10 @@ then point LiteLLM and optional kagent `RemoteMCPServer`s at the CR-named Servic
 
 # Input
 
-- `[MCP_SERVER]` — short name (Service DNS uses this)
-- `[NAMESPACE]` — `mcp-{server-name}` with label `mcp-server: "true"`
-- `[TRANSPORT]` — `http` (native streamable-http) or `stdio` (agentgateway adapter)
-- `[PORT]` — listen / Service port (lab convention: `8080`)
+- `[MCP_SERVER]`: short name (Service DNS uses this)
+- `[NAMESPACE]`: `mcp-{server-name}` with label `mcp-server: "true"`
+- `[TRANSPORT]`: `http` (native streamable-http) or `stdio` (agentgateway adapter)
+- `[PORT]`: listen / Service port (lab convention: `8080`)
 
 # Task
 
@@ -23,7 +23,7 @@ when an agent needs it), validate with `kustomize build`, probe `/mcp`.
 
 # Restrictions
 
-- Default: no commit/push (operator commits); ship only when authorized —
+- Default: no commit/push (operator commits); ship only when authorized;
   [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Never alter cluster without explicit permission.
 - Present options and get approval before mutating Git or cluster.
@@ -31,7 +31,7 @@ when an agent needs it), validate with `kustomize build`, probe `/mcp`.
 - Prefer native `transportType: http` when the image speaks streamable-http;
   use `stdio` when the process is stdio-only or LiteLLM session handling needs
   the agentgateway adapter.
-- No Gateway/HTTPRoute for MCP Services — clients are in-cluster only
+- No Gateway/HTTPRoute for MCP Services; clients are in-cluster only
   (LiteLLM / agents). Cilium CCNP `mcp-server-isolation` gates ingress.
 
 # Research with DeepWiki
@@ -119,13 +119,13 @@ spec:
 
 ### agentgateway gotchas
 
-1. **Premature `$VAR` expansion** — do not `export FOO="$(cat secret)"` then
+1. **Premature `$VAR` expansion**: do not `export FOO="$(cat secret)"` then
    use `$FOO` later in the same script; agentgateway expands `$FOO` first.
    Read secret files **inline** where used (`$(cat /var/run/secrets/mcp/…)`).
-2. **Service-link env clash** — a Service named `foo` injects
+2. **Service-link env clash**: a Service named `foo` injects
    `FOO_PORT=tcp://…`. CR `env` does not win. `export FOO_PORT=<real>` inside
    the startup command if the app reads that name.
-3. **Per-session respawn** — `cmd`/`args` run per MCP session while `/tmp`
+3. **Per-session respawn**: `cmd`/`args` run per MCP session while `/tmp`
    persists. Make clones/installs **idempotent** (or use a prebuilt image).
    Heavy per-session `pip install` will OOM.
 

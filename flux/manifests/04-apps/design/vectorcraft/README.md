@@ -4,7 +4,7 @@
 
 ## Overview
 
-VectorCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+VectorCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://vectorcraft.gateway.services.apocrathia.com`
 

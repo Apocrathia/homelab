@@ -19,7 +19,7 @@ This deployment includes:
 
 ### Transport
 
-`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080). The container must have `stdin: true`.
+`transportType: stdio`, agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080). The container must have `stdin: true`.
 
 The UniFi image can start an in-container HTTP listener by default in some environments. This deployment sets **`UNIFI_MCP_HTTP_ENABLED=false`** so the process stays on stdio.
 

@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 # Integrate upstream
 
-A consuming project has `.agents/` built from this core. The core evolves — new
+A consuming project has `.agents/` built from this core. The core evolves; new
 rules, improved skills, better scripts, new templates. This skill pulls those
 upstream changes in while preserving the project's domain-specific content
 (layer 3).
@@ -19,11 +19,11 @@ upstream changes in while preserving the project's domain-specific content
 Three layers, same as
 the inventory (`.agents/context/inventory.md` in the core repo):
 
-| Layer                | What                                          | How this skill handles it                               |
-| -------------------- | --------------------------------------------- | ------------------------------------------------------- |
-| 1 — Generic          | Rules, byte-identical skills, scripts         | Direct diff; copy or reconcile                          |
-| 2 — Templatized      | Skills with `{{project_name}}` tokens         | Diff after token normalization; reconcile               |
-| 3 — Project-specific | Context modules, agent personas, routing rows | **Do not overwrite.** Check templates structurally only |
+| Layer               | What                                          | How this skill handles it                               |
+| ------------------- | --------------------------------------------- | ------------------------------------------------------- |
+| 1: Generic          | Rules, byte-identical skills, scripts         | Direct diff; copy or reconcile                          |
+| 2: Templatized      | Skills with `{{project_name}}` tokens         | Diff after token normalization; reconcile               |
+| 3: Project-specific | Context modules, agent personas, routing rows | **Do not overwrite.** Check templates structurally only |
 
 See the adoption guide (`.agents/context/adoption-guide.md` in the core repo) for the
 manual procedure this skill automates.
@@ -38,22 +38,22 @@ manual procedure this skill automates.
 
 ## What you need from the operator
 
-- **Upstream core path** — local clone, git remote URL, or submodule path. If a
+- **Upstream core path**: local clone, git remote URL, or submodule path. If a
   local clone, give the absolute path. If a remote, the skill clones to a temp
   directory. If a submodule, the path under the consuming repo.
-- **Project name** — used to normalize `{{project_name}}` tokens in templatized
+- **Project name**: used to normalize `{{project_name}}` tokens in templatized
   skills. If the operator does not provide it, derive it from the consuming
   project's `AGENTS.md` title or ask.
 
 Work in a git worktree on the standard branch (see
 [Branch and MR naming](#branch-and-mr-naming) below).
 See [`.agents/rules/worktrees.md`](../../rules/worktrees.md). All
-`.agents/**` paths are protected — surface the full change set before writing
+`.agents/**` paths are protected; surface the full change set before writing
 (see [`.agents/rules/protected-paths.md`](../../rules/protected-paths.md)).
 
 ## Branch and MR naming
 
-Every core integration — first-time scaffold or later sync — uses the
+Every core integration (first-time scaffold or later sync) uses the
 same branch pattern and the same MR title, so the work is greppable across
 repos:
 
@@ -62,10 +62,10 @@ repos:
 | Branch   | `chore/sync-agent-core-<YYYYMMDDHHMM>`  |
 | MR title | `chore(agents): sync shared agent core` |
 
-The title is the constant — that is what makes integrations findable. The UTC
+The title is the constant; that is what makes integrations findable. The UTC
 timestamp is what stops a new integration from landing on a name some earlier
 integration already used: `gh pr view` resolves such a branch to the old merged
-PR, and `ship-work` then skips creating the new one — silently, which is why
+PR, and `ship-work` then skips creating the new one, silently, which is why
 the suffix is not optional. If two integrations somehow start in the same
 minute, `git worktree add -b` refuses the duplicate branch; bump the timestamp
 and rerun.
@@ -76,7 +76,7 @@ Derive the timestamp, do not copy it:
 branch="chore/sync-agent-core-$(date -u +%Y%m%d%H%M)"   # e.g. chore/sync-agent-core-202608071432
 ```
 
-One token, not `-2026-08-07-14-32` — the slug caps at 4 kebab words and
+One token, not `-2026-08-07-14-32`; the slug caps at 4 kebab words and
 `sync-agent-core` already uses 3 (see `agent-branch-naming`).
 
 ## Workflow
@@ -101,10 +101,10 @@ Copy this checklist and work it in order:
 Resolve the upstream core to a local directory you can read:
 
 ```bash
-# Local clone — use as-is
+# Local clone: use as-is
 upstream="/abs/path/to/agent-core"
 
-# Git remote — unique dir under the consumer .scratch/ (not /tmp).
+# Git remote: unique dir under the consumer .scratch/ (not /tmp).
 # $$ is reused across retries in the same shell, so mktemp the suffix.
 consumer_root="$(git rev-parse --show-toplevel)"
 mkdir -p "$consumer_root/.scratch"
@@ -115,13 +115,13 @@ upstream=$(mktemp -d "$consumer_root/.scratch/upstream-core.XXXXXX") || {
 git clone <remote-url> "$upstream"
 # Clone full history (not --depth 1) so step 6 can diff old vs new upstream revisions.
 
-# Submodule — use the submodule path
+# Submodule: use the submodule path
 upstream="<repo-root>/<submodule-path>"
 ```
 
 Verify the upstream is this core by checking for `rules/`, `skills/`, and
 `templates/` directories at the top level. If the structure does not match, stop
-and ask the operator — it may be the wrong repo.
+and ask the operator; it may be the wrong repo.
 
 Record the **canonical** upstream revision for the 3-way merge in
 step 6. Fetch and pin the canonical remote's `main`
@@ -193,7 +193,7 @@ fi
 A dirty tree is not a license to skip the pin. Stop and ask if you cannot
 produce a tree that matches `$upstream_rev`.
 
-Also determine the **baseline revision** — the upstream revision the consuming
+Also determine the **baseline revision**: the upstream revision the consuming
 project was last synced from:
 
 1. If `.agents/upstream-ref` exists, read JSON `sha` and verify it is an object
@@ -289,7 +289,7 @@ role the shared skills invoke (`/implementer`, `/reviewer`, `/verifier`,
 
 ### 3. Categorize files by layer
 
-Discover upstream files dynamically from `$upstream_rev` — do not hardcode
+Discover upstream files dynamically from `$upstream_rev`; do not hardcode
 skill names and do not walk the working tree. A behind submodule or clone
 is expected; `ls-tree` / `git show` against the pin see files that exist
 only at the tip.
@@ -297,7 +297,7 @@ only at the tip.
 ```bash
 agents_dir="$(git rev-parse --show-toplevel)/.agents"
 # Rules: pinned tip plus consumer leftovers that existed at the pin.
-# Walk $upstream_rev, not the working tree — a behind checkout is expected.
+# Walk $upstream_rev, not the working tree: a behind checkout is expected.
 if ! rules=$(git -C "$upstream" ls-tree -r --name-only "$upstream_rev" -- rules); then
   echo "upstream rule inventory failed — stop" >&2
   exit 1
@@ -407,24 +407,24 @@ done
 
 Categorize each file:
 
-| Layer                       | Upstream source                                                     | Consume                                | Action                                                                                           |
-| --------------------------- | ------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| 1 — Generic rules           | `rules/*.md`                                                        | `.agents/rules/*.md`                   | Direct diff                                                                                      |
-| 1 — Byte-identical skills   | `skills/<name>/SKILL.md` (no `{{project_name}}`)                    | `.agents/skills/<name>/SKILL.md`       | Direct diff                                                                                      |
-| 1 — Skill auxiliaries       | `skills/<name>/**` except `SKILL.md`                                | `.agents/skills/<name>/**`             | Direct diff (even when the skill itself is templatized)                                          |
-| 2 — Templatized skills      | `skills/<name>/SKILL.md` (has `{{project_name}}`)                   | `.agents/skills/<name>/SKILL.md`       | Diff after replacing `{{project_name}}` in the upstream with the project name                    |
-| 3 — Context templates       | `templates/context/*.tmpl`                                          | `.agents/context/*.md`                 | **Structural check only** — do not overwrite                                                     |
-| 3 — Root templates          | `templates/AGENTS.md.tmpl`, `templates/agents-README.md.tmpl`, etc. | `AGENTS.md`, `.agents/README.md`, etc. | **Structural check only**                                                                        |
-| 3 — Agent persona templates | `templates/agents/*.tmpl`                                           | `.agents/agents/*.md`                  | **Structural check only** — verify consuming project has personas for roles shared skills invoke |
-| 3 — Reference templates     | `templates/references/*`                                            | `.agents/references/*`                 | **Structural check only**                                                                        |
-| 4 — Optional visual skills  | `skills/<name>/` (whole directory)                                  | `.agents/skills/<name>/`               | **Opt-in only** — skip if absent; if present locally, diff the whole directory as layer 1        |
+| Layer                      | Upstream source                                                     | Consume                                | Action                                                                                          |
+| -------------------------- | ------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1: Generic rules           | `rules/*.md`                                                        | `.agents/rules/*.md`                   | Direct diff                                                                                     |
+| 1: Byte-identical skills   | `skills/<name>/SKILL.md` (no `{{project_name}}`)                    | `.agents/skills/<name>/SKILL.md`       | Direct diff                                                                                     |
+| 1: Skill auxiliaries       | `skills/<name>/**` except `SKILL.md`                                | `.agents/skills/<name>/**`             | Direct diff (even when the skill itself is templatized)                                         |
+| 2: Templatized skills      | `skills/<name>/SKILL.md` (has `{{project_name}}`)                   | `.agents/skills/<name>/SKILL.md`       | Diff after replacing `{{project_name}}` in the upstream with the project name                   |
+| 3: Context templates       | `templates/context/*.tmpl`                                          | `.agents/context/*.md`                 | **Structural check only**; do not overwrite                                                     |
+| 3: Root templates          | `templates/AGENTS.md.tmpl`, `templates/agents-README.md.tmpl`, etc. | `AGENTS.md`, `.agents/README.md`, etc. | **Structural check only**                                                                       |
+| 3: Agent persona templates | `templates/agents/*.tmpl`                                           | `.agents/agents/*.md`                  | **Structural check only**; verify consuming project has personas for roles shared skills invoke |
+| 3: Reference templates     | `templates/references/*`                                            | `.agents/references/*`                 | **Structural check only**                                                                       |
+| 4: Optional visual skills  | `skills/<name>/` (whole directory)                                  | `.agents/skills/<name>/`               | **Opt-in only**; skip if absent; if present locally, diff the whole directory as layer 1        |
 
 Project-specific files in the consuming project that have no upstream
 counterpart (e.g. `rules/security.md`, `skills/helm-deployment/`, agent
 personas, or a helper under a shared skill that never existed at
 `$baseline_rev`) are layer 3. Leave them alone.
 
-**Layer 4 — the visual skills.** `prime-visual`, `prime-slides`,
+**Layer 4: the visual skills.** `prime-visual`, `prime-slides`,
 `render-prime-chart` and `assess-chart` are PI-internal and produce branded
 output. They are not part of a sync:
 
@@ -433,7 +433,7 @@ output. They are not part of a sync:
   dependency from a routine `integrate-upstream` run. Surface them as
   available and move on; copy only if the project says yes.
 - **Never copy `SKILL.md` alone.** Unlike every layer-1 skill, these are
-  directories — `scripts/`, `rules/`, `assets/`, `examples/`. A `SKILL.md`
+  directories: `scripts/`, `rules/`, `assets/`, `examples/`. A `SKILL.md`
   without them documents scripts that are not there. Copy the whole
   directory.
 - **Never copy them into a public repository.** They reference a
@@ -445,7 +445,7 @@ output. They are not part of a sync:
   install snippet in the upstream `scaffold-guide.md`.
 
 If a project already has one of these skills, discovery emits
-`optional-present:` and you diff the whole directory as layer 1 — the
+`optional-present:` and you diff the whole directory as layer 1; the
 opt-in has already happened. Do not reclassify as `byte-identical`: that
 path only compares `SKILL.md`.
 
@@ -459,11 +459,11 @@ modified, so a working-tree miss never reaches the 3-way.
 For each file pair (upstream at `$upstream_rev`, local):
 
 - **Layer 1 (generic, including skill auxiliaries):**
-  `git -C "$upstream" show "$upstream_rev":<file>` vs the consumer file — any
+  `git -C "$upstream" show "$upstream_rev":<file>` vs the consumer file; any
   difference is a real change.
 - **Layer 2 (templatized):** Replace `{{project_name}}` in the
   **`$upstream_rev`** version with the project name, then diff. If the only
-  differences are the project name substitution, the skill is aligned — skip
+  differences are the project name substitution, the skill is aligned; skip
   it. If there are other differences, those are real upstream changes.
 - **Layer 3 (templates):** Do not diff content. Check structurally against
   `$upstream_rev`: does the consuming project's context module cover the same
@@ -477,7 +477,7 @@ For each file pair (upstream at `$upstream_rev`, local):
 
   **Compare modes too.** Content comparison misses permission bits, so a copy
   of `prime-visual/scripts/fetch_catalog_image.sh` that lost its executable
-  bit is byte-identical and classified unchanged — while the skill's own
+  bit is byte-identical and classified unchanged, while the skill's own
   `SKILL.md` tells the agent to run it, and it fails with `Permission denied`.
   This is the only layer holding executables, which is why layer 1 never
   needed the check:
@@ -516,11 +516,11 @@ Group every diff result into:
 ### 6. Reconcile modified files
 
 For each modified file, do a 3-way comparison using the baseline recorded in
-step 1. Step 1 already failed if `$baseline_rev` is empty — do not invent a
+step 1. Step 1 already failed if `$baseline_rev` is empty; do not invent a
 2-way fallback for a missing pin.
 
-1. **What changed upstream** — `git -C "$upstream" diff <baseline_rev>..$upstream_rev -- <file>`
-2. **What changed locally** — did the consuming project customize the file
+1. **What changed upstream**: `git -C "$upstream" diff <baseline_rev>..$upstream_rev -- <file>`
+2. **What changed locally**: did the consuming project customize the file
    beyond the project name? Compare the local file against the upstream at the
    baseline revision: `git -C "$upstream" show <baseline_rev>:<file>`. If the
    only differences are project name substitution, the upstream change is a clean
@@ -532,16 +532,16 @@ step 1. Step 1 already failed if `$baseline_rev` is empty — do not invent a
      upstream changes, then re-apply local customizations. Surface the conflict
      and your proposed resolution in the change set (step 7).
    - **Local improvement** (local is better than upstream): surface for
-     decision — the local version may be worth contributing back (see
+     decision: the local version may be worth contributing back (see
      the contributing guide (`.agents/context/contributing.md` in the core repo).
 
 ### 7. Surface the change set
 
 Present the full change set before writing anything. All `.agents/**` paths are
-protected — do not write until the operator confirms.
+protected; do not write until the operator confirms.
 
 ```markdown
-## Upstream integration — proposed changes
+## Upstream integration: proposed changes
 
 **Upstream core:** <path or remote>
 **Project name:** <name>
@@ -595,7 +595,7 @@ N files unchanged after token normalization.
 After operator confirmation, copy from the `$upstream_rev` captured in
 step 1 (`git show` / archive / detached worktree). Do **not** move a
 supplied submodule to make `HEAD` match. Recheck that `$upstream_rev`
-is still a commit — the step-1 capture does not cover a fetch that
+is still a commit; the step-1 capture does not cover a fetch that
 rewrote history during confirmation. If shared paths are dirty, still
 copy from `$upstream_rev`, not the working tree.
 
@@ -618,7 +618,7 @@ fi
 4. Handle removed files per operator decision.
 5. Do **not** overwrite layer 3 content. Structural suggestions are notes only.
 6. Do **not** write `.agents/upstream-ref` yet. A declined layer-1/2 file
-   or a failed link check must not advance the pin — `contribute-upstream`
+   or a failed link check must not advance the pin; `contribute-upstream`
    would then treat unapplied upstream text as a consumer-local improvement.
    If the operator declined any layer-1/2 path, set `declined_layer12=1`.
 
@@ -706,7 +706,7 @@ else
     "$consumer_root/.scratch/integrate-links-head-broken.txt"
   # Drop only `missing file` / escape layout false positives when the
   # target exists under the consumer layout. Keep missing-anchor and
-  # other whys. Fail closed if the filter itself errors — an empty
+  # other whys. Fail closed if the filter itself errors; an empty
   # capture must not look like a clean delta. A missing filter script
   # is a skip (the consumer may have declined contribute-upstream).
   if [ -n "$new_breaks" ]; then
@@ -801,7 +801,7 @@ submodule is expected.
 
 List `.agents/upstream-ref` as pinned only if step 9 wrote it. If the
 write was skipped, say it was left unchanged and include the skip
-reason — do not report a pin that was not recorded.
+reason; do not report a pin that was not recorded.
 `contribute-upstream` treats the pin as the 3-way baseline.
 
 ```markdown
@@ -827,7 +827,7 @@ reason — do not report a pin that was not recorded.
 - <file> — <what local does better>
 - ...
 
-### Link check: <pass | N new | skipped — missing checker>
+### Link check: <pass | N new | skipped: missing checker>
 
 ### Next
 
@@ -842,9 +842,9 @@ A clean pass with nothing to change is a valid outcome. Say so and stop.
 
 - Overwrite project-specific content (context modules, agent personas, routing
   rows, project-specific skills and rules).
-- Apply changes without operator confirmation — all `.agents/**` are protected.
-- Edit in the workspace root checkout — work in a worktree.
+- Apply changes without operator confirmation; all `.agents/**` are protected.
+- Edit in the workspace root checkout; work in a worktree.
 - Skip the link check after changes.
 - Assume the upstream is this core without verifying the directory structure.
-- Reconcile a modified file by blindly taking either side — surface the
+- Reconcile a modified file by blindly taking either side; surface the
   conflict and your proposed resolution.

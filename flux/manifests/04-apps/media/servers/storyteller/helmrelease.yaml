@@ -78,7 +78,7 @@ spec:
         - name: data
           mountPath: /data
         # Source libraries, read-only: Storyteller writes metadata edits back
-        # into import-from-server files, so the originals stay protected —
+        # into import-from-server files, so the originals stay protected,
         # the calibre tree belongs to CWA and the audiobook tree to chaptarr.
         - name: ebooks
           mountPath: /library/ebooks

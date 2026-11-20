@@ -1,4 +1,4 @@
-# `helm-deployment` — new app via Helm (skill)
+# `helm-deployment`: new app via Helm (skill)
 
 `SKILL.md` defines deploying a Helm chart into the homelab GitOps
 environment: chart review, HelmRelease wiring through `generic-app`,

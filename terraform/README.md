@@ -24,14 +24,16 @@ zones, and a GitLab project scaffold (1Password ephemeral → GitLab provider).
 
 ### Managed VMs
 
-| Deployment | VMID | Module       | Placement                                        |
-| ---------- | ---- | ------------ | ------------------------------------------------ |
-| talos-01   | 801  | `talos-vm`   | Pinned to `node-01`                              |
-| talos-02   | 802  | `talos-vm`   | Pinned to `node-02`                              |
-| talos-03   | 803  | `talos-vm`   | Pinned to `node-03`                              |
-| talos-04   | 804  | `talos-vm`   | Pinned to `node-04`                              |
-| home       | 100  | `proxmox-vm` | Cluster-portable (`initial_node` at import only) |
-| game       | 103  | `proxmox-vm` | Cluster-portable (`initial_node` at import only) |
+| Deployment | Module       | Placement                                        |
+| ---------- | ------------ | ------------------------------------------------ |
+| talos-01   | `talos-vm`   | Pinned to `node-01`                              |
+| talos-02   | `talos-vm`   | Pinned to `node-02`                              |
+| talos-03   | `talos-vm`   | Pinned to `node-03`                              |
+| talos-04   | `talos-vm`   | Pinned to `node-04`                              |
+| home       | `proxmox-vm` | Cluster-portable (`initial_node` at import only) |
+| game       | `proxmox-vm` | Cluster-portable (`initial_node` at import only) |
+
+VMIDs live in each deployment's `terragrunt.hcl`.
 
 Talos nodes are pinned one VM per physical host. Home and Game use the `proxmox-vm` module, which ignores `node_name` drift so Proxmox HA and live migration can move them without Terraform fighting placement.
 
@@ -79,9 +81,9 @@ through a terragrunt dependency on `okta/network-zone`.
 
 ### Managed GitLab
 
-| Deployment       | Module           | Notes                                                                  |
-| ---------------- | ---------------- | ---------------------------------------------------------------------- |
-| `gitlab/homelab` | `gitlab-project` | Pattern spike: 1Password ephemeral → GitLab token; project label later |
+| Deployment       | Module           | Notes                              |
+| ---------------- | ---------------- | ---------------------------------- |
+| `gitlab/homelab` | `gitlab-project` | 1Password ephemeral → GitLab token |
 
 Auth for this stack: **1Password Connect** (no `op` CLI). Set
 `OP_CONNECT_HOST` (CI default:
@@ -108,20 +110,16 @@ cd terraform/deployments/gitlab/homelab && terragrunt plan
 | `tailscale/tailnet` | `tailscale-tailnet` | Policy file + DNS + tailnet settings for `taila8ef8c.ts.net` |
 
 The tailnet policy file lives in the deployment directory (`policy.hujson`)
-and is managed WHOLE by `tailscale_acl`; it was imported verbatim from the
-live tailnet before first plan. `acls_externally_managed_on` locks the admin
-console's policy editor once applied (live since 2026-08-25). The tailnet's
-custom domain (`tailnet.apocrathia.com`) is console-managed (no provider/API
+and is managed WHOLE by `tailscale_acl`. `acls_externally_managed_on` locks
+the admin console's policy editor once applied. The tailnet's custom domain
+(`tailnet.apocrathia.com`) is console-managed (no provider/API
 support). Auth is **1Password Connect** → ephemeral item
 `tailscale-terraform-secrets` (API Credential: **username** = OAuth client ID,
 **credential** = client secret). The global DNS resolver is ControlD's legacy
 resolvers (premium profile, source-IP authorized via DDNS), hardcoded
 in-module; the resolver IPs are non-secret.
-Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
-`feature_settings`, `auth_keys`, `users:read`, `log_streaming`,
-`logs:configuration:read`, `devices:core`, `devices:core:read`,
-`devices:posture_attributes`; tags: `tag:k8s`. Do not export
-`TAILSCALE_API_KEY` or `TAILSCALE_OAUTH_*`.
+Client scopes and tags: see `terraform/providers/tailscale.hcl` (source of
+truth). Do not export `TAILSCALE_API_KEY` or `TAILSCALE_OAUTH_*`.
 
 ### Future Scope
 
@@ -138,7 +136,7 @@ Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
 
 ### Why OpenTofu?
 
-HashiCorp switched Terraform to BSL 1.1 in August 2023. OpenTofu is the Linux Foundation's MPL 2.0 fork with full Terraform compatibility.
+Terraform is BSL 1.1-licensed. OpenTofu is the Linux Foundation's MPL 2.0 fork with full Terraform compatibility.
 
 ### Why Terragrunt?
 
@@ -160,7 +158,7 @@ Terragrunt auto-detects OpenTofu when both are installed.
 | `gitlab-project`     | Existing GitLab project lookup + optional ownership label          |
 | `tailscale-tailnet`  | Tailnet policy file, DNS configuration, tailnet settings           |
 
-The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
+The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (see `deployments/proxmox/home/terragrunt.hcl`).
 
 ### Providers
 
@@ -225,7 +223,7 @@ terraform/
 │   ├── okta-policy-signon/             # Sign-on policy + rules
 │   ├── gitlab-project/                 # Project data + optional label
 │   └── tailscale-tailnet/              # Policy file + DNS + tailnet settings
-├── compositions/                       # Intentionally empty — see its README
+├── compositions/                       # Intentionally empty; see its README
 │   └── README.md                       # Multi-module root modules (none yet)
 └── deployments/
     ├── proxmox/
@@ -309,16 +307,16 @@ root.hcl + providers/gitlab.hcl
 
 ```text
 root.hcl + providers/tailscale.hcl
-    └── [AWS_SECRET_KEY_STANDALONE_REDACTED].hcl  → modules/tailscale-tailnet
+    └── deployments/tailscale/tailnet/terragrunt.hcl  → modules/tailscale-tailnet
 ```
 
 ## Prerequisites
 
 ### Version Requirements
 
-```bash
-tofu version          # >= 1.11.0 (ephemeral resources; gitlab stack)
-terragrunt --version  # >= 0.52.0
+```text
+OpenTofu >= 1.11.0 (see required_version in terraform/providers/*.hcl; ephemeral resources)
+Terragrunt >= 0.52.0 (v0.52 CLI redesign)
 ```
 
 ### Installation
@@ -373,7 +371,7 @@ Create a `.env` file in the `terraform/` directory (gitignored), filled from
 1Password:
 
 ```bash
-# Proxmox API (optional curl helpers only — provider uses Connect)
+# Proxmox API (optional curl helpers only; provider uses Connect)
 export PROXMOX_API_URL=https://node-01.services.apocrathia.com:8006
 
 # All provider stacks: Connect only (no PROXMOX_VE_* / CLOUDFLARE / OKTA / GITLAB PATs).
@@ -473,7 +471,7 @@ terragrunt run --all -- plan
 terragrunt run --all --parallelism 1 --non-interactive -- apply -auto-approve
 ```
 
-> **⚠️ CRITICAL**: Always use `--parallelism 1` when applying Talos control plane nodes. Parallel applies will reboot all nodes simultaneously, causing cluster outage and potential etcd quorum loss. Home and Game can be applied individually without that constraint.
+> CRITICAL: Always use `--parallelism 1` when applying Talos control plane nodes. Parallel applies will reboot all nodes simultaneously, causing cluster outage and potential etcd quorum loss. Home and Game can be applied individually without that constraint.
 
 ### Validate Configuration
 
@@ -583,8 +581,8 @@ terragrunt import 'cloudflare_dns_record.this["okta-cname"]' ZONE_ID/RECORD_ID
 
 ### Tailscale policy file / DNS / settings
 
-Import the live tailnet config before first apply (already done for the
-initial stack; IDs don't matter for acl / dns / settings):
+Import the live tailnet config before first apply (IDs don't matter for
+acl / dns / settings):
 
 ```bash
 cd terraform/deployments/tailscale/tailnet
@@ -599,22 +597,9 @@ overwrites the WHOLE policy file.
 
 ## Pre-commit Hooks
 
-Add to `.pre-commit-config.yaml`:
+Hooks live in `.pre-commit-config.yaml` (source of truth).
 
-```yaml
-repos:
-  - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.23
-    hooks:
-      - id: tflint
-  - repo: https://github.com/tofuutils/pre-commit-opentofu
-    rev: v2.1.0
-    hooks:
-      - id: tofu_fmt
-      - id: tofu_validate
-```
-
-> **Note**: Terragrunt CLI was redesigned in v0.52+. Use `terragrunt hcl fmt` for HCL formatting.
+Terragrunt v0.52+ CLI: use `terragrunt hcl fmt` for HCL formatting.
 
 Run manually:
 

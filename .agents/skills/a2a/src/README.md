@@ -1,4 +1,4 @@
-# src — a2a package source root
+# src: a2a package source root
 
 The `src/`-layout root of the `homelab-skill-a2a` package: `a2a/` holds the
 httpx-based client module the skill's documented calls import. Build and

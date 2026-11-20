@@ -10,9 +10,9 @@ searching, downloading, browsing shares, and chat.
 This deployment includes:
 
 - Soulseek daemon (web UI + API) on port 5030
-- Gluetun VPN sidecar — all traffic leaves through the VPN, with a kill-switch
+- Gluetun VPN sidecar, all traffic leaves through the VPN, with a kill-switch
   firewall (same pattern as qBittorrent/SABnzbd)
-- slskd's native gluetun integration — delays the Soulseek connection until the
+- slskd's native gluetun integration, delays the Soulseek connection until the
   VPN is up and drops it if the VPN goes down
 - Authentik proxy provider for SSO in front of the web UI
 - Longhorn persistent volume for application data (`/app`: config, SQLite DBs,
@@ -91,7 +91,7 @@ listen port automatically.
 
 1. Access the web UI and log in with the `web-username` / `web-password`
    credentials from 1Password.
-2. Confirm the Soulseek server connection status (top of the UI) — credentials
+2. Confirm the Soulseek server connection status (top of the UI), credentials
    come from the same 1Password item, and the connection waits for the VPN.
 3. Optional: add shared directories under Options if you want to upload.
 

@@ -1,4 +1,4 @@
-# `cleanup-worktrees` — worktree removal path (skill)
+# `cleanup-worktrees`: worktree removal path (skill)
 
 `SKILL.md` defines the remove half of worktree housekeeping: inventory and
 delete unused git worktrees and merged orphan branches under `.worktrees/`.

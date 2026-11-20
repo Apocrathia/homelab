@@ -3,8 +3,7 @@
 # `logs` table (rows older than 30 days), plus a weekly Sunday OPTIMIZE
 # TABLE pass to hand the freed pages back to the filesystem. MISP 2.5.44
 # has no built-in audit-log retention (only the MISP.log_new_audit master
-# switch), and the audit rows are ~99% feed-pull machine noise that filled
-# the DB volume on 2026-10-20.
+# switch), and the audit rows are ~99% feed-pull machine noise.
 apiVersion: batch/v1
 kind: CronJob
 metadata:

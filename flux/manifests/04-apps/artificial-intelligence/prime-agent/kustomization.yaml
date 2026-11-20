@@ -11,7 +11,7 @@ resources:
   - networkpolicy.yaml
 # No configMapGenerator: the agent/ payload (extensions + settings) is
 # pulled by the boot script from this repo's public per-path GitLab
-# archive on every pod start — the single-CM era died at the API
+# archive on every pod start: the single-CM era died at the API
 # server's 1 MiB limit (1,085,491 B serialized) and any CM variant kept
 # the sync-MR ritual. main is the deployed truth now: payload changes
 # land by merge, apply on the next pod restart, no manifest re-render.

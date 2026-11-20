@@ -16,7 +16,7 @@ fi
 
 echo "using pod ${POD}"
 # Pipe the enqueue script into the romm container so it uses RomM's Python env
-# and local Valkey — no HTTP auth, no exposed Redis.
+# and local Valkey: no HTTP auth, no exposed Redis.
 kubectl exec -i -n romm -c romm "${POD}" -- \
   env \
     SCAN_TYPE="${SCAN_TYPE:-unmatched}" \

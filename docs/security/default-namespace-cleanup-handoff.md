@@ -17,7 +17,7 @@ Do not try to "move" a `ValidatingPolicy` into `kyverno` by adding `metadata.nam
 
 ### Getting policy Events out of `default`
 
-Events are tied to the namespace of the object that triggered them. For this policy, `default` Events exist because there are still objects in `default` that violate policy or were validated there historically.
+Events are tied to the namespace of the object that triggered them; `default` Events come from objects in `default` that violate policy.
 
 Use this sequence:
 

@@ -4,7 +4,7 @@
 
 ## Overview
 
-TextureCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+TextureCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://texturecraft.gateway.services.apocrathia.com`
 

@@ -4,7 +4,7 @@
 
 ## Overview
 
-DesignCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
+DesignCraft, open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
 **URL:** `https://designcraft.gateway.services.apocrathia.com`
 

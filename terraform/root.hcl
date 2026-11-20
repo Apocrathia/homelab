@@ -16,7 +16,7 @@ locals {
   # Base state URL from environment
   base_address = get_env("TF_HTTP_ADDRESS", "")
 
-  # Path relative to this root include (named — required when stacks also
+  # Path relative to this root include (named, required when stacks also
   # include providers/*.hcl). Bare path_relative_to_include() keys off the
   # wrong include and injects ".." into the state URL.
   state_key = replace(path_relative_to_include("root"), "/", "-")

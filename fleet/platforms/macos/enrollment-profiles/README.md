@@ -1,4 +1,4 @@
-# macOS enrollment profiles — empty slot
+# macOS enrollment profiles: empty slot
 
 Only the `.keep` placeholder lives here. The fleet-gitops validator treats
 `enrollment-profiles` as an artifact directory: files added here do nothing

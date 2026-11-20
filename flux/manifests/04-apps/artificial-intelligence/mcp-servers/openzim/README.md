@@ -18,7 +18,7 @@ This deployment includes:
 
 ### Transport
 
-`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
+`transportType: stdio`, agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Storage
 

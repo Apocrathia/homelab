@@ -1,13 +1,13 @@
 ---
 # Sunshine (LizardByte) game-stream host, KMS capture mode.
 #
-# KMS capture reads the DRM framebuffer directly — below the Wayland
-# compositor — so it never touches xdg-desktop-portal. That kills the
+# KMS capture reads the DRM framebuffer directly, below the Wayland
+# compositor, so it never touches xdg-desktop-portal. That kills the
 # "Allow remote control?" KDE portal prompt that would otherwise appear
 # after every reboot (portal session tokens do not survive reboots).
 # Input injection uses /dev/uinput, which has no portal path either.
 #
-# Scope: opt-in per host via common_sunshine_kms (default false) — see
+# Scope: opt-in per host via common_sunshine_kms (default false); see
 # defaults/main.yml. Intended for physical-desktop hosts (gaming PC); KMS
 # cannot see KWin virtual outputs, so do not enable on headless/virtual-
 # display setups.

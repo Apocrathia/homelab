@@ -42,7 +42,7 @@ Service-port override should apply to the port the Service advertises.
 
    ```bash
    kubectl get svc <name> -n <ns> -o jsonpath='{.spec.ports[0]}'
-   # {"port":8080,"targetPort":8080,...} — both pinned to deployment.port
+   # {"port":8080,"targetPort":8080,...}: both pinned to deployment.port
    ```
 
 3. There is no CRD field to make `port: 80`; editing the Service by hand is

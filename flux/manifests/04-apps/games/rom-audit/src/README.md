@@ -1,7 +1,7 @@
 # rom_audit
 
 Pure-Python package that compares ROM files on disk against No-Intro DATs and
-reports `matched` / `wrong_name` / `unknown` for every file. Report only — it
+reports `matched` / `wrong_name` / `unknown` for every file. Report only, it
 never renames or deletes anything.
 
 > **Navigation**: [← Back to rom-audit README](../README.md)
@@ -40,7 +40,7 @@ uv run pytest
 
 ## Tests
 
-`tests/` uses fixtures only — a small synthetic DAT
+`tests/` uses fixtures only, a small synthetic DAT
 (`tests/fixtures/nes.dat`) and ROM payloads generated at test time (no real
 ROM files, no committed binaries). `test_dat.py` covers DAT parsing;
 `test_classify.py` covers classification of loose files and cart zips

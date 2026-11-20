@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: ollama
   author: apocrathia
-  description: Ollama LLM server via the official install.sh — drift-gated self-update against GitHub releases, models untouched.
+  description: Ollama LLM server via the official install.sh; drift-gated self-update against GitHub releases, models untouched.
   license: MIT
   min_ansible_version: "2.15"
   platforms:

@@ -1,5 +1,5 @@
 ---
-# Context link check — AGENTS.md / .agents markdown links and anchors
+# Context link check: AGENTS.md / .agents markdown links and anchors
 context-links:
   stage: test
   image:

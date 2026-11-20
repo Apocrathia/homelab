@@ -8,7 +8,8 @@ Privacy-respecting metasearch engine that aggregates results from multiple searc
 
 This deployment includes:
 
-- **Metasearch Engine**: Aggregates results from 150+ search engines
+SearXNG aggregates results from many engines with no user tracking or profiling; deployed behind an Authentik proxy provider with Longhorn-backed config and cache.
+
 - **Privacy-Focused**: No user tracking or profiling
 - **Authentik Integration**: SSO authentication via proxy provider
 - **Persistent Storage**: Configuration and cache data stored in Longhorn volumes

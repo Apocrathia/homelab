@@ -1,4 +1,4 @@
-# `context-eval/scripts` — grader validation gate
+# `context-eval/scripts`: grader validation gate
 
 `verify_checks.py` stages every corpus task in a throwaway workspace and
 proves each grader can fail before any agent run bills: reference overlay

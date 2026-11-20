@@ -1,4 +1,4 @@
-# `integrate-upstream` — sync from the shared core (skill)
+# `integrate-upstream`: sync from the shared core (skill)
 
 `SKILL.md` defines pulling changes from the shared agent core into a
 consuming project's existing `.agents/` tree: diff shared rules, skills, and
