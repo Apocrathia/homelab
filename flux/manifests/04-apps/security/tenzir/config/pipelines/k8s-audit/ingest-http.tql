@@ -1,0 +1,7 @@
+---
+name: k8s-audit ingest http
+disabled: true
+---
+accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
+homelab::k8s::audit::parse
+publish "k8s-audit.raw"

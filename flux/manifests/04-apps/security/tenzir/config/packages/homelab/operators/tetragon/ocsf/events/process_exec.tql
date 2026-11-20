@@ -1,0 +1,45 @@
+---
+description: |
+  Tetragon process_exec → OCSF Process Activity (1007), Launch. The exec'ed
+  binary is the primary process; its pod rides in process.container (OCSF
+  container profile) and the residue.
+args:
+  positional:
+    - name: event
+      description: The process_exec record to read.
+    - name: ocsf
+      description: The OCSF event to build.
+      type: field
+---
+
+$ocsf.category_uid = ocsf_category_uid("System Activity")
+$ocsf.class_uid = ocsf_class_uid("Process Activity")
+$ocsf.activity_id = 1 // Launch
+
+$ocsf.process = {
+  pid: $event.process?.pid?,
+  tid: $event.process?.tid?,
+  uid: f"{$event.process?.uid?}",
+  path: $event.process?.binary?,
+  file: {path: $event.process?.binary?},
+  cmd_line: f"{$event.process?.binary?} {$event.process?.arguments?}" if $event.process?.arguments? != null else $event.process?.binary?,
+  working_directory: $event.process?.cwd?,
+  created_time: $event.process?.start_time?,
+  parent_process: {
+    pid: $event.parent?.pid?,
+    path: $event.parent?.binary?,
+    cmd_line: f"{$event.parent?.binary?} {$event.parent?.arguments?}" if $event.parent?.arguments? != null else $event.parent?.binary?,
+  },
+}
+
+if $event.process?.pod? != null {
+  $ocsf.metadata.profiles = ["container"]
+  $ocsf.process.container = {
+    uid: $event.process.pod.container?.id?.replace("containerd://", ""),
+    name: $event.process.pod.container?.name?,
+    image: {
+      uid: $event.process.pod.container.image?.id?,
+      name: $event.process.pod.container.image?.name?,
+    },
+  }
+}

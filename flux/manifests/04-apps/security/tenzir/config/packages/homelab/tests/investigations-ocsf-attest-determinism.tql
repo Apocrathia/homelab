@@ -1,0 +1,82 @@
+---
+pre-compare: sort
+---
+from {i: 1}, {i: 2}
+// The print_json DETERMINISM question, pinned head-on instead of assumed:
+// two records with the same content in opposite key insertion order at
+// every nesting level, built by conditional assignment because a read_json
+// batch unifies same-shaped records into one schema layout — the
+// divergence this test exists for would never reach the operator through a
+// shared fixture file. The read-back lane cannot reproduce field order
+// anyway (ClickHouse sorts the keys of stored JSON values;
+// reference/operators/from_clickhouse.md), so attest's
+// print_json(this.sort()) must be insertion-order-independent for the
+// verify recompute to ever match. The asserts make the proof
+// load-bearing: the first fails if print_json alone were already
+// canonical (the pair would no longer be a discriminating fixture), the
+// second if sort()+print_json is not deterministic over identical
+// content.
+if i == 1 {
+  this = {
+    activity_id: 1,
+    assignee: {name: "hermes-agent"},
+    category_uid: 2,
+    class_uid: 2005,
+    desc: "determinism probe: same content, different key insertion order",
+    finding_info_list: [{
+      created_time: 2026-10-17T09:00:00Z,
+      related_events: null,
+      title: "Determinism probe",
+      uid: "case-determinism",
+    }],
+    metadata: {
+      correlation_uid: "case-determinism",
+      product: {name: "homelab-investigations", vendor_name: "apocrathia", version: "0.1.0"},
+      profiles: [],
+      uid: "determinism-probe",
+      version: "1.9.0",
+    },
+    severity_id: 3,
+    status_id: 1,
+    time: 2026-10-17T09:00:00Z,
+    type_uid: 200501,
+  }
+} else {
+  this = {
+    type_uid: 200501,
+    time: 2026-10-17T09:00:00Z,
+    status_id: 1,
+    severity_id: 3,
+    metadata: {
+      version: "1.9.0",
+      uid: "determinism-probe",
+      profiles: [],
+      product: {version: "0.1.0", vendor_name: "apocrathia", name: "homelab-investigations"},
+      correlation_uid: "case-determinism",
+    },
+    finding_info_list: [{
+      uid: "case-determinism",
+      title: "Determinism probe",
+      related_events: null,
+      created_time: 2026-10-17T09:00:00Z,
+    }],
+    desc: "determinism probe: same content, different key insertion order",
+    class_uid: 2005,
+    category_uid: 2,
+    assignee: {name: "hermes-agent"},
+    activity_id: 1,
+  }
+}
+homelab::investigations::ocsf::attest
+// Post-attest plumbing: the operator already fingerprinted from
+// this.sort(), so these assignments cannot perturb the proof.
+_unsorted = print_json(this)
+_fp = attestation_list[0].fingerprint.value
+lag value=_unsorted, into=_prev_unsorted
+lag value=_fp, into=_prev_fp
+where _prev_unsorted? != null
+insertion_order_sensitive = _unsorted != _prev_unsorted
+fingerprints_identical = _fp == _prev_fp
+assert insertion_order_sensitive, message="print_json is insertion-order sensitive; the fixture pair must differ in key order for this test to have teeth"
+assert fingerprints_identical, message="sorted-key serialization must fingerprint identical content identically regardless of key insertion order"
+drop _unsorted, _prev_unsorted, _fp, _prev_fp

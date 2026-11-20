@@ -1,0 +1,5 @@
+---
+dependencies:
+  homelab:
+    path: packages/homelab
+  demo: ^0.1.0

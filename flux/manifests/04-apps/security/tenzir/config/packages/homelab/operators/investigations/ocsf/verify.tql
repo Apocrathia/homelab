@@ -1,0 +1,21 @@
+---
+description: |
+  Investigations-plane scope of the record_integrity verification walk —
+  the thin binding over the shared operator
+  ([`../../record_integrity/verify.tql`](../../record_integrity/verify.tql)),
+  which owns the recompute, the chain walk, and the finding shape.
+  Scope: the walk is unwindowed (the investigations store is read whole
+  — a chain head referencing a predecessor the walk never saw is a
+  deletion), and findings dress as the investigations product over the
+  per-case chains (chain_uid = metadata.correlation_uid). The
+  investigations-attest-verify pipeline calls this hourly (the every
+  wrapper) and writes break findings into ocsf.Detection_Finding to ride
+  the Grafana rails (docs/issues/
+  tenzir-record-integrity-attestations.md, landed).
+---
+
+homelab::record_integrity::verify product="homelab-investigations",
+  title="Investigations record chain break",
+  uid_prefix="investigations",
+  scope_word="case",
+  windowed=false

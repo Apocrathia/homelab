@@ -1,0 +1,38 @@
+---
+pre-compare: sort
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// The finding-rail proof, half the scheduled-verify lap: the record the
+// verify pipelines write into ocsf.Detection_Finding must (1) pass
+// ocsf_derive + ocsf_cast clean (class 2004 schema-native — the cast
+// gate the pipeline rides before the to_clickhouse INSERT) and (2) land
+// inside the Grafana tenzir-findings rule's WHERE clauses
+// (03-services/observability/grafana/alerting/tenzir-findings.yaml,
+// first arm): class_uid = 2004, severity_id >= 4, and the finding-label
+// coalesce resolving on finding_info.title. Fixture =
+// detection-verify-tamper's stored-shape chain (fingerprint_mismatch on
+// a2, chain_link_mismatch on audit-b — two findings through the leg).
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"
+// Findings only reach here (the walk drops intact records); pin the
+// finding time for the baseline — the operator stamps now() live.
+time = 2026-10-17T11:30:00Z
+// The scheduled pipeline's write leg, as it runs on the node: the
+// finding rides ocsf_derive + ocsf_cast into the lake's class shape.
+ocsf_derive
+ocsf_cast
+// The alert rule's first arm, executable:
+//   WHERE class_uid = 2004 AND severity_id >= 4 AND $__timeFilter(time)
+assert class_uid == 2004, message="alert WHERE: class_uid = 2004"
+assert severity_id >= 4, message="alert WHERE: severity_id >= 4"
+assert time? != null, message="alert WHERE: time column present"
+// The finding label coalesce (finding_info.title > finding_info.uid >
+// rule_id > 'unattributed') resolves on title for every verify finding.
+assert finding_info?.title? != null, message="alert label: finding_info.title"
+to_stdout { write_json }

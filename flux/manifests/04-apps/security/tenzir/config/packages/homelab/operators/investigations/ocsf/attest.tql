@@ -1,0 +1,20 @@
+---
+description: |
+  Investigations-plane scope of the record_integrity stamp — the thin
+  binding over the shared operator
+  ([`../../record_integrity/attest.tql`](../../record_integrity/attest.tql)),
+  which owns the stamping mechanics and the OCSF rule quotes. Scope: one
+  chain per case — chain_uid = metadata.correlation_uid, the case spine;
+  genesis is the case open (class 2005, activity 1), so a new case
+  legitimately starts its chain; the attesting identity is
+  tenzir-node-investigations, the chart-rendered node name (the same
+  identity the map stamps as src_endpoint.hostname). The caller supplies
+  the chain tail in prev_tail via the investigations-chains context; a
+  null/absent tail on a non-open record is the documented node-restart
+  case. The whole-stamp narrative (genesis, restarts, the fingerprint
+  crux) lives in the shared operator and the ocsf README.
+---
+
+homelab::record_integrity::attest authority_uid="tenzir-node-investigations",
+  chain_uid=metadata.correlation_uid,
+  genesis=class_uid? == 2005 and activity_id? == 1

@@ -1,0 +1,6 @@
+---
+name: geo-open
+persist: true
+reload-interval: 1d
+type: geoip
+url: https://cra.circl.lu/opendata/geo-open/mmdb-country-asn/latest.mmdb

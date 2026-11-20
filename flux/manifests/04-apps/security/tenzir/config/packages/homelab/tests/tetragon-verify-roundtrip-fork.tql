@@ -1,0 +1,86 @@
+---
+quiet: true
+pre-compare: sort
+---
+// The DESIGN FORK PIN: the tetragon lanes' pre-INSERT records carry
+// JSON-borne null-valued fields (the map's unmapped literal writes
+// policy_name and the pod fields on every record; exec/exit records
+// get policy_name: null), and Tenzir's serializer OMITS
+// null-valued keys at write — irrecoverably, the row keeps no trace of
+// them. Lab-verified 2026-11-05 (engine v6.20.1 → ClickHouse 26.10.3.7
+// with the production DDL): a stamped record with
+// unmapped = {pod: {name: null, namespace: null}, policy_name: null}
+// stores an EMPTY unmapped column.
+//
+// This test runs the same stamp → round-trip → strip → verify chain as
+// detection-verify-roundtrip and PINS the honest outcome: the
+// null-carrying records (the exec/exit pair, whose stamped fingerprints
+// cover the nulls) FAIL the recompute after the nulls are dropped —
+// the strip cannot invert what the write destroyed — while the
+// null-free kprobe records ride the same round trip CLEAN through the
+// Process/File/Network strip arms. That split IS the fork: the
+// recoverable mass verifies, the null-carrying rows keep flagging
+// until the stamp side hashes a round-trip-stable canonical form (an
+// operator decision — it re-specifies the fingerprint and orphans the
+// already stamped rows; see the record_integrity README's round-trip
+// section).
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+this = {tetragon: this}
+homelab::tetragon::ocsf::map tetragon, ocsf
+this = move ocsf
+ocsf_derive
+ocsf_cast
+where class_uid in [ocsf_class_uid("Process Activity"), ocsf_class_uid("File System Activity"), ocsf_class_uid("Network Activity")]
+if type_uid == 100701 {
+  metadata.uid = "tet-attest-exec"
+}
+if type_uid == 100702 {
+  metadata.uid = "tet-attest-exit"
+}
+if type_uid == 100700 {
+  metadata.uid = "tet-attest-kprobe"
+}
+if type_uid == 100102 {
+  metadata.uid = "tet-attest-file"
+}
+if type_uid == 400101 {
+  metadata.uid = "tet-attest-net"
+}
+sort time, metadata.uid
+homelab::record_integrity::attest authority_uid="tenzir-node-tetragon",
+  chain_uid="tenzir-node-tetragon",
+  genesis=false,
+  chain="stream"
+
+// ==== the ClickHouse round trip ====
+// write side: Tenzir's serializer omits null-valued keys — THIS is the
+// unfixable transform for the null-carrying records (policy_name and
+// pod nulls on the exec/exit pair).
+drop_null_fields
+// write side: the absent typed-column fields lift as NULL — the
+// tetragon maps write process.file.path (never process.path), the
+// kprobe container block only when the process has a pod, and no lane
+// ever wrote traffic.bytes (13,574,131 landed Network Activity rows
+// carry zero traffic objects in the JSON, live count 2026-11-05).
+if class_uid? == 1007 and process?.path? == null {
+  process.path = null
+}
+if class_uid? == 1001 and actor?.process?.container?.name? == null {
+  actor.process.container.name = null
+}
+if class_uid? == 4001 and traffic?.bytes? == null {
+  traffic.bytes = null
+}
+// read side: the artifact strip inverts the injections above.
+homelab::record_integrity::ocsf::strip
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"
+// Pin the finding time for the baseline — the operator stamps now()
+// live (the detection-verify-finding precedent).
+time = 2026-10-10T05:10:00Z

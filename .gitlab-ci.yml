@@ -12,6 +12,7 @@ include:
   - local: .gitlab/scorecard.gitlab-ci.yml
   - local: .gitlab/pages.gitlab-ci.yml
   - local: .gitlab/tofu.gitlab-ci.yml
+  - local: .gitlab/tenzir-config-sync.gitlab-ci.yml
   - local: fleet/.gitlab-ci.yml
   - local: ansible/.gitlab-ci.yml
   # Security scanning

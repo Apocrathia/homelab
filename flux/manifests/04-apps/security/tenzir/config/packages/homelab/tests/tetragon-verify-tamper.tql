@@ -1,0 +1,50 @@
+---
+pre-compare: sort
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// The tetragon-attest chain with four post-stamp mutations applied in
+// the store — the verification lane's threat model, the same four as
+// the core node's detection-verify-tamper. (1) The exec record was
+// DELETED: exit is now the first record of the walk yet still
+// references a predecessor the walk never sees — the rolling-window
+// tolerance (windowed=true) treats that as the window edge, not a
+// break. (2) exit's process.pid was edited after stamping with its
+// attestation left stale: the per-record fingerprint recompute must
+// flag it — proving the fingerprint check runs even at the window
+// edge. (3) The kprobe record was DELETED: file's prev_event no longer
+// references its immediate walked predecessor, and the walk must flag
+// the broken link — the adjacency check that doubles as the un-hashed
+// link's integrity check. (4) The net record's chain-link attestation
+// (attestation_list[1]) was stripped: a mid-chain record without its
+// link is the documented restart shape — NOT a break. Expected: the
+// summary line plus two findings — fingerprint_mismatch on exit and
+// chain_link_mismatch on file.
+fork {
+  summarize records_checked = count()
+  to_stdout { write_json }
+}
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"
+// Findings only reach here (the walk drops intact records); pin the
+// finding time for the baseline — the operator stamps now() live.
+time = 2026-10-10T06:10:00Z
+// The scheduled pipeline's write leg, as it runs on the node: the
+// finding rides ocsf_derive + ocsf_cast into the lake's class shape.
+ocsf_derive
+ocsf_cast
+// The alert rule's first arm, executable (the same WHERE proof as
+// detection-verify-finding, now on this node's chain identity):
+//   WHERE class_uid = 2004 AND severity_id >= 4 AND $__timeFilter(time)
+assert class_uid == 2004, message="alert WHERE: class_uid = 2004"
+assert severity_id >= 4, message="alert WHERE: severity_id >= 4"
+assert time? != null, message="alert WHERE: time column present"
+// The finding label coalesce (finding_info.title > finding_info.uid >
+// rule_id > 'unattributed') resolves on title for every verify finding.
+assert finding_info?.title? != null, message="alert label: finding_info.title"
+to_stdout { write_json }

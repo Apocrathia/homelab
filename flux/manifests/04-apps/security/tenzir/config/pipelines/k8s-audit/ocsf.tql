@@ -1,0 +1,61 @@
+---
+name: k8s-audit ocsf
+disabled: false
+---
+// k8s audit → OCSF API Activity (6003), CH-direct (phase 2, stateless):
+// the fork { import } lake leg is gone. In-stream record_integrity
+// attestation stamps records inside a 60s event-time window, upstream of
+// the direct to_clickhouse INSERT. ClickHouse is the record; the lake
+// rides empty until its teardown.
+//
+// fork: the durable CH leg (attest + INSERT) rides a fork branch —
+// sink-only, so a fork_merge arm would be a parse error — and the
+// main flow publishes to the ocsf bus after it: sigma's subscription
+// is this publish's ONLY consumer (Grafana reads ClickHouse), so this
+// publish is load-bearing and must stay — the bus dies with its
+// publisher intact only on sigma's side of the loop (see
+// sigma-detect.tql for why sigma never publishes back).
+subscribe "k8s-audit.raw"
+homelab::k8s::audit::ocsf::map
+this = ocsf_derive(this)
+this = ocsf_cast(this)
+context_enrich "fleet_assets", key=src_endpoint?.ip, into=src_endpoint.host
+src_endpoint.hostname = src_endpoint.host?.hostname? if src_endpoint.host?.hostname? not in [null, ""] else null
+src_endpoint.os = {
+  name: src_endpoint.host?.os_version?,
+} if src_endpoint.host?.os_version? not in [null, ""] else null
+drop src_endpoint.host
+context_enrich "geo-open", key=src_endpoint?.ip, into=src_endpoint.geo
+src_endpoint.location = {
+  country: src_endpoint.geo?.country?.iso_code?,
+} if src_endpoint.geo?.country?.iso_code? not in [null, "None"] else null
+src_endpoint.autonomous_system = {
+  number: src_endpoint.geo?.country?.AutonomousSystemNumber?.int(),
+  name: src_endpoint.geo?.country?.AutonomousSystemOrganization?,
+} if src_endpoint.geo?.country?.AutonomousSystemNumber? not in [null, "0"] else null
+drop src_endpoint.geo
+drop_null_fields src_endpoint
+fork {
+  metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
+  window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+    sort time, metadata.uid
+    context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
+    homelab::record_integrity::attest authority_uid="tenzir-node-core",
+      chain_uid="tenzir-node-core",
+      genesis=false,
+      chain="stream"
+    fork {
+      context_update "detection-chains", key="tenzir-node-core",
+        value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+    }
+  }
+  to_clickhouse table="ocsf.API_Activity",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false,
+                mode="append",
+                max_batch_rows=65536
+}
+publish "ocsf"

@@ -1,0 +1,83 @@
+---
+quiet: true
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+homelab::investigations::ocsf::map
+// Pin the identity the envelopes cannot carry so the fixture chain is
+// deterministic end to end (the map mints uuid() per record).
+if metadata.correlation_uid == "case-attest-1" and time == 2026-10-17T09:00:00Z {
+  metadata.uid = "case-attest-1-open"
+}
+if metadata.correlation_uid == "case-attest-1" and time == 2026-10-17T09:05:00Z {
+  metadata.uid = "case-attest-1-evidence"
+}
+if metadata.correlation_uid == "case-attest-1" and time == 2026-10-17T10:00:00Z {
+  metadata.uid = "case-attest-1-close"
+}
+if metadata.correlation_uid == "case-attest-2" {
+  metadata.uid = "case-attest-2-open"
+}
+if metadata.correlation_uid == "case-attest-3" {
+  metadata.uid = "case-attest-3-update"
+}
+if metadata.correlation_uid == "case-attest-4" and time == 2026-10-17T09:45:00Z {
+  metadata.uid = "case-attest-4-open"
+}
+if metadata.correlation_uid == "case-attest-4" and time == 2026-10-17T10:15:00Z {
+  metadata.uid = "case-attest-4-close"
+}
+ocsf_derive
+ocsf_cast
+// The chain tails the live pipeline supplies via context_enrich on the
+// investigations-chains context (keyed by the case spine); the fixtures
+// bake the previous records' real tails — the exact values the node's
+// context would carry — so the chain links in the baseline are the ones a
+// live case stamps. case-attest-2: both opens are genesis records with
+// identical pinned content — no tails, so the pair proves serialization
+// determinism end to end (the dedicated determinism test pins the
+// mechanism itself). case-attest-3: no tail — the update of a case whose
+// chain state the node no longer holds; attest warns (the designed
+// restart warning; quiet: true keeps the baseline warning-free) and
+// stamps the record without prev_event.
+if metadata.correlation_uid == "case-attest-1" and time == 2026-10-17T09:05:00Z {
+  prev_tail = {
+    uid: "case-attest-1-open",
+    type_uid: 200501,
+    fingerprint: {
+      algorithm_id: 3,
+      encoding_id: 1,
+      serialization_id: 99,
+      serialization: "tenzir-sorted-json",
+      value: "b5cacf1b0a02224a8833d850138f621ad04a68513fd74866329733787112d7b6",
+    },
+  }
+}
+if metadata.correlation_uid == "case-attest-1" and time == 2026-10-17T10:00:00Z {
+  prev_tail = {
+    uid: "case-attest-1-evidence",
+    type_uid: 600504,
+    fingerprint: {
+      algorithm_id: 3,
+      encoding_id: 1,
+      serialization_id: 99,
+      serialization: "tenzir-sorted-json",
+      value: "459aa99b6aea30f55826de64447d40cec34cf57e972a1bfef6073073ad8dce41",
+    },
+  }
+}
+if metadata.correlation_uid == "case-attest-4" and time == 2026-10-17T10:15:00Z {
+  prev_tail = {
+    uid: "case-attest-4-open",
+    type_uid: 200501,
+    fingerprint: {
+      algorithm_id: 3,
+      encoding_id: 1,
+      serialization_id: 99,
+      serialization: "tenzir-sorted-json",
+      value: "f702baa3409285a31e4c364a2a1303f8e43f15989e58a0aaefbb54cf38c9c15b",
+    },
+  }
+}
+homelab::investigations::ocsf::attest
