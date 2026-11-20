@@ -10,12 +10,5 @@ metadata:
     # vxcontrol/pentagi + docker.io/library/docker live on docker.io; Kyverno
     # clones the docker.io pull secret into namespaces with this label.
     images/dockerhub: "true"
-    # The dind Deployment (dind.yaml) runs a privileged dockerd for agent
-    # sandboxes; that trips PSA baseline, so the namespace enforces
-    # privileged (speedtest/kagent pattern). The app pod itself stays
-    # unprivileged (uid 100, caps dropped).
-    pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/warn: privileged
     # Opt-in to the shared kopiur repository (ClusterRepository/nas-rustfs)
     backup.apocrathia.com/repo: nas-rustfs

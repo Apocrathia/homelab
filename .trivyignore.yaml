@@ -7,36 +7,33 @@
 # scopes AVD-KSV-0014 to files with those names (not every manifest in the repo).
 
 misconfigurations:
+  - id: AVD-KSV-0005
+    paths:
+      - "podman.yaml"
+    statement: >-
+      The rootless podman sandbox daemon (pentagi-podman Deployment) adds
+      exactly one capability, SYS_ADMIN, held by the unprivileged image
+      user uid 1000: containerd's
+      RuntimeDefault seccomp profile only allows the user-namespace syscalls
+      (clone/clone3/unshare/setns/mount) for containers with CAP_SYS_ADMIN
+      in their bounding set, and rootless podman needs those to create its
+      nested user namespace (verified from containerd
+      contrib/seccomp/seccomp_default.go). The pods are otherwise
+      unprivileged: no privileged mode, no host paths or devices, caps
+      otherwise dropped, seccompProfile stays RuntimeDefault, and a
+      CiliumNetworkPolicy gates the unauthenticated 2375 API to the app pod.
+      Replacing this waiver: a custom node-local seccomp profile or
+      security-profiles-operator (not in this cluster).
   - id: AVD-KSV-0014
     paths:
       - "cronjob.yaml"
       - "daemonset.yaml"
-      - "dind.yaml"
     statement: >-
       Some CronJobs and DaemonSets intentionally leave the root filesystem
-      writable (e.g. apt/compile steps in jobs, or tdarr-node transcoding),
-      and the pentagi docker-in-docker daemon writes /var/lib/docker and
-      /run by design. Prefer fixing with readOnlyRootFilesystem plus
-      emptyDir mounts when practical; until then suppress by basename for
-      cronjob.yaml, daemonset.yaml, and dind.yaml only.
-  - id: AVD-KSV-0017
-    paths:
-      - "dind.yaml"
-    statement: >-
-      The pentagi docker-in-docker daemon (pentagi-dind Deployment) must run
-      privileged: dockerd needs CAP_SYS_ADMIN, mounts, and iptables inside
-      its own namespace. It is the only privileged pod in the pentagi
-      namespace (the app pod runs as uid 100 with caps dropped), lives on
-      its own 30Gi PVC, and a CiliumNetworkPolicy pins its unauthenticated
-      2375 API to the pentagi app pod and kubelet probes. The same waivers
-      are annotated on the Deployment for kube-linter
-      (ignore-check.kube-linter.io/privileged-container and friends).
-  - id: AVD-KSV-0118
-    paths:
-      - "dind.yaml"
-    statement: >-
-      The pentagi-dind dockerd runs as root by requirement (docker-in-docker);
-      same rationale and compensating controls as AVD-KSV-0017.
+      writable (e.g. apt/compile steps in jobs, or tdarr-node transcoding).
+      Prefer fixing with readOnlyRootFilesystem plus emptyDir mounts when
+      practical; until then suppress by basename for cronjob.yaml and
+      daemonset.yaml only.
   - id: AVD-KSV-0041
     paths:
       - "generate-rbac.yaml"
