@@ -32,7 +32,7 @@ spec:
               drop:
                 - ALL
           # renovate: datasource=docker depName=ghcr.io/tenzir/tenzir
-          image: ghcr.io/tenzir/tenzir:v7.0.0-rc.6-slim
+          image: ghcr.io/tenzir/tenzir:v7.0.0-rc.6-slim@sha256:e8ed0979b074165426ce7fca59b9903f50bc2c26b714ee3ec9697c4d136ac4f6
           command:
             - /bin/sh
             - -c
