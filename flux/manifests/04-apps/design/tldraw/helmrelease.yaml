@@ -24,12 +24,16 @@ spec:
       container:
         name: node
         port: 5858
+        # The chart renders env from app.container.env — the original MR
+        # nested it at app.env, so Helm dropped it and NODE_ENV never reached
+        # the process. Without NODE_ENV=production the server registers no
+        # static routes and no SPA catch-all: every non-API GET 404s.
+        env:
+          - name: NODE_ENV
+            value: production
+          - name: CONFIG_DIR
+            value: /config
       command: ["node", "/app/dist/src/server/server.node.js"]
-      env:
-        - name: NODE_ENV
-          value: production
-        - name: CONFIG_DIR
-          value: /config
       replicas: 1
       podAntiAffinity:
         enabled: false
@@ -82,21 +86,22 @@ spec:
             limits:
               cpu: "2"
               memory: 3Gi
+      # Do not use httpGet probes here: unless NODE_ENV=production reaches
+      # the process (see app.container.env above) the server 404s every
+      # non-API route, and no /health endpoint exists upstream. TCP on the
+      # listen port is stable regardless of route behavior; switch back to
+      # httpGet / only after verifying it serves the SPA with 200.
       healthChecks:
         livenessProbe:
           enabled: true
-          httpGet:
-            path: /
+          tcpSocket:
             port: 5858
-            scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 30
         readinessProbe:
           enabled: true
-          httpGet:
-            path: /
+          tcpSocket:
             port: 5858
-            scheme: HTTP
           initialDelaySeconds: 5
           periodSeconds: 10
       volumeMounts:
