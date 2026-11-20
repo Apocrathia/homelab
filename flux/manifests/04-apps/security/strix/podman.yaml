@@ -157,6 +157,10 @@ spec:
             - name: config
               mountPath: /home/podman/.config/containers
               readOnly: true
+            # Writable tmpfs (fsGroup-owned, uid 1000 can mkdir): the
+            # rootfs is read-only, so the rootless session runtime state —
+            # XDG_RUNTIME_DIR=/run/user/1000, crun state, events log —
+            # lives here
             - name: run
               mountPath: /run
             - name: tmp

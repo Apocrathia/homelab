@@ -7,6 +7,18 @@ metadata:
     app.kubernetes.io/name: strix
     app.kubernetes.io/component: ai-pentesting
     app.kubernetes.io/part-of: security
-    # docker.io/library/docker (dockerd) lives on docker.io; Kyverno clones
-    # the docker.io pull secret into namespaces with this label.
+    # docker.io images need the Kyverno-cloned pull secret (kept for future
+    # use; the current images pull from quay.io/public.ecr.aws, and podman
+    # fetches the ghcr.io sandbox itself).
     images/dockerhub: "true"
+    # The rootless podman sandbox daemon (podman.yaml) needs seccomp
+    # Unconfined plus SETUID/SETGID in its bounding set for the nested user
+    # namespace containerd's RuntimeDefault profile blocks — both beyond the
+    # cluster-default PSA baseline, so the namespace enforces privileged
+    # (pentagi dind / speedtest / kagent pattern; this also retroactively
+    # unblocks the pod, which PSA baseline had rejected since the first
+    # deploy). The app pod itself stays unprivileged: uid 1000, caps
+    # dropped, RuntimeDefault.
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
