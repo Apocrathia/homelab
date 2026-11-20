@@ -1,63 +1,27 @@
 # OpenClaw
 
-Resident OpenClaw coding harness on Agent Substrate (`AgentHarness`), accessed
-through the kagent UI.
+Dormant namespace kept for a future OpenClaw harness on kagent 1.0. The
+kagent 1.0 API removed the `openclaw` AgentHarness backend upstream (zero
+openclaw paths in the v1.0.1 tree), and the old `AgentHarness/openclaw` had
+been READY=False for 115 days — the CRs are deleted (agentharness.yaml,
+rbac-ate-api.yaml, modelconfig.yaml in git history).
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
-## Overview
+## What remains
 
-- `AgentHarness/openclaw`, substrate runtime, OpenClaw backend
-- `ModelConfig/openclaw-model`, LiteLLM (`glm-5.3-prime`)
-- `OnePasswordItem/openclaw-harness-secrets`, gateway token + LiteLLM API key
-- Role/RoleBinding `openclaw-ate-api-env-sources`, lets
-  `ate-system/ate-api-server` resolve ActorTemplate env `secretKeyRef`s in this
-  namespace (same grant kagent's chart installs in `kagent`)
+- `Namespace/openclaw` — dormant (no workloads)
+- `OnePasswordItem/openclaw-harness-secrets` — litellm-api-key field stays
+  valid for any future harness
+- `authentik-blueprint.yaml` — Authentik bookmark application (points at the
+  retired harness gateway URL; the companion `openclaw-cleanup` blueprint in
+  the authentik namespace removes the orphaned provider/outpost)
 
-The authentik orphans (`openclaw-proxy-provider`, `openclaw-outpost`) are
-removed by the `openclaw-cleanup` companion blueprint
-(`flux/manifests/03-services/authentik/blueprints/openclaw-cleanup.yaml`),
-`state: absent` entries; blueprints never garbage-collect. Outpost deletions
-can leave the `ak-outpost-openclaw-outpost` Deployment, Service, metrics
-Service, and retired-hostname HTTPRoute behind in the authentik namespace;
-verify and delete survivors explicitly (operator cluster mutation):
-
-```bash
-kubectl get deploy,svc,httproute -n authentik | grep openclaw
-```
-
-## Configuration
-
-Defined by kagent CRs: `AgentHarness/openclaw` (substrate runtime) and
-`ModelConfig/openclaw-model` (LiteLLM), see `agentharness.yaml` and
-`modelconfig.yaml`.
-
-## Secrets
-
-1Password item: `vaults/Secrets/items/openclaw-secrets`
-
-| Field             | Used by                                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `token`           | Unused: the gateway does not authenticate with a bearer token (no `gatewayTokenSecretRef` in CRD v1alpha2). Safe to drop from the 1Password item |
-| `gateway-token`   | Legacy/generic-app; keep in sync with `token` if both exist                                                                                      |
-| `litellm-api-key` | ModelConfig / ActorTemplate `OPENAI_API_KEY`                                                                                                     |
-
-## Access
-
-- **Primary**: kagent UI → AgentHarness `openclaw` (full OpenClaw Control UI)
-- **Authentik dashboard**: `authentik-blueprint.yaml` publishes a bookmark
-  application pointing straight at the harness gateway
-  (`https://kagent.gateway.services.apocrathia.com/api/agentharnesses/openclaw/openclaw/gateway`).
-  It carries no provider, SSO comes from the kagent proxy provider that already
-  covers `kagent.gateway.services.apocrathia.com`.
-
-## Worker pool
-
-Harness uses the controller default pool `ate-system/kagent-default` (omit
-`workerPoolRef`). Each Ready harness pins a pool slot.
+Reactivation would be a BYO-harness / ACP reinvestigation once an image
+exists that implements the kagent 1.0 harness contract (none does today).
+No open issue tracks it — this README is the record.
 
 ## References
 
 - [OpenClaw Documentation](https://docs.openclaw.ai)
-- [Agent Substrate rollout plan](../../../../../docs/plans/agent-substrate-rollout.md)
 - [kagent](../kagent/README.md) / [substrate](../substrate/README.md)

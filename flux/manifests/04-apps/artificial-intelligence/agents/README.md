@@ -6,12 +6,26 @@ Declarative AI agents orchestrated by kagent.
 
 ## Overview
 
-Custom agents usually run in a dedicated `agent-*` namespace (for example `agent-git`, `agent-media`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace. **`homelab-agent`** is an exception: it lives in `kagent` so it can use system agents as tools without cross-namespace restrictions; only the Discord bridge runs in `agent-homelab`. **`investigator-agent`** also lives in `kagent`, the investigations node's NetworkPolicy admits ingress from `kagent`/`hermes-agent` only (the investigations design's in-cluster callers).
+Every agent runs in the `kagent` namespace on the chart Harness + the
+`kagent-default` WorkerPool (substrate actors, no per-agent Deployments).
+The fleet consolidated into one namespace because kagent 1.0's
+`tools[].subAgent` is same-namespace-only (AgentTemplate references carry no
+namespace) — delegation without duplicating prompt text requires one
+namespace. The seven chart subchart agents the 0.10.x line shipped
+(`k8s-agent`, `promql-agent`, `observability-agent`, `helm-agent`, the three
+cilium agents) are vendored at
+[kagent/builtin-agents/](../kagent/builtin-agents/).
+
+Two `agent-*` namespaces survive as bridge hosts only (no agents, no
+workers): `agent-homelab` (Discord bridge) and `agent-home` (Home Assistant
+webhook bridge). `investigator-agent`'s placement in `kagent` is also what the
+investigations node's NetworkPolicy expects (ingress from
+`kagent`/`hermes-agent` only).
 
 **Custom Agents:**
 
-- **[home](./home/)** - `home-agent`: Home Assistant automation (HA `rest_command` webhook bridge → A2A; HA + Grafana MCP)
-- **[homelab](./homelab/)** - `homelab-agent`: Tech assistant for homelab topics (Discord interface; Agent CR in `kagent`, bridge in `agent-homelab`)
+- **[home](./home/)** - `home-agent`: Home Assistant automation (HA `rest_command` webhook bridge → A2A; HA + Grafana MCP; bridge in `agent-home`)
+- **[homelab](./homelab/)** - `homelab-agent`: Tech assistant for homelab topics (Discord interface; bridge in `agent-homelab`)
 - **[search](./search/)** - `search-agent`: Web search specialist using SearXNG
 - **[knowledge](./knowledge/)** - `knowledge-agent`: Knowledge management with OpenZIM and Qdrant
 - **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
@@ -19,15 +33,7 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 - **[git](./git/)** - `git-agent`: GitHub and GitLab operations
 - **[investigator](./investigator/)** - `investigator-agent`: Security investigations against the Tenzir OCSF lake (cases, evidence pins, verdicts)
 
-**System Agents (managed by kagent helm chart):**
-
-- `k8s-agent`: Kubernetes cluster operations and troubleshooting
-- `helm-agent`: Helm release management
-- `cilium-policy-agent`: Cilium network policy creation
-- `cilium-manager-agent`: Cilium installation and management
-- `cilium-debug-agent`: Cilium debugging and diagnostics
-- `observability-agent`: Prometheus/Grafana monitoring
-- `promql-agent`: PromQL query generation
+**Vendored builtin Agents:** [kagent/builtin-agents/](../kagent/builtin-agents/)
 
 ## Architecture
 
@@ -38,49 +44,47 @@ Agents are defined using kagent's declarative Agent CRD, with optional bridge co
 ```mermaid
 flowchart LR
     H[homelab-agent]
+    INV[investigator-agent]
     K8S[k8s-agent]
-    HELM[helm-agent]
-    CILIUM_MGR[cilium-manager-agent]
     OBS[observability-agent]
-    PROMQL[promql-agent]
-    KNOW[knowledge-agent]
-    SEARCH[search-agent]
     MEDIA[media-agent]
     INFRA[infrastructure-agent]
     GIT[git-agent]
-    INV[investigator-agent]
+    KNOW[knowledge-agent]
+    SEARCH[search-agent]
+    PROMQL[promql-agent]
     HERMES[hermes-agent]
-    CILIUM_POLICY[cilium-policy-agent]
-    CILIUM_DEBUG[cilium-debug-agent]
     HOME[home-agent]
     HA[Home Assistant]
 
-    H --> K8S
-    H --> OBS
-    H --> MEDIA
-    H --> INFRA
-    H --> GIT
-    H --> KNOW
-    H --> INV
+    H -->|"subAgent"| INV
+    H -->|"subAgent"| K8S
+    H -->|"subAgent"| OBS
+    H -->|"subAgent"| MEDIA
+    H -->|"subAgent"| INFRA
+    H -->|"subAgent"| GIT
+    H -->|"subAgent"| KNOW
+    KNOW -->|"subAgent"| SEARCH
+    OBS -->|"subAgent"| PROMQL
     H --> HERMES
-
-    K8S --> HELM
-    K8S --> CILIUM_MGR
-    K8S --> CILIUM_POLICY
-    K8S --> CILIUM_DEBUG
-
-    KNOW --> SEARCH
-    OBS --> PROMQL
 
     HA -->|"webhook (rest_command)"| HOME
     HOME -->|"service calls"| HA
 ```
 
+Every edge is a same-namespace `subAgent` binding to an AgentTemplate (the
+fleet shares `kagent`). Hermes calls the same agents as A2A peers.
+
 ## Adding New Agents
 
 1. Create a new directory under `agents/`
-2. Add a `Namespace` manifest (`agent-<name>`), `ModelConfig`, 1Password-backed secrets, and the `Agent` CRD in that namespace
-3. Register the agent in LiteLLM `agents:` (`agent_card_params.url`) with A2A URL `/api/a2a/<namespace>/<agent-name>`. Clients call LiteLLM native `POST /a2a/{agent_name}` (discover via `GET /v1/agents`).
+2. Add the `AgentTemplate` (behavior: description, modelConfig, tools,
+   systemPrompt), a thin `Agent` (`harnessRef: kagent-default` +
+   `template.ref`), `ModelConfig`, and 1Password-backed secrets — all in the
+   `kagent` namespace; wire them into the dir's `kustomization.yaml`
+3. Register the agent in LiteLLM `agents:` (`agent_card_params.url`) with A2A
+   URL `/api/a2a/kagent/<agent-name>`. Clients call LiteLLM native
+   `POST /a2a/{agent_name}` (discover via `GET /v1/agents`).
 4. Add any necessary bridge components for external integrations
 5. Update this README with a link to the new agent
 
@@ -95,7 +99,7 @@ Follow the [kagent System Prompts Guide](https://kagent.dev/docs/kagent/getting-
 Example structure:
 
 ```yaml
-systemMessage: |
+systemPrompt: |
   You are a [role]. Your goal is to [purpose].
 
   Operational Protocol:
@@ -115,10 +119,7 @@ systemMessage: |
 ## Troubleshooting
 
 ```bash
-# Custom agents in agent-* namespaces (repeat as needed)
-kubectl get agents --namespace agent-git
-
-# Controller, system agents, and homelab-agent
+# The whole agent fleet (custom + vendored builtins)
 kubectl get agents --namespace kagent
 
 kubectl logs --namespace kagent deployment/kagent-controller -f

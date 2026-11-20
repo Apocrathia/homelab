@@ -10,11 +10,15 @@ spec:
   dependsOn:
     - name: kagent-crds
       namespace: kagent
+    # MCPServer CRD + controller live in the kmcp release now (kagent-crds
+    # 1.0.1 dropped them).
+    - name: kmcp-crds
+      namespace: kagent
   chart:
     spec:
       chart: kagent
-      # renovate: datasource=docker depName=ghcr.io/kagent-dev/kagent/helm/kagent
-      version: "0.10.6"
+      # renovate: datasource=docker depName=ghcr.io/kagent-dev/kagent/helm
+      version: "1.0.1"
       sourceRef:
         kind: HelmRepository
         name: kagent
@@ -29,35 +33,60 @@ spec:
   uninstall:
     keepHistory: false
 
-  # Pull database URL from secret (contains password)
-  valuesFrom:
-    - kind: Secret
-      name: kagent-secrets
-      valuesKey: postgres-url
-      targetPath: database.postgres.url
-
   values:
-    # Use ghcr.io for release images (default cr.kagent.dev is for dev)
+    # Use ghcr.io for release images (default cr.kagent.dev is for dev).
+    # kagent chart has no appVersion, so the tag is pinned here.
     registry: ghcr.io
     # renovate: datasource=docker depName=ghcr.io/kagent-dev/kagent/controller
-    tag: "0.10.6"
+    tag: "1.0.1"
 
+    # Both logins reuse the bootstrap `kagent` user via the existing
+    # kagent-secrets/postgres-url field (same URL, zero new 1Password items).
+    # Both assumed roles are also `kagent` — the role split the chart defaults
+    # imply (kagent_owner/kagent_readwrite) requires DB role membership that
+    # CNPG cannot grant post-init on the existing cluster.
     database:
-      type: postgres
-      # URL injected via valuesFrom from kagent-secrets.postgres-url
       postgres:
+        ownerConnectionStringSecretRef:
+          name: kagent-secrets
+          key: postgres-url
+        readWriteConnectionStringSecretRef:
+          name: kagent-secrets
+          key: postgres-url
+
+    # ControllerConfig (protobuf-shaped YAML): substrate endpoints, database
+    # roles, logging, telemetry. The substrate values are the chart defaults
+    # (release `substrate` in ate-system) — set explicitly for GitOps
+    # visibility.
+    config:
+      substrate:
+        apiEndpoint: "dns:///api.ate-system.svc:443"
+        routerUrl: "https://atenet-router.ate-system.svc:443"
+        actorJwtIssuer: "https://idp.ate-system.svc"
+      database:
+        owner:
+          role: kagent
+        readWrite:
+          role: kagent
         vectorEnabled: false
-        # CNPG Cluster (kagent-postgres) is the database; do not deploy chart bundled Postgres
-        bundled:
-          enabled: false
+      logging:
+        level: info
+      # Controller OTLP logs: Alloy receives gRPC on 4317 (see
+      # observability/alloy/logs/configmap.yaml). Endpoint must be an
+      # HTTP(S) URL; protocol grpc; duration is a protobuf string.
+      telemetry:
+        logs:
+          endpoint: "http://alloy.alloy-system.svc.cluster.local:4317"
+          protocol: grpc
+          timeout: "15s"
 
     controller:
       replicas: 1
-      loglevel: "info"
-
-      # Watch all namespaces for Agent/MCPServer CRDs
-      watchNamespaces: []
-
+      # Mount rotating substrate PodIdentity/ServiceDNS credentials
+      # (ClusterTrustBundle + PodCertificate projected volumes); needs the
+      # Talos kube-apiserver gates from talos/patches/unified-patch.yaml.
+      substrateClientCertificate:
+        enabled: true
       resources:
         requests:
           cpu: 100m
@@ -66,26 +95,23 @@ spec:
           cpu: 1
           memory: 512Mi
 
-      # Agent Substrate: sibling install in ate-system (not the bundled subchart)
-      substrate:
-        enabled: true
-        ateApiEndpoint: "dns:///api.ate-system.svc:443"
-        atenetRouterURL: "http://atenet-router.ate-system.svc:80"
-        ateApiInsecure: true
-        ateApiTokenAudience: api.ate-system.svc
-        defaultWorkerPool:
-          # WorkerPool lives in ate-system (PSA privileged); not in kagent
-          namespace: ate-system
-          name: kagent-default
-
-    # Keep bundled substrate subchart off: ate-system owns the data plane
-    substrate:
-      enabled: false
-
-    # WorkerPool CR is managed under substrate/ (ate-system): chart create
-    # would land privileged ateom pods in kagent and fail PSA baseline.
+    # WorkerPool CR is hand-managed (workerpool.yaml): every namespace that
+    # hosts Agents needs its own pool + Harness (references are local).
     substrateWorkerPool:
       create: false
+
+    # Chart-created Harness `kagent-default` (Go ADK runtime) in this
+    # namespace; codex/claude adapters stay off. Snapshots ride the shared
+    # ate-snapshots bucket on ate-cache.
+    harnesses:
+      enabled: true
+      snapshotLocation: "s3://ate-snapshots/kagent/"
+      kagent:
+        enabled: true
+      codex:
+        enabled: false
+      claude:
+        enabled: false
 
     ui:
       replicas: 1
@@ -114,68 +140,6 @@ spec:
         config:
           baseUrl: "http://litellm.litellm.svc.cluster.local:4000/v1"
 
-    # Enable kmcp
-    kmcp:
-      enabled: true
-
-    # Enable built-in tools
+    # Built-in tool server (bash/files/etc. for Go ADK agents)
     kagent-tools:
       enabled: true
-
-    # Enable MCP tool integrations
-    tools:
-      grafana-mcp:
-        enabled: true
-      querydoc:
-        enabled: true
-
-    # Subchart overrides: pin grafana-mcp image (default is mcp/grafana:latest)
-    grafana-mcp:
-      grafana:
-        # In-cluster kube-prometheus-stack Grafana (same as mcp-servers/grafana RemoteMCPServer)
-        url: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local"
-        # Secret must provide GRAFANA_SERVICE_ACCOUNT_TOKEN (preferred) or GRAFANA_API_KEY.
-        secretRef: kagent-secrets
-      image:
-        registry: docker.io
-        repository: grafana/mcp-grafana
-        # renovate: datasource=docker depName=docker.io/grafana/mcp-grafana
-        tag: "2.3.0"
-        pullPolicy: IfNotPresent
-
-    # Built-in agent subcharts (top-level keys; agents.*.enabled does not control these)
-    istio-agent:
-      enabled: false
-    kgateway-agent:
-      enabled: false
-    argo-rollouts-agent:
-      enabled: false
-
-    # Enable system agents
-    agents:
-      k8s-agent:
-        enabled: true
-      promql-agent:
-        enabled: true
-      observability-agent:
-        enabled: true
-      helm-agent:
-        enabled: true
-      cilium-policy-agent:
-        enabled: true
-      cilium-manager-agent:
-        enabled: true
-      cilium-debug-agent:
-        enabled: true
-
-    # Agent OTLP: Alloy receives gRPC 4317 / HTTP 4318 (see observability/alloy/logs/configmap.yaml)
-    otel:
-      tracing:
-        enabled: false
-      logging:
-        enabled: true
-        exporter:
-          otlp:
-            endpoint: alloy.alloy-system.svc.cluster.local:4317
-            insecure: true
-            timeout: 15
