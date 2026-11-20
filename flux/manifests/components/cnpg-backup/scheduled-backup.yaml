@@ -1,14 +1,17 @@
 ---
-# Nightly base backup for authentik-postgres (barman object store).
+# Nightly base backup (barman object store). Cluster name is filled by the
+# component's replacements from the consuming dir's Cluster CR.
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: authentik-postgres-backup
-  namespace: authentik
+  name: cnpg-backup
+  namespace: cnpg-backup-placeholder
+  labels:
+    cnpg-backup.apocrathia.com/component: "true"
 spec:
   # CNPG cron is 6-field (seconds first): "0 0 5 * * *" = daily 05:00 UTC.
   # A 5-field "0 5 * * *" parses as minute=5 hourly.
   schedule: "0 0 5 * * *" # 0500 UTC = 2300 MST, after the kopia 0200 UTC window
   backupOwnerReference: self
   cluster:
-    name: authentik-postgres
+    name: PLACEHOLDER

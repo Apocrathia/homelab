@@ -4,9 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - secret.yaml
-  - backup-secret.yaml
   - postgres.yaml
-  - scheduled-backup.yaml
   - helmrelease.yaml
   - httproute.yaml
   - rbac-sidecar.yaml
@@ -14,3 +12,35 @@ resources:
   - kube-auth
   - tiles
   - system
+
+components:
+  - ../../components/cnpg-backup
+
+patches:
+  # cnpg-backup component wiring: exact-name preservation (zero live churn).
+  - target:
+      kind: ScheduledBackup
+      name: cnpg-backup
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: authentik-postgres-backup
+  - target:
+      kind: OnePasswordItem
+      name: cnpg-backup-secrets
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: authentik-postgres-backup-secrets
+  - target:
+      kind: Cluster
+    patch: |-
+      - op: add
+        path: /spec/backup/barmanObjectStore/destinationPath
+        value: s3://cnpg/authentik
+      - op: add
+        path: /spec/backup/barmanObjectStore/s3Credentials/accessKeyId/name
+        value: authentik-postgres-backup-secrets
+      - op: add
+        path: /spec/backup/barmanObjectStore/s3Credentials/secretAccessKey/name
+        value: authentik-postgres-backup-secrets

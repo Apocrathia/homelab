@@ -1,0 +1,87 @@
+---
+# Kustomize component: CNPG barman backup wiring for raw-CR clusters.
+#
+# Renders into the consuming app dir:
+#   - OnePasswordItem cnpg-backup-secrets (shared cnpg-backups-secrets item)
+#   - ScheduledBackup cnpg-backup (nightly 0500 UTC base backup)
+#   - spec.backup barman stanza patched onto the app's Cluster CR
+#
+# Per-app contract (in the consuming kustomization.yaml):
+#   components: [../../components/cnpg-backup]
+#   patches renaming cnpg-backup -> <app>-postgres-backup and
+#   cnpg-backup-secrets -> <app>-postgres-backup-secrets, plus
+#   destinationPath and s3Credentials secret-name adds on the Cluster
+#   (s3://cnpg/<app> + <app>-postgres-backup-secrets).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - scheduled-backup.yaml
+  - backup-secret.yaml
+
+replacements:
+  # Point the ScheduledBackup at this kustomization's Cluster CR.
+  - source:
+      kind: Cluster
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: ScheduledBackup
+          labelSelector: cnpg-backup.apocrathia.com/component=true
+        fieldPaths:
+          - spec.cluster.name
+  # Barman serverName = cluster name (house convention).
+  - source:
+      kind: Cluster
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: Cluster
+        fieldPaths:
+          - spec.backup.barmanObjectStore.serverName
+
+  # Namespaces follow the Cluster CR (component resources are
+  # namespace-agnostic; consuming dirs carry no top-level namespace field).
+  - source:
+      kind: Cluster
+      fieldPath: metadata.namespace
+    targets:
+      - select:
+          kind: ScheduledBackup
+          labelSelector: cnpg-backup.apocrathia.com/component=true
+        fieldPaths:
+          - metadata.namespace
+      - select:
+          kind: OnePasswordItem
+          labelSelector: cnpg-backup.apocrathia.com/component=true
+        fieldPaths:
+          - metadata.namespace
+
+patches:
+  # Barman skeleton on the Cluster CR. The per-app fields (destinationPath,
+  # s3Credentials secret names) are deliberately absent: the consuming
+  # kustomization adds them. A consumer that forgets renders a Cluster the
+  # API server rejects (destinationPath and the credential names are
+  # required in the CNPG CRD) instead of silently backing up to a
+  # placeholder path.
+  - target:
+      kind: Cluster
+    patch: |-
+      - op: add
+        path: /spec/backup
+        value:
+          retentionPolicy: 14d
+          barmanObjectStore:
+            endpointURL: http://storage.services.apocrathia.com:9009
+            serverName: PLACEHOLDER
+            s3Credentials:
+              accessKeyId:
+                key: AWS_ACCESS_KEY_ID
+              secretAccessKey:
+                key: AWS_SECRET_ACCESS_KEY
+            wal:
+              compression: zstd
+            data:
+              compression: gzip
+              jobs: 2
+              immediateCheckpoint: true

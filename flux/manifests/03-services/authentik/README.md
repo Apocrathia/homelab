@@ -85,10 +85,13 @@ PostgreSQL backups via CNPG barman to the RustFS `cnpg` bucket
 (`s3://cnpg/authentik`):
 
 - WAL archiving: continuous, zstd-compressed (point-in-time recovery window)
-- Base backups: nightly (`scheduled-backup.yaml`), gzip, immediate checkpoint
-- Retention: configured in `scheduled-backup.yaml`
+- Base backups: nightly, gzip, immediate checkpoint
+- Retention: set in the component (14d)
 - Credentials: 1Password item `cnpg-backups-secrets` (bucket-scoped S3 user;
   see `docs/infrastructure/rustfs-bucket-user-creation.md`)
+
+The backup objects render from the shared
+[`cnpg-backup` component](../../components/cnpg-backup/).
 
 The Longhorn volume is additionally covered by the kopiur volume-backup pilot
 once authentik opts in: barman provides PITR, kopia the disk-level copy.
