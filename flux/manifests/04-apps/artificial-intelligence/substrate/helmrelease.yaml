@@ -45,8 +45,12 @@ spec:
     # kagent Harnesses set per-ActorTemplate snapshot locations
     # (substrate.snapshotPolicy.location); the API rejects that field without
     # this gate. All Substrate binaries share the gate list.
+    # GoldenEgressPolicy: kagent 1.0.1 compiles a golden egress rule into every
+    # ActorTemplate (its controller bearer token); the API rejects the field
+    # without this gate. All Substrate binaries share the gate list.
     preview:
       - PerTemplateSnapshotLocation
+      - GoldenEgressPolicy
 
     # Postgres is the new state store (valkey is gone). External CNPG cluster
     # (postgres.yaml). Both logins and both assumed roles are the bootstrap
@@ -73,6 +77,12 @@ spec:
     # on the kagent-side Harnesses.
     ateApi:
       snapshotLocation: "gs://ate-snapshots/"
+      # The kagent controller's mTLS SPIFFE identity must be an owner or every
+      # actor_template RPC comes back PermissionDenied.
+      authorization:
+        bootstrapOwners:
+          - system:serviceaccount:ate-system:ate-client
+          - spiffe://cluster.local/ns/kagent/sa/kagent-controller
 
     # atelet is deprecated in this chart (one upgrade would move it together
     # with ate-api-server, which the skew policy forbids). It moves to its own
