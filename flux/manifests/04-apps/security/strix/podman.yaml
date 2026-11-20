@@ -1,0 +1,196 @@
+---
+# Rootless podman service for strix's sandbox containers (replaces the
+# privileged docker:dind Daemon this directory shipped first). Strix
+# spawns one sandbox container per scan (ghcr.io/usestrix/strix-sandbox,
+# upstream's official image) through the Docker-compatible API that
+# `podman system service` exposes on 2375.
+#
+# Why the generic-app chart cannot host this: it hardwires
+# seccompProfile RuntimeDefault (pod-level and per container), and that
+# profile — containerd's default — allows clone(2) only with NO
+# CLONE_NEW* flags and gates unshare/clone3 behind CAP_SYS_ADMIN, so the
+# nested user namespace rootless podman needs is blocked. This raw
+# Deployment therefore runs seccomp Unconfined; the pod stays otherwise
+# unprivileged (non-root uid 1000, no privileged flag, capabilities
+# dropped except the two the uid-map helpers need).
+#
+# Rootless mechanics (grounded against the v5.4 image layers):
+# - the image's `podman` user is uid/gid 1000 with /etc/subuid + /etc/subgid
+#   ranges 1:999 and 1001:64535 — the pod MUST run as that exact uid
+# - newuidmap/newgidmap are 0755 with cap_setuid/cap_setgid file
+#   capabilities (restored by the image build via `rpm --setcaps
+#   shadow-utils`). File caps only take effect on exec when
+#   allowPrivilegeEscalation is true (no NO_NEW_PRIVS) and the caps are
+#   in the container's bounding set — hence SETGID/SETUID below
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: strix-podman
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      # Podman store layout is incompatible with the old docker:dind
+      # cache, so this is a fresh claim (the dockerd claim is pruned with
+      # its manifest); the sandbox image re-pulls on first scan. Distinct
+      # from the app claims (runtime 5Gi, data 20Gi) so no claim can bind
+      # another subsystem's Available PV. Image cache only: outside the
+      # kopia backup set.
+      storage: 30Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strix-podman
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # RWO Longhorn claim
+  selector:
+    matchLabels:
+      app: strix-podman
+  template:
+    metadata:
+      labels:
+        app: strix-podman
+        app.kubernetes.io/name: strix
+        app.kubernetes.io/component: podman
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        # The image's podman user; its subuid/subgid ranges are what the
+        # nested user namespace maps
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: podman
+          # renovate: datasource=docker depName=quay.io/podman/stable
+          image: quay.io/podman/stable:v5.4@sha256:52536d900c9e7e7cc924bb737eb8c570eeaa3c50f6a3b0b563eb0ec9c48807e4
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              # Rootless session dirs: XDG_RUNTIME_DIR on tmpfs, large
+              # temp staging (image pulls) on the store volume
+              mkdir -p "${XDG_RUNTIME_DIR}" "${TMPDIR}"
+              chmod 700 "${XDG_RUNTIME_DIR}"
+              exec podman system service --time=0 tcp://0.0.0.0:2375
+          env:
+            - name: XDG_RUNTIME_DIR
+              value: /run/user/1000
+            # Image blob staging for the ~4GB sandbox image must not
+            # stream through the small /tmp tmpfs
+            - name: TMPDIR
+              value: /home/podman/.local/share/containers/tmp
+          securityContext:
+            privileged: false
+            runAsNonRoot: true
+            # File-capped newuidmap/newgidmap need exec-time privilege
+            # escalation to write the subuid maps; NO_NEW_PRIVS would
+            # neutralize their cap_setuid/cap_setgid
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              # Bounding set for the file-capped uid-map helpers; sandbox
+              # containers get their own (namespaced) caps from podman
+              add:
+                - SETGID
+                - SETUID
+            # containerd's RuntimeDefault profile blocks clone/unshare
+            # with CLONE_NEWUSER for non-CAP_SYS_ADMIN containers (it
+            # allows clone only with no CLONE_NEW* flags); rootless
+            # podman cannot create its nested user namespace under it.
+            # Unconfined restores the plain-host unprivileged syscall
+            # surface; DAC/caps still apply (uid 1000, no privileges)
+            seccompProfile:
+              type: Unconfined
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              # Scan tooling (nmap, sqlmap, chromium) runs inside sandboxes
+              # on this daemon; sized for a single concurrent scan
+              cpu: "2"
+              memory: 6Gi
+          startupProbe:
+            # First boot initializes the store on the Longhorn volume
+            tcpSocket:
+              port: 2375
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 36
+          readinessProbe:
+            # Real API round trip through the running service
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - CONTAINER_HOST=tcp://127.0.0.1:2375 podman info >/dev/null
+            periodSeconds: 15
+            timeoutSeconds: 8
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 2375
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: store
+              mountPath: /home/podman/.local/share/containers
+            - name: config
+              mountPath: /home/podman/.config/containers
+              readOnly: true
+            - name: run
+              mountPath: /run
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: store
+          persistentVolumeClaim:
+            claimName: strix-podman
+        - name: config
+          configMap:
+            name: strix-podman-config
+        - name: run
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: strix-podman
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman
+spec:
+  type: ClusterIP
+  selector:
+    app: strix-podman
+  ports:
+    - name: docker
+      port: 2375
+      targetPort: 2375
+      protocol: TCP
