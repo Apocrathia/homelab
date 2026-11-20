@@ -6,6 +6,16 @@ Threat-intelligence and detection platforms for the homelab.
 
 ## Applications
 
+### [ARTEX](./artex/README.md)
+
+Self-hosted autonomous penetration testing: an LLM-driven planner/worker loop
+runs real recon and attack tools against authorized targets and binds every
+finding to captured traffic evidence. No image is built or pulled — the
+runtime is assembled in-pod from checksummed upstream releases onto a
+Longhorn volume (jetkvm pattern), with Renovate-tracked version pins.
+CloudNativePG backend, Authentik proxy, local accounts via a one-time setup
+token.
+
 ### [Coraza](./coraza/)
 
 Browser-based WAF testing tool: write SecLang rules and test them against
