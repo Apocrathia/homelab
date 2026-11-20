@@ -95,8 +95,10 @@ Two 1Password items (fields named here; values added by the operator):
 
 ```bash
 kubectl get agent investigator-agent --namespace kagent
-kubectl get pods --namespace kagent -l kagent.dev/agent-name=investigator-agent
-kubectl logs --namespace kagent -l kagent.dev/agent-name=investigator-agent
+
+# Agent runs execute in the shared kagent-default WorkerPool
+kubectl get pods --namespace kagent -l ate.dev/worker-pool=kagent-default
+kubectl logs --namespace kagent -l ate.dev/worker-pool=kagent-default --prefix
 
 # EgressPolicy + its backing secret (the gateway reads the token from it;
 # injection only happens inside the agent's own sandboxed egress path)

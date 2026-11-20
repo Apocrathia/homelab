@@ -124,7 +124,8 @@ kubectl get agents --namespace kagent
 
 kubectl logs --namespace kagent deployment/kagent-controller -f
 
-kubectl get pods --namespace kagent -l app=a2a-gateway
+# A2A is served by kagent-controller on :8083 (no separate gateway deployment)
+kubectl get pods --namespace kagent -l app.kubernetes.io/component=controller
 ```
 
 ## References

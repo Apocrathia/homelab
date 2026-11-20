@@ -73,11 +73,11 @@ Create a 1Password item:
 2. **Agent not responding**
 
    ```bash
-   # Check agent pod status
-   kubectl get pods --namespace kagent -l kagent.dev/agent-name=homelab-agent
+   # Check agent status (runs live in the shared kagent-default WorkerPool)
+   kubectl get agent homelab-agent --namespace kagent
 
-   # View agent logs
-   kubectl logs --namespace kagent -l kagent.dev/agent-name=homelab-agent
+   # View worker pool logs (agent sessions execute here)
+   kubectl logs --namespace kagent -l ate.dev/worker-pool=kagent-default --prefix
    ```
 
 ### Health Checks
