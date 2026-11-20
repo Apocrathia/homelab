@@ -171,7 +171,7 @@ spec:
             - |
               set -euo pipefail
               # renovate: datasource=npm depName=@playwright/mcp
-              PLAYWRIGHT_MCP_VERSION=0.0.83
+              PLAYWRIGHT_MCP_VERSION=0.0.86
               # renovate: datasource=npm depName=@playwright/cli
               PLAYWRIGHT_CLI_VERSION=0.1.22
               # renovate: datasource=npm depName=playwright
