@@ -93,12 +93,11 @@ converge. Retries during first boot are expected.
 
 ## Secrets (1Password)
 
-| Item / OnePasswordItem                                                                                      | Fields                                                                                                                                        | Used by                                                                                      |
-| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `agent-substrate-secrets`                                                                                   | `access-key-id`, `access-key-secret`, **`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`**                                                        | ate-cache, substrate object-store plugin, substrate-atelet (`objectStore.credentialsSecret`) |
-| `substrate-postgres`                                                                                        | `username`, `password`, `ownerConnectionString`, `readWriteConnectionString`                                                                  | CNPG bootstrap + substrate chart secretRefs                                                  |
-| `service-dns-ca-pool` / `pod-identity-ca-pool` / `postgres-ca-pool` (ns `podcertificate-controller-system`) | `pool` — ED25519 CA pool JSON (generate once: `go run ./cmd/ate-setup create podcertificate-controller-cas` from a substrate v1.0.1 checkout) | substrate-podcert signers                                                                    |
-| `cnpg-backups-secrets`                                                                                      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                                                                                                  | substrate-postgres barman backups                                                            |
+| Item / OnePasswordItem                            | Fields                                                                                                                                                                                                                                                                                                                 | Used by                                                                                                                                                                   |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-substrate-secrets`                         | `access-key-id`, `access-key-secret`, **`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`**                                                                                                                                                                                                                                 | ate-cache, substrate object-store plugin, substrate-atelet (`objectStore.credentialsSecret`)                                                                              |
+| `substrate-secrets` (consolidated substrate item) | object-store keys, `username`, `password`, `ownerConnectionString`, `readWriteConnectionString`, and the three CA pool JSON fields (`service-dns-ca-pool`, `pod-identity-ca-pool`, `postgres-ca-pool` — generate once: `go run ./cmd/ate-setup create podcertificate-controller-cas` from a substrate v1.0.1 checkout) | ate-system consumers via `OnePasswordItem/agent-substrate-secrets` + `OnePasswordItem/substrate-postgres`; podcert signers via External Secrets (`podcert-ca-pools.yaml`) |
+| `cnpg-backups-secrets`                            | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                                                                                                                                                                                                                                                                           | substrate-postgres barman backups                                                                                                                                         |
 
 ## Troubleshooting
 
@@ -113,7 +112,7 @@ kubectl get crd workerpools.ate.dev sandboxconfigs.ate.dev
 # Certificate trust bundles published by podcert
 kubectl get clustertrustbundles
 
-# CA pools consumed by podcert (OnePasswordItem-rendered Secrets)
+# CA pools consumed by podcert (External Secrets from substrate-secrets)
 kubectl get secrets -n podcertificate-controller-system
 
 # Database
