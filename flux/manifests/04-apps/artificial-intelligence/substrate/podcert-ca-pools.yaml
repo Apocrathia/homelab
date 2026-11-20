@@ -1,6 +1,6 @@
 ---
 # ED25519 signing pools for substrate-podcert, mirrored out of the
-# consolidated substrate-secrets item (ate-system) via External Secrets. The
+# consolidated agent-substrate-secrets item (ate-system) via External Secrets.
 # controller mounts these as its three signer pools (service-DNS,
 # pod-identity, postgres) and publishes the matching ClusterTrustBundles.
 # Pool JSON lives in the vault item fields service-dns-ca-pool /

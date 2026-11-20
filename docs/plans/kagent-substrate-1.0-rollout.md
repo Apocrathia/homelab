@@ -170,7 +170,7 @@ knowledge,media,search}` namespaces to terminate during convergence
   CR, not a HelmRelease, so `substrate` cannot dependsOn it (same posture
   as litellm's database). ate-api-server crash-loops and the HelmRelease
   remediation-retries until the cluster is up AND the
-  `substrate-postgres` OnePasswordItem (the consolidated substrate-secrets
+  `substrate-postgres` OnePasswordItem (the consolidated agent-substrate-secrets
   item) has rendered the bootstrap Secret.
   Retries during first boot are convergence noise, not a blocker.
 
