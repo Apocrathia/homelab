@@ -110,7 +110,7 @@ Manages Proxmox VM infrastructure. Runs validation and plan on MRs, drift check 
 - `TOFU_TOKEN` - Personal access token for posting MR comments
 - `TF_HTTP_ADDRESS`, `TF_HTTP_USERNAME`, `TF_HTTP_PASSWORD` - GitLab HTTP remote state backend (see `terraform/README.md`)
 - `OP_CONNECT_HOST` - 1Password Connect URL (CI default set in tofu YAML)
-- `OP_CONNECT_TOKEN` - 1Password Connect API token for tofu (see `docs/plans/tofu-1password-provider.md`)
+- `OP_CONNECT_TOKEN` - 1Password Connect API token for tofu (see the "OpenTofu secrets via 1Password provider" plan, delete-on-ship'd; git history is the archive)
 - `TOFU_DRIFT_WEBHOOK_URL` (optional) - Discord webhook for drift notifications
 
 ### Chart Tagging

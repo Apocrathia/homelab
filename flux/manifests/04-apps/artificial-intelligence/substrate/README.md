@@ -51,11 +51,18 @@ Internal only. API endpoint used by kagent:
 
 Helm values in `helmrelease.yaml`:
 
-- `preview: [PerTemplateSnapshotLocation]` — kagent Harnesses set
-  per-ActorTemplate snapshot locations; the API rejects the field without
-  the gate.
+- `preview: [PerTemplateSnapshotLocation, GoldenEgressPolicy]` — kagent
+  Harnesses set per-ActorTemplate snapshot locations; GoldenEgressPolicy is
+  the same gate contract for the per-template egress JWT
+  (`actor_template.golden_egress_policy`). The API rejects those fields
+  without the gates.
 - `rustfs.enabled: false` — snapshots live in `ate-cache` instead (see
   `ateApi.snapshotLocation` + `objectStorePlugin.extraEnv`).
+- `ateApi.authorization.bootstrapOwners` — API authorization owners:
+  `system:serviceaccount:ate-system:ate-client` (the release's shared
+  principal, the chart default) and the kagent controller's SPIFFE ID
+  (`spiffe://cluster.local/ns/kagent/sa/kagent-controller`), which calls
+  the API as its own identity.
 - `atelet.enabled: false` — atelet is its own release (`atelet-helmrelease.yaml`).
 - Postgres login: the CNPG bootstrap `substrate` user serves both the owner
   and read/write connection strings (single-login posture, like kagent's

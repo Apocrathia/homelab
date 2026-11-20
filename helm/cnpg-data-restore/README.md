@@ -28,7 +28,7 @@ From the repo root, with a values file that sets `postgresql.host`, `postgresql.
 helm install <release-name> helm/cnpg-data-restore \
   --namespace <namespace> \
   --values /path/to/your-values.yaml
-kubectl wait --namespace <namespace> --for=condition=complete job/<job-name>
+kubectl wait --namespace <namespace> --for=condition=complete job/<job-name> --timeout=3600s
 ```
 
 `job/<job-name>` matches the chart’s computed Job name (often `fullnameOverride` if set).
@@ -39,7 +39,7 @@ kubectl wait --namespace <namespace> --for=condition=complete job/<job-name>
 helm install authentik-pg-restore helm/cnpg-data-restore \
   --namespace authentik \
   --values helm/cnpg-data-restore/examples/authentik.yaml
-kubectl wait --namespace authentik --for=condition=complete job/authentik-pg-restore
+kubectl wait --namespace authentik --for=condition=complete job/authentik-pg-restore --timeout=3600s
 ```
 
 Use `kubectl logs job/<job-name> --namespace <namespace>` if the Job fails.
