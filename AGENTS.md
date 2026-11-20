@@ -33,9 +33,9 @@ lap.
 
 **Commit / push:**
 
-- Default: no commit or push. Soft ship language ("ship it", "LGTM", "looks
-  good", "go ahead") or explicit `commit` / `push` authorizes it for that lap.
-  Full policy + hard stops:
+- MR opening is pre-authorized (feature branch + MR; agents never merge).
+  Soft ship language or explicit `commit` / `push` still works but is not
+  required. Full policy + hard stops:
   [`constraints.md`](./.agents/context/constraints.md#commit-and-ship).
 
 Explore and validate all you want. Do not touch anything live without asking.

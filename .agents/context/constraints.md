@@ -16,12 +16,17 @@ Non-negotiables for every harness.
 
 ## Commit and ship
 
-- **Default:** agents do not commit or push. Use
-  [`draft-commit`](../skills/draft-commit/SKILL.md) for propose-only handoff.
-- **Authorization:** soft ship language ("ship it", "LGTM", "looks good", "go
-  ahead") **or** explicit `commit` / `push` / `/ship-work` / `/self-improve`
-  authorizes shipping for that lap. Authorization on a different topic earlier
-  in the session does not carry forward.
+- **Default: opening an MR is pre-authorized.** When work is review-clean
+  and local gates pass, commit the feature branch, push, and open the MR
+  ([`ship-work`](../skills/ship-work/SKILL.md)) — no permission round-trip.
+  Use [`draft-commit`](../skills/draft-commit/SKILL.md) for propose-only
+  handoff the operator asks for, or when gates are not clean.
+- **Authorization scope:** MR opening needs no authorization. Soft ship
+  language ("ship it", "LGTM", "looks good", "go ahead") **or** explicit
+  `commit` / `push` / `/ship-work` / `/self-improve` still authorizes for
+  that lap but adds nothing beyond MR opening, and never authorizes
+  merging. Authorization on a different topic earlier in the session does
+  not carry forward.
 - **Authorized contribute path:** [`ship-work`](../skills/ship-work/SKILL.md)
   (commit → push → MR → [`watch-mr`](../skills/watch-mr/SKILL.md)). Autonomous
   / self-improve never direct `main`: feature branch + MR; human merges.
@@ -41,8 +46,9 @@ Non-negotiables for every harness.
   [`draft-commit`](../skills/draft-commit/SKILL.md). Do not duplicate here.
 - **Ship model:** hybrid work graph; see
   [`development-loop.md#ship-model`](./development-loop.md#ship-model)
-  (`ship-work` / `self-improve` / `clock-out` adopted; `draft-commit` remains
-  the unauthorized default; `run-loop` remains scout/AFK).
+  (`ship-work` / `self-improve` / `clock-out` adopted; MR opening
+  pre-authorized, `draft-commit` is propose-only on request; `run-loop`
+  remains scout/AFK).
 
 ## GitOps and platform choices
 
