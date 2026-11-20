@@ -11,20 +11,17 @@ misconfigurations:
     paths:
       - "cronjob.yaml"
       - "daemonset.yaml"
-    statement: >-
-      Some CronJobs and DaemonSets intentionally leave the root filesystem
-      writable (e.g. apt/compile steps in jobs, or tdarr-node transcoding).
-      Prefer fixing with readOnlyRootFilesystem plus emptyDir mounts when
-      practical; until then suppress by basename for cronjob.yaml and
-      daemonset.yaml only.
-  - id: AVD-KSV-0014
-    paths:
+      - "dind.yaml"
       - "dockerd.yaml"
     statement: >-
-      The strix Docker-in-Docker daemon writes runtime state outside its
-      mounted image cache (sockets, pid files, iptables state under /run);
-      the docker:dind image is designed for a writable rootfs. Ingress to
-      its plain-HTTP 2375 is CiliumNetworkPolicy-gated to the strix app pod.
+      Some CronJobs and DaemonSets intentionally leave the root filesystem
+      writable (e.g. apt/compile steps in jobs, or tdarr-node transcoding),
+      the pentagi docker-in-docker daemon writes /var/lib/docker and /run by
+      design, and the strix Docker-in-Docker daemon writes runtime state
+      outside its mounted image cache. Prefer fixing with
+      readOnlyRootFilesystem plus emptyDir mounts when practical; until then
+      suppress by basename for cronjob.yaml, daemonset.yaml, dind.yaml, and
+      dockerd.yaml only.
   - id: AVD-KSV-0017
     paths:
       - "dockerd.yaml"
@@ -35,6 +32,24 @@ misconfigurations:
       cannot render privileged containers, hence the raw Deployment.
       Compensating controls: dedicated namespace, no service-account token,
       and a CiliumNetworkPolicy restricting 2375 to the strix app pod.
+  - id: AVD-KSV-0017
+    paths:
+      - "dind.yaml"
+    statement: >-
+      The pentagi docker-in-docker daemon (pentagi-dind Deployment) must run
+      privileged: dockerd needs CAP_SYS_ADMIN, mounts, and iptables inside
+      its own namespace. It is the only privileged pod in the pentagi
+      namespace (the app pod runs as uid 100 with caps dropped), lives on
+      its own 30Gi PVC, and a CiliumNetworkPolicy pins its unauthenticated
+      2375 API to the pentagi app pod and kubelet probes. The same waivers
+      are annotated on the Deployment for kube-linter
+      (ignore-check.kube-linter.io/privileged-container and friends).
+  - id: AVD-KSV-0118
+    paths:
+      - "dind.yaml"
+    statement: >-
+      The pentagi-dind dockerd runs as root by requirement (docker-in-docker);
+      same rationale and compensating controls as AVD-KSV-0017.
   - id: AVD-KSV-0041
     paths:
       - "generate-rbac.yaml"
