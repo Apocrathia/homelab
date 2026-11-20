@@ -8,4 +8,5 @@ resources:
   - servicemonitor.yaml
   - etcd
   - gaming-pc
+  - cnpg
   - snmp

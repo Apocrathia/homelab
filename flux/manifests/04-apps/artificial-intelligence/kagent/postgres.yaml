@@ -64,3 +64,10 @@ spec:
       owner: kagent
       secret:
         name: kagent-secrets
+
+  # Monitoring: exposes the instance-manager metrics endpoint (backup and
+  # WAL health) scraped by the CNPG backup alerts under
+  # flux/manifests/03-services/observability/prometheus/cnpg/. kagent's
+  # 2026-11 backup-failure streak was invisible to Prometheus without it.
+  monitoring:
+    enablePodMonitor: true

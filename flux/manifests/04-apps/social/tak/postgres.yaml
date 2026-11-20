@@ -32,7 +32,9 @@ spec:
           name: tak-postgres-backup-secrets
           key: AWS_SECRET_ACCESS_KEY
       wal:
-        compression: zstd
+        # gzip, not zstd: the stale postgis:15-3.3 barman-cloud rejects
+        # --zstd, breaking WAL archiving (see the imageName pin above).
+        compression: gzip
       data:
         compression: gzip
         jobs: 2

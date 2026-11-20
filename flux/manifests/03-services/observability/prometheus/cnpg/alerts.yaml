@@ -1,0 +1,39 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cnpg-backup-alerts
+  namespace: prometheus-system
+  labels:
+    app.kubernetes.io/name: prometheus-operator
+    app.kubernetes.io/version: v0.68.0
+spec:
+  groups:
+    - name: cnpg.backup
+      rules:
+        - alert: CnpgBackupFailing
+          expr: cnpg_collector_last_failed_backup_timestamp > cnpg_collector_last_available_backup_timestamp
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "CNPG backup failing on {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: "The most recent backup attempt failed and no backup has succeeded since. Check Backup CRs (kubectl get backup -n {{ $labels.namespace }}) and barman-cloud errors in the pod logs."
+
+        - alert: CnpgBackupStale
+          expr: (time() - cnpg_collector_last_available_backup_timestamp > 93600) and (cnpg_collector_last_available_backup_timestamp > 0)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "No successful CNPG backup in 26h for {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: "Last successful base backup is older than 26h on a cluster that has had one before. Backups may have stopped without recording failures: stuck Backup CR, suspended or deleted schedule."
+
+        - alert: CnpgWalArchiveFailing
+          expr: increase(cnpg_pg_stat_archiver_failed_count[30m]) > 3
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "CNPG WAL archiving failing on {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: "WAL archiving failed more than 3 times in the last 30m. PITR recoverability is degrading and base backups may block on walArchivingFailing. Check barman-cloud-wal-archive errors in the pod logs."
