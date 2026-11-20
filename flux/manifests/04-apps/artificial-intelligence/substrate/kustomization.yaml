@@ -19,3 +19,4 @@ resources:
   - cache-helmrelease.yaml
   - atelet-helmrelease.yaml
   - helmrelease.yaml
+  - networkpolicies.yaml

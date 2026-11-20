@@ -42,6 +42,7 @@ spec:
     # shared objects like SandboxConfigs).
     preview:
       - PerTemplateSnapshotLocation
+      - GoldenEgressPolicy
     # Snapshots live in ate-cache (dedicated RustFS), not the bundled one.
     objectStore:
       backend: s3
@@ -51,3 +52,44 @@ spec:
       # Secret needs AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY keys
       # (agent-substrate-secrets item, AWS_* fields).
       credentialsSecret: agent-substrate-secrets
+
+  # The chart's objectStore values are documented but not plumbed to the
+  # objectstore-plugin sidecar (upstream gap): the plugin builds its S3 client
+  # from the standard AWS env vars only. Inject them onto the DaemonSet's
+  # plugin container here so snapshot uploads reach ate-cache instead of
+  # hanging on the SDK's default credential chain.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: DaemonSet
+              name: atelet
+            patch: |
+              - op: add
+                path: /spec/template/spec/initContainers/0/env/-
+                value:
+                  name: AWS_ENDPOINT_URL
+                  value: "http://ate-cache.ate-system.svc.cluster.local:9000"
+              - op: add
+                path: /spec/template/spec/initContainers/0/env/-
+                value:
+                  name: AWS_S3_USE_PATH_STYLE
+                  value: "true"
+              - op: add
+                path: /spec/template/spec/initContainers/0/env/-
+                value:
+                  name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: agent-substrate-secrets
+                      key: AWS_ACCESS_KEY_ID
+              - op: add
+                path: /spec/template/spec/initContainers/0/env/-
+                value:
+                  name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: agent-substrate-secrets
+                      key: AWS_SECRET_ACCESS_KEY

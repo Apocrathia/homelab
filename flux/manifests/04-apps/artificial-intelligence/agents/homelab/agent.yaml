@@ -30,11 +30,6 @@ spec:
             templateRef:
               name: k8s-agent
         - subAgent:
-            name: observability-agent
-            description: An Observability-oriented Agent specialized in using Prometheus, Grafana, and Kubernetes for monitoring and observability
-            templateRef:
-              name: observability-agent
-        - subAgent:
             name: media-agent
             description: Media management agent for Sonarr/Radarr automation
             templateRef:

@@ -8,6 +8,11 @@ metadata:
     app.kubernetes.io/name: kagent
     app.kubernetes.io/component: worker-pool
     kagent.dev/worker-pool: kagent-default
+    # The kagent controller compiles every ActorTemplate's worker_selector
+    # from these two labels; worker pods inherit spec.template.labels, so
+    # they must be set there too or the scheduler finds no matching worker.
+    kagent.dev/worker-pool-name: kagent-default
+    kagent.dev/worker-pool-namespace: kagent
 spec:
   # Capacity for the whole consolidated fleet: every custom and vendored
   # builtin agent runs in this namespace now — replica count is parity with
@@ -19,3 +24,17 @@ spec:
     - name: gvisor
       configRef:
         name: gvisor-default
+  # Workers advertise capacity from their container limits (Downward API);
+  # each compiled actor books 1 CPU / 1 GiB. Requests stay low so all four
+  # pods schedule on the busy control-plane nodes.
+  template:
+    labels:
+      kagent.dev/worker-pool-name: kagent-default
+      kagent.dev/worker-pool-namespace: kagent
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "6"
+        memory: 12Gi

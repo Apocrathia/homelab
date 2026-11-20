@@ -17,12 +17,11 @@ spec:
   description: Knowledge management agent - stores, retrieves, and searches information across vector stores, encyclopedic sources, and GitHub repository documentation
   modelConfig:
     name: knowledge-agent-model
+  # search-agent is deliberately NOT a subAgent here: kagent 1.0 forbids
+  # consecutive shared-template levels (homelab-agent binds this template, so
+  # a search binding here would nest two levels). Web search stays available
+  # by calling search-agent directly over A2A.
   tools:
-    - subAgent:
-        name: search-agent
-        description: Search the web for current information, documentation, news, and technical details. Can also fetch and read specific URLs.
-        templateRef:
-          name: search-agent
     - mcp:
         server:
           kind: RemoteMCPServer

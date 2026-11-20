@@ -9,5 +9,5 @@ spec:
   model: glm-5.3-prime
   openAI:
     baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
-  apiKeySecret: search-agent-secrets
+  apiKeySecret: kagent-secrets
   apiKeySecretKey: litellm-api-key

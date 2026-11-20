@@ -1,0 +1,91 @@
+---
+# Ingress carve-outs the substrate 1.0.1 chart's own policies get wrong for
+# this install: its `postgres` policy selects pods by an `app=postgres` label
+# CNPG does not use, its ate-api policy allows only same-namespace clients,
+# and its observability policy (which selects every pod in the namespace)
+# opens only metric ports — leaving the objectstore plugin's S3 traffic to
+# ate-cache firewalled by the namespace's default-deny.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: substrate-postgres-cnpg
+  namespace: ate-system
+  labels:
+    app.kubernetes.io/name: substrate
+    app.kubernetes.io/component: networkpolicy
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: substrate-postgres
+  policyTypes: [Ingress]
+  ingress:
+    # ate-api-server: owner/read-write connections (sslmode=require)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ate-api-server
+      ports:
+        - protocol: TCP
+          port: 5432
+    # CNPG operator management + metrics scrape
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: postgres-system
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 9187
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ate-api-kagent-access
+  namespace: ate-system
+  labels:
+    app.kubernetes.io/name: substrate
+    app.kubernetes.io/component: networkpolicy
+spec:
+  podSelector:
+    matchLabels:
+      app: ate-api-server
+  policyTypes: [Ingress]
+  ingress:
+    # kagent controller (config.substrate client) from the kagent namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kagent
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8445
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ate-cache-s3
+  namespace: ate-system
+  labels:
+    app.kubernetes.io/name: substrate
+    app.kubernetes.io/component: networkpolicy
+spec:
+  podSelector:
+    matchLabels:
+      app: ate-cache
+  policyTypes: [Ingress]
+  ingress:
+    # objectstore-plugin (node sidecar in atelet pods; control sidecar in
+    # ate-api-server pods) writes and reads snapshots on port 9000.
+    - from:
+        - podSelector:
+            matchLabels:
+              app: atelet
+        - podSelector:
+            matchLabels:
+              app: ate-api-server
+      ports:
+        - protocol: TCP
+          port: 9000
