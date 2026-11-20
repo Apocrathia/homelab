@@ -42,6 +42,7 @@ spec:
     # shared objects like SandboxConfigs).
     preview:
       - PerTemplateSnapshotLocation
+      - GoldenEgressPolicy
     # Snapshots live in ate-cache (dedicated RustFS), not the bundled one.
     objectStore:
       backend: s3
