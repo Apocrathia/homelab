@@ -30,3 +30,9 @@ stable OCSF version directory + summary page (today `v1.9.0/`,
 `v1.9.0.md`); `git rm` every other `v*/` tree and `v*.md` page. Bump
 the kept version when the tenzir engine's OCSF default moves. Rationale
 and provenance: [`tenzir-ocsf/README.md`](./tenzir-ocsf/README.md).
+
+Also re-apply the one local patch: the
+`tenzir/guides/detect/check-sigma-rule-compatibility-with-ocsf.md`
+self-link targets `#windows-process-creation`, not upstream's
+tenzir.com-only `#sigma-windows-process-creation` anchor (still broken
+upstream).
