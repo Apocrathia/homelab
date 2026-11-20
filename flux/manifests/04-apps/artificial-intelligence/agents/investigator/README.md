@@ -121,5 +121,4 @@ findings alert lane surfaces alert-invocation failures in the bridge logs
 ## References
 
 - **[Investigations node README](../../../security/tenzir/nodes/investigations/README.md)** — envelope contract, bootstrap, containment
-- **[Tenzir platform design](../../../../../../.scratch/agent-investigation/design.md)** — P-3 scope
 - **[kagent Agent CRD](https://kagent.dev/docs/kagent/crds)** — Declarative agent schema
