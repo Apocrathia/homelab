@@ -20,7 +20,7 @@ spec:
     app:
       name: romm
       # renovate: datasource=docker depName=ghcr.io/rommapp/romm
-      image: ghcr.io/rommapp/romm:5.1.0@sha256:ce9d86ab531e09fede45d00f426e3bf2d1f5dd14846f94d6360d77a92a413028
+      image: ghcr.io/rommapp/romm:5.4.1@sha256:8677fb7b81b1d3db20b849e989a1dadc2a11159e51eb34a2acdcb01102274edf
       container:
         name: romm
         port: 8080
