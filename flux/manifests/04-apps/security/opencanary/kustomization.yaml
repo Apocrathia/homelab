@@ -10,6 +10,7 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - stix-push-cronjob.yaml
   - grafana/
 
 configMapGenerator:
@@ -17,5 +18,14 @@ configMapGenerator:
     namespace: opencanary
     files:
       - opencanary.conf
+    options:
+      disableNameSuffixHash: true
+  # Raw .py file (not inline in the CronJob) so the repo's ruff/pre-commit
+  # hooks format and lint the push script; mounted at /app by the
+  # opencanary-stix-push CronJob.
+  - name: opencanary-stix-push-script
+    namespace: opencanary
+    files:
+      - stix_push.py
     options:
       disableNameSuffixHash: true

@@ -13,9 +13,9 @@ area: security
 ## Problem / desired state
 
 OpenTAXII is deployed and bootstrapped (TAXII 2.1 api root + public
-`stix-feed` collection), and the OpenCTI taxii2 import connector wiring is in
-flight (`feat/opentaxii-opencti-connector`). But nothing feeds the TAXII 2.1
-collection, so the staging hub still carries no content.
+`stix-feed` collection), and the OpenCTI taxii2 import connector is live
+(hourly polls of the single api root/collection). But nothing fed the TAXII
+2.1 collection, so the staging hub carried no content.
 
 Research (2026-10-19, primary-source cited in the since-deleted
 `.scratch/opentaxii-setup/research.md`; `.scratch` is ephemeral; the
@@ -49,19 +49,32 @@ GitOps-managed mechanism:
    path; a triage script/scripted job reading canary alerts (Loki-side
    today), building STIX 2.1 indicator bundles, POSTing to the collection.
    This is the operator-prioritized signal source ("feed any opencanary
-   signals in").
+   signals in"). **Shipped via the canary STIX push lane**: CronJob
+   `opencanary-stix-push` under
+   `flux/manifests/04-apps/security/opencanary/` (Loki 20 min lookback →
+   deterministic-id STIX 2.1 indicators → anonymous POST to `stix-feed`;
+   mechanism and verify commands in the opencanary README). First content
+   lands with the operator-gated synthetic-alert demo (see Acceptance).
 
 ## Acceptance
 
-- `stix-feed` collection ingests real content (psql `opentaxii_stixobject`
-  count > 0; `GET /taxii2/<root>/collections/<id>/objects/` returns objects).
-- connector-taxii2 imports that content into OpenCTI (objects visible in
-  OpenCTI; connector logs show successful poll).
-- The feed mechanism is GitOps-managed (CronJob / MISP sync config / scripted
-  push under `flux/manifests/`), not a manual curl.
-- OpenCanary alerts ingested end-to-end within one polling cycle of
-  generation (for the canary lane).
-- READMEs updated (opentaxii + security threat-intel flow).
+- [ ] `stix-feed` collection ingests real content (psql `opentaxii_stixobject`
+      count > 0; `GET /taxii2/<root>/collections/<id>/objects/` returns objects).
+      Canary-lane mechanism shipped; first content pending the operator-gated
+      synthetic-alert demo (fire the opencanary README self-test curl, trigger a
+      manual `opencanary-stix-push` run, then re-check the count). The MISP lane
+      would also satisfy this once scoped.
+- [ ] connector-taxii2 imports that content into OpenCTI (objects visible in
+      OpenCTI; connector logs show successful poll). Pending the same demo; the
+      connector is live and polls hourly.
+- [x] The feed mechanism is GitOps-managed (CronJob / MISP sync config /
+      scripted push under `flux/manifests/`), not a manual curl - the canary lane
+      is the `opencanary-stix-push` CronJob + ConfigMap script.
+- [ ] OpenCanary alerts ingested end-to-end within one polling cycle of
+      generation (for the canary lane). Design satisfies it (15 min push + 60 min
+      connector poll, worst case ~75 min); verification pending the demo.
+- [x] READMEs updated (opentaxii + security threat-intel flow; opencanary
+      feeder section too).
 
 ## Feedback loop
 
@@ -79,7 +92,8 @@ Bootstrap live state: api root `9d2329b4-6a06-4f01-9c94-a2c3e6d1a501`
 ("Default", public), collection `952c801c-e4c8-4316-a565-5f97221e799f`
 ("stix-feed", public read + write). Collections are URL-addressable by alias
 (`opentaxii-add-collection -a`), which a stable push job should use instead
-of the UUID. Write access needs `is_public_write` (already set) or an
+of the UUID (the shipped canary lane deliberately posts to the recorded UUID:
+the live alias is NULL, and setting one is a live mutation). Write access needs `is_public_write` (already set) or an
 account (`opentaxii-create-account`; management API only exposes
 `/management/auth` + `/management/health`). POST envelope validation honors
 `allow_custom_properties`. Full source citations lived in the
