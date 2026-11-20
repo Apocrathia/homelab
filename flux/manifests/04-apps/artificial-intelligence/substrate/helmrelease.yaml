@@ -10,17 +10,20 @@ spec:
   dependsOn:
     - name: substrate-crds
       namespace: ate-system
+    # Issues the service-DNS / pod-identity / postgres CA pools the control
+    # plane validates its client certificates against.
+    - name: substrate-podcert
+      namespace: podcertificate-controller-system
     # Snapshot store must exist before atelet starts writing to it.
+    - name: substrate-atelet
+      namespace: ate-system
     - name: ate-cache
       namespace: ate-system
   chart:
     spec:
       chart: substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate
-      # Held at 0.0.6 until kagent vendors a matching client and JWT issuer
-      # discovery works on Talos: see docs/issues/substrate-kagent-version-skew.md.
-      # Close Renovate bumps until that issue's acceptance criteria pass.
-      version: "0.0.6"
+      version: "1.0.1"
       sourceRef:
         kind: HelmRepository
         name: substrate
@@ -35,86 +38,66 @@ spec:
   uninstall:
     keepHistory: false
 
-  # Chart Valkey conf has no announce-hostname knobs; after StatefulSet IP churn
-  # nodes.conf keeps dead pod IPs and ate-api's ClusterClient follows them.
-  # Announce stable headless DNS + prefer hostname endpoints so CLUSTER SLOTS
-  # survives restarts. Headless Service name is chart-fixed (valkey-cluster-service).
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              version: v1
-              kind: StatefulSet
-              name: valkey-cluster
-            patch: |
-              - op: replace
-                path: /spec/template/spec/containers/0/command
-                value:
-                  - /bin/sh
-                  - -c
-                  - >-
-                    exec valkey-server /etc/valkey/valkey.conf
-                    --cluster-announce-hostname
-                    "${POD_NAME}.valkey-cluster-service.${POD_NAMESPACE}.svc.cluster.local"
-                    --cluster-preferred-endpoint-type hostname
-                    --cluster-announce-port 6379
-                    --cluster-announce-bus-port 16379
-              - op: add
-                path: /spec/template/spec/containers/0/env
-                value:
-                  - name: POD_NAME
-                    valueFrom:
-                      fieldRef:
-                        fieldPath: metadata.name
-                  - name: POD_NAMESPACE
-                    valueFrom:
-                      fieldRef:
-                        fieldPath: metadata.namespace
-
   values:
     # Namespace owned by namespace.yaml (PSA privileged + dockerhub pull secret)
     createNamespace: false
 
-    # JWT via projected SA tokens; chart bootstraps TLS + session pools
-    auth:
-      mode: jwt
-      jwt:
-        # Talos kube-apiserver SA issuer (not kind's kubernetes.default.svc default)
-        issuer: https://kubernetes.apocrathia.com:6443
-        audience: api.ate-system.svc
-        bootstrap:
-          enabled: true
+    # kagent Harnesses set per-ActorTemplate snapshot locations
+    # (substrate.snapshotPolicy.location); the API rejects that field without
+    # this gate. All Substrate binaries share the gate list.
+    preview:
+      - PerTemplateSnapshotLocation
 
-    # Pin component images with the chart appVersion
-    image:
-      registry: ghcr.io/kagent-dev/substrate
-      # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateapi
-      # Held with the chart: see version comment above.
-      tag: "v0.0.6"
+    # Postgres is the new state store (valkey is gone). External CNPG cluster
+    # (postgres.yaml). Both logins and both assumed roles are the bootstrap
+    # `substrate` user — single-login posture, same as kagent's database.
+    # Connection strings live in OnePasswordItem/substrate-postgres.
+    postgres:
+      ownerRole: substrate
+      readWriteRole: substrate
+      ownerConnectionStringSecretRef:
+        name: substrate-postgres
+        key: ownerConnectionString
+      readWriteConnectionStringSecretRef:
+        name: substrate-postgres
+        key: readWriteConnectionString
 
     # Snapshots live in ate-cache (cache-helmrelease.yaml), not the bundled
-    # RustFS. The bundled Deployment is RollingUpdate on a ReadWriteOnce
-    # Longhorn PVC and its bucket-init Job template is immutable, so any upgrade
-    # touching either one deadlocks the release.
+    # RustFS. Component images come from the chart appVersion (v1.0.1) — no
+    # registry/tag overrides, the chart version is the single Renovate knob.
     rustfs:
       enabled: false
 
+    # Cluster-wide snapshot URI (atelet writes, actors restore). gs:// URIs are
+    # the S3-backend convention. Per-template prefixes (kagent, agent-*) ride
+    # on the kagent-side Harnesses.
+    ateApi:
+      snapshotLocation: "gs://ate-snapshots/"
+
+    # atelet is deprecated in this chart (one upgrade would move it together
+    # with ate-api-server, which the skew policy forbids). It moves to its own
+    # release: atelet-helmrelease.yaml.
     atelet:
-      storageBackend: s3
+      enabled: false
+
+    # S3 credentials + endpoint for the control-plane object-store plugin
+    # (snapshot transfers). Keys are the AWS_* pair on the shared substrate
+    # secrets item; ate-cache serves the bucket.
+    objectStorePlugin:
       extraEnv:
+        - name: AWS_REGION
+          value: "us-east-1"
         - name: AWS_ENDPOINT_URL
           value: "http://ate-cache.ate-system.svc.cluster.local:9000"
         - name: AWS_S3_USE_PATH_STYLE
           value: "true"
-        - name: AWS_REGION
-          value: "us-east-1"
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
             secretKeyRef:
               name: agent-substrate-secrets
-              key: access-key-id
+              key: AWS_ACCESS_KEY_ID
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
             secretKeyRef:
               name: agent-substrate-secrets
-              key: access-key-secret
+              key: AWS_SECRET_ACCESS_KEY

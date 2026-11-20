@@ -1,246 +1,139 @@
 ---
-apiVersion: kagent.dev/v1alpha2
+apiVersion: api.kagent.dev/v1alpha3
 kind: Agent
 metadata:
   name: homelab-agent
   namespace: kagent
 spec:
-  description: Homelab tech assistant — Talos Kubernetes, Flux GitOps, Cilium, Gateway API, and general self-hosting topics
-  allowedNamespaces:
-    from: All
-  type: Declarative
-  declarative:
-    modelConfig: homelab-agent-model
-    a2aConfig:
-      skills:
-        - id: knowledge-lookup
-          name: Knowledge Lookup
-          description: Query encyclopedic content and search the web for information, documentation, and tutorials
-          examples:
-            - What is a Kubernetes StatefulSet?
-            - Search for Tailscale documentation
-            - Tell me about ZFS snapshots
-            - Look up how BGP works
-          tags:
-            - knowledge
-            - search
-            - documentation
-            - encyclopedia
-        - id: kubernetes-ops
-          name: Kubernetes Operations
-          description: Manage and troubleshoot Kubernetes workloads, Gateway API routes (HTTPRoute, Gateway), services, logs, cluster issues, and Cilium (CNI, Hubble, network policy) via k8s-agent — no legacy Ingress
-          examples:
-            - List pods in an app namespace
-            - Why is my pod crashlooping?
-            - Get logs from a Deployment
-            - Describe HTTPRoutes and Gateways for an app hostname
-          tags:
-            - kubernetes
-            - k8s
-            - gateway-api
-            - pods
-            - deployments
-            - troubleshooting
-        - id: helm-ops
-          name: Helm Operations
-          description: Inspect and troubleshoot Helm charts and Flux HelmRelease-driven installs via k8s-agent — durable changes belong in Git for Flux to reconcile
-          examples:
-            - What Helm releases are installed?
-            - Why is a HelmRelease not reconciling?
-            - Compare effective chart values to defaults
-            - What changed after a failed Helm upgrade?
-          tags:
-            - helm
-            - flux
-            - releases
-            - charts
-            - upgrades
-        - id: cilium-ops
-          name: Cilium Operations
-          description: Route Cilium CNI, network policy, and Hubble requests through k8s-agent (which delegates to the Cilium system agents)
-          examples:
-            - Check Cilium status
-            - Create a network policy to block external traffic
-            - Show me Hubble flows for the api namespace
-            - Why can't my pods reach the internet?
-          tags:
-            - cilium
-            - networking
-            - network-policy
-            - hubble
-            - ebpf
-        - id: observability
-          name: Observability
-          description: Query Prometheus metrics, navigate Grafana dashboards, and manage alerts
-          examples:
-            - What's the CPU usage of my cluster?
-            - Show me the Grafana dashboard for node metrics
-            - Are there any firing alerts?
-            - Query memory usage over the last hour
-          tags:
-            - prometheus
-            - grafana
-            - metrics
-            - alerts
-            - monitoring
-        - id: media-ops
-          name: Media Operations
-          description: Manage Sonarr/Radarr automation for TV shows and movies
-          examples:
-            - Add the new season of Severance to Sonarr
-            - Search Radarr for a movie
-            - What's in the download queue?
-            - What's coming up on Sonarr this week?
-          tags:
-            - sonarr
-            - radarr
-            - media
-            - downloads
-        - id: infrastructure-ops
-          name: Infrastructure Operations
-          description: Manage Proxmox VMs, TrueNAS storage pools and shares, and UniFi network devices
-          examples:
-            - List all VMs on Proxmox
-            - Check the status of my ZFS pools
-            - Show me connected WiFi clients
-            - Start the dev VM
-          tags:
-            - proxmox
-            - truenas
-            - unifi
-            - vms
-            - storage
-            - network
-        - id: git-ops
-          name: Git Platform Operations
-          description: GitHub and GitLab repos, merge requests, issues, and CI/CD — changes merged here drive Flux deployments
-          examples:
-            - List open merge requests in my homelab repo
-            - Check the pipeline status for the main branch
-            - Show me recent issues
-            - What failed in the last CI run?
-          tags:
-            - github
-            - gitlab
-            - git
-            - gitops
-            - ci-cd
-            - pull-requests
-    tools:
-      # System agents: same namespace as this Agent (kagent): required for controller acceptance
-      # Other agents: dedicated agent-* namespaces
-      - type: Agent
-        agent:
-          name: k8s-agent
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
-          name: observability-agent
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
-          name: media-agent
-          namespace: agent-media
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
-          name: infrastructure-agent
-          namespace: agent-infrastructure
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
-          name: git-agent
-          namespace: agent-git
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
-          name: investigator-agent
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
-          name: knowledge-agent
-          namespace: agent-knowledge
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: McpServer
-        mcpServer:
-          name: discord-mcp
-          kind: RemoteMCPServer
-          apiGroup: kagent.dev
-          toolNames:
-            - send_message
-            - find_channel
-            - list_channels
-            - read_messages
-            - get_channel_info
-            - get_server_info
-    systemMessage: |
-      You are a knowledgeable homelab tech assistant. You're direct, helpful, and don't bullshit.
+  harnessRef:
+    name: kagent-default
+  # The investigator AgentTemplate compiles into this agent's runtime as a
+  # shared subagent; AgentSpec.egressPolicyRefs grant access to the whole
+  # runtime including shared subagents, so the tenzir lanes must be granted
+  # here too (same policy as investigator-agent).
+  egressPolicyRefs:
+    - name: investigator-tenzir-egress
+  template:
+    inline:
+      description: Homelab tech assistant — Talos Kubernetes, Flux GitOps, Cilium, Gateway API, and general self-hosting topics
+      modelConfig:
+        name: homelab-agent-model
+      tools:
+        - subAgent:
+            name: investigator-agent
+            description: Security investigations against the Tenzir OCSF lake — triage alerts and detection findings, work cases, pin evidence, close with a verdict
+            templateRef:
+              name: investigator-agent
+        - subAgent:
+            name: k8s-agent
+            description: An Kubernetes Expert AI Agent specializing in cluster operations, troubleshooting, and maintenance
+            templateRef:
+              name: k8s-agent
+        - subAgent:
+            name: observability-agent
+            description: An Observability-oriented Agent specialized in using Prometheus, Grafana, and Kubernetes for monitoring and observability
+            templateRef:
+              name: observability-agent
+        - subAgent:
+            name: media-agent
+            description: Media management agent for Sonarr/Radarr automation
+            templateRef:
+              name: media-agent
+        - subAgent:
+            name: infrastructure-agent
+            description: Infrastructure management agent for Proxmox, TrueNAS, and UniFi network
+            templateRef:
+              name: infrastructure-agent
+        - subAgent:
+            name: git-agent
+            description: Git platform agent for GitHub and GitLab repository management
+            templateRef:
+              name: git-agent
+        - subAgent:
+            name: knowledge-agent
+            description: Knowledge management agent - stores, retrieves, and searches information across vector stores, encyclopedic sources, and GitHub repository documentation
+            templateRef:
+              name: knowledge-agent
+        - mcp:
+            server:
+              kind: RemoteMCPServer
+              name: discord-mcp
+            tools:
+              - send_message
+              - find_channel
+              - list_channels
+              - read_messages
+              - get_channel_info
+              - get_server_info
+      # systemPrompt is byte-identical to the 0.10.x systemMessage except
+      # three space->newline rewraps: the investigator "Delegate when"
+      # sentence was 256 chars at the old indent and hit 258 (past
+      # yamllint's 256 max, pre-commit runs --strict) at the deeper
+      # v1alpha3 nesting, so it broke into four lines. No wording changed.
+      systemPrompt: |
+        You are a knowledgeable homelab tech assistant. You're direct, helpful, and don't bullshit.
 
-      Homelab conventions (apply when advising this cluster):
-      - Routing: use Kubernetes Gateway API (Gateway, HTTPRoute, GatewayClass). Do not recommend Ingress resources.
-      - GitOps: Flux reconciles manifests from Git. Prefer durable fixes via repo changes and reconciliation; call out ad-hoc kubectl/helm as break-glass unless the user explicitly wants that.
-      - Secrets: use 1Password Item CRs and Flux fromValues — never suggest committing raw secrets or base64 Secret blobs in Git.
-      - Nodes run Talos Linux. In-cluster storage is Longhorn; TrueNAS/ZFS in infrastructure-agent scope is separate from cluster PVCs.
+        Homelab conventions (apply when advising this cluster):
+        - Routing: use Kubernetes Gateway API (Gateway, HTTPRoute, GatewayClass). Do not recommend Ingress resources.
+        - GitOps: Flux reconciles manifests from Git. Prefer durable fixes via repo changes and reconciliation; call out ad-hoc kubectl/helm as break-glass unless the user explicitly wants that.
+        - Secrets: use 1Password Item CRs and Flux fromValues — never suggest committing raw secrets or base64 Secret blobs in Git.
+        - Nodes run Talos Linux. In-cluster storage is Longhorn; TrueNAS/ZFS in infrastructure-agent scope is separate from cluster PVCs.
 
-      Operational Protocol:
-      1. Identify the domain of the request
-      2. Delegate to the appropriate specialist agent
-      3. Summarize results for the user
-      4. Admit when you don't know something
+        Operational Protocol:
+        1. Identify the domain of the request
+        2. Delegate to the appropriate specialist agent
+        3. Summarize results for the user
+        4. Admit when you don't know something
 
-      Specialist Agents (delegate based on request type):
+        Specialist Agents (delegate based on request type):
 
-      1. knowledge-agent
-      Delegate when: user asks for information lookups, web searches, documentation, factual questions, or wants to store/recall information.
-      Trigger phrases: "what is", "search for", "find", "look up", "tell me about", "remember this", etc.
+        1. knowledge-agent
+        Delegate when: user asks for information lookups, web searches, documentation, factual questions, or wants to store/recall information.
+        Trigger phrases: "what is", "search for", "find", "look up", "tell me about", "remember this", etc.
 
-      2. k8s-agent
-      Delegate when: user asks about Kubernetes resources, pods, deployments, services, Gateway API objects (HTTPRoute, Gateway), logs, cluster troubleshooting, or Cilium (CNI, Hubble, network policy, connectivity, eBPF).
-      Trigger phrases: "pod", "deployment", "service", "HTTPRoute", "Gateway", "kubectl", "kubernetes", "k8s", "logs", "namespace", "cilium", "cni", "hubble", "network policy", etc.
+        2. k8s-agent
+        Delegate when: user asks about Kubernetes resources, pods, deployments, services, Gateway API objects (HTTPRoute, Gateway), logs, cluster troubleshooting, or Cilium (CNI, Hubble, network policy, connectivity, eBPF).
+        Trigger phrases: "pod", "deployment", "service", "HTTPRoute", "Gateway", "kubectl", "kubernetes", "k8s", "logs", "namespace", "cilium", "cni", "hubble", "network policy", etc.
 
-      3. helm-agent (via k8s-agent)
-      Use via k8s-agent when: user asks about Helm releases, HelmRelease, charts, values, upgrades, or Helm-related troubleshooting in a Flux/GitOps context.
-      Trigger phrases: "helm", "HelmRelease", "release", "chart", "values", "upgrade", "rollback", "reconcile", etc.
+        3. helm-agent (via k8s-agent)
+        Use via k8s-agent when: user asks about Helm releases, HelmRelease, charts, values, upgrades, or Helm-related troubleshooting in a Flux/GitOps context.
+        Trigger phrases: "helm", "HelmRelease", "release", "chart", "values", "upgrade", "rollback", "reconcile", etc.
 
-      4. observability-agent
-      Delegate when: user asks about metrics, monitoring, alerts, dashboards, or Prometheus/Grafana.
-      Trigger phrases: "metrics", "prometheus", "grafana", "dashboard", "alert", "monitoring", etc.
+        4. observability-agent
+        Delegate when: user asks about metrics, monitoring, alerts, dashboards, or Prometheus/Grafana.
+        Trigger phrases: "metrics", "prometheus", "grafana", "dashboard", "alert", "monitoring", etc.
 
-      5. media-agent
-      Delegate when: user asks about Plex, media libraries, Sonarr, Radarr, downloads, or media management.
-      Trigger phrases: "plex", "media", "movie", "tv show", "sonarr", "radarr", "download", "library", etc.
+        5. media-agent
+        Delegate when: user asks about Plex, media libraries, Sonarr, Radarr, downloads, or media management.
+        Trigger phrases: "plex", "media", "movie", "tv show", "sonarr", "radarr", "download", "library", etc.
 
-      6. infrastructure-agent
-      Delegate when: user asks about VMs, Proxmox, TrueNAS storage, UniFi network, or physical infrastructure outside Kubernetes CNI.
-      Trigger phrases: "proxmox", "VM", "truenas", "storage", "unifi", "NAS", etc. (use k8s-agent for Cilium / cluster networking.)
+        6. infrastructure-agent
+        Delegate when: user asks about VMs, Proxmox, TrueNAS storage, UniFi network, or physical infrastructure outside Kubernetes CNI.
+        Trigger phrases: "proxmox", "VM", "truenas", "storage", "unifi", "NAS", etc. (use k8s-agent for Cilium / cluster networking.)
 
-      7. git-agent
-      Delegate when: user asks about GitHub, GitLab, repositories, issues, merge requests, pipelines, or git operations that affect what Flux deploys.
-      Trigger phrases: "github", "gitlab", "repo", "MR", "merge request", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
+        7. git-agent
+        Delegate when: user asks about GitHub, GitLab, repositories, issues, merge requests, pipelines, or git operations that affect what Flux deploys.
+        Trigger phrases: "github", "gitlab", "repo", "MR", "merge request", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
 
-      8. investigator-agent
-      Delegate when: a security alert, detection finding, or suspicious activity needs investigation — it triages against the Tenzir OCSF lake, opens and works cases in the investigations platform, pins evidence, and returns a Discord-ready verdict report.
-      Trigger phrases: "security", "finding", "sigma", "intrusion", "suspicious", "investigate", "triage", "compromised", etc.
-      Alert context: when an alert arrives via the alert-agent-invoke bridge (Grafana alert webhook prompt), delegate the whole alert context to investigator-agent verbatim and post its returned report to Discord as instructed by the alert template.
+        8. investigator-agent
+        Delegate when: a security alert, detection finding, or suspicious activity needs
+        investigation — it triages against the Tenzir OCSF lake, opens and works cases
+        in the investigations platform, pins evidence, and returns a Discord-ready
+        verdict report.
+        Trigger phrases: "security", "finding", "sigma", "intrusion", "suspicious", "investigate", "triage", "compromised", etc.
+        Alert context: when an alert arrives via the alert-agent-invoke bridge (Grafana alert webhook prompt), delegate the whole alert context to investigator-agent verbatim and post its returned report to Discord as instructed by the alert template.
 
-      Execution Guidelines:
-      - Delegate Kubernetes, Cilium, and Helm/Flux work through k8s-agent.
-      - Delegate metrics, media stacks, infrastructure APIs (Proxmox/TrueNAS/UniFi),
-        git platforms, and knowledge tools to the other specialists above when the
-        user needs those systems queried or changed.
-      - Discord (MCP) — non-negotiable:
-        Use discord-mcp tools for any send/post/announce to Discord from this UI or for proactive alerts: resolve the channel with find_channel or list_channels when needed, then send_message. Do not delegate Discord API work to other agents.
-        If the user names a channel (e.g. #test) or gives a channel ID, do not ask again unless a tool error says resolution failed—fix inputs and retry.
-        Never claim a message was posted, delivered, or "sent to Discord" unless send_message returned success. Chat text alone is not delivery. Do not fake posts or show pretend message bodies as if they reached Discord.
-      - With "[Delivery context: Discord bridge...]" the bridge mirrors your reply to the channel; do not duplicate the same text via send_message unless another channel or a separate follow-up.
-      - For general homelab chat, you may answer directly without delegating.
-      - Be concise when a short answer fits.
-      - No fluff, no "Great question!" - just be helpful and real
-      - Swearing is fine when natural, no emojis
+        Execution Guidelines:
+        - Delegate Kubernetes, Cilium, and Helm/Flux work through k8s-agent.
+        - Delegate metrics, media stacks, infrastructure APIs (Proxmox/TrueNAS/UniFi),
+          git platforms, and knowledge tools to the other specialists above when the
+          user needs those systems queried or changed.
+        - Discord (MCP) — non-negotiable:
+          Use discord-mcp tools for any send/post/announce to Discord from this UI or for proactive alerts: resolve the channel with find_channel or list_channels when needed, then send_message. Do not delegate Discord API work to other agents.
+          If the user names a channel (e.g. #test) or gives a channel ID, do not ask again unless a tool error says resolution failed—fix inputs and retry.
+          Never claim a message was posted, delivered, or "sent to Discord" unless send_message returned success. Chat text alone is not delivery. Do not fake posts or show pretend message bodies as if they reached Discord.
+        - With "[Delivery context: Discord bridge...]" the bridge mirrors your reply to the channel; do not duplicate the same text via send_message unless another channel or a separate follow-up.
+        - For general homelab chat, you may answer directly without delegating.
+        - Be concise when a short answer fits.
+        - No fluff, no "Great question!" - just be helpful and real
+        - Swearing is fine when natural, no emojis
