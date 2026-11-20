@@ -24,9 +24,6 @@ spec:
       container:
         name: node
         port: 5858
-      service:
-        port: 5858
-        targetPort: 5858
         # The chart renders env from app.container.env — the original MR
         # nested it at app.env, so Helm dropped it and NODE_ENV never reached
         # the process. Without NODE_ENV=production the server registers no
@@ -36,6 +33,9 @@ spec:
             value: production
           - name: CONFIG_DIR
             value: /config
+      service:
+        port: 5858
+        targetPort: 5858
       command: ["node", "/app/dist/src/server/server.node.js"]
       replicas: 1
       podAntiAffinity:
