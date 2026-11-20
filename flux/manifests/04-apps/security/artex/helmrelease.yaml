@@ -175,7 +175,7 @@ spec:
               # renovate: datasource=npm depName=@playwright/cli
               PLAYWRIGHT_CLI_VERSION=0.1.22
               # renovate: datasource=npm depName=playwright
-              PLAYWRIGHT_VERSION=1.64.1
+              PLAYWRIGHT_VERSION=1.65.1
               export PLAYWRIGHT_BROWSERS_PATH=/rt/browsers
               STAMP="pw-mcp=$PLAYWRIGHT_MCP_VERSION pw-cli=$PLAYWRIGHT_CLI_VERSION"
               STAMP="$STAMP playwright=$PLAYWRIGHT_VERSION node=$(node --version)"
