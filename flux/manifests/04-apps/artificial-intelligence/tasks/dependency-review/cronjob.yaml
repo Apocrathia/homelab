@@ -84,7 +84,7 @@ spec:
                 - name: PYTHONPATH
                   value: /deps
                 - name: A2A_URL
-                  value: http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent/
+                  value: http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/git-agent/
                 - name: MAX_TURNS
                   value: "6"
                 - name: HTTP_TIMEOUT_S

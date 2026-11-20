@@ -3,7 +3,7 @@ apiVersion: api.kagent.dev/v1alpha3
 kind: ModelConfig
 metadata:
   name: media-agent-model
-  namespace: agent-media
+  namespace: kagent
 spec:
   provider: OpenAI
   model: glm-5.3-prime

@@ -8,9 +8,11 @@ Web search specialist powered by kagent, backed by SearXNG.
 
 This deployment includes:
 
-- Declarative kagent Agent CRD with search-focused system prompt
-- Connection to the SearXNG MCP server for web search
+- `AgentTemplate` + thin `Agent` in the `kagent` namespace (the consolidated
+  agent fleet) with a search-focused system prompt
+- Connection to the SearXNG and Firecrawl MCP servers for web search
 - Integration with LiteLLM for model access
+- Bound as a same-namespace subAgent tool by knowledge-agent
 
 ```mermaid
 sequenceDiagram
@@ -47,32 +49,35 @@ The agent uses the kagent `MCPServer` in `mcp-searxng` namespace:
 
 Create a 1Password item:
 
-**searxng-agent-secrets** (`vaults/Secrets/items/searxng-agent-secrets`)
+**search-agent-secrets** (`vaults/Secrets/items/search-agent-secrets`)
 
 - `litellm-api-key`: API key for LiteLLM access
 
 ### Access
 
-- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent`
+- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/search-agent`
 - **kagent UI**: `https://kagent.gateway.services.apocrathia.com`
 
 ## Agent-to-Agent Integration
 
-Other agents can delegate to this agent by referencing it as a tool (set `namespace` to `agent-search`):
+Other agents delegate to this agent via a same-namespace `subAgent` tool
+binding (v1alpha3 agent-tools are namespace-local; the whole fleet shares the
+`kagent` namespace):
 
 ```yaml
 spec:
-  declarative:
-    tools:
-      - type: Agent
-        agent:
-          name: search-agent
-          namespace: agent-search
-          kind: Agent
-          apiGroup: kagent.dev
+  template:
+    inline:
+      tools:
+        - subAgent:
+            name: search-agent
+            description: Search the web for current information, documentation, news, and technical details.
+            templateRef:
+              name: search-agent
 ```
 
-The calling agent's LLM sees the `spec.description` field to decide when to delegate.
+The calling agent's LLM sees the binding `description` field to decide when to
+delegate. knowledge-agent holds this binding today.
 
 ## Troubleshooting
 
@@ -82,10 +87,11 @@ The calling agent's LLM sees the `spec.description` field to decide when to dele
 
    ```bash
    # Check agent status
-   kubectl get agent search-agent --namespace agent-search
+   kubectl get agent search-agent --namespace kagent
 
-   # Check agent pod status
-   kubectl get pods --namespace agent-search -l kagent.dev/agent-name=search-agent
+   # Compiled sandbox + worker pool (substrate agents share them)
+   kubectl get sandboxtemplates -n kagent
+   kubectl get workerpool -n kagent
    ```
 
 2. **MCP Server not working**
@@ -102,10 +108,10 @@ The calling agent's LLM sees the `spec.description` field to decide when to dele
 
 ```bash
 # Overall status
-kubectl get agent,modelconfig --namespace agent-search
+kubectl get agent,modelconfig --namespace kagent
 
 # Test A2A endpoint
-curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent/.well-known/agent-card.json
+curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/search-agent/.well-known/agent-card.json
 ```
 
 ## References

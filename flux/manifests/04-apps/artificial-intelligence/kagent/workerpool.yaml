@@ -9,9 +9,9 @@ metadata:
     app.kubernetes.io/component: worker-pool
     kagent.dev/worker-pool: kagent-default
 spec:
-  # Capacity for kagent-namespace agents (homelab-agent, investigator-agent,
-  # hello-substrate) plus room for chart Harness smoke tests. agent-*
-  # namespaces run their own single-replica pools.
+  # Capacity for the whole consolidated fleet: every custom and vendored
+  # builtin agent runs in this namespace now — replica count is parity with
+  # the 0.10.x ate-system pool that served the same agent set.
   replicas: 4
   # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateworker-gvisor
   workerImage: ghcr.io/kagent-dev/substrate/ateworker-gvisor:v1.0.1

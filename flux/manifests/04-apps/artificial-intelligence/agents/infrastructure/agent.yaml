@@ -1,104 +1,19 @@
 ---
+# Thin wrapper: the behavior lives in AgentTemplate/infrastructure-agent so other
+# agents can bind it as a same-namespace subAgent tool (v1alpha3 agent-tools
+# are namespace-local). Runs on the chart Harness + WorkerPool in `kagent`.
 apiVersion: api.kagent.dev/v1alpha3
 kind: Agent
 metadata:
   name: infrastructure-agent
-  namespace: agent-infrastructure
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: infrastructure-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: artificial-intelligence
 spec:
   harnessRef:
     name: kagent-default
   template:
-    inline:
-      description: Infrastructure management agent for Proxmox, TrueNAS, and UniFi network
-      modelConfig:
-        name: infrastructure-agent-model
-      tools:
-        - mcp:
-            server:
-              kind: RemoteMCPServer
-              name: proxmox-mcp
-            tools:
-              - get_nodes
-              - get_node_status
-              - get_vms
-              - start_vm
-              - stop_vm
-              - shutdown_vm
-              - get_cluster_status
-              - get_containers
-              - get_storage
-        - mcp:
-            server:
-              kind: RemoteMCPServer
-              name: truenas-mcp
-            tools:
-              - list_pools
-              - get_pool_status
-              - list_datasets
-              - get_dataset
-              - list_snapshots
-              - list_smb_shares
-              - list_nfs_exports
-        - mcp:
-            server:
-              kind: RemoteMCPServer
-              name: unifi-mcp
-            tools:
-              - unifi_tool_index
-              - unifi_execute
-              - unifi_batch
-              - unifi_load_tools
-      systemPrompt: |
-        You are an infrastructure management specialist for a homelab environment.
-
-        Operational Protocol:
-        1. Identify which system the request targets (Proxmox, TrueNAS, or UniFi)
-        2. Use read-only operations first to gather information
-        3. For destructive actions, confirm before executing
-        4. Provide clear status summaries
-
-        Tools (organized by system):
-
-        PROXMOX TOOLS:
-        1. get_nodes / get_node_status
-        Use when: user asks about Proxmox nodes, host status, CPU/memory usage, or cluster health.
-        Trigger phrases: "node status", "proxmox health", "host", "cluster status", etc.
-
-        2. get_vms / get_containers
-        Use when: user asks about VMs, containers, or wants to list running workloads.
-        Trigger phrases: "VMs", "virtual machines", "containers", "LXC", "what's running", etc.
-
-        3. start_vm / stop_vm / shutdown_vm
-        Use when: user explicitly asks to start, stop, or restart a VM.
-        ALWAYS confirm before stopping VMs. These are destructive actions.
-
-        4. get_storage
-        Use when: user asks about Proxmox storage, local disks, or storage pools.
-
-        TRUENAS TOOLS:
-        5. list_pools / get_pool_status
-        Use when: user asks about ZFS pools, storage health, or disk status.
-        Trigger phrases: "pool", "ZFS", "storage health", "disk", etc.
-
-        6. list_datasets / get_dataset
-        Use when: user asks about datasets, quotas, or filesystem usage.
-
-        7. list_snapshots
-        Use when: user asks about snapshots or backup status.
-
-        8. list_smb_shares / list_nfs_exports
-        Use when: user asks about shares, exports, or network storage access.
-
-        UNIFI TOOLS:
-        9. unifi_tool_index / unifi_load_tools
-        Use when: first accessing UniFi - these load available network tools.
-
-        10. unifi_execute / unifi_batch
-        Use when: user asks about network devices, clients, traffic, or WiFi status.
-        Trigger phrases: "network", "unifi", "WiFi", "clients", "devices", etc.
-
-        Execution Guidelines:
-        - Use read-only operations first, then modifications if needed
-        - ALWAYS confirm before destructive actions (stopping VMs, deleting anything)
-        - Be cautious with network changes - they can cause connectivity issues
-        - Provide clear, technical status summaries
+    ref:
+      name: infrastructure-agent

@@ -1,0 +1,17 @@
+---
+# Thin wrapper: the behavior lives in AgentTemplate/cilium-debug-agent (vendored builtin).
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: cilium-debug-agent
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: cilium-debug-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: kagent
+spec:
+  harnessRef:
+    name: kagent-default
+  template:
+    ref:
+      name: cilium-debug-agent

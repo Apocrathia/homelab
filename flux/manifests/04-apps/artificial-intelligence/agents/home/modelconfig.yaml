@@ -3,7 +3,7 @@ apiVersion: api.kagent.dev/v1alpha3
 kind: ModelConfig
 metadata:
   name: home-agent-model
-  namespace: agent-home
+  namespace: kagent
 spec:
   provider: OpenAI
   model: glm-5.3-prime

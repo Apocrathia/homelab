@@ -5,11 +5,11 @@ apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: searxng-mcp
-  namespace: agent-search
+  namespace: kagent
   labels:
     app.kubernetes.io/name: searxng-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-search
+    app.kubernetes.io/part-of: search-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -20,11 +20,11 @@ apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: firecrawl-mcp
-  namespace: agent-search
+  namespace: kagent
   labels:
     app.kubernetes.io/name: firecrawl-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-search
+    app.kubernetes.io/part-of: search-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

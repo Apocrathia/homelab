@@ -35,8 +35,6 @@ intervention, convergence, and cleanup.
   ([substrate/README.md](../../flux/manifests/04-apps/artificial-intelligence/substrate/README.md));
   MCPServer CRD protection and adoption
   ([kmcp/README.md](../../flux/manifests/04-apps/artificial-intelligence/kmcp/README.md)).
-- Prompt rewrites and delegation follow-ups
-  (`docs/issues/kagent-1.0-cross-namespace-agent-tools.md`).
 
 ## Decisions
 
@@ -46,6 +44,14 @@ intervention, convergence, and cleanup.
   (`kagent.dev` -> `api.kagent.dev`). Old objects cannot be updated into the
   new APIs; the MR re-creates every CR. Without a served overlap there is
   no conversion path — an outage window is inherent to this upgrade.
+- **The agent fleet consolidates into `kagent`.** v1alpha3 agent tools are
+  same-namespace-only, so the six per-namespace custom agents and the seven
+  vendored 0.10.x subchart agents all re-create in `kagent` (AgentTemplate +
+  thin Agent). The `agent-{git,infrastructure,knowledge,media,search}`
+  namespaces delete with their Namespace CRs; `agent-home` and
+  `agent-homelab` survive as bridge-only hosts. A2A URLs move to
+  `/api/a2a/kagent/<agent>` (litellm, hermes, the CI job, both bridges are
+  rewired in this MR).
 - **substrate-crds is blocked by `status.storedVersions`.**
   `workerpools.ate.dev` keeps its CRD name across 0.0.6 -> 1.0.1, so the
   upgrade is a spec update that drops `v1alpha1`. Kubernetes rejects a CRD
@@ -112,7 +118,11 @@ servers from a fleet bounce.
     plain CR and may come up early — that is fine.
 
   - The new `api.kagent.dev/v1alpha3` CRs apply once the new CRDs exist
-    (transient `no matches for kind` until then). The `kagent` HelmRelease
+    (transient `no matches for kind` until then). Flux also prunes the five
+    emptied `agent-*` Namespace CRs — namespace deletion cascades once the
+    CRs inside them are gone, so expect the `agent-{git,infrastructure,
+knowledge,media,search}` namespaces to terminate during convergence
+    (the two bridge namespaces stay). The `kagent` HelmRelease
     upgrade itself fail-loops with the removed-API error below (the
     deployed release still tracks `kagent.dev/v1alpha2` objects, and their
     kinds are now gone) — no 1.0.1 controller until the stub recovery in
@@ -200,9 +210,11 @@ servers from a fleet bounce.
   kubectl get helmrelease -n podcertificate-controller-system substrate-podcert
   kubectl get cluster -n ate-system substrate-postgres
   kubectl get helmrelease -n kagent kagent-crds kagent kmcp-crds kmcp
-  kubectl get workerpool -A                       # kagent + each agent-* ns
-  kubectl get agents -A                           # the v1alpha3 fleet
+  kubectl get workerpool -A                       # kagent-default only
+  kubectl get agents -A                           # the v1alpha3 fleet in kagent
+  kubectl get agenttemplates -n kagent            # 14: seven custom + seven vendored
   kubectl get mcpservers -A                       # 14, reconciled by kmcp
+  kubectl get ns | grep '^agent-'                 # agent-home + agent-homelab only
   ```
 
   If the 14 MCPServer CRs are missing: the `helm.sh/resource-policy=keep`
@@ -214,8 +226,10 @@ servers from a fleet bounce.
   the CRs back from git.
 
   Smoke: hello-substrate A2A round-trip (the arm64 gVisor
-  checkpoint/restore path that killed the 0.10.x line) and a
-  homelab-agent Discord round-trip.
+  checkpoint/restore path that killed the 0.10.x line), a homelab-agent
+  Discord round-trip, and one delegation edge (ask homelab-agent something
+  that should route to git-agent) to prove the consolidated subAgent
+  bindings compile.
 
 - [ ] 5. **Clean up dropped CRDs.**
 

@@ -40,7 +40,7 @@ spec:
             value: "/data"
 
           - name: KAGENT_URL
-            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent/"
+            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/home-agent/"
 
           - name: LISTEN_PORT
             value: "8080"

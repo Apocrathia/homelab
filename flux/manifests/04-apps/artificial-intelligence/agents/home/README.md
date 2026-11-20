@@ -8,7 +8,8 @@ The home automation agent, triggered by Home Assistant webhooks. Powered by kage
 
 This deployment includes:
 
-- Declarative kagent `Agent` CR in the `agent-home` namespace
+- `AgentTemplate` + thin `Agent` CR in the `kagent` namespace (the
+  consolidated agent fleet)
 - `RemoteMCPServer` for Home Assistant (`homeassistant-mcp`, upstream HTTPS at `home.services.apocrathia.com:8123/api/mcp`, bearer token injected via `headersFrom` from a 1Password-backed Secret)
 - `RemoteMCPServer` for Grafana (`grafana-mcp`, cluster-internal proxy in `mcp-grafana`)
 - `home-agent-bridge` HelmRelease (`generic-app`), a small Python HTTP server that accepts `POST /` with `{"prompt": "..."}` from Home Assistant's [`rest_command`](https://www.home-assistant.io/integrations/rest_command/) integration and forwards it to the agent via A2A
@@ -86,7 +87,8 @@ The hostname `home-agent.gateway.services.apocrathia.com` resolves to the cluste
 
 - **Bridge URL (HA-facing)**: `https://home-agent.gateway.services.apocrathia.com/`
 - **Bridge URL (cluster-internal)**: `http://home-agent-bridge.agent-home.svc.cluster.local:8080/`
-- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent`
+  (the bridge stays in `agent-home`; only the agent moved to `kagent`)
+- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/home-agent`
 - **kagent UI**: `https://kagent.gateway.services.apocrathia.com`
 
 ## Smoke test
@@ -104,7 +106,7 @@ Expected: `HTTP/1.1 202 Accepted` with `accepted <request-id>` body. Then watch 
 
 ```bash
 kubectl logs --namespace agent-home -l app=home-agent-bridge -f
-kubectl logs --namespace agent-home -l kagent.dev/agent-name=home-agent -f
+kubectl logs --namespace kagent deployment/kagent-controller -f
 ```
 
 ## Troubleshooting
@@ -120,9 +122,9 @@ kubectl logs --namespace agent-home -l app=home-agent-bridge --tail=200
 ### Agent runs but does nothing
 
 ```bash
-kubectl get agent home-agent --namespace agent-home -o yaml
-kubectl get remotemcpservers --namespace agent-home
-kubectl logs --namespace agent-home -l kagent.dev/agent-name=home-agent --tail=200
+kubectl get agent home-agent --namespace kagent -o yaml
+kubectl get remotemcpservers --namespace kagent
+kubectl logs --namespace kagent deployment/kagent-controller --tail=200
 ```
 
 If the HA MCP server returns 401, the `homeassistant-token` value in the 1Password item is missing the `Bearer ` prefix or the token has expired.
@@ -131,7 +133,7 @@ If the HA MCP server returns 401, the `homeassistant-token` value in the 1Passwo
 
 ```bash
 kubectl exec --namespace agent-home deploy/home-agent-bridge -- \
-  curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent/.well-known/agent-card.json
+  curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/home-agent/.well-known/agent-card.json
 ```
 
 If this 404s, the agent CR didn't reconcile, check the kagent controller logs in the `kagent` namespace.

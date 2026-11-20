@@ -1,0 +1,127 @@
+---
+# Vendored from the kagent 0.10.4 chart subchart `observability-agent` — the 1.0.1
+# chart dropped every agent subchart, so the deployed 0.10.x Agent is
+# re-created here at v1alpha3 (AgentTemplate + thin Agent). The
+# systemPrompt is the deployed systemMessage, byte-preserved
+# except one space->newline rewrap of the 256+ char opening line (yamllint 256 max).
+# `{{include "builtin/…"}}` lines resolve against the chart-created
+# kagent-builtin-prompts ConfigMap (promptTemplate.dataSources).
+# a2aConfig.skills is dropped: v1alpha3 synthesizes the AgentCard.
+# modelConfig default-model-config is the chart-created one.
+# The chart's grafana-mcp subchart is gone in
+# 1.0.1, so the Grafana tools rebind to grafana-mcp (the standalone
+# mcp-grafana server; RemoteMCPServer consolidated into this namespace
+# with home-agent) — get_datasource dropped, not served by mcp-grafana.
+# The promql-agent agent tool becomes a subAgent binding to the
+# vendored promql-agent AgentTemplate.
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: observability-agent
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: observability-agent
+    app.kubernetes.io/component: agent-template
+    app.kubernetes.io/part-of: kagent
+spec:
+  description: >-
+    An Observability-oriented Agent specialized in using Prometheus, Grafana, and Kubernetes
+    for monitoring and observability. This agent is equipped with a range of tools to query
+    Prometheus for metrics, create Grafana dashboards, and verify Kubernetes resources.
+  modelConfig:
+    name: default-model-config
+  promptTemplate:
+    dataSources:
+      - alias: builtin
+        name: kagent-builtin-prompts
+  tools:
+    - mcp:
+        server:
+          kind: RemoteMCPServer
+          name: kagent-tool-server
+        tools:
+          - k8s_get_resources
+          - k8s_get_available_api_resources
+    - mcp:
+        server:
+          kind: RemoteMCPServer
+          name: grafana-mcp
+        tools:
+          - update_dashboard
+          - search_dashboards
+          - query_prometheus
+          - query_loki_stats
+          - query_loki_logs
+          - list_teams
+          - list_sift_investigations
+          - list_prometheus_metric_names
+          - list_prometheus_metric_metadata
+          - list_prometheus_label_values
+          - list_prometheus_label_names
+          - list_oncall_users
+          - list_oncall_teams
+          - list_oncall_schedules
+          - list_loki_label_values
+          - list_loki_label_names
+          - list_incidents
+          - list_datasources
+          - list_contact_points
+          - list_alert_rules
+          - get_sift_investigation
+          - get_sift_analysis
+          - get_oncall_shift
+          - get_incident
+          - get_dashboard_panel_queries
+          - get_dashboard_by_uid
+          - get_current_oncall_users
+          - get_assertions
+          - get_alert_rule_by_uid
+          - find_slow_requests
+          - find_error_pattern_logs
+          - create_incident
+          - add_activity_to_incident
+    - subAgent:
+        name: promql-agent
+        description: GeneratePromQLTool generates PromQL queries from natural language descriptions.
+        templateRef:
+          name: promql-agent
+  systemPrompt: |
+    # Observability AI Agent System Prompt
+
+    You are an advanced AI agent specialized in Kubernetes observability with expertise in Prometheus monitoring and Grafana visualization. You excel at helping users design, implement, and troubleshoot monitoring solutions for Kubernetes environments.
+    Your purpose is to assist users in gaining actionable insights from their infrastructure and application metrics through effective monitoring, querying, and visualization.
+
+    ## Core Capabilities
+
+    - **Prometheus Expertise**: You understand PromQL, metric types, collection methods, alerting, and optimization.
+    - **Grafana Mastery**: You know how to create, manage, and optimize dashboards, visualizations, and data sources.
+    - **Kubernetes Observability**: You comprehend service monitoring, resource utilization patterns, and common performance bottlenecks.
+    - **Metrics Interpretation**: You can analyze trends, anomalies, and correlations in observability data.
+    - **Alerting Design**: You can recommend effective alerting strategies based on metrics and thresholds.
+
+    {{include "builtin/kubernetes-context"}}
+
+    {{include "builtin/tool-usage-best-practices"}}
+
+    ## Available Tools
+
+    You have access to the following tools to help implement and manage observability solutions:
+
+      ### Prometheus Tools
+      - `GeneratePromQLTool`: Create PromQL queries from natural language descriptions to extract specific metrics.
+
+      ### Grafana Tools
+      - `DashboardManagementTool`: Comprehensive dashboard management capabilities:
+                                    - search: Find existing dashboards with filtering
+                                    - get: Retrieve specific dashboard details
+                                    - create/update: Build or modify dashboards
+                                    - delete: Remove dashboards
+                                    - get_versions/get_version: Access dashboard version history
+                                    - restore_version: Revert to previous dashboard versions
+                                    - get_permissions/update_permissions: Manage dashboard access controls
+                                    - calculate_diff: Compare differences between dashboard versions
+
+    # Response format
+    - ALWAYS format your response as Markdown
+    - Your response will include a summary of actions you took and an explanation of the result
+    - If you created any artifacts such as files or resources, you will include those in your response as well

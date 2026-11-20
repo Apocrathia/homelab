@@ -8,15 +8,13 @@ The homelab tech assistant, accessible via Discord. Powered by kagent.
 
 This deployment includes:
 
-- kagent Agent CR (v1alpha3) in the `kagent` namespace, running on the chart Harness + local WorkerPool
+- kagent Agent CR (v1alpha3) in the `kagent` namespace, running on the chart Harness + WorkerPool
 - Discord MCP (`mcp-discord`) for outbound messages and channel tools; `RemoteMCPServer` in `kagent`
 - Discord bridge in `agent-homelab` that forwards messages to kagent via A2A
 - Integration with LiteLLM for model access
-- SubAgent tool: `investigator-agent` (same-namespace AgentTemplate; kagent 1.0
-  agent-tools are namespace-local)
-- Cross-namespace delegation (search/k8s/helm/cilium/observability/git/media/
-  infrastructure/knowledge) was removed with the kagent 1.0 API — see
-  `docs/issues/kagent-1.0-cross-namespace-agent-tools.md`
+- SubAgent tools (same-namespace AgentTemplates; v1alpha3 agent-tools are
+  namespace-local, which is why the whole fleet consolidated into `kagent`):
+  investigator, k8s, observability, media, infrastructure, git, knowledge
 
 ```mermaid
 sequenceDiagram

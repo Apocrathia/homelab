@@ -3,11 +3,11 @@ apiVersion: api.kagent.dev/v1alpha3
 kind: RemoteMCPServer
 metadata:
   name: servarr-mcp
-  namespace: agent-media
+  namespace: kagent
   labels:
     app.kubernetes.io/name: servarr-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-media
+    app.kubernetes.io/part-of: media-agent
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

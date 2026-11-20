@@ -3,7 +3,7 @@ apiVersion: api.kagent.dev/v1alpha3
 kind: ModelConfig
 metadata:
   name: git-agent-model
-  namespace: agent-git
+  namespace: kagent
 spec:
   provider: OpenAI
   model: glm-5.3-prime

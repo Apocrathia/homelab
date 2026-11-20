@@ -354,12 +354,12 @@ agents:
   - agent_name: "git-agent"
     agent_card_params:
       name: "Git Agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/git-agent"
       protocolVersion: "1.0"
   - agent_name: "home-agent"
     agent_card_params:
       name: "Home Agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/home-agent"
       protocolVersion: "1.0"
   - agent_name: "homelab-agent"
     agent_card_params:
@@ -369,7 +369,7 @@ agents:
   - agent_name: "infrastructure-agent"
     agent_card_params:
       name: "Infrastructure Agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/infrastructure-agent"
       protocolVersion: "1.0"
   - agent_name: "investigator-agent"
     agent_card_params:
@@ -379,17 +379,17 @@ agents:
   - agent_name: "knowledge-agent"
     agent_card_params:
       name: "Knowledge Agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/knowledge-agent"
       protocolVersion: "1.0"
   - agent_name: "media-agent"
     agent_card_params:
       name: "Media Agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-media/media-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/media-agent"
       protocolVersion: "1.0"
   - agent_name: "search-agent"
     agent_card_params:
       name: "Search Agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/search-agent"
       protocolVersion: "1.0"
   - agent_name: "hermes-agent"
     agent_card_params:

@@ -77,5 +77,5 @@ Superseded by the kagent 1.0.1 + substrate 1.0.1 migration
 AgentHarness/ActorTemplate with Agent + AgentTemplate + Harness
 (controller-compiled ActorTemplates), so the v1alpha2 skew this issue
 tracked no longer exists. The openclaw harness it blocked is deleted with
-that migration (backend removed upstream); see
-`openclaw-harness-kagent-1.0.md`.
+that migration (backend removed upstream; the openclaw README carries the
+reactivation facts).

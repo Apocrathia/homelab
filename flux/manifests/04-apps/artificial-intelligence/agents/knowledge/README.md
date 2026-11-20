@@ -18,7 +18,8 @@ The knowledge agent stores, retrieves, and synthesizes information across source
 | `qdrant-store` | Qdrant MCP       | Store memories/knowledge with semantic embeddings |
 | `qdrant-find`  | Qdrant MCP       | Semantic search across stored knowledge           |
 | OpenZIM tools  | OpenZIM MCP      | Query offline encyclopedic content                |
-| search-agent   | Agent delegation | Web search for current information                |
+| DeepWiki tools | DeepWiki MCP     | GitHub repository documentation and Q&A           |
+| search-agent   | subAgent binding | Web search for current information                |
 
 ## Usage
 
@@ -27,16 +28,19 @@ Other agents (like homelab-agent) call it to store and recall knowledge, look up
 ## Configuration
 
 - **Model**: via LiteLLM (pinned in `modelconfig.yaml`)
-- **Namespace**: `agent-knowledge`
+- **Namespace**: `kagent` (the consolidated agent fleet): behavior in
+  `agenttemplate.yaml`, thin `Agent` wrapper in `agent.yaml`. Binds
+  `search-agent` as a same-namespace subAgent tool; homelab-agent binds this
+  agent the same way.
 
 ## Troubleshooting
 
 ```bash
 # Check agent status
-kubectl get agents knowledge-agent --namespace agent-knowledge
+kubectl get agents knowledge-agent --namespace kagent
 
-# View agent logs
-kubectl logs --namespace agent-knowledge -l app.kubernetes.io/name=knowledge-agent -f
+# Controller logs (substrate agents run on the shared worker pool)
+kubectl logs --namespace kagent deployment/kagent-controller -f
 ```
 
 ## References
