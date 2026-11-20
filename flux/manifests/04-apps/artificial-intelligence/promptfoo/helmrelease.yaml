@@ -85,7 +85,7 @@ spec:
               set -euo pipefail
 
               # renovate: datasource=node-version depName=node
-              NODE_VERSION="24.22.3"
+              NODE_VERSION="26.13.1"
               # renovate: datasource=npm depName=promptfoo
               PROMPTFOO_VERSION="0.126.0"
               # renovate: datasource=pypi depName=modelaudit
