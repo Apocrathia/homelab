@@ -1,0 +1,27 @@
+---
+pre-compare: sort
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// The stored-shape records exactly as the live lane reads them back:
+// the netflow-attest test's output as strict JSON — what the
+// ocsf.Network_Activity catch-all column holds, minus the
+// schema-unification null paddings (att[0].prev_event /
+// att[1].fingerprint), which the ClickHouse JSON-column write drops
+// anyway. The chain: six Network Activity flows in (time, uid) order,
+// one chain per node (chain_uid = tenzir-node-netflow), the
+// 06:59:38.841Z same-timestamp pair uid-ordered — the tie-break is the
+// NORM on this lane (v5 datagrams stamp whole batches of flows with
+// one timestamp). Expected: the summary line alone — every record
+// walks silently, zero findings.
+fork {
+  summarize records_checked = count()
+  to_stdout { write_json }
+}
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"

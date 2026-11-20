@@ -1,0 +1,10 @@
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+homelab::investigations::ocsf::map
+// The map mints metadata.uid (uuid) per record; pin it so the baseline is
+// deterministic. The envelopes name time, so the record time already is.
+metadata.uid = "test-record-uid"
+ocsf_derive
+ocsf_cast
+drop_null_fields

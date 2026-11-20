@@ -1,0 +1,61 @@
+{
+  class_uid: 6003,
+  category_uid: 6,
+  activity_id: 1,
+  type_uid: 600301,
+  time: 2026-10-14T12:00:00.456789Z,
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "audit",
+      vendor_name: "kubernetes",
+      version: "audit.k8s.io/v1",
+    },
+  },
+  api: {
+    operation: "create pods/exec",
+    service: {
+      name: "kubernetes",
+    },
+    version: "v1",
+  },
+  http_request: {
+    user_agent: "kubectl/v1.31.0 (darwin/arm64) kubernetes/31f0f1a",
+  },
+  src_endpoint: {
+    ip: 10.42.0.5,
+  },
+  actor: {
+    user: {
+      name: "alice@example.com",
+      uid: "oidc:alice@example.com",
+    },
+  },
+  unmapped: {
+    audit_id: "3915f981-a6b4-427f-8d9f-57e432d9e35",
+    request_uri: "/api/v1/namespaces/default/pods/nginx/exec?command=sh",
+    object_ref: {
+      resource: "pods",
+      namespace: "default",
+      name: "nginx",
+      subresource: "exec",
+      apiVersion: "v1",
+    },
+    user_groups: [
+      "system:authenticated",
+      "team:admins",
+    ],
+    response_code: 200,
+    request_object: {
+      kind: "PodExecOptions",
+      apiVersion: "v1",
+      command: [
+        "/bin/sh",
+      ],
+    },
+  },
+  activity_name: "Create",
+  category_name: "Application Activity",
+  class_name: "API Activity",
+  type_name: "API Activity: Create",
+}

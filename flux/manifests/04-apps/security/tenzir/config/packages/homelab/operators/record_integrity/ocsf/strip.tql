@@ -1,0 +1,149 @@
+---
+description: |
+  Inverts the ClickHouse round-trip transforms that the ocsf class
+  tables' catch-all write applies to fields ABSENT from the pre-INSERT
+  record, so the verify recompute reproduces the stamp-side hash input.
+  Runs on the RECONSTRUCTED read-back (the shape from_clickhouse table
+  mode yields, or homelab::record_integrity::ocsf::read's sql-mode
+  rebuild — byte-identical, lab-verified 2026-11-05): for a nullable
+  column the reconstruction emits a null field and for a
+  DEFAULT-bearing non-nullable column its default value whenever the
+  archived record lacked the field, and Tenzir's serializer omits null
+  object fields and null list elements recursively when writing JSON
+  columns and the catch-all (the vendored integrations/clickhouse.md
+  reference; the from_clickhouse reference:
+  "A non-nullable column receives its default value for an event
+  without the field, such as 0, '' or {}, and the event comes back with
+  that value" — a documented "difference from the original events").
+  The stamp-side hash (attest.tql) covers the PRE-INSERT record, so the
+  artifact must leave before verify recomputes.
+
+  WHAT IS STRIPPED, per class, is evidence-anchored to the LANDED lanes
+  and the store's hand-DDL (config/10-startup-scripts.xml) — the same
+  pairing discipline as a new typed column: a new column or a new lane
+  re-audits the arm. Stripping only fires when the read-back value
+  equals the artifact signature (null for nullable columns, the DEFAULT
+  for non-nullable ones); a lane that WRITES that value pre-INSERT
+  would collide and must be excluded from the arm:
+
+  - 6003 API_Activity: severity_id == 0 — the k8s-audit lane never
+    writes severity_id (all 4,197,949 landed rows read back 0, the Int8
+    DEFAULT 0; live count 2026-11-05).
+  - 1007 Process_Activity: process.path == null — the tetragon maps
+    write process.file.path and actor.process.path, never process.path
+    (475,776 landed rows carry the null artifact); device.hostname ==
+    null — `$ocsf.device.hostname = move $input.node_name?` never
+    writes a real null (absent node_name = absent field, 0 landed
+    nulls), and the emptied device parent drops with it.
+  - 1001 File_System_Activity: actor.process.container.name == null —
+    the kprobe map builds the container only when the process has a
+    pod (3,906 landed rows carry the null artifact; the emptied parent
+    drops); device.hostname == null — same move semantics as 1007.
+    file.xattributes.permission is NEVER stripped: the kprobe literal
+    always writes it, null included, so a null read-back is the REAL
+    pre-INSERT value (0 landed nulls).
+  - 4001 Network_Activity: traffic.bytes == null — no landed row ever
+    wrote it (13,574,131 attested rows: zero event JSON carries a
+    traffic object at all; the null artifact is the whole of the
+    read-back's traffic, so the emptied parent drops). src/dst
+    endpoint IPs are NEVER stripped: both lanes write real values.
+  - 0 Base_Event: device.hostname == null — the fleet lane writes it
+    from hostIdentifier (always real), the tetragon fallback moves
+    node_name (absent-able, never real-null). class_name is NEVER
+    stripped: ocsf_derive fills it ("Base Event") before the stamp.
+  - 2004 Detection_Finding and 2002 Vulnerability_Finding: nothing —
+    findings/stamp writes uid/rule_id/subject_* on every finding (null
+    included: rule_id is a REAL null on all 3,978 landed trivy rows,
+    and a real null lifts to the column and reads back as the same
+    null — parity holds without a strip), severity_id/status_id/
+    finding_info.*/metadata.product.name are always lane-written.
+  - 3002 Authentication / 3001 Account_Change: nothing today — no row
+    has ever landed (authentik lanes, 0 rows live 2026-11-05); when
+    they land, their lap re-audits this arm.
+
+  NOT INVERTIBLE HERE: JSON-borne null-valued fields (non-column paths)
+  are dropped by Tenzir's serializer on the write path and leave no
+  trace in the row — the tetragon maps' unmapped literals (policy_name,
+  pod.name, pod.namespace on non-kprobe/non-pod records) are
+  irrecoverable, so those chains cannot verify from the row alone (the
+  design fork,
+  documented in the record_integrity README and pinned by
+  tetragon-verify-roundtrip-fork). This operator strips only the
+  recoverable column artifacts.
+---
+
+// Read-back records only: the walk's read operator calls this per
+// class before verify; the package tests drive it with round-trip
+// fixtures. Keyed on class_uid (the archive rule routes class_uid to
+// the class table 1:1) — ocsf-store read-backs only.
+match class_uid? {
+  6003 => {
+    // API Activity: the Int8 DEFAULT 0 artifact (k8s-audit lane never
+    // writes the field).
+    if severity_id? == 0 {
+      drop severity_id?
+    }
+  }
+  1007 => {
+    // Process Activity: the tetragon maps never write process.path
+    // (they write process.file.path / actor.process.path), and the
+    // nullable hostname column materializes a null for a record whose
+    // node_name was absent (move writes nothing, never a real null).
+    if process?.path? == null {
+      drop process.path?
+      if process == {} {
+        drop process?
+      }
+    }
+    if device?.hostname? == null {
+      drop device.hostname?
+      if device == {} {
+        drop device?
+      }
+    }
+  }
+  1001 => {
+    // File System Activity: the kprobe container block is conditional
+    // on the pod (absent-able, never real-null); the same hostname
+    // move semantics as Process Activity. file.xattributes.permission
+    // stays: its literal always writes it, null included.
+    if actor?.process?.container?.name? == null {
+      drop actor.process.container.name?
+      if actor?.process?.container? == {} {
+        drop actor.process.container?
+      }
+    }
+    if device?.hostname? == null {
+      drop device.hostname?
+      if device == {} {
+        drop device?
+      }
+    }
+  }
+  4001 => {
+    // Network Activity: no lane ever wrote traffic.bytes (the null
+    // column is pure artifact), and with bytes gone the read-back's
+    // traffic is empty — both are injected, both leave.
+    if traffic?.bytes? == null {
+      drop traffic.bytes?
+      if traffic == {} {
+        drop traffic?
+      }
+    }
+  }
+  0 => {
+    // Base Event: hostname via move (fleet's hostIdentifier is always
+    // real; the tetragon fallback's node_name is absent-able).
+    // class_name is ocsf_derive's, never the artifact.
+    if device?.hostname? == null {
+      drop device.hostname?
+      if device == {} {
+        drop device?
+      }
+    }
+  }
+  // Detection Finding / Vulnerability Finding / Authentication /
+  // Account_Change: every column field is lane-written (values or
+  // real nulls) — nothing to strip.
+  _ => {}
+}

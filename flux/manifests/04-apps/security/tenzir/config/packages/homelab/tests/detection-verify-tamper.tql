@@ -1,0 +1,39 @@
+---
+pre-compare: sort
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// The same stored-shape chain with four post-stamp mutations applied
+// in the store — the verification lane's threat model. (1) The a1
+// record was DELETED: a2 is now the first record of the walk yet still
+// references a predecessor the walk never sees — the rolling-window
+// tolerance (windowed=true) treats that as the window edge, not a
+// break; in the unwindowed investigations walk the same shape is the
+// chain_head_missing deletion finding. (2) a2's unmapped.response_code
+// was edited after stamping with its attestation left stale: the
+// per-record fingerprint recompute must flag it — proving the
+// fingerprint check runs even at the window edge. (3) The auth record
+// was DELETED: audit-b's prev_event no longer references its immediate
+// walked predecessor, and the walk must flag the broken link. (4)
+// audit-b's INTACT link must flag the auth deletion. (4) The
+// finding record's chain-link attestation (attestation_list[1]) was
+// stripped: a mid-chain record without its link is the documented
+// restart shape — NOT a break (the un-hashed link carries no
+// fingerprint to recompute; its integrity is enforced by the adjacency
+// check that (3) just proved on audit-b). Expected: the summary line
+// plus two findings — fingerprint_mismatch on a2 and
+// chain_link_mismatch on audit-b.
+fork {
+  summarize records_checked = count()
+  to_stdout { write_json }
+}
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"
+// Findings only reach here (the walk drops intact records); pin the
+// finding time for the baseline — the operator stamps now() live.
+time = 2026-10-17T11:30:00Z

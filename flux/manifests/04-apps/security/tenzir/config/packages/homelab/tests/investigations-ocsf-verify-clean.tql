@@ -1,0 +1,21 @@
+---
+pre-compare: sort
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// The stored-shape records exactly as the live lane reads them back:
+// the fixture is the attest test's write_ndjson output — strict JSON,
+// what the investigations.records catch-all column holds — and read_json
+// re-infers the types the same way from_clickhouse's catch-all
+// reconstruction does (reference/operators/from_clickhouse.md: JSON
+// values "come back with their types"). The chain: open -> evidence ->
+// close with valid links, the determinism pair (same content, same
+// fingerprints), and the restart record (mid-chain genesis — the
+// documented node-restart case, not a break). Expected: the summary
+// line alone — every record walks silently, zero findings.
+fork {
+  summarize records_checked = count()
+  to_stdout { write_json }
+}
+homelab::investigations::ocsf::verify

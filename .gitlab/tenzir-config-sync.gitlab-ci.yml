@@ -1,0 +1,73 @@
+---
+# Sync the Tenzir platform config from this repo to the platform's
+# configuration repository. The homelab repo is the source of truth;
+# the platform repo is the deploy target (same shape as Flux: repo -> cluster).
+#
+# Requires the masked CI variable TENZIR_PLATFORM_API_KEY with an API key
+# holding WorkspaceBranch.saveDraft + WorkspaceBranch.commitDraft on the
+# workspace, and Workspace.readGitRemote + Workspace.readFileTree.
+tenzir-config-sync:
+  stage: deploy
+  image: alpine:3.21
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes:
+        - flux/manifests/04-apps/security/tenzir/config/**/*
+  before_script:
+    - apk add --no-cache curl jq python3
+  script:
+    - |
+      set -eu
+      API="https://platform.tenzir.com/api"
+      AUTH="x-tenzir-api-key: ${TENZIR_PLATFORM_API_KEY}"
+      CONFIG_DIR="flux/manifests/04-apps/security/tenzir/config"
+
+      # Resolve org/workspace/user ids from the account
+      ACCOUNT=$(curl -sf -H "$AUTH" "$API/account")
+      ORG=$(echo "$ACCOUNT" | jq -r '.policy[0][0].orgId')
+      USER=$(echo "$ACCOUNT" | jq -r '.user.id')
+      WS=$(curl -sf -H "$AUTH" "$API/organizations/$ORG/workspaces" \
+        | jq -r '.[] | select(.slug == "homelab") | .id')
+
+      # Current head of main
+      HEAD=$(curl -sf -H "$AUTH" \
+        "$API/organizations/$ORG/workspaces/homelab/file-tree?branch=main" \
+        | jq -r '.commit')
+
+      # Every file in the mirror becomes a put change
+      CHANGES=$(cd "$CONFIG_DIR" && find . -type f ! -path './.git/*' \
+        | sed 's|^\./||' | sort \
+        | python3 -c "
+      import json, sys, pathlib
+      changes = []
+      for p in sys.stdin.read().split():
+          changes.append({'type': 'put', 'path': p, 'text': pathlib.Path(p).read_text()})
+      print(json.dumps(changes))
+      ")
+
+      # Save the draft
+      SAVE_BODY=$(jq -n \
+        --arg head "$HEAD" \
+        --arg msg "sync from homelab repo @ ${CI_COMMIT_SHORT_SHA}" \
+        --argjson changes "$CHANGES" \
+        '{headSha: $head, message: $msg, changes: $changes}')
+
+      SAVE_RESP=$(curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+        -d "$SAVE_BODY" \
+        "$API/organizations/$ORG/workspaces/$WS/users/$USER/drafts/main/save")
+
+      REVISION=$(echo "$SAVE_RESP" | jq -r '.revision // empty')
+
+      # Commit the draft
+      COMMIT_BODY=$([ -n "$REVISION" ] \
+        && jq -n --argjson rev "$REVISION" '{revision: $rev}' \
+        || echo '{}')
+
+      curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+        -d "$COMMIT_BODY" \
+        "$API/organizations/$ORG/workspaces/$WS/users/$USER/drafts/main/commit" \
+        > /dev/null
+
+      echo "synced $(echo "$CHANGES" | jq length) files to the platform config"

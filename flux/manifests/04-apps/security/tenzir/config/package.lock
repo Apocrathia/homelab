@@ -1,0 +1,9 @@
+# Written by tenzir. Do not edit by hand.
+format: 1
+packages:
+  - id: demo
+    version: 0.1.0
+    git: https://github.com/tenzir/library.git
+    path: demo
+    commit: e8956fbbbc707824077c1593c1dace17ce08b929
+    hash: sha256:b2cd2bf87ec86d00783ea1871bdc5ccd182cc17626c8cb607d0c73009f14e587

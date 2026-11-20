@@ -1,0 +1,48 @@
+---
+quiet: true
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// Pin the uids the archive leg mints with uuid() when absent: pinned
+// fixtures keep the baseline deterministic (the investigations-test
+// precedent). The fixture is the real vendored-map output for six v5
+// flows (unusual_traffic.nfv5 through netflow::ocsf::normalize +
+// ocsf_derive + ocsf_cast — the map itself is pinned by the vendored
+// package's own baselines, packages/netflow/tests/ocsf/), so this test
+// exercises the archive leg over the exact stored shape the netflow
+// node archives. The 06:59:38.841Z pair arrives in REVERSE uid order
+// above (36.0.61.171 before 114.0.61.171) — the sort below reorders
+// them, proving the (time, metadata.uid) tie-break the chain links
+// follow: v5 exporters emit whole datagrams of same-timestamp flows,
+// so time ties are the NORM on this lane, not the k8s-audit rarity
+// the core node handles.
+if src_endpoint?.ip == 80.0.61.171 {
+  metadata.uid = "netflow-attest-a"
+}
+if src_endpoint?.ip == 66.97.110.107 {
+  metadata.uid = "netflow-attest-b"
+}
+if src_endpoint?.ip == 114.0.61.171 {
+  metadata.uid = "netflow-attest-c"
+}
+if src_endpoint?.ip == 36.0.61.171 {
+  metadata.uid = "netflow-attest-d"
+}
+if src_endpoint?.ip == 29.0.61.171 {
+  metadata.uid = "netflow-attest-e"
+}
+if src_endpoint?.ip == 153.37.6.97 {
+  metadata.uid = "netflow-attest-f"
+}
+// The netflow node's archive-rule attest leg, verbatim
+// (nodes/netflow/pipelines/ocsf-archive.tql): stream mode chains the
+// batch internally in the sorted order; no context tail here (a node
+// context is not fixture-testable), so the first record rides as
+// genesis exactly like a fresh node's first archive pass, and the
+// rest chain via the operator's own lag.
+sort time, metadata.uid
+homelab::record_integrity::attest authority_uid="tenzir-node-netflow",
+  chain_uid="tenzir-node-netflow",
+  genesis=false,
+  chain="stream"
