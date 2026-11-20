@@ -54,18 +54,33 @@ deleted = failed = 0
 for event_id in ids:
     # DELETE /events/<id> (automation guide); MISP 403s both
     # permission failures and not-found, so count it and keep sweeping.
+    # quickDelete runs one bulk DELETE per related table (attributes,
+    # attribute_tags, ...), so fat backfill events take minutes
+    # server-side; misp-docker's nginx caps a single request at
+    # FASTCGI_READ_TIMEOUT=300s. The client timeout sits above that cap
+    # so the server's own verdict (200 or 504) arrives instead of a
+    # client-side abort, which also kills the in-flight server-side
+    # delete (nginx aborts the fastcgi request when the client goes
+    # away).
     delete_req = urllib.request.Request(
         f"{misp_url}/events/{event_id}", headers=headers, method="DELETE"
     )
     try:
         with urllib.request.urlopen(  # nosemgrep
-            delete_req, timeout=60
+            delete_req, timeout=600
         ) as resp:
             resp.read()
         deleted += 1
     except urllib.error.HTTPError as err:
         failed += 1
         print(f"delete failed for event {event_id}: HTTP {err.code}", file=sys.stderr)
+    except OSError as err:
+        # urllib raises socket timeouts (TimeoutError) and dropped
+        # connections as bare OSErrors, not HTTPError: count them and
+        # keep sweeping like the 403 path; the event stays in the
+        # index, so the next nightly run retries it.
+        failed += 1
+        print(f"delete failed for event {event_id}: {err!r}", file=sys.stderr)
     if deleted and deleted % 1000 == 0:
         print(f"deleted {deleted} events")
 print(f"deleted {deleted} events, {failed} delete failures")
