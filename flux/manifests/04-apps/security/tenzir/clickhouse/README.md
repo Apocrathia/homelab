@@ -296,7 +296,7 @@ containment ([nodes/investigations](../nodes/investigations/README.md)).
 
 The shape is not minimalism for its own sake; it kills the typed-column
 boot-abort failure class (live parity with the canonical DDL is tracked in
-[`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../docs/issues/ocsf-live-monthly-cutover.md)):
+[`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../../docs/issues/ocsf-live-monthly-cutover.md)):
 
 - `startup_scripts` executes sequentially and aborts at the FIRST
   failing query. Every typed column is a place where the DDL in git and
