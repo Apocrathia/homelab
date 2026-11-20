@@ -1,0 +1,96 @@
+---
+# CloudNativePG cluster for PentAGI (mealie/immich pattern: standalone
+# Cluster, not generic-app postgres, because the app needs pgvector created
+# by a superuser at bootstrap).
+#
+# pgvector: the CNPG system image ships the extension files
+# (postgresql-17-pgvector is installed in the standard/system flavors), but
+# pgvector is not a trusted extension, so the pentagi database owner cannot
+# CREATE EXTENSION it. postInitApplicationSQL runs as the postgres superuser
+# on the app database, so both extensions exist before the app's goose
+# migrations run (their own CREATE EXTENSION IF NOT EXISTS statements become
+# no-ops).
+#
+# The pentagi-secrets secret (username/password keys) is created by the
+# HelmRelease's OnePasswordItem; Flux retries the Cluster until it exists.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pentagi-postgres
+  namespace: pentagi
+spec:
+  # PostgreSQL version
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:70664ebcfa1100361b5bdc28bbf06fdbe08db2dc4ad7bd14de33c5e05fe8ea8e
+
+  # Number of instances
+  instances: 1
+
+  # Barman backups: rustfs S3 (bucket `cnpg`, policy scoped to bucket+objects).
+  # WAL archiving is continuous; base backups are triggered by the scheduled
+  # Backup resource in scheduled-backup.yaml.
+  backup:
+    retentionPolicy: 14d
+    barmanObjectStore:
+      destinationPath: s3://cnpg/pentagi
+      endpointURL: http://storage.services.apocrathia.com:9009
+      serverName: pentagi-postgres
+      s3Credentials:
+        accessKeyId:
+          name: pentagi-postgres-backup-secrets
+          key: AWS_ACCESS_KEY_ID
+        secretAccessKey:
+          name: pentagi-postgres-backup-secrets
+          key: AWS_SECRET_ACCESS_KEY
+      wal:
+        compression: zstd
+      data:
+        compression: gzip
+        jobs: 2
+        immediateCheckpoint: true
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 12Gi
+
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    parameters:
+      max_connections: "100"
+      track_io_timing: "on"
+      track_functions: "all"
+      log_statement: "ddl"
+      log_min_duration_statement: "1000ms"
+      log_min_messages: "INFO"
+
+  # Affinity settings for better performance (CloudNativePG-specific)
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: "preferred"
+    topologyKey: "kubernetes.io/hostname"
+
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: pentagi
+      owner: pentagi
+      secret:
+        name: pentagi-secrets
+      # Runs as the postgres superuser on the pentagi database
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS vector;
+        - CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+  # Monitoring
+  monitoring:
+    enablePodMonitor: true
