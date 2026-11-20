@@ -22,8 +22,8 @@ every RustFS consumer in the homelab.
   [Console (manual) path](#console-manual-path).
 - Management model is **manual** (admin API), same as the old MinIO. Terraform
   is not used: the AWS provider cannot manage users, and the rustfs-native
-  provider stores user secrets in state. See
-  `docs/plans/minio-to-rustfs-migration.md` for the decision.
+  provider stores user secrets in state. See the "Migrate NAS MinIO
+  consumers to RustFS" plan (delete-on-ship'd; git history) for the decision.
 
 ## Preferred path: admin API (agent-driven)
 

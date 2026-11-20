@@ -129,8 +129,8 @@ indicators/day): the `max(2, ·)` floor pins 2 cores and the 2 GB RAM
 floor; requests small, limits justified in
 [`helmrelease.yaml`](./helmrelease.yaml). Re-measure when a second
 factory lane lands or the collection grows past the MISP connector's
-backlog
-([misp-deployment.md](../../../../../../../docs/issues/misp-deployment.md)).
+backlog (the "Deploy MISP threat-intelligence sharing platform" issue,
+delete-on-ship'd; git history).
 
 ## Bootstrap
 
@@ -151,8 +151,8 @@ user; no new user needed. The node comes up on apply.
 1. ~~First factory row~~, **done**: the OpenCTI TAXII row is live
    (this node) plus the core-node loader (the consumer half). The
    TAXII 2.1 export surface and collection are the opencti lane's
-   SIEM-handoff checklist
-   ([opencti-deployment.md](../../../../../../../docs/issues/opencti-deployment.md));
+   SIEM-handoff checklist (the "Deploy OpenCTI threat-intelligence
+   platform" issue, delete-on-ship'd; git history);
    the collection's indicator volume climbs as the MISP connector
    import finishes.
 2. **Threat intel: abuse.ch ThreatFox** IOC feed as a second intel

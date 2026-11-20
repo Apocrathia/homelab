@@ -7,7 +7,6 @@ source: agent
 found_at: 2026-10-29
 area: observability
 slice: hitl
-plan: docs/plans/ocsf-monthly-partition-cutover.md
 ---
 
 # ocsf cutover residue: flood-residue prune (operator-gated) + per-replica spot-check
@@ -80,21 +79,41 @@ Still open:
 - Read-only store reads via the `ocsf-clickhouse` datasource:
   `SHOW TABLES FROM ocsf`, `system.tables` engine_full,
   `system.columns`; the path the 2026-11-05 verification used.
-- Per-replica `kubectl exec` reads in the plan's Verify section
-  (`SHOW CREATE`, `system.parts`); read-only; the prune mutation
-  needs the operator's explicit go.
+- Per-replica `kubectl exec` reads (read-only; lifted from the cutover
+  runbook's Verify section before its delete-on-ship):
+
+  ```bash
+  for r in 0 1 2; do
+    kubectl exec -n tenzir chi-tenzir-ocsf-0-${r}-0 -- \
+      clickhouse-client --query "SHOW CREATE TABLE ocsf.Detection_Finding"
+  done
+  ```
+
+  ```sql
+  SELECT partition, count() AS parts
+  FROM system.parts
+  WHERE database = 'ocsf' AND active AND table = 'Detection_Finding'
+  GROUP BY partition ORDER BY partition
+  ```
+
+  Monthly `toYYYYMM(time)` partitions (e.g. `202611_*`) are the pass
+  shape; the prune mutation needs the operator's explicit go.
+
 - `xmllint --noout flux/manifests/04-apps/security/tenzir/clickhouse/config/10-startup-scripts.xml`
 
 ## Implementation hint
 
-The cutover runbook is
-[`docs/plans/ocsf-monthly-partition-cutover.md`](../plans/ocsf-monthly-partition-cutover.md);
-its GATE (core-node stability) is the live gate for the prune. The
-prune repeats the 2026-10-29 operator-directed `ALTER ... DELETE`
-precedent (45,631,490 rows then, ~3.5M now).
+The cutover runbook carried a GATE: core-node stability is the live
+gate for the prune (runbook delete-on-ship'd 2026-11-20; git history
+is the archive). The prune repeats the 2026-10-29 operator-directed
+`ALTER ... DELETE` precedent (45,631,490 rows then, ~3.5M now).
 
 ## Notes
 
 Store holds a single month slice per table (data begins 2026-11-01/02,
 retention wipe). `investigations.records` and `ocsf.fleet_assets`
 were already monthly and out of scope.
+
+Introspection charter (scheduled volume/freshness passes over
+`ocsf.*`) from the stateless-migration plan never landed; tracked
+here.

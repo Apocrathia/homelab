@@ -232,8 +232,9 @@ OpenCTI releases near-daily with date-based versions; the chart tracks
 upstream same-day. The chart version here is the single deliberate knob:
 platform/worker images ride the chart's `appVersion` (digest-pinning split
 `repository`/`tag` fields is not supported by the repo's renovate config).
-Merge chart-bump MRs on purpose; the LTS-vs-rolling cadence call is tracked
-in `docs/issues/opencti-deployment.md`.
+Merge chart-bump MRs on purpose; the LTS-vs-rolling cadence call was
+tracked in the "Deploy OpenCTI threat-intelligence platform" issue
+(delete-on-ship'd; git history).
 
 ## Backups
 
@@ -357,8 +358,8 @@ Stream/collection tokens are minted in the OpenCTI UI **post-merge** when
 creating the collection/stream (shown on creation; nothing to pre-provision
 in Git). Operator step when the SIEM lane asks: create a dedicated
 **read-only OpenCTI user**, then a TAXII collection or stream scoped with
-filters, and hand over the URL + token, see the handoff checklist in
-[`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md).
+filters, and hand over the URL + token, see the handoff checklist in the
+"Deploy OpenCTI threat-intelligence platform" issue (delete-on-ship'd; git history).
 
 ## Post-merge live acceptance (deploy)
 

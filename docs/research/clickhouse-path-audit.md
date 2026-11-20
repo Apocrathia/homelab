@@ -10,8 +10,9 @@ area: observability
 
 > Research note (October 2026). Read-only vendor-doc vs homelab audit of the
 > Tenzir → ClickHouse write path, produced during the ocsf DDL-divergence +
-> broken-parts repair (that issue shipped and was delete-on-ship'd; see
-> `docs/plans/ocsf-monthly-partition-cutover.md` for the follow-on cutover).
+> broken-parts repair (that issue shipped and was delete-on-ship'd; the
+> follow-on monthly-partition cutover ran live 2026-11-05, its runbook
+> plan since delete-on-ship'd too).
 > Follow-ups are proposals until they land as issues/plans or in
 > the tree. Original scout copy lives at
 > `.scratch/agent-investigation/clickhouse-path-audit.md`.
@@ -133,8 +134,8 @@ Homelab context, all **[homelab]**: Altinity operator shape with 1 shard ×
 l.142-168 schema-bootstrap comment, l.168); per-class `ocsf.*` tables +
 `investigations.records` CREATEs in that one file (l.170-385); write mode
 `append` everywhere (`nodes/investigations/pipelines/investigations-ingest-http.tql`
-l.7-14; core/tetragon archive rules per
-`docs/plans/clickhouse-rollout.md` D8).
+l.7-14; core/tetragon archive rules per the ClickHouse rollout
+plan's D8; that plan is delete-on-ship'd, git history is the archive).
 
 - **(a) One mismatched CREATE aborts the entire startup-scripts file;
   tables silently stop existing; writers fail "table does not exist".**
@@ -144,7 +145,7 @@ l.7-14; core/tetragon archive rules per
   no boot DDL file exists whose partial failure can orphan tables. The
   rollout plan itself flagged a silent-failure cousin (Keeper race: "tables
   silently do not exist until the next server restart",
-  `docs/plans/clickhouse-rollout.md` D4, l.255-260) and relied on two
+  plan D4, l.255-260) and relied on two
   gates: the operator-led `SHOW TABLES` validation after apply, and
   append-mode failing loudly. The one-bad-statement-kills-the-whole-file
   abort mode was **not** named in the plan and is not covered by any
@@ -282,7 +283,8 @@ Vendored (VDR = `flux/manifests/04-apps/security/tenzir/.agents/skills/tenzir/`)
 (full), `integrations/nano.md` (full); grep sweep of VDR `guides/` for
 clickhouse/startup-scripts/users.d/operator coverage.
 
-Homelab: `docs/plans/clickhouse-rollout.md` (full), `flux/manifests/04-apps/security/tenzir/clickhouse/cluster.yaml` (full), `flux/manifests/04-apps/security/tenzir/.agents/context/architecture.md` (full), `tenzir/nodes/investigations/`
+Homelab: the ClickHouse rollout plan (full; since delete-on-ship'd),
+`flux/manifests/04-apps/security/tenzir/clickhouse/cluster.yaml` (full), `flux/manifests/04-apps/security/tenzir/.agents/context/architecture.md` (full), `tenzir/nodes/investigations/`
 (helmrelease, README, ingest TQL), git log of cluster.yaml (`45cd29202`,
 `cbb02987f`, `b659c98f5`, `9f5e1fbe5`).
 

@@ -24,4 +24,5 @@ No open issue tracks it — this README is the record.
 ## References
 
 - [OpenClaw Documentation](https://docs.openclaw.ai)
+- "Roll out Agent Substrate for kagent" plan (delete-on-ship'd; git history is the archive)
 - [kagent](../kagent/README.md) / [substrate](../substrate/README.md)

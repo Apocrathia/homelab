@@ -27,7 +27,7 @@ area: other
 | Authentik blueprint delivery          | `flux/manifests/03-services/authentik/helmrelease.yaml`                                            | current pattern under evaluation            |
 | Blueprint census                      | 22 per-app + 12 service blueprints + 3 chart templates + 1 cleanup                                 | pattern breadth                             |
 | Tofu CI stack                         | `.gitlab/tofu.gitlab-ci.yml`, `terraform/`                                                         | current Terraform operating model           |
-| Tofu secrets plan                     | `docs/plans/tofu-1password-provider.md`                                                            | credential pattern to reuse                 |
+| Tofu secrets plan                     | "OpenTofu secrets via 1Password provider" plan (delete-on-ship'd; git history)                     | credential pattern to reuse                 |
 | crossplane-contrib/provider-terraform | github.com/crossplane-contrib/provider-terraform (v1.2.0, 2026-08-24)                              | pattern-B lineage, TF 1.5.7 freeze          |
 | upbound/provider-opentofu             | github.com/upbound/provider-opentofu (v1.1.8, 2026-09-11)                                          | recommended engine                          |
 | flux-iac/tofu-controller              | github.com/flux-iac/tofu-controller (v0.16.5, 2026-08-06)                                          | pattern C                                   |
@@ -121,7 +121,8 @@ per-resource status).
   CR → ProviderConfig with 1Password-backed secret → `defaultActivations`
   scoping against upjet CRD bloat.
 - The credential pattern is proven. Tofu already resolves provider creds via
-  1Password Connect (`docs/plans/tofu-1password-provider.md`); the Crossplane
+  1Password Connect (per the "OpenTofu secrets via 1Password provider" plan,
+  since delete-on-ship'd; git history is the archive); the Crossplane
   equivalent is a `OnePasswordItem` → Secret → ProviderConfig chain.
 - The Authentik API is Terraform-shaped: the goauthentik provider covers
   Application, Provider, Group, User, bindings, flows, outposts. Whatever
@@ -241,7 +242,8 @@ MRs in v2; the best per-resource ergonomics of the four.
 - State will contain the per-app OIDC `client_secret` (Sensitive-marked, but
   Terraform state is plaintext). This is a deliberate divergence from the CI
   stack's rule against persisting credentials in state
-  (`docs/plans/tofu-1password-provider.md` uses ephemeral items there): here
+  (the tofu 1Password provider plan uses ephemeral items there; that plan is
+  delete-on-ship'd, git history is the archive): here
   the values must be resource attributes, and the state Secret is
   RBAC-gated in the cluster. Acceptable tradeoff, but it should stay an
   explicit decision.

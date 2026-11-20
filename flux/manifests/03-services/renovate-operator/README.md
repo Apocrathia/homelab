@@ -44,8 +44,8 @@ in each target repository.
 The deployment reads `renovate-operator-secret`, synced from the existing
 `renovate-secrets` 1Password item. Required fields:
 
-- `RENOVATE_TOKEN`: GitLab PAT for platform access (same value as `gitlab-token`)
-- `GITHUB_COM_TOKEN`: GitHub token for changelogs (same value as `github-token`)
+- `RENOVATE_TOKEN`: GitLab PAT for platform access (the retired Renovate CE's `gitlab-token` field is gone; the value lives only in this vault item)
+- `GITHUB_COM_TOKEN`: GitHub token for changelogs (the retired Renovate CE's `github-token` field is gone; the value lives only in this vault item)
 - `oidc-client-id`: Authentik OIDC client ID (copied from the live provider; feeds the HelmRelease and the tofu ProviderConfig client-id lane)
 - `oidc-client-secret`: Authentik OIDC client secret (same source)
 - `oidc-session-secret`: random string for UI session encryption (generate once)

@@ -441,8 +441,8 @@ kubectl -n misp describe helmrelease misp
 
 ## References
 
-- [Deployment issue](../../../../../docs/issues/misp-deployment.md):
-  per-slice acceptance and operator checklist
+- Deployment issue ("Deploy MISP threat-intelligence sharing platform",
+  delete-on-ship'd; git history): per-slice acceptance and operator checklist
 - [Research doc](../../../../../docs/research/misp-opencti-deployment.md):
   chart verdicts, sizing, risks (design source of truth)
 - **[MISP](https://www.misp-project.org/)** - project and docs

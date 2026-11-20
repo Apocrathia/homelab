@@ -63,7 +63,7 @@ Friends reach homelab apps over Tailscale as invited tailnet users, not
 device-shares, and with no public DNS. They use the same
 `gateway.services.apocrathia.com` hostnames the LAN uses, resolve them via
 tailnet split DNS, and authenticate through Authentik like every LAN user.
-Plan and slice status: [tailnet split DNS](../../../../docs/plans/tailnet-split-dns.md).
+Plan and slice status: the "Tailnet split DNS for friends" plan (delete-on-ship'd; git history).
 
 ### Architecture
 

@@ -10,7 +10,7 @@ uses, pointed at `tailnet-gateway` instead of `main-gateway`. LAN-only zones
 
 ## Overview
 
-Part of the [tailnet split DNS plan](../../../../docs/plans/tailnet-split-dns.md).
+Part of the "Tailnet split DNS for friends" plan (delete-on-ship'd; git history).
 Friends are invited tailnet users, not device-shares, and Tailscale split DNS
 (restricted nameserver for the homelab zones) sends their
 queries here. App records point at `tailnet-gateway`'s
@@ -130,7 +130,7 @@ kubectl -n tailnet-dns run -it --rm dig --image=busybox --restart=Never --   nsl
 
 ## References
 
-- [Tailnet split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
+- Tailnet split DNS plan (delete-on-ship'd; git history is the archive)
 - [ExternalDNS CoreDNS + etcd tutorial](https://kubernetes-sigs.github.io/external-dns/latest/tutorials/coredns-etcd/)
 - [CoreDNS etcd plugin](https://coredns.io/plugins/etcd/)
 - [Tailscale operator L3 service exposure](https://tailscale.com/docs/kubernetes-operator/ingress)

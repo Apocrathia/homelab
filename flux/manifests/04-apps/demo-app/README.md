@@ -209,7 +209,7 @@ httproute:
 - **URL**: `https://demo.gateway.services.apocrathia.com` (same hostname as the LAN)
 - **Authentication**: SSO through Authentik (routes to the demo-app outpost, same as the LAN route)
 - **TLS**: Wildcard certificate for `*.gateway.services.apocrathia.com` terminated at the tailnet gateway
-- **Routing**: The outpost-generated HTTPRoute `ak-outpost-demo-app-outpost` (ns `authentik`) dual-parents `main-gateway`/`https` and `tailnet-gateway`/`https-gateway-services`; the outpost route owns both doors; the app has no route manifest of its own. Background: [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
+- **Routing**: The outpost-generated HTTPRoute `ak-outpost-demo-app-outpost` (ns `authentik`) dual-parents `main-gateway`/`https` and `tailnet-gateway`/`https-gateway-services`; the outpost route owns both doors; the app has no route manifest of its own. Background: [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the "Tailnet split DNS for friends" plan (delete-on-ship'd; git history)
 
 ### Internal Access
 
