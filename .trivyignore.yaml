@@ -17,6 +17,24 @@ misconfigurations:
       Prefer fixing with readOnlyRootFilesystem plus emptyDir mounts when
       practical; until then suppress by basename for cronjob.yaml and
       daemonset.yaml only.
+  - id: AVD-KSV-0014
+    paths:
+      - "dockerd.yaml"
+    statement: >-
+      The strix Docker-in-Docker daemon writes runtime state outside its
+      mounted image cache (sockets, pid files, iptables state under /run);
+      the docker:dind image is designed for a writable rootfs. Ingress to
+      its plain-HTTP 2375 is CiliumNetworkPolicy-gated to the strix app pod.
+  - id: AVD-KSV-0017
+    paths:
+      - "dockerd.yaml"
+    statement: >-
+      Strix spawns its pentest sandbox containers through a real Docker
+      daemon, which requires privileged (overlay2 mounts, iptables, and
+      NET_RAW/NET_ADMIN grants to the sandboxes). The generic-app chart
+      cannot render privileged containers, hence the raw Deployment.
+      Compensating controls: dedicated namespace, no service-account token,
+      and a CiliumNetworkPolicy restricting 2375 to the strix app pod.
   - id: AVD-KSV-0041
     paths:
       - "generate-rbac.yaml"

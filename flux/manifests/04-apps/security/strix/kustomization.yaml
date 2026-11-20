@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: strix
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+
+resources:
+  - namespace.yaml
+  - dockerd.yaml
+  - networkpolicy.yaml
+  - helmrelease.yaml

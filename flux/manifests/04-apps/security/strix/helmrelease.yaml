@@ -1,0 +1,250 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: strix
+  namespace: strix
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: generic-app
+      # renovate: datasource=docker depName=registry.gitlab.com/apocrathia/homelab/generic-app
+      version: "0.0.91"
+      sourceRef:
+        kind: HelmRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: strix
+      namespace: strix
+      # Strix (usestrix/strix, Apache-2.0): autonomous AI pentesting. The
+      # OSS distribution is a pip package (strix-agent) that spawns its
+      # official sandbox image (ghcr.io/usestrix/strix-sandbox) through a
+      # Docker daemon — there is no orchestrator image to pin, so the main
+      # container is a plain python base and the init container installs the
+      # CLI into a Longhorn-backed venv (artex runtime-assembly pattern).
+      # Scans are launched by exec'ing into the pod; the wrapper below
+      # serves the built-in web viewer of the latest run.
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+      replicas: 1
+      container:
+        name: strix
+        port: 8080
+        env:
+          # Applies to the viewer wrapper AND to scan processes the operator
+          # starts with kubectl exec. The daemon is the raw Deployment in
+          # dockerd.yaml (plain 2375, gated by networkpolicy.yaml).
+          - name: DOCKER_HOST
+            value: tcp://strix-dockerd.strix.svc.cluster.local:2375
+          # PostHog/Scarf/OTEL off (STRIX_TELEMETRY=0 is upstream's opt-out);
+          # the viewer's email-verification relay to app.strix.ai is simply
+          # never used, keeping scans fully local
+          - name: STRIX_TELEMETRY
+            value: "0"
+          # Sandbox image is deliberately NOT pinned here: the pinned
+          # strix-agent version carries its own compatible default
+          # (1.3.0 for 1.7.0), and the CLI pulls it into dockerd on first
+          # scan. Override with STRIX_IMAGE if a specific sandbox is needed.
+          # Model string + provider key live in 1Password so switching
+          # providers needs no git change.
+          - name: STRIX_LLM
+            valueFrom:
+              secretKeyRef:
+                name: strix-secrets
+                key: llm
+          - name: LLM_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: strix-secrets
+                key: llm-api-key
+          # Runs + ~/.strix config land on the durable volume
+          - name: HOME
+            value: /data
+          - name: TZ
+            value: America/Denver
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -eu
+          cd /data
+          # kubectl exec starts in / (the image sets no WORKDIR); point
+          # ./strix_runs at the durable volume so bare `strix -t ...` works
+          ln -sfn /data/strix_runs /strix_runs
+          STATIC="$(ls -d /rt/venv/lib/python3*/site-packages/strix/interface/viewer/static)"
+          latest() { ls -1t strix_runs/*/run.json 2>/dev/null | head -n1 | xargs -r dirname | xargs -r basename; }
+          while true; do
+            run="$(latest)"
+            if [ -z "$run" ]; then
+              echo "[viewer] no runs yet - serving the SPA shell until the first scan"
+              python3 -m http.server 8080 --directory "$STATIC" &
+            else
+              echo "[viewer] serving run: $run"
+              /rt/venv/bin/strix view "$run" --host 0.0.0.0 --port 8080 --no-open &
+            fi
+            pid=$!
+            # restart when a newer run appears or the viewer dies; each
+            # restart mints a new session token (grab the URL from logs)
+            while kill -0 "$pid" 2>/dev/null && [ "$run" = "$(latest)" ]; do
+              sleep 10
+            done
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            sleep 2
+          done
+      initContainers:
+        - name: fetch-strix
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              # renovate: datasource=pypi depName=strix-agent
+              STRIX_VERSION=1.7.0
+              [ "$(cat /rt/.stamps/strix 2>/dev/null || true)" = "$STRIX_VERSION" ] && exit 0
+              echo "[fetch-strix] installing strix-agent $STRIX_VERSION"
+              rm -rf /rt/venv
+              python -m venv /rt/venv
+              /rt/venv/bin/pip install --no-cache-dir "strix-agent==${STRIX_VERSION}"
+              /rt/venv/bin/strix --version
+              mkdir -p /rt/.stamps
+              echo "$STRIX_VERSION" > /rt/.stamps/strix
+              echo "[fetch-strix] done"
+          volumeMounts:
+            - name: runtime
+              mountPath: /rt
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      podAntiAffinity:
+        enabled: false # Single-replica toolbox
+      # Root matches the artex precedent: the wrapper writes the
+      # /strix_runs symlink into the container rootfs, and operator exec
+      # sessions run scan tooling that expects a writable HOME on /data.
+      # No capabilities beyond the defaults; all drop-ALL keeps it minimal.
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        # Orchestrator + viewer only; scan tooling runs in the dockerd pod
+        requests:
+          cpu: 150m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 2Gi
+      service:
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+        portName: http
+      healthChecks:
+        # The viewer serves the SPA index at / without a session token
+        # (verified in strix/interface/viewer/server.py); API routes stay
+        # token-gated. No dedicated health endpoint exists upstream.
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 24
+          successThreshold: 1
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: runtime
+          mountPath: /rt
+        - name: data
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          # strix-agent venv; rebuilt when the Renovate pin bumps, excluded
+          # from kopia backups. Capacities are distinct across all three
+          # claims in this namespace (5/20/30Gi) so no claim can bind
+          # another subsystem's Available PV.
+          - name: runtime
+            capacity: 5Gi
+          # strix_runs/ output + ~/.strix config
+          - name: data
+            capacity: 20Gi
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/strix-secrets"
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Security"
+      displayName: "Strix"
+      externalHost: "https://strix.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/strix/icon.png"
+      metaDescription: "Self-hosted autonomous AI pentesting — LLM agents that find and validate vulnerabilities with working proofs-of-concept"
+      metaPublisher: "Strix (Apache-2.0)"
+
+    httproute:
+      enabled: false
+
+    gatus:
+      enabled: true
+      group: security
+      path: /
+
+    # No database: runs are files under strix_runs/ (run.json + events.jsonl)
+    postgres:
+      enabled: false
+
+    # Kopia snapshots of the durable volume only; runtime rebuilds from the
+    # pip pin, and the dockerd image cache re-pulls
+    backup:
+      enabled: true
+      volumes:
+        - data

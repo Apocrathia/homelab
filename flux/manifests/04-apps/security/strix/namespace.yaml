@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: ai-pentesting
+    app.kubernetes.io/part-of: security
+    # docker.io/library/docker (dockerd) lives on docker.io; Kyverno clones
+    # the docker.io pull secret into namespaces with this label.
+    images/dockerhub: "true"
