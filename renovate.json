@@ -57,13 +57,6 @@
       "groupName": "generic-app chart"
     },
     {
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchCurrentVersion": "!/^0/",
-      "automerge": false,
-      "automergeType": "pr",
-      "platformAutomerge": true
-    },
-    {
       "description": "MySQL stays on the 8.4 LTS lineage — 26.x needs the 9.x LTS stepping stone (lineage rule) and aborts on an 8.4 datadir",
       "matchPackageNames": ["mysql"],
       "matchUpdateTypes": ["major"],
@@ -176,6 +169,5 @@
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
   "rebaseWhen": "conflicted",
-  "platformAutomerge": true,
-  "automergeType": "pr"
+  "platformAutomerge": false
 }
