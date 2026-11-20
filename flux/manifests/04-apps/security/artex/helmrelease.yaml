@@ -384,7 +384,13 @@ spec:
       owner: artex
       storage:
         storageClass: longhorn
-        size: 10Gi
+        # MUST exceed every storage.longhorn.volumes[].capacity (runtime
+        # 12Gi, data 30Gi, keys 1Gi): a CNPG claim with no volumeName can
+        # bind any still-Available static Longhorn PV of capacity >= its
+        # request. On first install the 10Gi claim stole the 12Gi runtime
+        # PV and stranded the app pod for hours. Longhorn thin-provisions,
+        # so the oversized request costs nothing until used.
+        size: 35Gi
       resources:
         requests:
           cpu: 100m
