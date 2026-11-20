@@ -98,10 +98,10 @@ delegate. knowledge-agent holds this binding today.
 
    ```bash
    # Check MCPServer status
-   kubectl get mcpserver -n mcp-searxng kagent-searxng-mcp
+   kubectl get mcpserver -n mcp-searxng searxng
 
    # View MCP server pod logs
-   kubectl logs -n mcp-searxng -l kagent.dev/mcpserver-name=kagent-searxng-mcp
+   kubectl logs -n mcp-searxng -l app.kubernetes.io/instance=searxng
    ```
 
 ### Health Checks
