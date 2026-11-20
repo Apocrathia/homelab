@@ -1,11 +1,13 @@
 ---
 title: "CNPG backup manifests: extract shared kustomize component"
 kind: architecture
-status: open
+status: in-flight
 severity: low
 source: human
 found_at: 2026-10-10
 area: storage
+branch: feat/cnpg-backup-component
+closed_by: "!6128"
 ---
 
 # CNPG backup manifests: extract shared kustomize component
