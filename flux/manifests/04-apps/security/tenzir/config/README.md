@@ -43,3 +43,5 @@ API key with `WorkspaceBranch.saveDraft` + `WorkspaceBranch.commitDraft`
 on the homelab workspace. Rotate it in 1Password
 (`Secrets/tenzir-secrets/saas-platform-mcp-api-key`) and GitLab CI
 settings together.
+
+CI sync verified: 2026-11-20T18:00:28.897428Z
