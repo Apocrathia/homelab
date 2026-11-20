@@ -11,16 +11,16 @@ search, scraper, and knowledge-base tooling wired in.
 
 - One generic-app workload running the official upstream image
   (`vxcontrol/pentagi`, digest-pinned) — no in-pod assembly needed
-- Agent sandboxes run on a dedicated privileged docker-in-docker daemon
-  (`dind.yaml`), reached over TCP; the app Fatals without a reachable
-  daemon. A CiliumNetworkPolicy pins the unauthenticated 2375 port to the
-  app pod and kubelet probes
+- Agent sandboxes run on a dedicated unprivileged rootless podman daemon
+  (`podman.yaml`, Docker-compat API on TCP 2375); the app Fatals without a
+  reachable daemon. A CiliumNetworkPolicy pins the unauthenticated 2375
+  port to the app pod and kubelet probes
 - CloudNativePG PostgreSQL 17 (`postgres.yaml`, standalone cluster because
   pgvector must be created by a superuser via `postInitApplicationSQL`;
   the CNPG system image ships the extension files) with nightly barman
   backups to the NAS rustfs bucket
 - Longhorn volume for `data/` (flow data, files, knowledge uploads); kopia
-  snapshots nightly. The dind image cache (30Gi PVC) is deliberately not
+  snapshots nightly. The podman image cache (25Gi PVC) is deliberately not
   backed up — it re-pulls
 - Authentik proxy provider fronts the UI (the open-source version has only
   Google/GitHub OAuth, no generic OIDC, so proxy mode is the fit); the app
@@ -60,9 +60,16 @@ The pod stays pending until the item exists (the DSN key is required).
 ## Limitations / notes
 
 - Published sandbox ports (`DOCKER_PORTS_BASE` 28000+) bind inside the
-  dind pod, not through the gateway; compose-style browser access to
+  podman pod, not through the gateway; compose-style browser access to
   agent-spawned services needs a follow-up (NodePort or `DOCKER_NETWORK`
   tuning)
+- The podman daemon keeps `seccompProfile: RuntimeDefault` and grants its
+  uid-1000 process exactly one capability (SYS_ADMIN): containerd's default
+  seccomp profile only allows the user-namespace syscalls
+  (clone/clone3/unshare/setns/mount) for containers with CAP_SYS_ADMIN in
+  their bounding set, and rootless podman needs those to nest. If
+  `podman run --rm alpine true` inside the daemon pod fails after merge,
+  see the MR test plan (fallback: revert to the dind shape)
 - The optional scraper service (`vxcontrol/scraper`) is not deployed; the
   browser tool self-disables without `SCRAPER_*` URLs
 - Graphiti/Neo4j knowledge graph and Langfuse/OTel observability stacks
@@ -81,7 +88,11 @@ kubectl get pods -n pentagi
 kubectl logs -n pentagi deployment/pentagi -f
 
 # Sandbox daemon (first flow pulls the kali image, minutes on first run)
-kubectl logs -n pentagi deployment/pentagi-dind -f
+kubectl logs -n pentagi deployment/pentagi-podman -f
+
+# Verify the nested user namespace actually works (post-merge check from
+# the MR test plan; prints "alpine" on success)
+kubectl exec -n pentagi deploy/pentagi-podman -c podman -- podman run --rm alpine true
 
 # Health endpoint
 kubectl exec -n pentagi deploy/pentagi -- wget -qO- http://localhost:8443/api/v1/info

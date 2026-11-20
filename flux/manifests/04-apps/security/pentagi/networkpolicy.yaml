@@ -1,5 +1,5 @@
 ---
-# The dind daemon speaks plain unauthenticated TCP on 2375 (see dind.yaml);
+# The podman daemon speaks plain unauthenticated TCP on 2375 (see podman.yaml);
 # anyone reaching it owns every agent sandbox. Compensating control, same
 # shape as openaev's opensearch ingress policy: accept 2375 only from the
 # pentagi app pod and from the kubelet (probes originate on the host).
@@ -8,7 +8,7 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: pentagi-dind-ingress
+  name: pentagi-podman-ingress
   namespace: pentagi
   labels:
     app.kubernetes.io/name: pentagi
@@ -18,7 +18,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: pentagi-dind
+      app: pentagi-podman
   ingress:
     # kubelet health probes (reserved:host).
     - fromEntities:

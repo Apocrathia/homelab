@@ -10,6 +10,6 @@ metadata:
 
 resources:
   - namespace.yaml
-  - dockerd.yaml
+  - podman.yaml
   - networkpolicy.yaml
   - helmrelease.yaml

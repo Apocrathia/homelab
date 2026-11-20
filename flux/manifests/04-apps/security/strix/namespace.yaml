@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: strix
     app.kubernetes.io/component: ai-pentesting
     app.kubernetes.io/part-of: security
-    # docker.io/library/docker (dockerd) lives on docker.io; Kyverno clones
-    # the docker.io pull secret into namespaces with this label.
+    # The strix platform image lives on docker.io; Kyverno clones the
+    # docker.io pull secret into namespaces with this label. (The sandbox
+    # daemon image is on quay.io, no pull secret needed.)
     images/dockerhub: "true"

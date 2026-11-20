@@ -1,5 +1,5 @@
 ---
-# strix-dockerd listens on plain-HTTP 2375 (no TLS without client certs
+# strix-podman listens on plain-HTTP 2375 (no TLS without client certs
 # mounted): restrict ingress to the strix app pod only. Docker-API access is
 # root-equivalent on the daemon pod, so nothing else in the cluster may
 # reach it. Egress stays open — the sandbox containers scan arbitrary
@@ -7,7 +7,7 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: strix-dockerd-ingress
+  name: strix-podman-ingress
   namespace: strix
   labels:
     app.kubernetes.io/name: strix
@@ -17,7 +17,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: strix-dockerd
+      app: strix-podman
   ingress:
     - fromEndpoints:
         - matchLabels:

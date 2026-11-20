@@ -14,9 +14,11 @@ proofs-of-concept, and write reports to disk.
   serves the built-in web viewer of the latest run
 - Scans run inside sandbox containers
   (`ghcr.io/usestrix/strix-sandbox`, upstream's official image) spawned
-  through a Docker daemon: `strix-dockerd`, a raw privileged Deployment
-  (docker.io `dind`) next to the app release, since the generic-app chart
-  cannot render privileged containers (openaev raw-manifest pattern)
+  through a Docker-compatible daemon: `strix-podman`, an unprivileged
+  rootless podman Deployment (quay.io `podman/stable`, uid 1000) next to
+  the app release; its only capability is SYS_ADMIN, which containerd's
+  RuntimeDefault seccomp profile requires before it allows the nested
+  user-namespace syscalls rootless podman needs
 - The sandbox image is deliberately not pinned in the manifests: the pinned
   `strix-agent` version carries its own compatible default (1.3.0 for
   1.7.0) and pulls it into the daemon on first scan
@@ -39,7 +41,7 @@ durable volume, and `HOME` is already `/data`):
 kubectl exec -n strix deploy/strix -c strix -- strix --target https://example.com
 ```
 
-First scan pulls the ~4 GB sandbox image into `strix-dockerd` (10-15 min);
+First scan pulls the ~4 GB sandbox image into the podman store (10-15 min);
 later scans start immediately. Results land under `/data/strix_runs/`.
 
 The web viewer follows the newest run automatically; it restarts (with a
@@ -68,9 +70,10 @@ The pod stays pending until the item exists. An interactive
 
 ## Security notes
 
-- The dockerd Deployment is privileged and its 2375 port is plain HTTP;
-  a CiliumNetworkPolicy restricts ingress to the strix app pod only
-  (docker-API access is root-equivalent on that pod)
+- The podman daemon runs unprivileged (uid 1000, caps dropped except
+  SYS_ADMIN for the nested user namespace); its 2375 port is plain HTTP,
+  so a CiliumNetworkPolicy restricts ingress to the strix app pod only
+  (Docker-API access is root-equivalent on that pod)
 - Sandbox containers get `NET_ADMIN`/`NET_RAW` (nmap -sS and friends) and a
   generated testing CA for the built-in Caido MITM proxy — upstream design
   for a pentest sandbox
@@ -90,9 +93,9 @@ kubectl get pods -n strix
 kubectl logs -n strix deploy/strix -c fetch-strix
 kubectl logs -n strix deploy/strix -c strix -f
 
-# Docker daemon (sandbox containers run here; `docker ps` lists them)
-kubectl get pods -n strix -l app=strix-dockerd
-kubectl exec -n strix deploy/strix-dockerd -- docker ps
+# Sandbox daemon (rootless podman; `podman ps` lists the sandbox containers)
+kubectl get pods -n strix -l app=strix-podman
+kubectl exec -n strix deploy/strix-podman -c podman -- podman ps
 
 # Viewer session URL
 kubectl logs -n strix deploy/strix -c strix | grep 'http://'

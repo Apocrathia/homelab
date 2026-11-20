@@ -1,0 +1,213 @@
+---
+# Rootless podman daemon for strix's sandbox containers (Docker-API
+# compatible), replacing the raw privileged docker:dind Deployment this
+# directory first shipped (pentagi lap 2, same rework).
+#
+# The OSS CLI spawns one sandbox container per scan (ghcr.io/usestrix/
+# strix-sandbox, upstream's official image) through the Docker API
+# (strix/runtime/docker_connection.py resolves DOCKER_HOST; the sandbox
+# client sends cap_add NET_ADMIN/NET_RAW + extra_hosts
+# host.docker.internal:host-gateway through the compat create - podman
+# honors both, the host-gateway keyword since 4.7). Scans run inside this
+# pod: the heavy tooling resource limits live here.
+#
+# Unprivileged: podman runs as the image's built-in uid 1000 with its
+# contiguous subuid block (no newuidmap needed). The only capability is
+# SYS_ADMIN, required because containerd's RuntimeDefault seccomp profile
+# only allows clone/clone3/unshare/setns/mount with CAP_SYS_ADMIN in the
+# bounding set - without it rootless podman cannot create its nested user
+# namespace. Plain HTTP on 2375 stays gated by networkpolicy.yaml to the
+# strix app pod.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: strix-podman-store
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman-daemon
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      # Distinct from the app claims (runtime 5Gi, data 20Gi) and the
+      # pentagi claims (10/12/25Gi) so no claim can bind another
+      # subsystem's Available PV. Re-pullable image cache, deliberately
+      # outside the kopia backup set.
+      storage: 25Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: strix-podman-config
+  namespace: strix
+  labels:
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman-daemon
+data:
+  containers.conf: |
+    # Rootless-podman-in-a-pod config; overrides the image's
+    # /etc/containers/containers.conf (which defaults sandboxes to the
+    # daemon pod's namespaces). With the default private namespaces,
+    # podman's Docker-compat API maps an empty NetworkMode to "bridge",
+    # which is what strix's sandbox client sends, so sandboxes get proper
+    # per-container networking via netavark+pasta and published ports work
+    # through rootlessport.
+    [containers]
+    # cgroups cannot be delegated to uid 1000 inside a plain pod
+    cgroups = "disabled"
+    log_driver = "k8s-file"
+    [engine]
+    cgroup_manager = "cgroupfs"
+    events_logger = "file"
+    runtime = "crun"
+  storage.conf: |
+    [storage]
+    # Native rootless overlay; containers/storage appends the userxattr
+    # mount option automatically when running rootless. graphroot defaults
+    # to $HOME/.local/share/containers/storage (on the store PVC below),
+    # runroot to $XDG_RUNTIME_DIR/containers (tmpfs).
+    # Fallback if the store errors on first boot: use driver = "vfs".
+    driver = "overlay"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strix-podman
+  namespace: strix
+  labels:
+    app: strix-podman
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman-daemon
+    app.kubernetes.io/part-of: security
+    app.kubernetes.io/managed-by: flux
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # RWO Longhorn claim
+  selector:
+    matchLabels:
+      app: strix-podman
+  template:
+    metadata:
+      labels:
+        app: strix-podman
+        app.kubernetes.io/name: strix
+        app.kubernetes.io/component: podman-daemon
+        app.kubernetes.io/part-of: security
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        # The image's podman user (uid/gid 1000) with its contiguous
+        # subuid/subgid block; runAsNonRoot + no privilege escalation.
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: podman
+          # renovate: datasource=docker depName=quay.io/podman/stable
+          image: quay.io/podman/stable:v6.2.0@sha256:699988997a6bec77661e2f0f489d96df8dd3fff47996e306acc41e268254fad3
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              # /run is root-owned; rootless podman needs a private runtime
+              # dir (0777 tmpfs from the emptyDir, 0700 owned by uid 1000)
+              mkdir -p "${XDG_RUNTIME_DIR}"
+              chmod 700 "${XDG_RUNTIME_DIR}"
+              exec podman system service --time=0 tcp://0.0.0.0:2375
+          env:
+            - name: XDG_RUNTIME_DIR
+              value: /tmp/podman-run
+          securityContext:
+            # RuntimeDefault seccomp only allows clone/clone3/unshare/setns/
+            # mount with CAP_SYS_ADMIN in the bounding set (containerd
+            # contrib/seccomp/seccomp_default.go) - rootless podman's nested
+            # user namespace needs exactly those. The cap is held by the
+            # unprivileged uid 1000 inside the pod's private mount/pid/net
+            # namespaces: no privileged mode, no host paths, no devices.
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - SYS_ADMIN
+          ports:
+            - name: docker
+              containerPort: 2375
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              # Scan tooling (nmap, sqlmap, chromium) runs inside sandboxes
+              # on this daemon; sized for a single concurrent scan
+              cpu: "2"
+              memory: 6Gi
+          volumeMounts:
+            - name: store
+              mountPath: /home/podman/.local/share/containers
+            - name: config
+              mountPath: /home/podman/.config/containers
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /_ping
+              port: docker
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /_ping
+              port: docker
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /_ping
+              port: docker
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: store
+          persistentVolumeClaim:
+            claimName: strix-podman-store
+        - name: config
+          configMap:
+            name: strix-podman-config
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: strix-podman
+  namespace: strix
+  labels:
+    app: strix-podman
+    app.kubernetes.io/name: strix
+    app.kubernetes.io/component: podman-daemon
+    app.kubernetes.io/managed-by: flux
+spec:
+  type: ClusterIP
+  selector:
+    app: strix-podman
+  ports:
+    - name: docker
+      port: 2375
+      targetPort: docker
+      protocol: TCP

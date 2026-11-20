@@ -1,0 +1,223 @@
+---
+# Rootless podman daemon for PentAGI agent sandboxes (Docker-API compatible).
+#
+# Replaces the first lap's privileged docker:dind: PentAGI hard-requires a
+# Docker-API daemon (it Fatals when the docker client cannot reach one) and
+# Talos/containerd has no host socket, but the whole point of this rework is
+# that the sandbox daemon no longer needs privileged mode. podman runs
+# rootless as the image's built-in `podman` user (uid/gid 1000, whose
+# /etc/subuid + /etc/subgid ranges form one contiguous 1..65536 block, so
+# the nested user namespace needs no setuid newuidmap - verified from the
+# image layers), serving the Docker-compat API on plain TCP 2375.
+#
+# The one capability: containerd's RuntimeDefault seccomp profile only
+# allows clone/clone3/unshare/setns/mount for containers with CAP_SYS_ADMIN
+# in their bounding set (containerd contrib/seccomp/seccomp_default.go), so
+# without it rootless podman cannot create its user namespaces at all. The
+# pod keeps seccompProfile: RuntimeDefault and grants exactly SYS_ADMIN to
+# the unprivileged uid 1000 - no privileged mode, no host paths, no other
+# capabilities; the CiliumNetworkPolicy in networkpolicy.yaml still pins
+# unauthenticated 2375 to the app pod and kubelet probes.
+#
+# Storage: native rootless overlay on the Longhorn store (kernel 5.11+
+# unprivileged overlayfs). containers/storage appends the userxattr mount
+# option automatically when rootless (drivers/overlay/overlay.go), which is
+# what makes the overlay mount possible without CAP_SYS_ADMIN in the
+# initial user namespace. Fallback if the store errors on first boot:
+# switch the driver in the storage.conf below to "vfs" (slower, no
+# overlayfs); everything else stays the same.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pentagi-podman-store
+  namespace: pentagi
+  labels:
+    app.kubernetes.io/name: pentagi
+    app.kubernetes.io/component: podman-daemon
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      # Distinct from every other claim in play (app data 10Gi, postgres
+      # 12Gi, strix claims 5/20/25Gi) so no claim can bind another
+      # subsystem's Available PV. Re-pullable image cache, deliberately
+      # outside the kopia backup set.
+      storage: 25Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pentagi-podman-config
+  namespace: pentagi
+  labels:
+    app.kubernetes.io/name: pentagi
+    app.kubernetes.io/component: podman-daemon
+data:
+  containers.conf: |
+    # Rootless-podman-in-a-pod config. This file overrides the image's
+    # /etc/containers/containers.conf, which defaults every sandbox to the
+    # daemon pod's namespaces (netns="host" etc) - podman's upstream config
+    # for podman-in-podman. We drop those lines instead: with the default
+    # (private) namespaces, podman's Docker-compat API maps an empty
+    # NetworkMode to "bridge" (pkg/api/handlers/compat/containers_create.go),
+    # which is what both consumer apps send, so sandboxes get proper
+    # per-container networking via netavark+pasta and published ports work
+    # through rootlessport.
+    [containers]
+    # cgroups cannot be delegated to uid 1000 inside a plain pod
+    cgroups = "disabled"
+    log_driver = "k8s-file"
+    [engine]
+    cgroup_manager = "cgroupfs"
+    events_logger = "file"
+    runtime = "crun"
+  storage.conf: |
+    [storage]
+    # Native rootless overlay; containers/storage appends the userxattr
+    # mount option automatically when running rootless. graphroot defaults
+    # to $HOME/.local/share/containers/storage (on the store PVC below),
+    # runroot to $XDG_RUNTIME_DIR/containers (tmpfs).
+    # Fallback if the store errors on first boot: use driver = "vfs".
+    driver = "overlay"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pentagi-podman
+  namespace: pentagi
+  labels:
+    app: pentagi-podman
+    app.kubernetes.io/name: pentagi
+    app.kubernetes.io/component: podman-daemon
+    app.kubernetes.io/part-of: security
+    app.kubernetes.io/managed-by: flux
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # RWO claim
+  selector:
+    matchLabels:
+      app: pentagi-podman
+  template:
+    metadata:
+      labels:
+        app: pentagi-podman
+        app.kubernetes.io/name: pentagi
+        app.kubernetes.io/component: podman-daemon
+        app.kubernetes.io/part-of: security
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        # The image's podman user (uid/gid 1000) with its contiguous
+        # subuid/subgid block; runAsNonRoot + no privilege escalation.
+        # newuidmap is never needed (single-block mapping), so
+        # NO_NEW_PRIVS does not break the userns setup.
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: podman
+          # renovate: datasource=docker depName=quay.io/podman/stable
+          image: quay.io/podman/stable:v6.2.0@sha256:699988997a6bec77661e2f0f489d96df8dd3fff47996e306acc41e268254fad3
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              # /run is root-owned; rootless podman needs a private runtime
+              # dir (0777 tmpfs from the emptyDir, 0700 owned by uid 1000)
+              mkdir -p "${XDG_RUNTIME_DIR}"
+              chmod 700 "${XDG_RUNTIME_DIR}"
+              exec podman system service --time=0 tcp://0.0.0.0:2375
+          env:
+            - name: XDG_RUNTIME_DIR
+              value: /tmp/podman-run
+          securityContext:
+            # RuntimeDefault seccomp only allows clone/clone3/unshare/setns/
+            # mount with CAP_SYS_ADMIN in the bounding set (containerd
+            # contrib/seccomp/seccomp_default.go) - rootless podman's nested
+            # user namespace needs exactly those. The cap is held by the
+            # unprivileged uid 1000 inside the pod's private mount/pid/net
+            # namespaces: no privileged mode, no host paths, no devices.
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - SYS_ADMIN
+          ports:
+            - name: docker
+              containerPort: 2375
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          volumeMounts:
+            - name: store
+              mountPath: /home/podman/.local/share/containers
+            - name: config
+              mountPath: /home/podman/.config/containers
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /_ping
+              port: docker
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /_ping
+              port: docker
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /_ping
+              port: docker
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: store
+          persistentVolumeClaim:
+            claimName: pentagi-podman-store
+        - name: config
+          configMap:
+            name: pentagi-podman-config
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pentagi-podman
+  namespace: pentagi
+  labels:
+    app: pentagi-podman
+    app.kubernetes.io/name: pentagi
+    app.kubernetes.io/component: podman-daemon
+    app.kubernetes.io/managed-by: flux
+spec:
+  selector:
+    app: pentagi-podman
+  ports:
+    - name: docker
+      port: 2375
+      targetPort: docker
+      protocol: TCP
+  type: ClusterIP

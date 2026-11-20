@@ -10,7 +10,7 @@ metadata:
 
 resources:
   - namespace.yaml
-  - dind.yaml
+  - podman.yaml
   - networkpolicy.yaml
   - postgres.yaml
   - scheduled-backup.yaml

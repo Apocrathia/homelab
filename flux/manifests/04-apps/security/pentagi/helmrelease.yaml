@@ -69,12 +69,12 @@ spec:
                 name: pentagi-secrets
                 key: gemini-api-key
                 optional: true
-          # Agent sandboxes: the privileged dockerd from dind.yaml. The app
-          # Fatals without a reachable daemon, and worker containers stay
-          # inside that daemon (docker named-volume workspaces, the
-          # documented remote-socket path).
+          # Agent sandboxes: the rootless podman daemon from podman.yaml
+          # (Docker-compat API). The app Fatals without a reachable daemon,
+          # and worker containers stay inside that daemon (podman named
+          # volumes, the documented remote-socket path).
           - name: DOCKER_HOST
-            value: tcp://pentagi-dind.pentagi.svc.cluster.local:2375
+            value: tcp://pentagi-podman.pentagi.svc.cluster.local:2375
           # Public URL behind the Authentik proxy; used for OAuth callbacks
           # and generated links.
           - name: PUBLIC_URL
@@ -192,8 +192,8 @@ spec:
       group: security
       path: /api/v1/info
 
-    # Kopia snapshots of the durable app volume; the dind image cache
-    # (dind.yaml PVC) is deliberately excluded, it re-pulls.
+    # Kopia snapshots of the durable app volume; the podman image cache
+    # (podman.yaml PVC) is deliberately excluded, it re-pulls.
     backup:
       enabled: true
       volumes:
