@@ -29,10 +29,23 @@ write a fresh one.
 
 Exit codes:
 - 0: skipped (input unchanged) OR agent ran AND comment has expected hash
-- 1: anything else (transport error, no completion, missing trailer, etc.)
+- 1: invocation-side failure (agent-unreachable, budget-exhausted,
+  transport-failures, no-completion, note-missing)
+- 2: verification-side failure (trailer-write-failed, bad-input)
 
-The job is `allow_failure: true` at the pipeline level so a 1 here does
-not block merges.
+Every failure path logs exactly one tagged result line as its last log
+line:
+    === mr-change-summary failed: <reason> — <detail> ===
+
+Knobs beyond the CI job variables:
+- AGENT_BUDGET_S: overall wall-clock budget for the agent invocation in
+  seconds (default 900). Streaming WORKING events keep connections alive,
+  so HTTP_TIMEOUT_S alone cannot bound a wedged agent.
+- DEBUG_TRACEBACKS: set to 1/true/yes to print full tracebacks on
+  unexpected crashes (default off; failures log one clean line instead).
+
+The job is `allow_failure: true` at the pipeline level so a non-zero exit
+does not block merges.
 """
 
 from __future__ import annotations
@@ -43,6 +56,8 @@ import logging
 import os
 import re
 import sys
+import time
+import traceback
 from pathlib import Path
 from uuid import uuid4
 
@@ -62,6 +77,47 @@ LOG = logging.getLogger(__name__)
 
 COMMENT_MARKER = "<!-- mr-change-summary -->"
 HASH_TRAILER_RE = re.compile(r"<!--\s*hash:([^\s>]+)\s*-->")
+
+# Failure reason -> exit code. Invocation-side failures (the agent run
+# itself) exit 1; verification-side failures (our note/trailer machinery
+# and input validation) exit 2.
+REASON_EXIT_CODES: dict[str, int] = {
+    "agent-unreachable": 1,
+    "budget-exhausted": 1,
+    "transport-failures": 1,
+    "no-completion": 1,
+    "note-missing": 1,
+    "trailer-write-failed": 2,
+    "bad-input": 2,
+}
+
+# Reason an unexpected crash gets tagged with. main_async advances this as
+# it moves between phases so main()'s catch-all can attribute the crash to
+# the phase that was running.
+_crash_reason = "bad-input"
+
+
+def _set_crash_reason(reason: str) -> None:
+    global _crash_reason
+    _crash_reason = reason
+
+
+def failure_reason_line(reason: str, detail: str) -> str:
+    """Build the tagged result line every failure path logs."""
+    return f"=== mr-change-summary failed: {reason} — {detail} ==="
+
+
+def exit_code_for(reason: str) -> int:
+    """Exit code for a failure reason (1 invocation-side, 2 verification)."""
+    return REASON_EXIT_CODES[reason]
+
+
+def log_failure(reason: str, detail: str) -> None:
+    LOG.error(failure_reason_line(reason, detail))
+
+
+def _env_truthy(raw: str) -> bool:
+    return raw.strip().lower() in ("1", "true", "yes")
 
 
 def _looks_like_tool_stub(text: str) -> bool:
@@ -208,25 +264,40 @@ async def run_agent(
        `failed`/`canceled` states usually mean gitlab-mcp or kagent is
        wedged. Burning all `max_turns` against a ~180s A2A deadline looks
        like a hung CI job; stop after `max_consecutive_failures` instead.
+
+    Returns True if the agent reached `completed` with non-stub output.
+    Every False return logs one `=== mr-change-summary failed: ... ===`
+    line first (agent-unreachable / transport-failures / no-completion).
     """
     timeout = httpx.Timeout(timeout_s, connect=15.0)
+    started = time.monotonic()
     async with httpx.AsyncClient(
         timeout=timeout, follow_redirects=True
     ) as httpx_client:
-        resolver = A2ACardResolver(httpx_client=httpx_client, base_url=a2a_url)
-        agent_card = await resolver.get_agent_card()
-        client = ClientFactory(config=ClientConfig(httpx_client=httpx_client)).create(
-            card=agent_card
-        )
+        try:
+            resolver = A2ACardResolver(httpx_client=httpx_client, base_url=a2a_url)
+            agent_card = await resolver.get_agent_card()
+            client = ClientFactory(
+                config=ClientConfig(httpx_client=httpx_client)
+            ).create(card=agent_card)
+        except Exception as e:  # noqa: BLE001
+            log_failure(
+                "agent-unreachable",
+                f"agent card fetch failed: {type(e).__name__}: {e} (url={a2a_url}); "
+                "agent missing or kagent down — expected during kagent upgrades",
+            )
+            return False
 
         context_id: str | None = None
         consecutive_failures = 0
 
         for turn in range(max_turns):
             LOG.info(
-                "--- turn %s/%s contextId=%s prompt_chars=%s consecutive_failures=%s ---",
+                "--- turn %s/%s elapsed=%ss contextId=%s prompt_chars=%s "
+                "consecutive_failures=%s ---",
                 turn + 1,
                 max_turns,
+                int(time.monotonic() - started),
                 context_id or "(new)",
                 len(prompt_text),
                 consecutive_failures,
@@ -292,14 +363,19 @@ async def run_agent(
                 )
                 context_id = None
                 if consecutive_failures >= max_consecutive_failures:
-                    LOG.error(
-                        "Aborting after %s consecutive hard failures (transport/failed). "
-                        "Likely gitlab-mcp or kagent saturation: not worth burning more turns.",
-                        consecutive_failures,
+                    log_failure(
+                        "transport-failures",
+                        f"aborted after {consecutive_failures} consecutive transport/failed "
+                        f"turns; last error {type(e).__name__}: {e} "
+                        "(likely gitlab-mcp or kagent saturation)",
                     )
                     return False
                 if turn >= max_turns - 1:
-                    LOG.error("Final turn failed with transport error")
+                    log_failure(
+                        "transport-failures",
+                        f"final turn {turn + 1}/{max_turns} ended with transport error: "
+                        f"{type(e).__name__}: {e}",
+                    )
                     return False
                 continue
 
@@ -322,13 +398,18 @@ async def run_agent(
                 )
                 context_id = None
                 if consecutive_failures >= max_consecutive_failures:
-                    LOG.error(
-                        "Aborting after %s consecutive hard failures (transport/failed). "
-                        "Likely gitlab-mcp or kagent saturation: not worth burning more turns.",
-                        consecutive_failures,
+                    log_failure(
+                        "transport-failures",
+                        f"aborted after {consecutive_failures} consecutive transport/failed "
+                        f"turns; last state={state} "
+                        "(likely gitlab-mcp or kagent saturation)",
                     )
                     return False
                 if turn >= max_turns - 1:
+                    log_failure(
+                        "transport-failures",
+                        f"final turn {turn + 1}/{max_turns} ended with state={state}",
+                    )
                     return False
                 continue
 
@@ -337,7 +418,9 @@ async def run_agent(
             consecutive_failures = 0
             context_id = next_context_id
 
-        LOG.warning("Exhausted %s turns without natural completion", max_turns)
+        log_failure(
+            "no-completion", f"exhausted {max_turns} turns without natural completion"
+        )
         return False
 
 
@@ -351,6 +434,7 @@ async def main_async() -> int:
         1, int(os.environ.get("MAX_CONSECUTIVE_FAILURES", "3"))
     )
     timeout_s = float(os.environ.get("HTTP_TIMEOUT_S", "600"))
+    budget_s = float(os.environ.get("AGENT_BUDGET_S", "900"))
 
     api_url = os.environ.get("CI_API_V4_URL", "").strip()
     project_id = os.environ.get("CI_PROJECT_ID", "").strip()
@@ -367,24 +451,27 @@ async def main_async() -> int:
     )
 
     if not a2a_url:
-        LOG.error("A2A_URL is required")
-        return 1
+        log_failure("bad-input", "A2A_URL is required")
+        return exit_code_for("bad-input")
     if not prompt_path.is_file():
-        LOG.error("PROMPT_PATH not found: %s", prompt_path)
-        return 1
+        log_failure("bad-input", f"PROMPT_PATH not found: {prompt_path}")
+        return exit_code_for("bad-input")
     prompt_text = prompt_path.read_text(encoding="utf-8").strip()
     if not prompt_text:
-        LOG.error("Prompt is empty: %s", prompt_path)
-        return 1
+        log_failure("bad-input", f"Prompt is empty: {prompt_path}")
+        return exit_code_for("bad-input")
     if not diff_path.is_file():
-        LOG.error("DIFF_PATH not found: %s (required for hash-skip)", diff_path)
-        return 1
-    if not changed_files_path.is_file():
-        LOG.error(
-            "CHANGED_FILES_PATH not found: %s (required for hash-skip)",
-            changed_files_path,
+        log_failure(
+            "bad-input", f"DIFF_PATH not found: {diff_path} (required for hash-skip)"
         )
-        return 1
+        return exit_code_for("bad-input")
+    if not changed_files_path.is_file():
+        log_failure(
+            "bad-input",
+            f"CHANGED_FILES_PATH not found: {changed_files_path} "
+            "(required for hash-skip)",
+        )
+        return exit_code_for("bad-input")
 
     input_hash = _compute_input_hash(diff_path, changed_files_path)
     LOG.info("Input hash: %s", input_hash)
@@ -433,23 +520,32 @@ async def main_async() -> int:
 
     LOG.info(
         "Invoking agent: a2a_url=%s prompt_chars=%s max_turns=%s "
-        "max_consecutive_failures=%s timeout_s=%s",
+        "max_consecutive_failures=%s timeout_s=%s budget_s=%s",
         a2a_url,
         len(prompt_text),
         max_turns,
         max_consecutive_failures,
         timeout_s,
+        budget_s,
     )
+    _set_crash_reason("transport-failures")
 
-    completed = await run_agent(
-        a2a_url=a2a_url,
-        prompt_text=prompt_text,
-        max_turns=max_turns,
-        timeout_s=timeout_s,
-        max_consecutive_failures=max_consecutive_failures,
-    )
+    try:
+        completed = await asyncio.wait_for(
+            run_agent(
+                a2a_url=a2a_url,
+                prompt_text=prompt_text,
+                max_turns=max_turns,
+                timeout_s=timeout_s,
+                max_consecutive_failures=max_consecutive_failures,
+            ),
+            timeout=budget_s,
+        )
+    except asyncio.TimeoutError:
+        log_failure("budget-exhausted", f"agent did not complete within {budget_s}s")
+        return exit_code_for("budget-exhausted")
     if not completed:
-        LOG.error("Agent did not complete the task cleanly")
+        # run_agent already logged its tagged failure line.
         return 1
 
     if skip_verify:
@@ -466,6 +562,7 @@ async def main_async() -> int:
     # Re-fetch the comment the agent (hopefully) just posted/updated and
     # rewrite the body with a fresh hash trailer so we can prove it ran.
     LOG.info("Re-fetching MR notes to find the agent's posted comment...")
+    _set_crash_reason("note-missing")
     try:
         post_note_id, post_body, _ = await _fetch_existing_comment(
             api_url=api_url,
@@ -475,40 +572,54 @@ async def main_async() -> int:
             timeout_s=30.0,
         )
     except Exception as e:  # noqa: BLE001
-        LOG.exception("Failed to re-fetch MR notes for trailer write: %s", e)
-        return 1
+        log_failure(
+            "trailer-write-failed",
+            f"failed to re-fetch MR notes for trailer write: {type(e).__name__}: {e}",
+        )
+        return exit_code_for("trailer-write-failed")
 
     if post_note_id is None or post_body is None:
-        LOG.error(
-            "Agent claimed completion but no note with marker '%s' exists on MR !%s. "
-            "Treating run as failed.",
-            COMMENT_MARKER,
-            mr_iid,
+        log_failure(
+            "note-missing",
+            f"agent claimed completion but no note with marker '{COMMENT_MARKER}' "
+            f"exists on MR !{mr_iid}",
         )
-        return 1
+        return exit_code_for("note-missing")
 
     if not private_token:
-        LOG.error(
-            "AGENT_TOKEN is not set. Comment was posted by the agent but the "
-            "skip-cache trailer cannot be written. Create a project PAT with "
-            "`api` scope and store it as the AGENT_TOKEN CI/CD variable."
+        log_failure(
+            "trailer-write-failed",
+            "AGENT_TOKEN is not set; the skip-cache trailer cannot be written. "
+            "Create a project PAT with `api` scope and store it as the "
+            "AGENT_TOKEN CI/CD variable.",
         )
-        return 1
+        return exit_code_for("trailer-write-failed")
 
     new_body = _strip_trailing_hash(post_body) + "\n" + _hash_trailer(input_hash) + "\n"
     LOG.info("Appending hash trailer to note %s (hash=%s)...", post_note_id, input_hash)
-    success = await _update_note_body(
-        api_url=api_url,
-        project_id=project_id,
-        mr_iid=mr_iid,
-        note_id=post_note_id,
-        body=new_body,
-        private_token=private_token,
-        timeout_s=30.0,
-    )
+    _set_crash_reason("trailer-write-failed")
+    try:
+        success = await _update_note_body(
+            api_url=api_url,
+            project_id=project_id,
+            mr_iid=mr_iid,
+            note_id=post_note_id,
+            body=new_body,
+            private_token=private_token,
+            timeout_s=30.0,
+        )
+    except Exception as e:  # noqa: BLE001
+        log_failure(
+            "trailer-write-failed",
+            f"MR note {post_note_id} update raised {type(e).__name__}: {e}",
+        )
+        return exit_code_for("trailer-write-failed")
     if not success:
-        LOG.error("Failed to append hash trailer to MR note %s.", post_note_id)
-        return 1
+        log_failure(
+            "trailer-write-failed",
+            f"failed to append hash trailer to MR note {post_note_id}",
+        )
+        return exit_code_for("trailer-write-failed")
     LOG.info("Trailer written (note id=%s, hash=%s)", post_note_id, input_hash)
     return 0
 
@@ -517,7 +628,13 @@ def main() -> int:
     logging.basicConfig(
         level=logging.INFO, format="%(levelname)s %(message)s", stream=sys.stdout
     )
-    return asyncio.run(main_async())
+    try:
+        return asyncio.run(main_async())
+    except Exception as e:  # noqa: BLE001
+        log_failure(_crash_reason, f"unexpected {type(e).__name__}: {e}")
+        if _env_truthy(os.environ.get("DEBUG_TRACEBACKS", "")):
+            traceback.print_exc()
+        return exit_code_for(_crash_reason)
 
 
 if __name__ == "__main__":

@@ -61,7 +61,7 @@ Runs on every MR. Builds a prompt from the MR title, description, changed files,
 - After the agent posts/updates the comment, CI rewrites the body to append a `<!-- hash:abcdef... -->` trailer. The trailer is the cache key for the next run and the verification token for this run.
 - Trailer writes use `AGENT_TOKEN` (a project PAT with `api` scope); GitLab.com rejects `CI_JOB_TOKEN` for MR note PUTs. See "Required CI/CD Variables" below.
 - To force a refresh after a prompt-engineering change, manually delete the existing change-summary comment on the affected MR(s); the next pipeline will write a fresh one.
-- Jobs use `resource_group: mr-change-summary` so only one change-summary runs cluster-wide at a time (avoids stampeding gitlab-mcp).
+- Jobs run un-serialized (no `resource_group`); concurrency is bounded downstream by the substrate WorkerPool (4) and gitlab-mcp replicas (3).
 - Hard A2A failures (transport errors / `failed` state) abort after `MAX_CONSECUTIVE_FAILURES` instead of burning the full turn budget.
 
 **Requirements**:
@@ -76,9 +76,13 @@ Runs on every MR. Builds a prompt from the MR title, description, changed files,
 - `MAX_TURNS`: A2A turn cap (default `12`)
 - `MAX_CONSECUTIVE_FAILURES`: abort after this many consecutive transport/`failed` turns (default `3`)
 - `HTTP_TIMEOUT_S`: per-request HTTP timeout to kagent (default `600`)
+- `AGENT_BUDGET_S`: overall wall-clock budget for the whole agent invocation (default `900`); streaming keep-alive events can hold a single request open, so this is what bounds a wedged agent
+- `DEBUG_TRACEBACKS`: set to `1` to print full Python tracebacks on failure (default off; failures log one clean tagged line instead)
 - `DIFF_MAX_BYTES`: diff payload cap fed to the agent (default `120000`)
 - `CHANGED_FILES_MAX_LINES`: file-list cap (default `500`)
 - `FORCE_RECOMPUTE`: set to `1` in a manual pipeline run to bypass the hash skip and re-invoke the agent
+
+**Exit codes**: `0` means skipped or verified success. `1` means an invocation-side failure (`agent-unreachable`, `budget-exhausted`, `transport-failures`, `no-completion`, `note-missing`). `2` means a verification-side failure (`trailer-write-failed`, `bad-input`). Every failure path logs exactly one tagged line, `=== mr-change-summary failed: <reason> — <detail> ===`, as its last log line. The job is `allow_failure: true`, so neither `1` nor `2` blocks merges.
 
 ### OpenSSF Scorecard
 
