@@ -19,8 +19,8 @@ The 1Password Connect Operator requires two main credentials:
 
 Chicken-and-egg: these two Secrets must exist before Connect can sync anything
 else, so they are created manually (below). An `op`-driven bootstrap that pulls
-both from the vault is tracked in
-[`docs/issues/onepassword-bootstrap-op-cli.md`](../../../../docs/issues/onepassword-bootstrap-op-cli.md).
+both from the vault is tracked in the "Bootstrap 1Password Connect
+credentials via op CLI" issue (delete-on-ship'd; git history is the archive).
 
 ### Step 1: Create 1Password Connect Credentials
 

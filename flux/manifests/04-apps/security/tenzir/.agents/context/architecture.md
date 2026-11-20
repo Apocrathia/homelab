@@ -13,8 +13,8 @@ Vendored docs for the general shapes: node
 Seven standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
 distributed mode, so each node is a process with its own pipelines and
 no node-local storage — every write attests and INSERTs to ClickHouse
-in-stream ([stateless migration
-plan](../../../../../../../docs/plans/tenzir-stateless-migration.md))
+in-stream (per the "Tenzir CH-only stateless migration" plan,
+delete-on-ship'd; git history)
 ([core](../../nodes/core/README.md),
 [tetragon](../../nodes/tetragon/README.md),
 [netflow](../../nodes/netflow/README.md),
@@ -88,8 +88,8 @@ OCSF projection, and stays parked. Bus semantics and the class taxonomy:
 ## Storage plane
 
 The write path to the ClickHouse OCSF query store (per-class
-`ocsf.<Class_Name>` tables) is CH-only stateless, landed
-([plan](../../../../../../../docs/plans/tenzir-stateless-migration.md)):
+`ocsf.<Class_Name>` tables) is CH-only stateless, landed per the
+"Tenzir CH-only stateless migration" plan (delete-on-ship'd; git history):
 every source pipeline attests in-stream and INSERTs directly with
 `to_clickhouse` — no node-local lake, no `ocsf-archive` compaction
 rules, no PVCs. The only in-flight state is in-memory: the 60-second

@@ -1012,7 +1012,7 @@ def slug(heading: str, refs=None) -> str:
     s = s.strip().lower()
     s = re.sub(r"[^\w\s-]", "", s)
     s = re.sub(r"\s", " ", s)
-    return s.replace(" ", "-").strip("-")
+    return s.replace(" ", "-")
 
 
 def add_github_anchor(anchors, heading, refs=None):

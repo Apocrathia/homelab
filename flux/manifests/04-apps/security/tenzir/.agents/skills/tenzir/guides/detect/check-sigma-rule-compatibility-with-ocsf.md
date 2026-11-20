@@ -2681,7 +2681,7 @@ Notice that the event has no `Image`, `CommandLine`, or `IntegrityLevel` fields.
 
 ## 3. Trace the rule fields into the event
 
-Open the [Windows process creation field projections](check-sigma-rule-compatibility-with-ocsf.md#sigma-windows-process-creation) in the mapping catalog. Its visible selector covers the rule’s `logsource`. The family details show where Tenzir reads each field and how it interprets the value. Compare those lookups with the attributes in the sample event:
+Open the [Windows process creation field projections](check-sigma-rule-compatibility-with-ocsf.md#windows-process-creation) in the mapping catalog. Its visible selector covers the rule’s `logsource`. The family details show where Tenzir reads each field and how it interprets the value. Compare those lookups with the attributes in the sample event:
 
 | Sigma field      | OCSF lookup                                                              | Result for the sample                                   |
 | ---------------- | ------------------------------------------------------------------------ | ------------------------------------------------------- |

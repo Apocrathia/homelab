@@ -8,8 +8,8 @@ It supports 90+ package managers and multiple platforms (here: GitLab).
 
 - **Host** — the `renovate-operator` (mogenius, Apache-2.0, CRD-driven) runs
   Renovate against every `Apocrathia/*` repo on a schedule. It replaced the
-  license-bound Mend CE deployment (see
-  [`docs/plans/renovate-operator-cutover.md`](../../../../../../docs/plans/renovate-operator-cutover.md)).
+  license-bound Mend CE deployment (see the "Renovate operator: shadow,
+  then replace Renovate CE" plan, delete-on-ship'd; git history).
   One `RenovateJob` (`homelab`) drives discovery, then a job per repo.
 - **Consumer** — each repo opts in with a repo-root `renovate.json`. The
   operator reads that file and turns it into MRs. The homelab's own
